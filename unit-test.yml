@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:5.0
+    container_name: redis_container-test
+    command: redis-server --requirepass testpass
+    ports:
+      - '6000:6379'
+
+  db:
+    image: mysql:8.0
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    container_name: db_container_test
+    ports:
+      - 6001:3306
+    environment:
+      TZ: 'Asia/Tokyo'
+      MYSQL_ROOT_PASSWORD: p@ssw0rd
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
