@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import BaseDriver, { RequestSqlOptions } from './BaseDriver';
 import {
   DbConnection,
@@ -23,7 +24,7 @@ export default class RedisDriver extends BaseDriver {
     super(conRes);
   }
 
-  async asyncConnectSub(): Promise<string> {
+  async connectSub(): Promise<string> {
     try {
       const options: any = Object.assign(
         {
@@ -37,14 +38,14 @@ export default class RedisDriver extends BaseDriver {
           host: this.conRes.host,
           password: this.conRes.password,
           db: this.conRes.database,
-          retryStrategy: function (times: number) {
+          retryStrategy: function () {
             return 'No!';
           },
         },
       );
       if (this.isNeedsSsh()) {
         options.host = '127.0.0.1';
-        options.port = this.sshLocalPort!;
+        options.port = this.sshLocalPort;
       }
       options.connectTimeout = 5_000;
       if (this.conRes.hasUrl()) {
@@ -78,7 +79,7 @@ export default class RedisDriver extends BaseDriver {
     return '';
   }
 
-  async asyncTest(with_connect = false): Promise<string> {
+  async test(with_connect = false): Promise<string> {
     let errorReason = '';
     try {
       if (with_connect) {
@@ -87,7 +88,7 @@ export default class RedisDriver extends BaseDriver {
           return con_result;
         }
       }
-      const result = await this.client!.ping();
+      await this.client.ping();
       if (with_connect) {
         await this.asyncClose();
       }
@@ -97,43 +98,20 @@ export default class RedisDriver extends BaseDriver {
     return errorReason;
   }
 
-  async asyncRequestSql(
+  async requestSql(
     sql: string,
     options?: RequestSqlOptions,
   ): Promise<ResultSetDataHolder> {
-    const rdh = new ResultSetDataHolder([]);
-    // await new Promise((resolve, reject) => {
-    //   if (this.client) {
-    //     this.client.query(sql, binds, (err, results, fields) => {
-    //       if (err) {
-    //         log.error("err=", err);
-    //         rdh = ResultSetDataHolder.create(err);
-    //       } else {
-    //         rdh = new ResultSetDataHolder(
-    //           fields === undefined ? [] : fields.map(f => fieldInfo2Key(f))
-    //         );
-    //         results.forEach((result: any) => {
-    //           rdh.addRow(result);
-    //         });
-    //       }
-    //       resolve();
-    //     });
-    //   } else {
-    //     reject(new Error("No connection"));
-    //   }
-    // });
-    return rdh;
+    return ResultSetDataHolder.createEmpty();
   }
-  async asyncCountTables(
+  async countTables(
     tables: SchemaAndTableHints,
     options: any,
   ): Promise<TableRows[]> {
     return new Array<TableRows>();
   }
 
-  async asyncExecuteCommand(
-    req: RedisRequest,
-  ): Promise<DbKey | string | number> {
+  async executeCommand(req: RedisRequest): Promise<DbKey | string | number> {
     let ret: DbKey | string | number = '';
     if (!this.client) {
       return ret;
@@ -143,9 +121,9 @@ export default class RedisDriver extends BaseDriver {
     switch (req.command) {
       case RedisCommandType.GetValue:
         {
-          r = await this.getValueByKey(this.client, req.key!, req.type!);
+          r = await this.getValueByKey(this.client, req.key, req.type);
           const ttl = await this.client.ttl(req.key);
-          ret = new DbKey(req.key!, req.type, ttl);
+          ret = new DbKey(req.key, req.type, ttl);
           if (ret.ttl > 0) {
             ret.ttl_confirmation_datetime = new Date().getTime();
           }
@@ -154,7 +132,7 @@ export default class RedisDriver extends BaseDriver {
         break;
       case RedisCommandType.SetValue:
         if (req.options) {
-          await this.client.set(req.key!, req.options.val);
+          await this.client.set(req.key, req.options.val);
         }
         break;
       case RedisCommandType.Flushall:
@@ -176,17 +154,17 @@ export default class RedisDriver extends BaseDriver {
     return ret;
   }
 
-  asyncScan(
+  scan(
     db_index: number,
     key: string,
     count: number,
     with_value: boolean,
     progressCallback: Function,
   ): Promise<Array<DbKey>> {
-    return new Promise((resolve, reject) => {
-      const currentClient = this.client!;
-      this.client!.select(db_index);
-      const stream = this.client!.scanStream({
+    return new Promise((resolve) => {
+      const currentClient = this.client;
+      this.client.select(db_index);
+      const stream = this.client.scanStream({
         match: key,
         count,
       });
@@ -211,7 +189,7 @@ export default class RedisDriver extends BaseDriver {
         const parallels: any[] = [];
         ret.forEach((keyRes) => {
           parallels.push(
-            (async () => {
+            (async (): Promise<void> => {
               keyRes.type = RedisKeyType.parse(
                 await currentClient.type(keyRes.getName()),
               );
@@ -229,7 +207,7 @@ export default class RedisDriver extends BaseDriver {
             })(),
           );
         });
-        (async () => {
+        (async (): Promise<void> => {
           await Promise.all(parallels);
           progressCallback('Key scanning done.', 100);
           resolve(ret);
@@ -237,25 +215,28 @@ export default class RedisDriver extends BaseDriver {
       });
     });
   }
-  async getValueByKey(client: Redis, key: string, type: RedisKeyType) {
+  async getValueByKey(
+    client: Redis,
+    key: string,
+    type: RedisKeyType,
+  ): Promise<any> {
     switch (type) {
       case RedisKeyType.string:
-        return await client.get(key!);
+        return await client.get(key);
       case RedisKeyType.list:
-        return await client.lrange(key!, 0, -1);
+        return await client.lrange(key, 0, -1);
       case RedisKeyType.set:
-        return await client.smembers(key!);
+        return await client.smembers(key);
       case RedisKeyType.zset:
-        return await client.zrange(key!, 0, -1);
+        return await client.zrange(key, 0, -1);
       case RedisKeyType.hash:
-        return await client.hgetall(key!);
-
+        return await client.hgetall(key);
       default:
         console.log('whattype??', type);
     }
     return undefined;
   }
-  async asyncGetResouces(options: {
+  async getResouces(options: {
     progress_callback?: Function | undefined;
     params?: any;
   }): Promise<Array<DbResource>> {
@@ -264,11 +245,11 @@ export default class RedisDriver extends BaseDriver {
     }
     const dbResources = new Array<DbResource>();
 
-    const keyspace = await this.client!.info('keyspace');
+    const keyspace = await this.client.info('keyspace');
     // db0:keys=7,expires=0,avg_ttl=0
     // db3:keys=1,expires=1,avg_ttl=4996199
     const re = /db([0-9]+):keys=([0-9]+),expires=([0-9]+),avg_ttl=([0-9]+)/g;
-    let m;
+    let m: string[];
     while ((m = re.exec(keyspace))) {
       const db = m[1];
       const keys = parseInt(m[2], 10);
@@ -286,46 +267,8 @@ export default class RedisDriver extends BaseDriver {
     }
 
     return dbResources;
-    // const self = this
-    // return new Promise((resolve, reject) => {
-    //   let dbResources = [];
-    //   log.info("start refreshResouces ");
-
-    //   this.client.keys("*", (err, results) => {
-    //     if (err) {
-    //       log.info(err);
-    //     } else {
-    //       const parallelList = [];
-    //       results.forEach(key => {
-    //         parallelList.push(callback => {
-    //           this.client.type(key, (errType, rsType) => {
-    //             if (errType) {
-    //               dbRes.addChild(new DbRes.DbKey(key));
-    //               callback(errType);
-    //             } else {
-    //               this.client.ttl(key, (errTtl, rsTtl) => {
-    //                 if (errTtl) {
-    //                   dbRes.addChild(new DbRes.DbKey(key, rsType));
-    //                 } else {
-    //                   dbRes.addChild(new DbRes.DbKey(key, rsType, rsTtl));
-    //                 }
-    //                 callback(errTtl);
-    //               });
-    //             }
-    //           });
-    //         });
-    //       });
-    //       log.info("done with the keys: ");
-    //       async.parallel(parallelList, (err, results) => {
-    //         if (err) console.error(err);
-    //         log.info("done with the keys: ");
-    //         resolve(dbResources);
-    //       });
-    //     }
-    //   });
-    // });
   }
-  async asyncCloseSub(): Promise<string> {
+  async closeSub(): Promise<string> {
     if (this.client) {
       await this.client.quit();
     }

@@ -70,7 +70,7 @@ describe('RedisDriver', () => {
     let testRedisDb0Res: RedisDatabase;
 
     it('should return Database resource', async () => {
-      const dbRootRes = await driver.asyncGetResouces({});
+      const dbRootRes = await driver.getResouces({});
       expect(dbRootRes).toHaveLength(16);
       testRedisDb0Res = dbRootRes[0] as RedisDatabase;
       expect(testRedisDb0Res.getName()).toBe(
@@ -80,14 +80,14 @@ describe('RedisDriver', () => {
   });
 
   describe('asyncScan', () => {
-    it('should return Database resource', async () => {
-      const keys = await driver.asyncScan(
+    it('should return values', async () => {
+      const keys = await driver.scan(
         0,
         '*',
         1000,
         true,
         // eslint-disable-next-line @typescript-eslint/no-empty-function
-        (a, b) => {},
+        () => {},
       );
       let key = keys.find((it) => it.name === 'n1');
       expect(key.val).toBe('1');
@@ -126,7 +126,7 @@ describe('RedisDriver', () => {
 
   describe('RedisCommandType.GetValue', () => {
     it('should return values', async () => {
-      const key = (await driver.asyncExecuteCommand(
+      const key = (await driver.executeCommand(
         createRedisRequest(RedisCommandType.GetValue, {
           key: 'n1',
           type: RedisKeyType.string,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import BaseDriver, { RequestSqlOptions } from './BaseDriver';
 import ResultSetDataHolder, { RdhKey } from '../resource/ResultSetDataHolder';
 import {
@@ -11,13 +12,13 @@ import {
   TableRows,
   SchemaAndTableHints,
 } from '../resource/DbResource';
-import { Pool, FieldDef } from 'pg';
+import { default as pg } from 'pg';
 import { PostgresColumnType } from '../resource/types/PostgresColumnType';
 import { EnumValues } from 'enum-values';
 import { GeneralColumnType } from '../resource/types/GeneralColumnType';
 
 export default class PostgresDriver extends BaseDriver {
-  private pool: Pool | undefined;
+  private pool: pg.Pool;
 
   constructor(conRes: DbConnection) {
     super(conRes);
@@ -30,7 +31,7 @@ export default class PostgresDriver extends BaseDriver {
   //      dataTypeSize: -1,
   //      dataTypeModifier: -1,
   //      format: 'text' }
-  fieldInfo2Key(fieldInfo: FieldDef, resolver?: ColumnResolver) {
+  fieldInfo2Key(fieldInfo: pg.FieldDef, resolver?: ColumnResolver): RdhKey {
     if (fieldInfo.name.startsWith('c_')) {
       console.log(
         `★ ${fieldInfo.name.substring(2).toUpperCase()} = ${
@@ -50,7 +51,7 @@ export default class PostgresDriver extends BaseDriver {
     return key;
   }
 
-  async asyncConnectSub(): Promise<string> {
+  async connectSub(): Promise<string> {
     let errorReason = '';
 
     const options = Object.assign(
@@ -71,30 +72,30 @@ export default class PostgresDriver extends BaseDriver {
       },
     );
 
-    this.pool = new Pool(options);
+    this.pool = new pg.Pool(options);
     // the pool with emit an error on behalf of any idle clients
     // it contains if a backend error or network partition happens
-    this.pool.on('error', (err, client) => {
-      // log.error('Unexpected error on idle client', err);
-    });
-    this.pool.on('acquire', function (client) {
-      // log.info('acquire', client);
-    });
-    this.pool.on('connect', function (client) {
-      // log.info('connect', client);
-    });
-    errorReason = await this.asyncTest();
+    // this.pool.on('error', (err, client) => {
+    //   // log.error('Unexpected error on idle client', err);
+    // });
+    // this.pool.on('acquire', function (client) {
+    //   // log.info('acquire', client);
+    // });
+    // this.pool.on('connect', function (client) {
+    //   // log.info('connect', client);
+    // });
+    errorReason = await this.test();
 
     return errorReason;
   }
 
-  async asyncTest(with_connect = false): Promise<string> {
+  async test(with_connect = false): Promise<string> {
     let errorReason = '';
     try {
       if (with_connect) {
         errorReason = await this.asyncConnect();
       }
-      const rdh = await this.asyncRequestSql('SELECT NOW()');
+      const rdh = await this.requestSql('SELECT NOW()');
       if (rdh && rdh.errorMessage) {
         errorReason = rdh.errorMessage;
       }
@@ -104,12 +105,12 @@ export default class PostgresDriver extends BaseDriver {
       if (with_connect) {
         await this.asyncClose();
       }
-      return errorReason;
     }
+    return errorReason;
   }
 
   // public
-  async asyncRequestSql(
+  async requestSql(
     sql: string,
     options?: RequestSqlOptions,
   ): Promise<ResultSetDataHolder> {
@@ -121,7 +122,7 @@ export default class PostgresDriver extends BaseDriver {
       if (options && options.binds) {
         binds = options.binds;
       }
-      const results = await this.pool!.query(sql, binds);
+      const results = await this.pool.query(sql, binds);
       // command: 'SELECT',
       // rowCount: 5,
       // oid: null,
@@ -157,7 +158,7 @@ export default class PostgresDriver extends BaseDriver {
     return rdh;
   }
 
-  async asyncCountTables(
+  async countTables(
     tables: SchemaAndTableHints,
     options: any,
   ): Promise<TableRows[]> {
@@ -175,45 +176,43 @@ export default class PostgresDriver extends BaseDriver {
       }
       const sql = `SELECT COUNT(*) as count FROM ${prefix}${st.table}`;
       try {
-        const results = await this.pool!.query(sql, []);
+        const results = await this.pool.query(sql, []);
         if (results && results.rows && results.rows.length > 0) {
           const row = results.rows[0];
           const obj: TableRows = Object.assign({ count: row.count }, st);
           list.push(obj);
         }
+        // eslint-disable-next-line no-empty
       } catch (e) {}
       counter++;
     }
     return list;
   }
 
-  async asyncGetResouces(options: {
+  async getResouces(options: {
     progress_callback?: Function | undefined;
     params?: any;
   }): Promise<Array<DbResource>> {
     if (!this.conRes) {
       return [];
     }
-    console.log('L188 asyncGetResouces');
     const dbResources = new Array<DbResource>();
     const db_list = await this.asyncGetDatabases(this.conRes.database);
-    console.log('L195 db_list');
-    db_list.forEach((db) => console.log('L193!!!!' + db.name));
     db_list.forEach((db) => dbResources.push(db));
-    const dbDatabase = db_list.find((d) => d.name === this.conRes.database)!;
+    const dbDatabase = db_list.find((d) => d.name === this.conRes.database);
 
-    const dbSchemas = await this.asyncGetSchemas(dbDatabase);
+    const dbSchemas = await this.getSchemas(dbDatabase);
     dbSchemas.forEach((res) => {
       dbDatabase.addChild(res);
     });
     // const parallels = [];
     for (const dbSchema of dbSchemas) {
-      const dbTables = await this.asyncGetTables(dbSchema);
+      const dbTables = await this.getTables(dbSchema);
       dbTables.forEach((res) => dbSchema.addChild(res));
     }
     for (const dbSchema of dbSchemas) {
       for (const dbTable of dbSchema.getChildren()) {
-        const dbColumns = await this.asyncGetColumns(<DbTable>dbTable);
+        const dbColumns = await this.getColumns(<DbTable>dbTable);
         dbColumns.forEach((res) => dbTable.addChild(res));
       }
     }
@@ -224,7 +223,7 @@ export default class PostgresDriver extends BaseDriver {
     connection_database: string,
   ): Promise<Array<DbDatabase>> {
     const rdh = await this
-      .asyncRequestSql(`SELECT datname AS name, pg_encoding_to_char(encoding) AS comment
+      .requestSql(`SELECT datname AS name, pg_encoding_to_char(encoding) AS comment
       FROM pg_database ORDER BY datname`);
     return rdh.rows.map((r) => {
       const res = new DbDatabase(r.values.name);
@@ -234,20 +233,21 @@ export default class PostgresDriver extends BaseDriver {
     });
   }
 
-  async asyncGetSchemas(dbDatabase: DbDatabase): Promise<Array<DbSchema>> {
-    const rdh = await this.asyncRequestSql(`SELECT SCHEMA_NAME AS name
+  async getSchemas(dbDatabase: DbDatabase): Promise<Array<DbSchema>> {
+    const rdh = await this.requestSql(`SELECT SCHEMA_NAME AS name
       FROM INFORMATION_SCHEMA.SCHEMATA
       WHERE LOWER(SCHEMA_NAME) NOT IN ('information_schema', 'sys', 'performance_schema', 'pg_catalog', 'pg_toast', 'pg_temp_1', 'pg_toast_temp_1')
       ORDER BY name`);
+
     return rdh.rows.map((r) => {
       const res = new DbSchema(r.values.name);
       return res;
     });
   }
 
-  async asyncGetTables(dbSchema: DbSchema): Promise<Array<DbTable>> {
+  async getTables(dbSchema: DbSchema): Promise<Array<DbTable>> {
     let rdh = await this
-      .asyncRequestSql(`select quote_ident(m.relname) as qname, COALESCE(d.description, '') as comment
+      .requestSql(`select quote_ident(m.relname) as qname, COALESCE(d.description, '') as comment
       from pg_stat_all_tables as m
       LEFT JOIN pg_description as d ON (m.relid = d.objoid AND d.objsubid=0)
       WHERE m.schemaname='${dbSchema.getName()}'
@@ -259,7 +259,7 @@ export default class PostgresDriver extends BaseDriver {
     });
 
     rdh = await this
-      .asyncRequestSql(`select quote_ident(viewname) as qname, definition from pg_catalog.pg_views 
+      .requestSql(`select quote_ident(viewname) as qname, definition from pg_catalog.pg_views 
       where schemaname = '${dbSchema.getName()}' 
       order by viewname`);
 
@@ -271,18 +271,62 @@ export default class PostgresDriver extends BaseDriver {
     );
   }
 
-  async asyncGetColumns(dbTable: DbTable): Promise<Array<DbColumn>> {
-    const binds = [dbTable.getParent()!.getName(), dbTable.getName()];
-    const rdh = await this.asyncRequestSql(
-      `SELECT COLUMN_NAME as name, quote_ident(COLUMN_NAME) as qname,
-            data_type as col_type,
-            CASE WHEN IS_NULLABLE = 'YES' THEN 1 ELSE 0 END as nullable,
-            NULL as col_key,
-            COLUMN_DEFAULT as col_default,
-            NULL as col_extra,
-            (select pg_catalog.col_description(oid, INFORMATION_SCHEMA.COLUMNS.ordinal_position::int) from pg_catalog.pg_class c where c.relname=INFORMATION_SCHEMA.COLUMNS.table_name) as comment
-            FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA = $1 AND  quote_ident(TABLE_NAME) = $2`,
+  async getColumns(dbTable: DbTable): Promise<Array<DbColumn>> {
+    const binds = [dbTable.getParent().getName(), dbTable.getName()];
+    const rdh = await this.requestSql(
+      `select
+      col.COLUMN_NAME as name,
+      quote_ident(col.COLUMN_NAME) as qname,
+      data_type as col_type,
+      case
+        when IS_NULLABLE = 'YES' then 1
+        else 0
+      end as nullable,
+      case
+        when pk.column_name is not null then 'PRI'
+        else null
+      end as col_key,
+      COLUMN_DEFAULT as col_default,
+      null as col_extra,
+      (
+      select
+        pg_catalog.col_description(oid,
+        col.ordinal_position::int)
+      from
+        pg_catalog.pg_class c
+      where
+        c.relname = col.table_name) as comment
+    from
+      INFORMATION_SCHEMA.columns col
+    left join (
+      select
+        tc.table_catalog,
+        tc.table_schema,
+        tc.table_name,
+        ccu.column_name
+      from
+        information_schema.table_constraints tc
+      inner join
+        information_schema.constraint_column_usage ccu
+        on
+        (tc.table_catalog = ccu.table_catalog
+          and
+      tc.table_schema = ccu.table_schema
+          and
+      tc.table_name = ccu.table_name
+          and
+      tc.constraint_name = ccu.constraint_name)
+      where
+        tc.constraint_type = 'PRIMARY KEY'
+    ) pk on
+      (col.table_catalog = pk.table_catalog
+        and col.table_schema = pk.table_schema
+        and col.table_name = pk.table_name
+        and col.column_name = pk.column_name)
+    where
+    col.table_schema = $1 AND  quote_ident(col.table_name) = $2
+    order by
+      col.ordinal_position`,
       { binds },
     );
 
@@ -294,20 +338,19 @@ export default class PostgresDriver extends BaseDriver {
       const res = new DbColumn(
         r.values.qname,
         GeneralColumnType.parse(type_name),
-        {},
+        {
+          nullable: r.values.nullable === 1,
+          key: r.values.col_key,
+          default: r.values.col_default,
+          extra: r.values.col_extra,
+        },
         r.values.comment,
       );
-      // {
-      //   nullable: rs.nullable === 1,
-      //   key: rs.col_key,
-      //   default: rs.col_default,
-      //   extra: rs.col_extra
-      // }
       return res;
     });
   }
 
-  async asyncCloseSub(): Promise<string> {
+  async closeSub(): Promise<string> {
     try {
       if (this.pool) {
         await this.pool.end();

@@ -1,6 +1,6 @@
 {
   "name": "multi-platform-database-drivers",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "multi-platform database drivers in TypeScript.",
   "type": "module",
   "engines": {
@@ -9,6 +9,7 @@
   "devDependencies": {
     "@types/jest": "~29.2",
     "@types/node": "~18",
+    "@types/pg": "^8.6.6",
     "@typescript-eslint/eslint-plugin": "~5.44",
     "@typescript-eslint/parser": "~5.44",
     "eslint": "~8.28",
@@ -32,12 +33,16 @@
     "lint:fix": "eslint --fix . --ext .ts --ext .mts",
     "test0": "jest --coverage",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:postgres": "node --experimental-vm-modules node_modules/jest/bin/jest.js __tests__/db/drivers/PostgresDriver.test.ts",
+    "test:minio": "node --experimental-vm-modules node_modules/jest/bin/jest.js __tests__/db/drivers/AwsS3Driver.test.ts",
     "prettier": "prettier --config .prettierrc --write .",
     "test:watch": "jest --watch"
   },
   "author": "H.Y <xxx@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.279.0",
+    "@aws-sdk/credential-providers": "^3.279.0",
     "dayjs": "^1.11.7",
     "dt-sql-parser": "^4.0.0-beta.3.2",
     "enum-values": "^1.2.1",
@@ -48,7 +53,6 @@
     "mysql2": "^3.1.2",
     "pg": "^8.9.0",
     "pretty-bytes": "^6.1.0",
-    "s3-client": "^4.4.2",
     "short-unique-id": "^4.4.4",
     "shuffle-array": "^1.0.1",
     "simple-statistics": "^7.8.3",

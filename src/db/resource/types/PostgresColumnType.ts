@@ -52,7 +52,7 @@ export enum PostgresColumnType {
   UNKNOWN = -1,
 }
 export namespace PostgresColumnType {
-  export function parse(s: number | string | undefined) {
+  export function parse(s: number | string | undefined): PostgresColumnType {
     if (s === undefined || s === null) {
       return PostgresColumnType.UNKNOWN;
     }
@@ -86,7 +86,7 @@ export namespace PostgresColumnType {
       (a) => a.name === s,
     );
     if (e) {
-      return e.value;
+      return e.value as PostgresColumnType;
     }
     // console.error(`can't parse from `, s, typeof s);
     return PostgresColumnType.UNKNOWN;

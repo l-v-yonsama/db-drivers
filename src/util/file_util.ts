@@ -1,48 +1,27 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as path from 'path';
 import * as fs from 'fs';
 import prettyBytes from 'pretty-bytes';
-import * as mkdirp from 'mkdirp';
 import { promisify } from 'util';
 import * as jconv from 'jconv';
 import GeneralResponse from '../service/response/GeneralReponse';
 
 export {
   replaceSafeFileName,
-  asyncCreateKeyFolder,
+  createKeyFolder,
   getAppPath,
   createAbsoluteFilePath,
   getAbsTmpDirPath,
-  asyncReadFile,
+  readFile,
   syncReadFile,
   isAsyncFileExists,
   sizeToString,
   stats,
-  asyncGetKeyFile,
+  getKeyFile,
 };
 
 const AWS = 'aws';
-const RDH = 'rdh';
-const XLSX = 'xlsx';
-const CAPTURE = 'capture';
-const REQUEST = 'request';
-const MSG_PACK = 'msgpack';
-const MSG_PACK_IMAGE = 'msgpack_image';
-const REST = 'rest';
 const TMP = 'tmp';
-const SESSION = 'session';
-
-const BASE_DIRS = [
-  AWS,
-  RDH,
-  REQUEST,
-  XLSX,
-  CAPTURE,
-  MSG_PACK,
-  MSG_PACK_IMAGE,
-  SESSION,
-  REST,
-  TMP,
-];
 
 function sizeToString(len?: number): string {
   if (len === undefined) {
@@ -87,13 +66,13 @@ function createAbsoluteFilePath(
   return path.join(userDataDir, category, relative_file_path);
 }
 
-const lpad = (n: number) => (n < 10 ? '0' + n : String(n));
+const lpad = (n: number): string => (n < 10 ? '0' + n : String(n));
 
 function replaceSafeFileName(name = ''): string {
   return name.replace(/[<>#%{}|\\^~[]`;\?:@=& ]/gi, '_').trim();
 }
 
-async function asyncCreateKeyFolder(
+async function createKeyFolder(
   bucket_name: string,
   key: string,
 ): Promise<string> {
@@ -115,7 +94,7 @@ async function asyncCreateKeyFolder(
 
   const userDataDir = getAppPath();
   const output_dir_path = path.join(userDataDir, AWS, bucket_name, ...folders);
-  mkdirp.sync(output_dir_path);
+  fs.promises.mkdir(output_dir_path, { recursive: true });
   return output_dir_path;
 }
 
@@ -134,7 +113,7 @@ async function isAsyncFileExists(full_path: string): Promise<boolean> {
   }
 }
 
-async function asyncReadFile(
+async function readFile(
   full_path: string,
   encoding: string | null = null,
 ): Promise<string | Buffer> {
@@ -150,7 +129,7 @@ async function asyncReadFile(
         }
       });
     } else {
-      // log.info(LOG_PREFIX, '#asyncReadFile', full_path)
+      // log.info(LOG_PREFIX, '#readFile', full_path)
       fs.readFile(full_path, encoding as BufferEncoding, (err, data) => {
         if (err) {
           reject(err);
@@ -172,7 +151,7 @@ function syncReadFile(
   return fs.readFileSync(full_path);
 }
 
-async function asyncGetKeyFile(
+async function getKeyFile(
   bucket_name: string,
   key: string,
 ): Promise<GeneralResponse> {

@@ -3,15 +3,15 @@ version: '3'
 services:
   redis:
     image: redis:5.0
-    container_name: redis_container-test
+    container_name: redis_container
     command: redis-server --requirepass testpass
     ports:
       - '6000:6379'
 
-  db:
+  mysql:
     image: mysql:8.0
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    container_name: db_container_test
+    container_name: mysql_container
     ports:
       - 6001:3306
     environment:
@@ -20,3 +20,22 @@ services:
       MYSQL_DATABASE: testdb
       MYSQL_USER: testuser
       MYSQL_PASSWORD: testpass
+  postgres:
+    image: postgres:14
+    container_name: postgres_container
+    ports:
+      - 6002:5432
+    environment:
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpass
+      - POSTGRES_DB=testdb
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: minio_container
+    environment:
+      MINIO_ROOT_USER: testuser
+      MINIO_ROOT_PASSWORD: testpass
+    command: server --console-address ":9001" /data
+    ports:
+      - 6003:9000
+      - 6004:9001

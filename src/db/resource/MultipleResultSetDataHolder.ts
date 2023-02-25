@@ -51,13 +51,13 @@ export default class MultipleResultSetDataHolder {
     }
     return r;
   }
-  public push(label: string, rdh: ResultSetDataHolder, id?: string) {
+  public push(label: string, rdh: ResultSetDataHolder, id?: string): void {
     if (id === undefined || id === '') {
       id = uid.randomUUID(8);
     }
-    this.list.push({ label, id: id!, rdh });
+    this.list.push({ label, id, rdh });
   }
-  public clear() {
+  public clear(): void {
     this.active_id = undefined;
     this.list.splice(0, this.list.length);
   }
@@ -67,10 +67,10 @@ export default class MultipleResultSetDataHolder {
     }
     return undefined;
   }
-  public moveFirstPosition() {
+  public moveFirstPosition(): void {
     this.movePosition('first');
   }
-  public movePosition(position: string) {
+  public movePosition(position: string): void {
     if (this.list.length === 0) {
       return;
     }
@@ -107,7 +107,7 @@ export default class MultipleResultSetDataHolder {
       this.active_id = this.list[0].id;
     }
   }
-  public copyFrom(that: MultipleResultSetDataHolder) {
+  public copyFrom(that: MultipleResultSetDataHolder): void {
     this.clear();
     if (that.active_id) {
       this.active_id = that.active_id;

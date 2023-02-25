@@ -44,7 +44,7 @@ export default class MySQLDriver extends BaseDriver {
     return key;
   }
 
-  async asyncConnectSub(): Promise<string> {
+  async connectSub(): Promise<string> {
     let errorMessage = '';
     const options = {
       connectionLimit: 4,
@@ -57,20 +57,20 @@ export default class MySQLDriver extends BaseDriver {
     };
     this.client = mysql.createPool(options);
     try {
-      errorMessage = await this.asyncTest();
+      errorMessage = await this.test();
     } catch (e) {
       errorMessage = e.message;
     }
     return errorMessage;
   }
 
-  async asyncTest(with_connect = false): Promise<string> {
+  async test(with_connect = false): Promise<string> {
     let errorReason = '';
     if (with_connect) {
       errorReason = await this.asyncConnect();
     }
     if (!errorReason) {
-      const rdh = await this.asyncRequestSql('SELECT 1 from DUAL');
+      const rdh = await this.requestSql('SELECT 1 from DUAL');
       if (rdh && rdh.errorMessage) {
         return rdh.errorMessage;
       }
@@ -82,11 +82,11 @@ export default class MySQLDriver extends BaseDriver {
   }
 
   // public
-  async asyncRequestSql(
+  async requestSql(
     sql: string,
     options?: RequestSqlOptions,
   ): Promise<ResultSetDataHolder> {
-    // console.log('asyncRequestSql', sql);
+    // console.log('requestSql', sql);
     let rdh = new ResultSetDataHolder([]);
 
     if (this.client) {
@@ -150,7 +150,7 @@ export default class MySQLDriver extends BaseDriver {
     return rdh;
   }
 
-  async asyncCountTables(
+  async countTables(
     tables: SchemaAndTableHints,
     options: any,
   ): Promise<TableRows[]> {
@@ -168,7 +168,7 @@ export default class MySQLDriver extends BaseDriver {
       }
       const sql = `SELECT COUNT(*) as count FROM ${prefix}${st.table}`;
       try {
-        const [results] = await this.client!.query(sql, []);
+        const [results] = await this.client.query(sql, []);
         if (results && (results as any).length > 0) {
           const row = results[0];
           const obj: TableRows = Object.assign({ count: row.count }, st);
@@ -182,7 +182,7 @@ export default class MySQLDriver extends BaseDriver {
     return list;
   }
 
-  async asyncGetResouces(options: {
+  async getResouces(options: {
     progress_callback?: Function | undefined;
     params?: any;
   }): Promise<Array<DbResource>> {
@@ -200,7 +200,7 @@ export default class MySQLDriver extends BaseDriver {
       );
     }
 
-    const dbSchemas = await this.asyncGetSchemas(dbDatabase);
+    const dbSchemas = await this.getSchemas(dbDatabase);
     dbSchemas.forEach((res) => {
       dbDatabase.addChild(res);
     });
@@ -212,7 +212,7 @@ export default class MySQLDriver extends BaseDriver {
     // const parallels = [];
     const incrPerSchema = Math.round(20 / dbSchemas.length);
     for (const dbSchema of dbSchemas) {
-      const dbTables = await this.asyncGetTables(dbSchema);
+      const dbTables = await this.getTables(dbSchema);
       dbTables.forEach((res) => dbSchema.addChild(res));
       if (options.progress_callback) {
         progress += incrPerSchema;
@@ -231,15 +231,16 @@ export default class MySQLDriver extends BaseDriver {
         );
       }
       for (const dbTable of dbSchema.getChildren()) {
-        const dbColumns = await this.asyncGetColumns(<DbTable>dbTable);
+        const dbColumns = await this.getColumns(<DbTable>dbTable);
         dbColumns.forEach((res: DbColumn) => dbTable.addChild(res));
       }
     }
     return dbResources;
   }
 
-  async asyncGetSchemas(dbDatabase: DbDatabase): Promise<Array<DbSchema>> {
-    const rdh = await this.asyncRequestSql(`SELECT SCHEMA_NAME AS name
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getSchemas(dbDatabase: DbDatabase): Promise<Array<DbSchema>> {
+    const rdh = await this.requestSql(`SELECT SCHEMA_NAME AS name
       FROM INFORMATION_SCHEMA.SCHEMATA
       WHERE LOWER(SCHEMA_NAME) NOT IN ('information_schema', 'sys', 'performance_schema')
       ORDER BY name`);
@@ -249,9 +250,9 @@ export default class MySQLDriver extends BaseDriver {
     });
   }
 
-  async asyncGetTables(dbSchema: DbSchema): Promise<Array<DbTable>> {
+  async getTables(dbSchema: DbSchema): Promise<Array<DbTable>> {
     const rdh = await this
-      .asyncRequestSql(`SELECT TABLE_NAME as name, CASE TABLE_TYPE
+      .requestSql(`SELECT TABLE_NAME as name, CASE TABLE_TYPE
           WHEN 'BASE TABLE' THEN 'TABLE'
           WHEN 'SYSTEM VIEW' THEN 'VIEW'
           ELSE 'TABLE' END  AS table_type,
@@ -269,9 +270,9 @@ export default class MySQLDriver extends BaseDriver {
     });
   }
 
-  async asyncGetColumns(dbTable: DbTable): Promise<Array<DbColumn>> {
-    const binds = [dbTable.getParent()!.getName(), dbTable.getName()];
-    const rdh = await this.asyncRequestSql(
+  async getColumns(dbTable: DbTable): Promise<Array<DbColumn>> {
+    const binds = [dbTable.getParent().getName(), dbTable.getName()];
+    const rdh = await this.requestSql(
       `SELECT COLUMN_NAME as name,
             DATA_TYPE as col_type,
             CASE WHEN IS_NULLABLE = 'YES' THEN 1 ELSE 0 END as nullable,
@@ -284,7 +285,6 @@ export default class MySQLDriver extends BaseDriver {
       { binds },
     );
 
-    console.log(rdh.toString(rdh.rows.length));
     return rdh.rows.map((r) => {
       const type_name = EnumValues.getNameFromValue(
         MySQLColumnType,
@@ -305,7 +305,7 @@ export default class MySQLDriver extends BaseDriver {
     });
   }
 
-  async asyncCloseSub(): Promise<string> {
+  async closeSub(): Promise<string> {
     try {
       if (this.client) {
         await this.client.end();

@@ -100,7 +100,7 @@ export namespace MySQLColumnType {
     return MySQLColumnType.UNKNOWN;
   }
 
-  export function parse(s: number | string | undefined) {
+  export function parse(s: number | string | undefined): MySQLColumnType {
     if (s === undefined || s === null) {
       return MySQLColumnType.UNKNOWN;
     }
@@ -126,7 +126,7 @@ export namespace MySQLColumnType {
       (a) => a.name === s,
     );
     if (e) {
-      return e.value;
+      return e.value as MySQLColumnType;
     }
     // console.error(`can't parse from `, s, typeof s);
     return MySQLColumnType.UNKNOWN;

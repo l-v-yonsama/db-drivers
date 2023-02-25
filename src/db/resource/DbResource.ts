@@ -76,7 +76,7 @@ export class DbResource {
     return this.parent;
   }
 
-  addChild(res: DbResource) {
+  addChild(res: DbResource): DbResource {
     this.children.push(res);
     res.parent = this;
     return res;
@@ -103,7 +103,7 @@ export class DbResource {
     return false;
   }
 
-  clearChildren() {
+  clearChildren(): void {
     this.children.splice(0, this.children.length);
   }
 
@@ -118,7 +118,7 @@ export class DbResource {
       return this.children.find((a) => a.getName().toUpperCase() === name);
     }
   }
-  toString() {
+  toString(): string {
     return `[${this.resouce_type}]:${this.name}`;
   }
 }
@@ -339,7 +339,7 @@ export class DbTable extends DbResource {
     this.comment = comment || '';
   }
 
-  toString() {
+  toString(): string {
     return `[${super.toString()}]: Type[${this.table_type}]`;
   }
   static deserialize(
@@ -373,7 +373,7 @@ export class DbKey extends DbResource {
       this.ttl_remain = this.ttl;
     }
   }
-  toString() {
+  toString(): string {
     if (this.ttl < 0) {
       return `${super.toString()} TYPE[${this.type}]`;
     }
@@ -469,7 +469,7 @@ export class DbColumn extends DbResource {
     // }
     return '' + this.col_type;
   }
-  toString() {
+  toString(): string {
     return `[${super.toString()}]: GType[${this.getGeneralType()}] Nullable[${
       this.nullable
     }] Key[${this.key}]`;
@@ -556,7 +556,7 @@ export class DbS3Key extends DbResource {
     super(ResourceType.Key, name);
     this.is_dir = is_dir;
   }
-  toString() {
+  toString(): string {
     return `${super.toString()}`;
   }
 

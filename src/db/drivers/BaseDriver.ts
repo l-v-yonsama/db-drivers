@@ -14,8 +14,7 @@ import getPort, { portNumbers } from 'get-port';
 import ResourceUtil from '../resource/ResourceUtil';
 import { ResourceType } from '../resource/types/ResourceType';
 import { DBType } from '../resource/types/DBType';
-
-const LOG_PREFIX = '[BaseDriver.ts]';
+import * as fs from 'fs';
 
 export default abstract class BaseDriver {
   public isConnected: boolean;
@@ -34,7 +33,8 @@ export default abstract class BaseDriver {
   getConnectionRes(): DbConnection {
     return this.conRes;
   }
-  initBaseStatus() {
+
+  initBaseStatus(): void {
     this.isConnected = false;
   }
 
@@ -61,7 +61,7 @@ export default abstract class BaseDriver {
   }
   parseSchemaAndTableHints(sql: string): SchemaAndTableHints {
     const ret: SchemaAndTableHints = { list: [] };
-    const myRegexp = /(FROM|UPDATE)[\s]+(([^\s\(\)]+)\.)?([^\s\(\)]+)/gim;
+    const myRegexp = /(FROM|UPDATE)[\s]+(([^\s()]+)\.)?([^\s()]+)/gim;
     let match = myRegexp.exec(sql);
     while (match != null) {
       // sql=SELECT * FROM SSS.TTT
@@ -163,10 +163,10 @@ export default abstract class BaseDriver {
         localPort: this.sshLocalPort,
       });
       if (setting.auth_method === 'private_key') {
-        setting.privateKey = require('fs').readFileSync(setting.privateKeyPath);
+        setting.privateKey = fs.readFileSync(setting.privateKeyPath, 'utf8');
       }
 
-      this.sshServer = tunnel(setting, function (err: Error, server: any) {
+      this.sshServer = tunnel(setting, function (err: Error) {
         if (err) {
           reject(err);
         } else {
@@ -188,7 +188,7 @@ export default abstract class BaseDriver {
         if (this.isNeedsSsh()) {
           await this.asyncConnectToSshServer();
         }
-        errorReason = await this.asyncConnectSub();
+        errorReason = await this.connectSub();
       } else {
         errorReason = 'Connection property is nothing';
       }
@@ -203,7 +203,7 @@ export default abstract class BaseDriver {
     try {
       if (this.conRes) {
         if (this.isConnected) {
-          errorReason = await this.asyncCloseSub();
+          errorReason = await this.closeSub();
         } else {
           // log.info('not connected, skip close.')
         }
@@ -221,22 +221,22 @@ export default abstract class BaseDriver {
     }
     return errorReason;
   }
-  abstract asyncConnectSub(): Promise<string>;
-  abstract asyncCloseSub(): Promise<string>;
-  abstract asyncGetResouces(options: {
+  abstract connectSub(): Promise<string>;
+  abstract closeSub(): Promise<string>;
+  abstract getResouces(options: {
     progress_callback?: Function | undefined;
     params?: any;
   }): Promise<Array<DbResource>>;
-  abstract asyncTest(with_connect: boolean): Promise<string>;
-  abstract asyncCountTables(
+  abstract test(with_connect: boolean): Promise<string>;
+  abstract countTables(
     tables: SchemaAndTableHints,
     options: any,
   ): Promise<TableRows[]>;
-  abstract asyncRequestSql(
+  abstract requestSql(
     sql: string,
     options?: RequestSqlOptions,
   ): Promise<ResultSetDataHolder>;
-  createDBError(message: string, sourceError: any) {
+  createDBError(message: string, sourceError: any): DBError {
     return new DBError(
       message,
       sourceError.code,

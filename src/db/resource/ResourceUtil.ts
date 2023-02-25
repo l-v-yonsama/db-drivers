@@ -225,12 +225,6 @@ export default class ResourceUtil {
     return undefined;
   }
 
-  static clearDefinitions() {
-    const Config = require('electron-config');
-    const config = new Config();
-    config.set('connectionList', []);
-  }
-
   static isConnected(dbRes: DbResource): boolean {
     const con = ResourceUtil.getDBConnection(dbRes);
     if (con && con.isConnected) {
@@ -311,63 +305,11 @@ export default class ResourceUtil {
     }
   }
 
-  static getConnectionDef(): Array<any> {
-    const Config = require('electron-config');
-    const config = new Config();
-    const list = config.get('connectionList');
-    if (list) {
-      return list;
-    }
-    return [];
-  }
-
-  static deleteConnectionDefById(id: string): void {
-    const Config = require('electron-config');
-    const config = new Config();
-    const list = <Array<any>>config.get('connectionList');
-    if (list) {
-      const idx = list.findIndex((a) => a.id === id);
-      if (idx !== undefined) {
-        list.splice(idx, 1);
-      }
-    }
-    config.set('connectionList', list);
-  }
-
-  static hasConnectionDef(defName: string, enviroment: string): boolean {
-    const list = ResourceUtil.getConnectionDef();
-    if (list.length > 0) {
-      const ret = list.some((a: any) => {
-        return a.name === defName && a.enviroment === enviroment;
-      });
-      return ret;
-    }
-    return false;
-  }
-
   static isRequiredRefresh(res: DbS3Bucket | DbS3Key) {
     if (res.refreshed === undefined) {
       return true;
     }
     return new Date().getTime() - res.refreshed.getTime() > 1000 * 60 * 60;
-  }
-  static addConnectionDef(def: any) {
-    console.log('ResourceUtil#addConnectionDef', def);
-    const list = ResourceUtil.getConnectionDef();
-    list.push(def);
-    const Config = require('electron-config');
-    const config = new Config();
-    config.set('connectionList', list);
-  }
-
-  static updateConnectionDef(old_id: string, def: any) {
-    console.log('ResourceUtil#updateConnectionDef', def);
-    const list = ResourceUtil.getConnectionDef();
-    const idx = list.findIndex((o) => o.id === old_id);
-    list.splice(idx, 1, def);
-    const Config = require('electron-config');
-    const config = new Config();
-    config.set('connectionList', list);
   }
 
   static getTextColorModifierByExt(name: string): string {

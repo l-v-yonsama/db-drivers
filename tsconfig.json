@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2021",
+    "target": "es2017",
     "module": "commonjs",
-    "lib": ["ES2022"],
     "moduleResolution": "node",
     "rootDir": ".",
     "outDir": "build",
@@ -17,7 +16,8 @@
     "noUnusedParameters": false,
     "noImplicitAny": false,
     "noImplicitThis": false,
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "skipLibCheck": true
   },
   "include": ["src/**/*", "__tests__/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]

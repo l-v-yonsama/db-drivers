@@ -9,7 +9,7 @@ export enum RedisKeyType {
   UNKNOWN,
 }
 export namespace RedisKeyType {
-  export function parse(s: string | number | undefined) {
+  export function parse(s: string | number | undefined): RedisKeyType {
     if (s === undefined) {
       return RedisKeyType.UNKNOWN;
     }
