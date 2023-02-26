@@ -267,7 +267,7 @@ export default class ResourceUtil {
     if (dbRes.getParent() === undefined) {
       return undefined;
     }
-    return ResourceUtil.getResourceOf(dbRes.getParent()!, type);
+    return ResourceUtil.getResourceOf(dbRes.getParent(), type);
   }
   static getResourceOf(
     dbRes: DbResource,
@@ -279,7 +279,7 @@ export default class ResourceUtil {
     if (dbRes.getParent() === undefined) {
       return undefined;
     }
-    return ResourceUtil.getResourceOf(dbRes.getParent()!, type);
+    return ResourceUtil.getResourceOf(dbRes.getParent(), type);
   }
 
   static getAncestorListOf<T extends DbResource>(
@@ -295,7 +295,7 @@ export default class ResourceUtil {
     parent: DbResource | undefined,
     type: ResourceType,
     arr: Array<T>,
-  ) {
+  ): void {
     if (parent === undefined || parent === null) {
       return;
     }
@@ -305,7 +305,7 @@ export default class ResourceUtil {
     }
   }
 
-  static isRequiredRefresh(res: DbS3Bucket | DbS3Key) {
+  static isRequiredRefresh(res: DbS3Bucket | DbS3Key): boolean {
     if (res.refreshed === undefined) {
       return true;
     }

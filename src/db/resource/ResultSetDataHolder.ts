@@ -85,18 +85,19 @@ export class RdhRow {
     this.meta = meta;
     this.values = values;
   }
+
   pushAnnotation(
     key: string,
     type: AnnotationType,
     options?: AnnotationOptions,
-  ) {
+  ): void {
     if (this.meta[key] === undefined) {
       this.meta[key] = new Array<CellAnnotation>();
     }
     this.meta[key].push(new CellAnnotation(type, options));
   }
+
   public clearAnnotations(type: AnnotationType): void {
-    const r = new Array<CellAnnotation>();
     if (this.meta) {
       const meta_keys = Object.keys(this.meta);
       if (meta_keys && meta_keys.length > 0) {
@@ -114,6 +115,7 @@ export class RdhRow {
       }
     }
   }
+
   public getAnnotations(type: AnnotationType): CellAnnotation[] {
     const r = new Array<CellAnnotation>();
     if (this.meta) {
@@ -195,12 +197,14 @@ export default class ResultSetDataHolder {
     this.setKeys(keys);
     this.dbRes = dbRes;
   }
-  static createEmpty() {
+
+  static createEmpty(): ResultSetDataHolder {
     const rdh = new ResultSetDataHolder(['message']);
     rdh.is_empty = true;
     rdh.addRow({ message: 'empty result set' });
     return rdh;
   }
+
   static from(list: any, i_titles?: string | string[]): ResultSetDataHolder {
     if (list === undefined || list === null || list === '') {
       throw new Error(typeof list + ' has no value.');
@@ -228,7 +232,7 @@ export default class ResultSetDataHolder {
     if (list instanceof Array) {
       if (list.length > 0) {
         let elm = list[0];
-        const t0 = typeof elm;
+
         if (elm instanceof Array) {
           // number[][]
           let i = str_titles.length + 1;
@@ -306,7 +310,7 @@ export default class ResultSetDataHolder {
     return ss.sampleCorrelation(x, y);
   }
 
-  describe(mode = ''): ResultSetDataHolder {
+  describe(): ResultSetDataHolder {
     // #               a         b
     // # count  4.000000  4.000000
     // # mean   1.750000  0.600000
@@ -359,6 +363,7 @@ export default class ResultSetDataHolder {
 
     return ret;
   }
+
   splitRows(
     test_percentage: number,
     with_shuffle = false,
@@ -384,6 +389,7 @@ export default class ResultSetDataHolder {
     test.rows = cloned_rows.slice(numTrainExamples);
     return [train, test];
   }
+
   /**
    * Sample a data from each class of this resutlsets.
    *
@@ -455,7 +461,7 @@ export default class ResultSetDataHolder {
     const x = new Array<any[]>();
     const y = new Array<any>();
     for (let j = 0; j < batch_size; j++) {
-      const row = this.rows[this.shuffledIndexes![this.shuffledNextCounter]];
+      const row = this.rows[this.shuffledIndexes[this.shuffledNextCounter]];
       const innerX = new Array<any>();
       xKeys.forEach((k) => {
         innerX.push((<any>row.values)[k]);
@@ -464,25 +470,28 @@ export default class ResultSetDataHolder {
       y.push((<any>row.values)[yKey]);
       this.shuffledNextCounter++;
       if (this.rows.length <= this.shuffledNextCounter) {
-        ShuffleArray(this.shuffledIndexes!);
+        ShuffleArray(this.shuffledIndexes);
         this.shuffledNextCounter = 0;
       }
     }
     return [x, y];
   }
-  hasKey(key: string) {
+
+  hasKey(key: string): boolean {
     return this.keys.some((k) => k.name === key);
   }
-  drop(key: string) {
+
+  drop(key: string): void {
     if (this.hasKey(key)) {
-      this.rows.forEach((v: any, i: number) => {
+      this.rows.forEach((v) => {
         delete v.values[key];
       });
       const idx = this.keys.findIndex((k) => k.name === key);
       this.keys.splice(idx, 1);
     }
   }
-  assign(key: string, list: any) {
+
+  assign(key: string, list: any): void {
     if (list === undefined || list === null || list === '') {
       throw new Error(typeof list + ' has no value.');
     }
@@ -515,14 +524,15 @@ export default class ResultSetDataHolder {
       this.rows[i].values[key] = v;
     });
   }
+
   assignFromDictionary(
     new_key: string,
     existing_key: string,
     dictionary: string[],
-  ) {
+  ): void {
     this.drop(new_key);
     this.keys.push(new RdhKey(new_key, GeneralColumnType.TEXT));
-    this.rows.forEach((row: any, i: number) => {
+    this.rows.forEach((row: any) => {
       const existing_val = row.values[existing_key];
       if (
         existing_val === undefined ||
@@ -539,6 +549,7 @@ export default class ResultSetDataHolder {
       }
     });
   }
+
   toVector(key_name: string, is_only_number = false): Array<any> {
     const retList = new Array<any>();
     this.rows.forEach((row: RdhRow) => {
@@ -553,6 +564,7 @@ export default class ResultSetDataHolder {
     });
     return retList;
   }
+
   toMatrixArray(key_names?: string[]): Array<Array<any>> {
     const retList = new Array<Array<any>>();
     this.rows.forEach((row: RdhRow) => {
@@ -570,6 +582,7 @@ export default class ResultSetDataHolder {
     });
     return retList;
   }
+
   toCsv(config?: { key_names?: string[] }): string {
     if (config === undefined) {
       config = {};
@@ -582,8 +595,8 @@ export default class ResultSetDataHolder {
     }
     this.rows.forEach((row: RdhRow) => {
       const retRow = new Array<any>();
-      if (config!.key_names && config!.key_names!.length > 0) {
-        config!.key_names!.forEach((key_name: any) => {
+      if (config.key_names && config.key_names.length > 0) {
+        config.key_names.forEach((key_name: any) => {
           retRow.push((<any>row.values)[key_name]);
         });
       } else {
@@ -595,7 +608,8 @@ export default class ResultSetDataHolder {
     });
     return retList.join('\r\n');
   }
-  addRow(recordData: any, default_meta?: any) {
+
+  addRow(recordData: any, default_meta?: any): void {
     let meta = {};
     if (default_meta) {
       meta = default_meta;
@@ -606,10 +620,12 @@ export default class ResultSetDataHolder {
     });
     this.rows.push(new RdhRow(meta, values));
   }
-  clearRows() {
+
+  clearRows(): void {
     this.rows.splice(0, this.rows.length);
   }
-  copyFrom(that: ResultSetDataHolder) {
+
+  copyFrom(that: ResultSetDataHolder): void {
     this.clearRows();
     this.keys.splice(0, this.keys.length);
     this.setKeys(that.keys);
@@ -617,10 +633,10 @@ export default class ResultSetDataHolder {
       this.addRow(v);
     });
   }
-  setSqlStatement(sqlStatement: string) {
+  setSqlStatement(sqlStatement: string): void {
     this.sqlStatement = sqlStatement;
   }
-  setDbRes(dbRes: DbResource) {
+  setDbRes(dbRes: DbResource): void {
     this.dbRes = dbRes;
   }
   public hasAnnotation(type: AnnotationType): boolean {
@@ -633,7 +649,7 @@ export default class ResultSetDataHolder {
     }
     return r;
   }
-  fillnull(how: 'mean' | 'median') {
+  fillnull(how: 'mean' | 'median'): void {
     this.keys
       .filter((k) => GeneralColumnType.isNumericLike(k.type))
       .forEach((k) => {
@@ -660,7 +676,7 @@ export default class ResultSetDataHolder {
         }
       });
   }
-  resetKeyTypeByRows() {
+  resetKeyTypeByRows(): void {
     this.keys.forEach((k) => {
       const length = this.rows.length;
       const types = new Set<string>();
@@ -681,7 +697,7 @@ export default class ResultSetDataHolder {
       }
     });
   }
-  setKeys(keys: Array<string | RdhKey>) {
+  setKeys(keys: Array<string | RdhKey>): void {
     keys.forEach((k) => {
       if (k instanceof RdhKey) {
         this.keys.push(k);
@@ -713,7 +729,7 @@ export default class ResultSetDataHolder {
   //   default: undefined,
   //   zeroFill: false,
   //   protocol41: true }
-  addKey(k: string | RdhKey) {
+  addKey(k: string | RdhKey): void {
     if (this.keys === undefined) {
       this.keys = [];
     }
