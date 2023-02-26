@@ -11,7 +11,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - run: docker-compose up -f unit-test.yml -d    
+      # E2E テストを Docker Compose で実行する
+      - name: run test on docker-compose
+        run: |
+          docker-compose -f ./unit-test.yml build
+          docker-compose -f ./unit-test.yml up --abort-on-container-exit  
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
