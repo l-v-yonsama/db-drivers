@@ -21,7 +21,7 @@ jobs:
           docker-compose -f ./unit-test.yml build
           docker-compose -f ./unit-test.yml up -d
       - name: wait
-        run: docker-compose -f unit-test.yml exec -T mysql bash -c "mysqladmin --wait --count 60 ping -pp@ssw0rd  || exit 1"
+        run: docker-compose -f unit-test.yml exec -T mysql bash -c "mysqladmin --wait --count 60 ping -pp@ssw0rd --protocol=tcp || exit 1"
       - run: npm ci
       - run: npm test
 
