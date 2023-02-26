@@ -19,7 +19,7 @@ jobs:
       - name: run test on docker-compose
         run: |
           docker-compose -f ./unit-test.yml build
-          docker-compose -f ./unit-test.yml up --abort-on-container-exit  
+          docker-compose -f ./unit-test.yml up -d
       - run: npm ci
       - run: npm test
 
