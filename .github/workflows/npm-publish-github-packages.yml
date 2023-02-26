@@ -11,6 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - run: docker-compose up -f unit-test.yml -d    
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
