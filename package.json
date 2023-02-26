@@ -1,5 +1,5 @@
 {
-  "name": "multi-platform-database-drivers",
+  "name": "@l-v-yonsama/multi-platform-database-drivers",
   "version": "0.1.0",
   "description": "multi-platform database drivers in TypeScript.",
   "type": "module",
