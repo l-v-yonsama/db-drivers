@@ -22,6 +22,13 @@ jobs:
           docker-compose -f ./unit-test.yml up -d
       - name: wait
         run: docker-compose -f unit-test.yml exec -T mysql bash -c "mysqladmin --wait --count 60 ping -pp@ssw0rd --protocol=tcp || exit 1"
+      - name: wait2
+        run: |
+          while [ "$(curl -I  http://localhost:6003/minio/health/live  -o /dev/null -w '%{http_code}\n' -s)" != "200" ]
+          do
+            echo "waiting"
+            sleep 2
+          done
       - run: npm ci
       - run: npm test
 
