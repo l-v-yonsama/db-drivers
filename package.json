@@ -38,7 +38,7 @@
     "prettier": "prettier --config .prettierrc --write .",
     "test:watch": "jest --watch"
   },
-  "author": "H.Y <xxx@users.noreply.github.com>",
+  "author": "l-v-yonsama <32474032+l-v-yonsama@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.279.0",
@@ -61,5 +61,16 @@
   },
   "volta": {
     "node": "18.12.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/l-v-yonsama/db-drivers.git"
+  },
+  "keywords": [
+    "database clients"
+  ],
+  "bugs": {
+    "url": "https://github.com/l-v-yonsama/db-drivers/issues"
+  },
+  "homepage": "https://github.com/l-v-yonsama/db-drivers#readme"
 }

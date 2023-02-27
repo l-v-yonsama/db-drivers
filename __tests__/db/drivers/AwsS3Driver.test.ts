@@ -25,7 +25,8 @@ describe('AwsS3Driver', () => {
     try {
       await driver.removeBucket({ bucket });
     } catch (e) {
-      console.error('error:' + e.message);
+      // The specified bucket does not exist
+      // console.error('error:' + e.message);
     }
     await driver.createBucket({ bucket });
     await driver.putObject({ bucket, key: 'text/abc.txt', body: 'abc' });
@@ -47,47 +48,47 @@ describe('AwsS3Driver', () => {
     });
   });
 
-  // describe('asyncGetResouces', () => {
-  //   let testDbRes: DbDatabase;
-  //   let testBucketRes: DbS3Bucket;
+  describe('asyncGetResouces', () => {
+    let testDbRes: DbDatabase;
+    let testBucketRes: DbS3Bucket;
 
-  //   it('should return Database resource', async () => {
-  //     const dbRootRes = await driver.getResouces({});
-  //     expect(dbRootRes).toHaveLength(1);
-  //     testDbRes = dbRootRes[0] as DbDatabase;
-  //     expect(testDbRes.getName()).toBe('S3');
-  //   });
+    it('should return Database resource', async () => {
+      const dbRootRes = await driver.getResouces({});
+      expect(dbRootRes).toHaveLength(1);
+      testDbRes = dbRootRes[0] as DbDatabase;
+      expect(testDbRes.getName()).toBe('S3');
+    });
 
-  //   it('should have DbS3Bucket resource', async () => {
-  //     testBucketRes = testDbRes.getChildByName(bucket) as DbS3Bucket;
-  //     expect(testBucketRes.getName()).toBe(bucket);
-  //   });
+    it('should have DbS3Bucket resource', async () => {
+      testBucketRes = testDbRes.getChildByName(bucket) as DbS3Bucket;
+      expect(testBucketRes.getName()).toBe(bucket);
+    });
 
-  //   it('should have DbS3Owner resource', async () => {
-  //     const owner = testDbRes.getChildByName('minio') as DbS3Owner;
-  //     expect(owner.getName()).toBe('minio');
-  //   });
+    it('should have DbS3Owner resource', async () => {
+      const owner = testDbRes.getChildByName('minio') as DbS3Owner;
+      expect(owner.getName()).toBe('minio');
+    });
 
-  //   it('should have values', async () => {
-  //     const textValue = await driver.getValueByKey({
-  //       bucket,
-  //       key: 'text/abc.txt',
-  //     });
-  //     expect(textValue).toBe('abc');
+    it('should have values', async () => {
+      const textValue = await driver.getValueByKey({
+        bucket,
+        key: 'text/abc.txt',
+      });
+      expect(textValue).toBe('abc');
 
-  //     const textValue2 = await driver.getValueByKey({
-  //       bucket,
-  //       key: 'text/folder/abc.txt',
-  //     });
-  //     expect(textValue2).toBe('abc');
+      const textValue2 = await driver.getValueByKey({
+        bucket,
+        key: 'text/folder/abc.txt',
+      });
+      expect(textValue2).toBe('abc');
 
-  //     const textValue3 = await driver.getValueByKey({
-  //       bucket,
-  //       key: 'text/empty.txt',
-  //     });
-  //     expect(textValue3).toBe('');
-  //   });
-  // });
+      const textValue3 = await driver.getValueByKey({
+        bucket,
+        key: 'text/empty.txt',
+      });
+      expect(textValue3).toBe('');
+    });
+  });
 
   function createDriver(): AwsS3Driver {
     const con = new DbConnection({ ...connectOption, db_type: DBType.Minio });
