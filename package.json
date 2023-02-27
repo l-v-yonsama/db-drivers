@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "multi-platform database drivers in TypeScript.",
   "type": "module",
   "engines": {
@@ -29,6 +29,7 @@
     "build": "tsc -p tsconfig.json",
     "build:watch": "tsc -w -p tsconfig.json",
     "build:release": "npm run clean && tsc -p tsconfig.release.json",
+    "prepublishOnly": "npm run build:release",
     "lint": "eslint . --ext .ts --ext .mts",
     "lint:fix": "eslint --fix . --ext .ts --ext .mts",
     "test0": "jest --coverage",
@@ -62,6 +63,9 @@
   "volta": {
     "node": "18.12.1"
   },
+  "files": [
+    "build"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/l-v-yonsama/db-drivers.git"
