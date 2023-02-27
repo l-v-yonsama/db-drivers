@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "multi-platform database drivers in TypeScript.",
   "type": "module",
   "engines": {
@@ -76,5 +76,8 @@
   "bugs": {
     "url": "https://github.com/l-v-yonsama/db-drivers/issues"
   },
-  "homepage": "https://github.com/l-v-yonsama/db-drivers#readme"
+  "homepage": "https://github.com/l-v-yonsama/db-drivers#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  }
 }
