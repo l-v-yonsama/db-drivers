@@ -5,7 +5,7 @@
     "declaration": false,
     "moduleResolution": "node",
     "rootDir": ".",
-    "outDir": "build",
+    "outDir": "built",
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "alwaysStrict": true,

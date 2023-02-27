@@ -5,7 +5,7 @@
     "declaration": true,
     "moduleResolution": "node",
     "rootDir": ".",
-    "outDir": "build",
+    "outDir": "built",
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "alwaysStrict": true,
@@ -19,5 +19,6 @@
     "noImplicitThis": false,
     "strictNullChecks": false,
     "skipLibCheck": true
-  }
+  },
+  "exclude": ["src/**/*.spec.ts", "__tests__/**/*.test.ts"]
 }

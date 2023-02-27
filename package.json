@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.5",
+  "version": "0.1.8",
   "description": "multi-platform database drivers in TypeScript.",
   "type": "module",
   "engines": {
@@ -23,8 +23,8 @@
     "typescript": "~4.9"
   },
   "scripts": {
-    "start": "node build/src/main.js",
-    "clean": "rimraf coverage build tmp",
+    "start": "node built/src/index.js",
+    "clean": "rimraf coverage built tmp",
     "prebuild": "npm run lint",
     "build": "tsc -p tsconfig.json",
     "build:watch": "tsc -w -p tsconfig.json",
@@ -63,8 +63,9 @@
   "volta": {
     "node": "18.12.1"
   },
+  "main": "built/src/index.js",
   "files": [
-    "build"
+    "built/src"
   ],
   "repository": {
     "type": "git",
