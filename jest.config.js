@@ -1,19 +1,12 @@
-export default {
+/** @type {import('ts-jest').JestConfigWithTsJest} */
+module.exports = {
+  preset: 'ts-jest',
   testEnvironment: 'node',
-  preset: 'ts-jest/presets/default-esm',
+  // A map from regular expressions to paths to transformers
   transform: {
-    '^.+\\.m?[tj]s?$': ['ts-jest', { useESM: true }],
+    '\\.jsx?$': 'babel-jest',
+    '\\.tsx?$': 'ts-jest',
   },
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.(m)?js$': '$1',
-  },
-  testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.(m)?ts$',
-  coverageDirectory: 'coverage',
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    'src/**/*.mts',
-    '!src/**/*.d.ts',
-    '!src/**/*.d.mts',
-  ],
+  transformIgnorePatterns: ['/node_modules/(?!get-port)'],
   testPathIgnorePatterns: ['/__tests__/data', '/__tests__/setup'],
 };

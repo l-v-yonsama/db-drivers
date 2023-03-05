@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "module": "commonjs",
+    "target": "es6",
+    "module": "ES2015",
+    "lib": ["es7"],
+    "removeComments": true,
+    "esModuleInterop": true,
     "declaration": true,
     "moduleResolution": "node",
     "rootDir": ".",
