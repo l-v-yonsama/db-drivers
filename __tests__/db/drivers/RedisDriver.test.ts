@@ -8,7 +8,7 @@ import {
 import {
   RedisCommandType,
   RedisRequest,
-} from '../../../src/service/request/redis_request';
+} from '../../../src/service/request/RedisRequest';
 import { RedisKeyType } from '../../../src/db/resource/types/RedisKeyType';
 
 const connectOption: RedisOptions = {
@@ -53,11 +53,11 @@ describe('RedisDriver', () => {
 
   afterAll(async () => {
     await redisClient.quit();
-    await driver.asyncClose();
+    await driver.disconnect();
   });
 
-  it('asyncConnect', async () => {
-    expect(await driver.asyncConnect()).toBe('');
+  it('connect', async () => {
+    expect(await driver.connect()).toBe('');
   });
 
   describe('getName', () => {
@@ -70,7 +70,7 @@ describe('RedisDriver', () => {
     let testRedisDb0Res: RedisDatabase;
 
     it('should return Database resource', async () => {
-      const dbRootRes = await driver.getResouces({});
+      const dbRootRes = await driver.getInfomationSchemas({});
       expect(dbRootRes).toHaveLength(16);
       testRedisDb0Res = dbRootRes[0] as RedisDatabase;
       expect(testRedisDb0Res.getName()).toBe(
@@ -147,7 +147,7 @@ describe('RedisDriver', () => {
     options: { key?: string; type?: RedisKeyType },
   ): RedisRequest {
     return {
-      connection_id: '1',
+      connectionId: '1',
       index: 0,
       command,
       ...options,

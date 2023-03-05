@@ -48,7 +48,7 @@ export default class AwsS3Driver extends BaseDriver {
       accessKeyId: this.conRes.user,
       secretAccessKey: this.conRes.password,
     };
-    if (this.conRes.db_type === DBType.Minio) {
+    if (this.conRes.dbType === DBType.Minio) {
       (<any>this.config).endpoint = this.conRes.url;
       (<any>this.config).s3ForcePathStyle = 'true';
     }
@@ -60,7 +60,7 @@ export default class AwsS3Driver extends BaseDriver {
   async test(with_connect = false): Promise<string> {
     let errorReason = '';
     if (with_connect) {
-      errorReason = await this.asyncConnect();
+      errorReason = await this.connect();
     }
     if (this.s3Client) {
       try {
@@ -72,7 +72,7 @@ export default class AwsS3Driver extends BaseDriver {
     }
 
     if (with_connect) {
-      await this.asyncClose();
+      await this.disconnect();
     }
 
     return errorReason;
@@ -375,7 +375,7 @@ export default class AwsS3Driver extends BaseDriver {
   //   });
   // }
 
-  async getResouces(options: {
+  async getInfomationSchemas(options: {
     progress_callback?: Function | undefined;
     params?: any;
   }): Promise<Array<DbResource>> {

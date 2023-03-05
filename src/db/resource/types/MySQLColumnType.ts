@@ -42,6 +42,7 @@ export enum MySQLColumnType {
   BINARY = 2002, // (254)BINARY(flags: 128,)
   UNKNOWN,
 }
+
 export namespace MySQLColumnType {
   export function parseByFieldInfo(fieldInfo: FieldPacket): number {
     if (fieldInfo === undefined || fieldInfo === null) {
@@ -65,22 +66,21 @@ export namespace MySQLColumnType {
             return MySQLColumnType.UNKNOWN;
           }
         } else {
-          if (
-            numOfLength === 4294967295 ||
-            numOfLength === 589815 ||
-            numOfLength === 589779
-          ) {
-            // flags:17, (length: 589815 | 589779) information_schema.COLUMNS.GENERATION_EXPRESSION => longtext
-            return MySQLColumnType.LONGTEXT;
-          } else if (numOfLength === 50331645) {
-            return MySQLColumnType.MEDIUMTEXT;
-          } else if (numOfLength === 196605) {
-            return MySQLColumnType.TEXT;
-          } else if (numOfLength === 765) {
+          if ([255, 510, 765, 1020].indexOf(numOfLength) >= 0) {
             return MySQLColumnType.TINYTEXT;
+          } else if (
+            [65535, 131070, 196605, 262140].indexOf(numOfLength) >= 0
+          ) {
+            return MySQLColumnType.TEXT;
+          } else if (
+            [16777255, 33554510, 50331765, 67108860].indexOf(numOfLength) >= 0
+          ) {
+            return MySQLColumnType.MEDIUMTEXT;
+          } else if (4294967295 === numOfLength) {
+            return MySQLColumnType.LONGTEXT;
           }
+          return MySQLColumnType.TEXT;
         }
-        console.error(`L83 can't parse from `, fieldInfo);
         return MySQLColumnType.UNKNOWN;
       case 254:
         if (flags === 128) {

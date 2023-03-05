@@ -93,7 +93,7 @@ export default class PostgresDriver extends BaseDriver {
     let errorReason = '';
     try {
       if (with_connect) {
-        errorReason = await this.asyncConnect();
+        errorReason = await this.connect();
       }
       const rdh = await this.requestSql('SELECT NOW()');
       if (rdh && rdh.errorMessage) {
@@ -103,7 +103,7 @@ export default class PostgresDriver extends BaseDriver {
       errorReason = e.message;
     } finally {
       if (with_connect) {
-        await this.asyncClose();
+        await this.disconnect();
       }
     }
     return errorReason;
@@ -189,7 +189,7 @@ export default class PostgresDriver extends BaseDriver {
     return list;
   }
 
-  async getResouces(options: {
+  async getInfomationSchemas(options: {
     progress_callback?: Function | undefined;
     params?: any;
   }): Promise<Array<DbResource>> {
@@ -205,6 +205,7 @@ export default class PostgresDriver extends BaseDriver {
     dbSchemas.forEach((res) => {
       dbDatabase.addChild(res);
     });
+    this.resetDefaultSchema(dbDatabase);
     // const parallels = [];
     for (const dbSchema of dbSchemas) {
       const dbTables = await this.getTables(dbSchema);

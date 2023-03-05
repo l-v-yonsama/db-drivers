@@ -43,7 +43,7 @@ export interface ColumnResolver {
 export class DbResource {
   public id = uid.randomUUID(8);
   protected parent: DbResource | undefined;
-  protected resouce_type: ResourceType;
+  protected resouceType: ResourceType;
   public name: string;
   public comment?: string;
   protected children: Array<DbResource>;
@@ -54,8 +54,8 @@ export class DbResource {
     return r;
   }
 
-  constructor(resouce_type: ResourceType, name: string) {
-    this.resouce_type = resouce_type;
+  constructor(resouceType: ResourceType, name: string) {
+    this.resouceType = resouceType;
     this.name = name;
     this.children = [];
   }
@@ -65,14 +65,14 @@ export class DbResource {
   }
 
   getResouceType(): ResourceType {
-    return this.resouce_type;
+    return this.resouceType;
   }
 
   getChildren(): DbResource[] {
     return this.children;
   }
 
-  getParent(): DbResource | undefined {
+  getParent(): DbResource {
     return this.parent;
   }
 
@@ -107,25 +107,47 @@ export class DbResource {
     this.children.splice(0, this.children.length);
   }
 
-  getChildByName(name: string, options?: any): DbResource | undefined {
-    name = name.toUpperCase();
-    if (options && options.quote_ident === true) {
-      name = unwrapQuote(name);
-      return this.children.find(
-        (a) => unwrapQuote(a.getName()).toUpperCase() === name,
+  getChildByName(
+    name: string,
+    options?: { unwrapQuote?: boolean; resouceType?: ResourceType },
+  ): DbResource {
+    let searchChildren = this.children;
+    if (options && options.resouceType) {
+      searchChildren = this.children.filter(
+        (it) => it.resouceType === options.resouceType,
+      );
+    }
+
+    let uname = name.toUpperCase();
+    if (options && options.unwrapQuote === true) {
+      uname = unwrapQuote(uname);
+      return searchChildren.find(
+        (a) => unwrapQuote(a.getName()).toUpperCase() === uname,
       );
     } else {
-      return this.children.find((a) => a.getName().toUpperCase() === name);
+      return searchChildren.find((a) => a.getName().toUpperCase() === uname);
     }
   }
   toString(): string {
-    return `[${this.resouce_type}]:${this.name}`;
+    return `[${this.resouceType}]:${this.name}`;
+  }
+  toJsonStringify(space = 0): string {
+    return JSON.stringify(
+      this,
+      (k, v) => {
+        if (['parent', 'expanded', 'disabled'].includes(k)) {
+          return undefined;
+        }
+        return v;
+      },
+      space,
+    );
   }
 }
 
 export interface SshSetting {
   use: boolean;
-  auth_method: string;
+  authMethod: string;
   username: string;
   password?: string;
   host: string;
@@ -138,17 +160,17 @@ export interface SshSetting {
 }
 
 export interface FirebaseSetting {
-  auth_method: string;
+  authMethod: string;
   projectid?: string;
-  private_key?: string;
-  client_email?: string;
+  privateKey?: string;
+  clientEmail?: string;
   serviceAccountCredentialsPath?: string;
 }
 
 export interface ConnectionSetting {
-  db_type: DBType;
-  odbc_vendor_type?: ODBCVendorType;
-  name?: string;
+  dbType: DBType;
+  odbcVendorType?: ODBCVendorType;
+  name: string;
   url?: string;
   host?: string;
   port?: number;
@@ -156,11 +178,11 @@ export interface ConnectionSetting {
   user?: string;
   password?: string;
   database?: string;
-  database_version?: number;
+  databaseVersion?: number;
   ds?: string;
   region?: string;
   isConnected?: boolean;
-  is_in_progress?: boolean;
+  isInProgress?: boolean;
   apiVersion?: string;
   ssh?: SshSetting;
   firebase?: FirebaseSetting;
@@ -168,19 +190,19 @@ export interface ConnectionSetting {
 
 export class DbConnection extends DbResource implements ConnectionSetting {
   public property: Map<string, object>;
-  public db_type = DBType.Unknown;
-  public odbc_vendor_type = ODBCVendorType.Oracle;
+  public dbType = DBType.Unknown;
+  public odbcVendorType = ODBCVendorType.Oracle;
   public host = '';
   public port = 0;
   public user = '';
   public password = '';
   public database = '';
-  public database_version = 1;
+  public databaseVersion = 1;
   public enviroment = '';
   public ds = '';
   public url = '';
   public isConnected = false;
-  public is_in_progress = false;
+  public isInProgress = false;
   public apiVersion?: string;
   public region?: string;
   public ssh?: SshSetting;
@@ -189,8 +211,8 @@ export class DbConnection extends DbResource implements ConnectionSetting {
   constructor(prop: any) {
     super(ResourceType.Connection, prop.name);
     this.id = prop.id;
-    this.db_type = DBType.parse(prop['db_type']);
-    this.odbc_vendor_type = prop.odbc_vendor_type;
+    this.dbType = DBType.parse(prop['dbType']);
+    this.odbcVendorType = prop.odbcVendorType;
     this.property = new Map<string, object>();
     this.host = prop.host;
     this.port = prop.port;
@@ -198,7 +220,7 @@ export class DbConnection extends DbResource implements ConnectionSetting {
     this.password = prop.password;
     this.enviroment = prop.enviroment;
     this.database = prop.database;
-    this.database_version = prop.database_version;
+    this.databaseVersion = prop.databaseVersion;
     this.ds = prop.ds;
     this.url = prop.url;
     this.apiVersion = prop.apiVersion;
@@ -212,17 +234,14 @@ export class DbConnection extends DbResource implements ConnectionSetting {
     }
   }
 
-  isInProgress(): boolean {
-    return this.is_in_progress;
-  }
   static deserialize(json: any): DbConnection {
     const con = new DbConnection(json);
     if (json.children && json.children.length > 0) {
       json.children.forEach((childJson: any) => {
-        if (con.db_type === DBType.Redis) {
-          con.addChild(RedisDatabase.deserialize(con, childJson));
+        if (con.dbType === DBType.Redis) {
+          con.addChild(RedisDatabase.deserialize(childJson));
         } else {
-          con.addChild(DbDatabase.deserialize(con, childJson));
+          con.addChild(DbDatabase.deserialize(childJson));
         }
       });
     }
@@ -249,7 +268,25 @@ export class DbDatabase extends DbResource {
   constructor(name: string) {
     super(ResourceType.Database, name);
   }
-  static deserialize(con: DbConnection, json: any): DbDatabase {
+
+  public getSchema(option: { name?: string; isDefault?: boolean }): DbSchema {
+    const { name, isDefault } = option;
+    for (const child of this.children) {
+      if (child.getResouceType() !== ResourceType.Schema) {
+        continue;
+      }
+      const currentSchema = child as DbSchema;
+      if (name && name === child.getName()) {
+        return currentSchema;
+      }
+      if (isDefault && currentSchema.isDefault) {
+        return currentSchema;
+      }
+    }
+    return null;
+  }
+
+  static deserialize(json: any): DbDatabase {
     const own = new DbDatabase(json.name);
     if (json.comment) {
       own.comment = json.comment;
@@ -263,19 +300,19 @@ export class DbDatabase extends DbResource {
     if (json.children && json.children.length > 0) {
       json.children.forEach((childJson: any) => {
         // console.log('childJson=', childJson)
-        switch (childJson.resouce_type) {
+        switch (childJson.resouceType) {
           case ResourceType.Schema:
-            own.addChild(DbSchema.deserialize(con, own, childJson));
+            own.addChild(DbSchema.deserialize(own, childJson));
             break;
           case ResourceType.Bucket:
-            own.addChild(DbS3Bucket.deserialize(con, own, childJson));
+            own.addChild(DbS3Bucket.deserialize(own, childJson));
             break;
           case ResourceType.Owner:
-            own.addChild(DbS3Owner.deserialize(con, own, childJson));
+            own.addChild(DbS3Owner.deserialize(own, childJson));
             break;
           default:
             throw new Error(
-              `DbDatabase#deserialize Undefined resource type:${childJson.resouce_type}`,
+              `DbDatabase#deserialize Undefined resource type:${childJson.resouceType}`,
             );
         }
       });
@@ -287,24 +324,24 @@ export class DbDatabase extends DbResource {
 export class RedisDatabase extends DbDatabase {
   public keys: number;
   public expires: number;
-  public avg_ttl: number;
+  public avgTtl: number;
 
-  constructor(name: string, keys: number, expires: number, avg_ttl: number) {
+  constructor(name: string, keys: number, expires: number, avgTtl: number) {
     super(name);
     this.keys = keys;
     this.expires = expires;
-    this.avg_ttl = avg_ttl;
+    this.avgTtl = avgTtl;
   }
 
   public getDBIndex(): number {
     return parseInt(this.name, 10);
   }
-  static deserialize(con: DbConnection, json: any): RedisDatabase {
+  static deserialize(json: any): RedisDatabase {
     const own = new RedisDatabase(
       json.name,
       json.keys,
       json.expires,
-      json.avg_ttl,
+      json.avgTtl,
     );
     if (json.children && json.children.length > 0) {
       json.children.forEach((childJson: any) => {
@@ -316,14 +353,16 @@ export class RedisDatabase extends DbDatabase {
 }
 
 export class DbSchema extends DbResource {
+  public isDefault = false;
   constructor(name: string) {
     super(ResourceType.Schema, name);
   }
-  static deserialize(con: DbConnection, db: DbDatabase, json: any): DbSchema {
+  static deserialize(db: DbDatabase, json: any): DbSchema {
     const own = new DbSchema(json.name);
+    own.isDefault = json.isDefault;
     if (json.children && json.children.length > 0) {
       json.children.forEach((childJson: any) => {
-        own.addChild(DbTable.deserialize(con, db, own, childJson));
+        own.addChild(DbTable.deserialize(db, own, childJson));
       });
     }
     return own;
@@ -331,27 +370,22 @@ export class DbSchema extends DbResource {
 }
 
 export class DbTable extends DbResource {
-  public table_type: any;
-  public is_in_progress = false;
-  constructor(name: string, table_type: any, comment = '') {
+  public tableType: any;
+  public isInProgress = false;
+  constructor(name: string, tableType: any, comment = '') {
     super(ResourceType.Table, name);
-    this.table_type = table_type;
+    this.tableType = tableType;
     this.comment = comment || '';
   }
 
   toString(): string {
-    return `[${super.toString()}]: Type[${this.table_type}]`;
+    return `[${super.toString()}]: Type[${this.tableType}]`;
   }
-  static deserialize(
-    con: DbConnection,
-    db: DbDatabase,
-    schema: DbSchema,
-    json: any,
-  ): DbTable {
-    const own = new DbTable(json.name, json.table_type, json.comment);
+  static deserialize(db: DbDatabase, schema: DbSchema, json: any): DbTable {
+    const own = new DbTable(json.name, json.tableType, json.comment);
     if (json.children && json.children.length > 0) {
       json.children.forEach((childJson: any) => {
-        own.addChild(DbColumn.deserialize(con, db, schema, own, childJson));
+        own.addChild(DbColumn.deserialize(db, schema, own, childJson));
       });
     }
     return own;
@@ -361,7 +395,7 @@ export class DbTable extends DbResource {
 export class DbKey extends DbResource {
   public type = RedisKeyType.UNKNOWN;
   public ttl = -1;
-  public ttl_confirmation_datetime: number | undefined;
+  public ttlConfirmationDatetime: number | undefined;
   public ttl_remain: number | undefined;
   public val: any;
 
@@ -382,11 +416,9 @@ export class DbKey extends DbResource {
 
   static deserialize(json: any): DbKey {
     const own = new DbKey(json.name, json.type, json.ttl);
-    own.ttl_confirmation_datetime = json.ttl_confirmation_datetime;
-    if (own.ttl > 0 && own.ttl_confirmation_datetime) {
-      const sub = Math.round(
-        (Date.now() - own.ttl_confirmation_datetime) / 1000,
-      );
+    own.ttlConfirmationDatetime = json.ttlConfirmationDatetime;
+    if (own.ttl > 0 && own.ttlConfirmationDatetime) {
+      const sub = Math.round((Date.now() - own.ttlConfirmationDatetime) / 1000);
       const r = own.ttl - sub;
       if (r > 0) {
         own.ttl_remain = own.ttl;
@@ -400,14 +432,14 @@ export class DbKey extends DbResource {
 }
 
 export class DbColumn extends DbResource {
-  public readonly col_type: GeneralColumnType;
+  public readonly colType: GeneralColumnType;
   public readonly nullable: boolean;
   public readonly key: string | undefined;
   public readonly default: any;
   public readonly extra: any;
   constructor(
     name: string,
-    col_type = GeneralColumnType.UNKNOWN,
+    colType = GeneralColumnType.UNKNOWN,
     params: any,
     comment = '',
   ) {
@@ -415,7 +447,7 @@ export class DbColumn extends DbResource {
     if (comment === null) {
       comment = '';
     }
-    this.col_type = col_type;
+    this.colType = colType;
     if (typeof comment !== 'string') {
       console.trace('error comment type', typeof comment, ' comment=', comment);
     }
@@ -432,7 +464,6 @@ export class DbColumn extends DbResource {
   }
 
   static deserialize(
-    con: DbConnection,
     db: DbDatabase,
     schema: DbSchema,
     table: DbTable,
@@ -440,7 +471,7 @@ export class DbColumn extends DbResource {
   ): DbColumn {
     const own = new DbColumn(
       json.name,
-      json.col_type,
+      json.colType,
       json.params,
       json.comment,
     );
@@ -467,7 +498,7 @@ export class DbColumn extends DbResource {
     // } else {
     //   return "undefined";
     // }
-    return '' + this.col_type;
+    return '' + this.colType;
   }
   toString(): string {
     return `[${super.toString()}]: GType[${this.getGeneralType()}] Nullable[${
@@ -478,7 +509,7 @@ export class DbColumn extends DbResource {
 
 export class DbS3Bucket extends DbResource {
   public created?: Date;
-  public is_in_progress = false;
+  public isInProgress = false;
   public refreshed?: Date;
 
   constructor(name?: string, created?: Date) {
@@ -507,7 +538,7 @@ export class DbS3Bucket extends DbResource {
     }
     return <DbS3Key>searchRes;
   }
-  static deserialize(con: DbConnection, db: DbDatabase, json: any): DbS3Bucket {
+  static deserialize(db: DbDatabase, json: any): DbS3Bucket {
     const own = new DbS3Bucket(json.name);
     own.created = json.created;
     if (json.refreshed) {
@@ -527,7 +558,7 @@ export class DbS3Owner extends DbResource {
     super(ResourceType.Owner, name === undefined ? '' : name);
     this.id = id;
   }
-  static deserialize(con: DbConnection, db: DbDatabase, json: any): DbS3Owner {
+  static deserialize(db: DbDatabase, json: any): DbS3Owner {
     const own = new DbS3Owner(json.name);
     own.id = json.id;
     return own;
@@ -544,7 +575,7 @@ export interface S3KeySearchResult {
 export class DbS3Key extends DbResource {
   public output_file_path?: string;
   public is_dir = false;
-  public is_in_progress = false;
+  public isInProgress = false;
   public refreshed?: Date;
   public updated?: Date;
   public etag?: string;

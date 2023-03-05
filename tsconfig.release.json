@@ -20,5 +20,5 @@
     "strictNullChecks": false,
     "skipLibCheck": true
   },
-  "exclude": ["src/**/*.spec.ts", "__tests__/**/*.test.ts"]
+  "exclude": ["src/**/*.spec.ts", "__tests__/**/*"]
 }

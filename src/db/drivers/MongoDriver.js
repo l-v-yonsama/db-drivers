@@ -58,7 +58,7 @@ export default class MongoDriver {
         });
     });
   }
-  getResouces() {
+  getInfomationSchemas() {
     const self = this;
     console.log('driver.js 43 create promsie');
     return new Promise((resolve, reject) => {

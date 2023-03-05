@@ -6,15 +6,15 @@ import {
   DbColumn,
   SchemaAndTableHints,
   TableRows,
-  Proposal,
+  DbDatabase,
+  DbSchema,
 } from '../resource/DbResource';
 import ResultSetDataHolder from '../resource/ResultSetDataHolder';
 import * as tunnel from 'tunnel-ssh';
 import getPort, { portNumbers } from 'get-port';
-import ResourceUtil from '../resource/ResourceUtil';
 import { ResourceType } from '../resource/types/ResourceType';
-import { DBType } from '../resource/types/DBType';
 import * as fs from 'fs';
+import { ResourceHelper } from '../resource';
 
 export default abstract class BaseDriver {
   public isConnected: boolean;
@@ -75,47 +75,32 @@ export default abstract class BaseDriver {
     return ret;
   }
 
-  getProposals(): Proposal[] {
-    if (this.conRes && DBType.isRDB(this.conRes.db_type)) {
-      const retList: Proposal[] = [];
-      this.conRes.getChildren().forEach((db) => {
-        db.getChildren().forEach((schema) => {
-          schema.getChildren().forEach((table) => {
-            let table_comment = table.comment;
-            if (!table_comment) {
-              table_comment = table.name;
-            }
-            retList.push({
-              s: schema.name,
-              name: table.name,
-              comment: table.comment,
-              type: table.getResouceType(),
-            });
-            table.getChildren().forEach((column) => {
-              if (column.comment) {
-                retList.push({
-                  s: schema.name,
-                  t: table.name,
-                  name: column.name,
-                  comment: `${table_comment}.${column.comment}`,
-                  type: column.getResouceType(),
-                });
-              } else {
-                retList.push({
-                  s: schema.name,
-                  t: table.name,
-                  name: column.name,
-                  comment: `${table_comment}.${column.name}`,
-                  type: column.getResouceType(),
-                });
-              }
-            });
-          });
-        });
-      });
-      return retList;
+  resetDefaultSchema(database: DbDatabase): void {
+    const searchNames = [];
+    if (this.conRes.database) {
+      searchNames.push(this.conRes.database);
     }
-    return [];
+    if (this.conRes.user) {
+      searchNames.push(this.conRes.user);
+    }
+    searchNames.push('public');
+    for (const searchName of searchNames) {
+      const child = database.getChildByName(searchName, {
+        resouceType: ResourceType.Schema,
+      }) as DbSchema;
+
+      if (child) {
+        child.isDefault = true;
+        return;
+      }
+    }
+
+    const child = database
+      .getChildren()
+      .find((it) => it.getResouceType() === ResourceType.Schema) as DbSchema;
+    if (child) {
+      child.isDefault = true;
+    }
   }
 
   resolveColumn(
@@ -128,14 +113,14 @@ export default abstract class BaseDriver {
     if (this.conRes) {
       for (let i = 0; i < resolver.hints.list.length; i++) {
         const hints = resolver.hints.list[i];
-        const t = ResourceUtil.findResource(
+        const t = ResourceHelper.findResource(
           this.conRes,
           ResourceType.Table,
           hints.table,
         );
         if (t) {
           // log.info(LOG_PREFIX, "#resolveColumn found table", hints.table);
-          return <DbColumn>t.getChildByName(column, { quote_ident: true });
+          return <DbColumn>t.getChildByName(column, { unwrapQuote: true });
         } else {
           // log.warn(LOG_PREFIX, "#resolveColumn not found table", hints.table);
         }
@@ -154,7 +139,7 @@ export default abstract class BaseDriver {
     return '';
   }
 
-  async asyncConnectToSshServer(): Promise<string> {
+  async connectToSshServer(): Promise<string> {
     this.sshLocalPort = await getPort({ port: portNumbers(13000, 15100) });
     // log.info(LOG_PREFIX, 'SSH Local host port is ', this.sshLocalPort)
     return new Promise<string>((resolve, reject) => {
@@ -162,7 +147,7 @@ export default abstract class BaseDriver {
         localHost: '127.0.0.1',
         localPort: this.sshLocalPort,
       });
-      if (setting.auth_method === 'private_key') {
+      if (setting.authMethod === 'privateKey') {
         setting.privateKey = fs.readFileSync(setting.privateKeyPath, 'utf8');
       }
 
@@ -180,13 +165,13 @@ export default abstract class BaseDriver {
     });
   }
 
-  async asyncConnect(): Promise<string> {
+  async connect(): Promise<string> {
     let errorReason = '';
     try {
       this.initBaseStatus();
       if (this.conRes) {
         if (this.isNeedsSsh()) {
-          await this.asyncConnectToSshServer();
+          await this.connectToSshServer();
         }
         errorReason = await this.connectSub();
       } else {
@@ -198,7 +183,8 @@ export default abstract class BaseDriver {
     this.isConnected = errorReason === '';
     return errorReason;
   }
-  async asyncClose(): Promise<string> {
+
+  async disconnect(): Promise<string> {
     let errorReason = '';
     try {
       if (this.conRes) {
@@ -223,7 +209,7 @@ export default abstract class BaseDriver {
   }
   abstract connectSub(): Promise<string>;
   abstract closeSub(): Promise<string>;
-  abstract getResouces(options: {
+  abstract getInfomationSchemas(options: {
     progress_callback?: Function | undefined;
     params?: any;
   }): Promise<Array<DbResource>>;

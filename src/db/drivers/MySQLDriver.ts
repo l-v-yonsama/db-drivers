@@ -67,7 +67,7 @@ export default class MySQLDriver extends BaseDriver {
   async test(with_connect = false): Promise<string> {
     let errorReason = '';
     if (with_connect) {
-      errorReason = await this.asyncConnect();
+      errorReason = await this.connect();
     }
     if (!errorReason) {
       const rdh = await this.requestSql('SELECT 1 from DUAL');
@@ -75,7 +75,7 @@ export default class MySQLDriver extends BaseDriver {
         return rdh.errorMessage;
       }
       if (with_connect) {
-        await this.asyncClose();
+        await this.disconnect();
       }
     }
     return errorReason;
@@ -182,7 +182,7 @@ export default class MySQLDriver extends BaseDriver {
     return list;
   }
 
-  async getResouces(options: {
+  async getInfomationSchemas(options: {
     progress_callback?: Function | undefined;
     params?: any;
   }): Promise<Array<DbResource>> {
@@ -204,6 +204,7 @@ export default class MySQLDriver extends BaseDriver {
     dbSchemas.forEach((res) => {
       dbDatabase.addChild(res);
     });
+    this.resetDefaultSchema(dbDatabase);
     progress = 30;
     if (options.progress_callback) {
       options.progress_callback(`${dbSchemas.length} Schemas found.`, progress);
@@ -244,6 +245,7 @@ export default class MySQLDriver extends BaseDriver {
       FROM INFORMATION_SCHEMA.SCHEMATA
       WHERE LOWER(SCHEMA_NAME) NOT IN ('information_schema', 'sys', 'performance_schema')
       ORDER BY name`);
+
     return rdh.rows.map((r) => {
       const res = new DbSchema(r.values.name);
       return res;

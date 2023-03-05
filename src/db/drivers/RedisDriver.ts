@@ -14,7 +14,7 @@ import { RedisKeyType } from '../resource/types/RedisKeyType';
 import {
   RedisCommandType,
   RedisRequest,
-} from '../../service/request/redis_request';
+} from '../../service/request/RedisRequest';
 
 export default class RedisDriver extends BaseDriver {
   client: Redis | undefined;
@@ -83,14 +83,14 @@ export default class RedisDriver extends BaseDriver {
     let errorReason = '';
     try {
       if (with_connect) {
-        const con_result = await this.asyncConnect();
+        const con_result = await this.connect();
         if (con_result) {
           return con_result;
         }
       }
       await this.client.ping();
       if (with_connect) {
-        await this.asyncClose();
+        await this.disconnect();
       }
     } catch (e) {
       errorReason = e.message;
@@ -125,7 +125,7 @@ export default class RedisDriver extends BaseDriver {
           const ttl = await this.client.ttl(req.key);
           ret = new DbKey(req.key, req.type, ttl);
           if (ret.ttl > 0) {
-            ret.ttl_confirmation_datetime = new Date().getTime();
+            ret.ttlConfirmationDatetime = new Date().getTime();
           }
           ret.val = r;
         }
@@ -195,7 +195,7 @@ export default class RedisDriver extends BaseDriver {
               );
               keyRes.ttl = await currentClient.ttl(keyRes.getName());
               if (keyRes.ttl > 0) {
-                keyRes.ttl_confirmation_datetime = new Date().getTime();
+                keyRes.ttlConfirmationDatetime = new Date().getTime();
               }
               if (with_value) {
                 keyRes.val = await this.getValueByKey(
@@ -236,7 +236,7 @@ export default class RedisDriver extends BaseDriver {
     }
     return undefined;
   }
-  async getResouces(options: {
+  async getInfomationSchemas(options: {
     progress_callback?: Function | undefined;
     params?: any;
   }): Promise<Array<DbResource>> {

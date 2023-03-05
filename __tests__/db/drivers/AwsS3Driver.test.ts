@@ -21,7 +21,7 @@ describe('AwsS3Driver', () => {
 
   beforeAll(async () => {
     driver = createDriver();
-    await driver.asyncConnect();
+    await driver.connect();
     try {
       await driver.removeBucket({ bucket });
     } catch (e) {
@@ -39,7 +39,7 @@ describe('AwsS3Driver', () => {
   });
 
   afterAll(async () => {
-    await driver.asyncClose();
+    await driver.disconnect();
   });
 
   describe('getName', () => {
@@ -53,7 +53,7 @@ describe('AwsS3Driver', () => {
     let testBucketRes: DbS3Bucket;
 
     it('should return Database resource', async () => {
-      const dbRootRes = await driver.getResouces({});
+      const dbRootRes = await driver.getInfomationSchemas({});
       expect(dbRootRes).toHaveLength(1);
       testDbRes = dbRootRes[0] as DbDatabase;
       expect(testDbRes.getName()).toBe('S3');
@@ -91,7 +91,7 @@ describe('AwsS3Driver', () => {
   });
 
   function createDriver(): AwsS3Driver {
-    const con = new DbConnection({ ...connectOption, db_type: DBType.Minio });
+    const con = new DbConnection({ ...connectOption, dbType: DBType.Minio });
     return new AwsS3Driver(con);
   }
 });

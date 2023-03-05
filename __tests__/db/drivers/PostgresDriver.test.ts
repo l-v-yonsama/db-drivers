@@ -1,10 +1,10 @@
 import PostgresDriver from '../../../src/db/drivers/PostgresDriver';
 import {
   DbConnection,
-  DbResource,
   DbSchema,
   DbTable,
   DbColumn,
+  DbDatabase,
 } from '../../../src/db/resource/DbResource';
 import { DBType } from '../../../src/db/resource/types/DBType';
 import { default as pg } from 'pg';
@@ -19,7 +19,7 @@ const baseConnectOption = {
 };
 const connectOption = {
   ...baseConnectOption,
-  db_type: DBType.Postgres,
+  dbType: DBType.Postgres,
   enviroment: 'ut',
 };
 
@@ -76,12 +76,12 @@ describe('PostgresDriver', () => {
   });
 
   afterAll(async () => {
-    await driver.asyncClose();
+    await driver.disconnect();
     client.end();
   });
 
-  it('asyncConnect', async () => {
-    expect(await driver.asyncConnect()).toBe('');
+  it('connect', async () => {
+    expect(await driver.connect()).toBe('');
   });
 
   describe('getName', () => {
@@ -91,43 +91,43 @@ describe('PostgresDriver', () => {
   });
 
   describe('asyncGetResouces', () => {
-    let testDbRes: DbResource;
+    let testDbRes: DbDatabase;
     let testSchemaRes: DbSchema;
     let testTableRes: DbTable;
 
     it('should return Database resource', async () => {
-      const dbRootRes = await driver.getResouces({});
-      testDbRes = dbRootRes.find((it) => it.name === 'testdb');
+      const dbRootRes = await driver.getInfomationSchemas({});
+      testDbRes = dbRootRes.find((it) => it.name === 'testdb') as DbDatabase;
       expect(testDbRes.getName()).toBe(driver.getConnectionRes().database);
     });
 
     it('should have Schema resource', async () => {
       expect(testDbRes.getChildren()).toHaveLength(1);
-      testSchemaRes = testDbRes.getChildren()[0];
+      testSchemaRes = testDbRes.getSchema({ isDefault: true });
       expect(testSchemaRes.getName()).toBe('public');
     });
 
     it('should have Table resource', async () => {
       testTableRes = testSchemaRes.getChildByName('testtable') as DbTable;
       expect(testTableRes.getName()).toBe('testtable');
-      expect(testTableRes.table_type).toBe('TABLE');
+      expect(testTableRes.tableType).toBe('TABLE');
       expect(testTableRes.comment).toBe('table with various data types');
     });
 
     it('should have Column resource', async () => {
       // ID
       const idRes = testTableRes.getChildByName('ID') as DbColumn;
-      expect(idRes.col_type).toBe(GeneralColumnType.INTEGER);
+      expect(idRes.colType).toBe(GeneralColumnType.INTEGER);
       expect(idRes.nullable).toBe(false);
       expect(idRes.key).toBe('PRI');
       expect(idRes.default).toContain('nextval');
       // n0
       const n0Res = testTableRes.getChildByName('n0') as DbColumn;
-      expect(n0Res.col_type).toBe(GeneralColumnType.BIT);
+      expect(n0Res.colType).toBe(GeneralColumnType.BIT);
       expect(n0Res.nullable).toBe(true);
       // n1
       const n1Res = testTableRes.getChildByName('n1') as DbColumn;
-      expect(n1Res.col_type).toBe(GeneralColumnType.INTEGER);
+      expect(n1Res.colType).toBe(GeneralColumnType.INTEGER);
       expect(n1Res.nullable).toBe(true);
     });
   });

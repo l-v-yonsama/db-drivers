@@ -1,4 +1,4 @@
-export default class GeneralResponse {
+export default class GeneralReply {
   public ok = true;
   public message = '';
   public result: any;
