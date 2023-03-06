@@ -6,15 +6,11 @@
     "node": ">= 18.12 <19"
   },
   "devDependencies": {
-    "@babel/plugin-transform-modules-commonjs": "^7.21.2",
-    "@babel/preset-env": "^7.20.2",
     "@types/jest": "~29.2",
     "@types/node": "~18",
     "@types/pg": "^8.6.6",
     "@typescript-eslint/eslint-plugin": "~5.44",
     "@typescript-eslint/parser": "~5.44",
-    "babel-jest": "^29.4.3",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "eslint": "~8.28",
     "eslint-config-prettier": "~8.5",
     "eslint-plugin-jest": "~27.1",
@@ -71,6 +67,7 @@
     "node": "18.12.1"
   },
   "main": "built/src/index.js",
+  "types": "built/src/index.d.ts",
   "files": [
     "built/src"
   ],
