@@ -11,7 +11,7 @@ import {
 } from '../resource/DbResource';
 import ResultSetDataHolder from '../resource/ResultSetDataHolder';
 import * as tunnel from 'tunnel-ssh';
-import getPort, { portNumbers } from 'get-port';
+import { getPort } from 'get-port-please';
 import { ResourceType } from '../resource/types/ResourceType';
 import * as fs from 'fs';
 import { ResourceHelper } from '../resource';
@@ -140,7 +140,7 @@ export default abstract class BaseDriver {
   }
 
   async connectToSshServer(): Promise<string> {
-    this.sshLocalPort = await getPort({ port: portNumbers(13000, 15100) });
+    this.sshLocalPort = await getPort({ portRange: [13000, 15100] });
     // log.info(LOG_PREFIX, 'SSH Local host port is ', this.sshLocalPort)
     return new Promise<string>((resolve, reject) => {
       const setting = Object.assign({}, this.conRes.ssh, {
