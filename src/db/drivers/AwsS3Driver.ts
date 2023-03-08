@@ -1,19 +1,17 @@
 /* eslint-disable no-async-promise-executor */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import BaseDriver, { RequestSqlOptions } from './BaseDriver';
+import { BaseDriver, RequestSqlOptions } from './BaseDriver';
 import {
   DbConnection,
   DbResource,
   DbDatabase,
   DbS3Bucket,
   DbS3Owner,
-  DbS3Key,
-  S3KeySearchResult,
   TableRows,
   SchemaAndTableHints,
-} from '../resource/DbResource';
-import ResultSetDataHolder from '../resource/ResultSetDataHolder';
-import { DBType } from '../resource/types/DBType';
+  ResultSetDataHolder,
+  DBType,
+} from '../resource';
 import {
   CreateBucketCommand,
   DeleteBucketCommand,
@@ -27,7 +25,7 @@ import {
   S3ClientConfig,
 } from '@aws-sdk/client-s3';
 
-export default class AwsS3Driver extends BaseDriver {
+export class AwsS3Driver extends BaseDriver {
   s3Client: S3Client;
   finder: any;
   config: S3ClientConfig;

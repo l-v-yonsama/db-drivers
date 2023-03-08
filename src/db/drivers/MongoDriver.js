@@ -1,6 +1,6 @@
 import * as DbRes from '../resource/DbResource';
 
-export default class MongoDriver {
+export class MongoDriver {
   constructor() {
     this.client = require('mongodb').MongoClient;
     this.isConnected = false;

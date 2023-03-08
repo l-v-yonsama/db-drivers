@@ -86,3 +86,6 @@ export enum GeneralDBCommandType {
   DisconnectAll = 'DisconnectAll',
   BatchInsertFromArray = 'BatchInsertFromArray',
 }
+
+export * from './RedisRequest';
+export * from './S3Request';

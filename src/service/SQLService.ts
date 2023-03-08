@@ -1,5 +1,5 @@
 import { default as Parser } from 'node-sql-parser/build/mariadb';
-import { DbSchema, DbTable } from '../db/resource/DbResource';
+import { DbSchema, DbTable } from '../db';
 import { GeneralResponse } from './response';
 
 interface ValidateErrorResultParam {

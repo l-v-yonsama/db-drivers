@@ -1,15 +1,13 @@
-import RedisDriver from '../../../src/db/drivers/RedisDriver';
 import { Redis, RedisOptions } from 'ioredis';
 import {
+  RedisDriver,
   DbConnection,
   DbKey,
   RedisDatabase,
-} from '../../../src/db/resource/DbResource';
-import {
   RedisCommandType,
   RedisRequest,
-} from '../../../src/service/request/RedisRequest';
-import { RedisKeyType } from '../../../src/db/resource/types/RedisKeyType';
+  RedisKeyType,
+} from '../../../src';
 
 const connectOption: RedisOptions = {
   port: 6000, // Redis port

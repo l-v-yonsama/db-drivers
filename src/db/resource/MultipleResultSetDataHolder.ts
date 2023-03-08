@@ -1,4 +1,4 @@
-import ResultSetDataHolder, { AnnotationType } from './ResultSetDataHolder';
+import { ResultSetDataHolder, AnnotationType } from './ResultSetDataHolder';
 import ShortUniqueId from 'short-unique-id';
 
 const uid = new ShortUniqueId();
@@ -16,7 +16,7 @@ export interface LabeledRdh {
   id: string;
   rdh: ResultSetDataHolder;
 }
-export default class MultipleResultSetDataHolder {
+export class MultipleResultSetDataHolder {
   public list: LabeledRdh[];
   public active_id?: string;
   public source_file_name?: string;

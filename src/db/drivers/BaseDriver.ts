@@ -1,4 +1,4 @@
-import DBError from '../DBError';
+import { DBError } from '../DBError';
 import {
   DbConnection,
   DbResource,
@@ -8,15 +8,15 @@ import {
   TableRows,
   DbDatabase,
   DbSchema,
-} from '../resource/DbResource';
-import ResultSetDataHolder from '../resource/ResultSetDataHolder';
+  ResultSetDataHolder,
+  ResourceType,
+  ResourceHelper,
+} from '../resource';
 import * as tunnel from 'tunnel-ssh';
 import { getPort } from 'get-port-please';
-import { ResourceType } from '../resource/types/ResourceType';
 import * as fs from 'fs';
-import { ResourceHelper } from '../resource';
 
-export default abstract class BaseDriver {
+export abstract class BaseDriver {
   public isConnected: boolean;
   protected conRes: DbConnection;
   protected sshServer: any;

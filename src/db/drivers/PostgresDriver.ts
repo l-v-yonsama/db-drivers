@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import BaseDriver, { RequestSqlOptions } from './BaseDriver';
-import ResultSetDataHolder, { RdhKey } from '../resource/ResultSetDataHolder';
+import { BaseDriver, RequestSqlOptions } from './BaseDriver';
 import {
+  ResultSetDataHolder,
+  RdhKey,
   DbConnection,
   DbResource,
   DbDatabase,
@@ -11,13 +12,13 @@ import {
   ColumnResolver,
   TableRows,
   SchemaAndTableHints,
-} from '../resource/DbResource';
+  PostgresColumnType,
+  GeneralColumnType,
+} from '../resource';
 import { default as pg } from 'pg';
-import { PostgresColumnType } from '../resource/types/PostgresColumnType';
 import { EnumValues } from 'enum-values';
-import { GeneralColumnType } from '../resource/types/GeneralColumnType';
 
-export default class PostgresDriver extends BaseDriver {
+export class PostgresDriver extends BaseDriver {
   private pool: pg.Pool;
 
   constructor(conRes: DbConnection) {

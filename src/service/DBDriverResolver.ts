@@ -1,13 +1,15 @@
 // import MongoDriver from './drivers/MongoDriver'
 // import ODBCDriver from './drivers/ODBCDriver';
-import RedisDriver from '../db/drivers/RedisDriver';
-import MySQLDriver from '../db/drivers/MySQLDriver';
-import PostgresDriver from '../db/drivers/PostgresDriver';
-import AwsS3Driver from '../db/drivers/AwsS3Driver';
-// import FirestoreDriver from "./drivers/FirestoreDriver";
-import BaseDriver from '../db/drivers/BaseDriver';
-import { ConnectionSetting, DbConnection } from '../db/resource/DbResource';
-import { DBType } from '../db/resource/types/DBType';
+import {
+  RedisDriver,
+  MySQLDriver,
+  PostgresDriver,
+  AwsS3Driver,
+  BaseDriver,
+  ConnectionSetting,
+  DbConnection,
+  DBType,
+} from '../db';
 import ShortUniqueId from 'short-unique-id';
 
 const uid = new ShortUniqueId();

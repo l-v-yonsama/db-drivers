@@ -1,10 +1,12 @@
-import { GeneralColumnType } from './types/GeneralColumnType';
-import { ResourceType } from './types/ResourceType';
-import { DBType } from './types/DBType';
-import { RedisKeyType } from './types/RedisKeyType';
+import {
+  DBType,
+  ResourceType,
+  RedisKeyType,
+  GeneralColumnType,
+  ODBCVendorType,
+} from './types';
 import dayjs from 'dayjs';
 import ShortUniqueId from 'short-unique-id';
-import { ODBCVendorType } from './types/ODBCVendorType';
 
 const uid = new ShortUniqueId();
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import BaseDriver, { RequestSqlOptions } from './BaseDriver';
+import { BaseDriver, RequestSqlOptions } from './BaseDriver';
 import {
   DbConnection,
   DbResource,
@@ -9,14 +9,13 @@ import {
   TableRows,
 } from '../resource/DbResource';
 import { Redis } from 'ioredis';
-import ResultSetDataHolder from '../resource/ResultSetDataHolder';
-import { RedisKeyType } from '../resource/types/RedisKeyType';
+import { ResultSetDataHolder, RedisKeyType } from '../resource';
 import {
   RedisCommandType,
   RedisRequest,
 } from '../../service/request/RedisRequest';
 
-export default class RedisDriver extends BaseDriver {
+export class RedisDriver extends BaseDriver {
   client: Redis | undefined;
   databases = 16;
 

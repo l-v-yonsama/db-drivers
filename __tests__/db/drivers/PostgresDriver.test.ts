@@ -1,14 +1,14 @@
-import PostgresDriver from '../../../src/db/drivers/PostgresDriver';
 import {
+  PostgresDriver,
   DbConnection,
   DbSchema,
   DbTable,
   DbColumn,
   DbDatabase,
-} from '../../../src/db/resource/DbResource';
-import { DBType } from '../../../src/db/resource/types/DBType';
+  DBType,
+  GeneralColumnType,
+} from '../../../src';
 import { default as pg } from 'pg';
-import { GeneralColumnType } from '../../../src/db/resource/types/GeneralColumnType';
 
 const baseConnectOption = {
   host: '127.0.0.1',

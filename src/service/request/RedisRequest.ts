@@ -1,4 +1,4 @@
-import { RedisKeyType } from '../../db/resource/types/RedisKeyType';
+import { RedisKeyType } from '../../db';
 
 export interface RedisRequest {
   connectionId: string;

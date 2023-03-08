@@ -1,9 +1,9 @@
-import { DbResource } from './DbResource';
 import { default as listit } from 'list-it';
-import { GeneralColumnType } from './types/GeneralColumnType';
 import { EnumValues } from 'enum-values';
 import * as ss from 'simple-statistics';
 import ShuffleArray from 'shuffle-array';
+import { DbResource } from './DbResource';
+import { GeneralColumnType } from './types';
 
 export class SampleClassPair {
   public clazz_value: any;
@@ -173,7 +173,7 @@ export class RdhRow {
   }
 }
 
-export default class ResultSetDataHolder {
+export class ResultSetDataHolder {
   static create(err?: Error): ResultSetDataHolder {
     const rdh = new ResultSetDataHolder([]);
     if (err) {

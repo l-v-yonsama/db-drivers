@@ -1,4 +1,4 @@
-export default class DBError extends Error {
+export class DBError extends Error {
   public code: any;
   public errno: any;
   public sqlMessage: any;

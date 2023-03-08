@@ -1,13 +1,13 @@
-import MySQLDriver from '../../../src/db/drivers/MySQLDriver';
 import {
+  MySQLDriver,
   DbConnection,
   DbSchema,
   DbTable,
   DbColumn,
   DbDatabase,
-} from '../../../src/db/resource/DbResource';
-import { DBType } from '../../../src/db/resource/types/DBType';
-import { GeneralColumnType } from '../../../src/db/resource/types/GeneralColumnType';
+  DBType,
+  GeneralColumnType,
+} from '../../../src';
 import { init } from '../../setup/mysql';
 
 const baseConnectOption = {

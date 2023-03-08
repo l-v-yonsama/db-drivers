@@ -1,9 +1,9 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
-    "node": ">= 18.12 <19"
+    "node": ">= 16 <19"
   },
   "devDependencies": {
     "@types/jest": "~29.2",

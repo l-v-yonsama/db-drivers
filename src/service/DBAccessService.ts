@@ -1,7 +1,12 @@
-import BaseDriver, { RequestSqlOptions } from '../db/drivers/BaseDriver';
-import { DbConnection, DbResource, TableRows } from '../db/resource/DbResource';
-import ResultSetDataHolder from '../db/resource/ResultSetDataHolder';
-import { DBType } from '../db/resource/types/DBType';
+import {
+  BaseDriver,
+  RequestSqlOptions,
+  DbConnection,
+  DbResource,
+  TableRows,
+  ResultSetDataHolder,
+  DBType,
+} from '../db';
 import { DBDriverResolver } from './DBDriverResolver';
 import {
   AddConnectionSettingRequest,
@@ -15,8 +20,7 @@ import {
   TestConnectionSettingRequest,
   ViewDataRequest,
 } from './request';
-import { GeneralDBResponse } from './response';
-import { ConnectionResult } from './response/reply/ConnectionResult';
+import { GeneralDBResponse, ConnectionResult } from './response';
 
 export class DBAccessService {
   public static async addConnectionSetting(

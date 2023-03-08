@@ -1,7 +1,8 @@
-import BaseDriver, { RequestSqlOptions } from './BaseDriver';
+import { BaseDriver, RequestSqlOptions } from './BaseDriver';
 import * as mysql from 'mysql2/promise';
-import ResultSetDataHolder, { RdhKey } from '../resource/ResultSetDataHolder';
 import {
+  ResultSetDataHolder,
+  RdhKey,
   DbConnection,
   DbResource,
   DbDatabase,
@@ -11,13 +12,13 @@ import {
   ColumnResolver,
   TableRows,
   SchemaAndTableHints,
-} from '../resource/DbResource';
-import { MySQLColumnType } from '../resource/types/MySQLColumnType';
+  GeneralColumnType,
+  MySQLColumnType,
+} from '../resource';
 import { EnumValues } from 'enum-values';
-import { GeneralColumnType } from '../resource/types/GeneralColumnType';
 import { ResultSetHeader } from 'mysql2/promise';
 
-export default class MySQLDriver extends BaseDriver {
+export class MySQLDriver extends BaseDriver {
   private client: mysql.Pool | undefined;
 
   constructor(conRes: DbConnection) {

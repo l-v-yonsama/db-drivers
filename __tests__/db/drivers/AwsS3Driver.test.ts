@@ -1,11 +1,11 @@
-import AwsS3Driver from '../../../src/db/drivers/AwsS3Driver';
 import {
+  AwsS3Driver,
   DbConnection,
   DbDatabase,
   DbS3Bucket,
   DbS3Owner,
-} from '../../../src/db/resource/DbResource';
-import { DBType } from '../../../src/db/resource/types/DBType';
+  DBType,
+} from '../../../src';
 
 const connectOption = {
   port: 6003,
