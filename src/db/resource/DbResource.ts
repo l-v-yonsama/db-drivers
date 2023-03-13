@@ -171,12 +171,10 @@ export interface FirebaseSetting {
 
 export interface ConnectionSetting {
   dbType: DBType;
-  odbcVendorType?: ODBCVendorType;
   name: string;
   url?: string;
   host?: string;
   port?: number;
-  enviroment?: string;
   user?: string;
   password?: string;
   database?: string;
@@ -192,7 +190,7 @@ export interface ConnectionSetting {
 
 export class DbConnection extends DbResource implements ConnectionSetting {
   public property: Map<string, object>;
-  public dbType = DBType.Unknown;
+  public dbType = undefined;
   public odbcVendorType = ODBCVendorType.Oracle;
   public host = '';
   public port = 0;
@@ -213,7 +211,7 @@ export class DbConnection extends DbResource implements ConnectionSetting {
   constructor(prop: any) {
     super(ResourceType.Connection, prop.name);
     this.id = prop.id;
-    this.dbType = DBType.parse(prop['dbType']);
+    this.dbType = prop.dbType;
     this.odbcVendorType = prop.odbcVendorType;
     this.property = new Map<string, object>();
     this.host = prop.host;

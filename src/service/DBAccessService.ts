@@ -219,7 +219,6 @@ export class DBAccessService {
         switch (driver.getConnectionRes().dbType) {
           case DBType.AwsS3:
           case DBType.Minio:
-          case DBType.Mongodb:
           case DBType.Redis:
             error_message = 'Not supported.';
             break;

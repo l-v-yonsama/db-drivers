@@ -19,6 +19,9 @@ built/
 # JetBrains IDEs
 .idea/
 
+# Package file
+l-v-yonsama-multi-platform-database-drivers-*.tgz
+
 # Optional npm cache directory
 .npm
 
