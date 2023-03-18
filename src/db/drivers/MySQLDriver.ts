@@ -4,7 +4,6 @@ import {
   ResultSetDataHolder,
   RdhKey,
   DbConnection,
-  DbResource,
   DbDatabase,
   DbSchema,
   DbTable,
@@ -186,11 +185,11 @@ export class MySQLDriver extends BaseDriver {
   async getInfomationSchemas(options: {
     progress_callback?: Function | undefined;
     params?: any;
-  }): Promise<Array<DbResource>> {
+  }): Promise<Array<DbDatabase>> {
     if (!this.conRes) {
       return [];
     }
-    const dbResources = new Array<DbResource>();
+    const dbResources = new Array<DbDatabase>();
     const dbDatabase = new DbDatabase(this.conRes.database);
     dbResources.push(dbDatabase);
     let progress = 10;

@@ -97,7 +97,7 @@ describe('PostgresDriver', () => {
 
     it('should return Database resource', async () => {
       const dbRootRes = await driver.getInfomationSchemas({});
-      testDbRes = dbRootRes.find((it) => it.name === 'testdb') as DbDatabase;
+      testDbRes = dbRootRes.find((it) => it.name === 'testdb');
       expect(testDbRes.getName()).toBe(driver.getConnectionRes().database);
     });
 

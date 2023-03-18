@@ -2,10 +2,10 @@ import {
   BaseDriver,
   RequestSqlOptions,
   DbConnection,
-  DbResource,
   TableRows,
   ResultSetDataHolder,
   DBType,
+  DbDatabase,
 } from '../db';
 import { DBDriverResolver } from './DBDriverResolver';
 import {
@@ -78,7 +78,9 @@ export class DBAccessService {
     }
   }
 
-  public static async connect(req: ConnectRequest): Promise<GeneralDBResponse> {
+  public static async connect(
+    req: ConnectRequest,
+  ): Promise<GeneralDBResponse<ConnectionResult>> {
     const command = GeneralDBCommandType.Connect;
     const st_tm = new Date().getTime();
     try {
@@ -354,7 +356,7 @@ export class DBAccessService {
 
   public static async getInfomationSchemas(
     req: CountTablesRequest,
-  ): Promise<GeneralDBResponse<Array<DbResource>>> {
+  ): Promise<GeneralDBResponse<Array<DbDatabase>>> {
     const command = GeneralDBCommandType.GetInfomationSchemas;
 
     const st_tm = new Date().getTime();

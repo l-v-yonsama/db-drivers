@@ -4,7 +4,6 @@ import {
   ResultSetDataHolder,
   RdhKey,
   DbConnection,
-  DbResource,
   DbDatabase,
   DbSchema,
   DbTable,
@@ -193,11 +192,11 @@ export class PostgresDriver extends BaseDriver {
   async getInfomationSchemas(options: {
     progress_callback?: Function | undefined;
     params?: any;
-  }): Promise<Array<DbResource>> {
+  }): Promise<Array<DbDatabase>> {
     if (!this.conRes) {
       return [];
     }
-    const dbResources = new Array<DbResource>();
+    const dbResources = new Array<DbDatabase>();
     const db_list = await this.asyncGetDatabases(this.conRes.database);
     db_list.forEach((db) => dbResources.push(db));
     const dbDatabase = db_list.find((d) => d.name === this.conRes.database);

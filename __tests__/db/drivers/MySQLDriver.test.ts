@@ -55,7 +55,7 @@ describe('MySQLDriver', () => {
     it('should return Database resource', async () => {
       const dbRootRes = await driver.getInfomationSchemas({});
       expect(dbRootRes).toHaveLength(1);
-      testDbRes = dbRootRes[0] as DbDatabase;
+      testDbRes = dbRootRes[0];
       expect(testDbRes.getName()).toBe(driver.getConnectionRes().database);
     });
 

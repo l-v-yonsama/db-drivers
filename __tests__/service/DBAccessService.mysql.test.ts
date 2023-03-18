@@ -22,7 +22,6 @@ const baseConnectOption = {
 const connectOption: ConnectionSetting = {
   ...baseConnectOption,
   dbType: DBType.MySQL,
-  enviroment: 'ut',
   name: 'local-mysql',
 };
 
@@ -227,7 +226,7 @@ describe('DBAccessService:MySQL', () => {
         });
         const dbRootRes = res.result;
         expect(dbRootRes).toHaveLength(1);
-        testDbRes = dbRootRes[0] as DbDatabase;
+        testDbRes = dbRootRes[0];
 
         // for saving json string.
         // console.log(testDbRes.toJsonStringify());

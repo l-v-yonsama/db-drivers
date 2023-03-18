@@ -1,7 +1,6 @@
 import { DBError } from '../DBError';
 import {
   DbConnection,
-  DbResource,
   ColumnResolver,
   DbColumn,
   SchemaAndTableHints,
@@ -212,7 +211,7 @@ export abstract class BaseDriver {
   abstract getInfomationSchemas(options: {
     progress_callback?: Function | undefined;
     params?: any;
-  }): Promise<Array<DbResource>>;
+  }): Promise<Array<DbDatabase>>;
   abstract test(with_connect: boolean): Promise<string>;
   abstract countTables(
     tables: SchemaAndTableHints,
