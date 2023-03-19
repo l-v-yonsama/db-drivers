@@ -58,6 +58,18 @@ describe('RedisDriver', () => {
     expect(await driver.connect()).toBe('');
   });
 
+  it('failed to connect', async () => {
+    const con = new DbConnection({
+      port: 6379,
+      database: '0',
+      host: '127.0.0.1',
+      user: 'xxxx',
+      password: 'xxxx',
+    });
+    const testDriver = new RedisDriver(con);
+    expect(await testDriver.connect()).toContain('failed to connect');
+  });
+
   describe('getName', () => {
     it('should return constructor name', () => {
       expect(driver.getName()).toBe('RedisDriver');

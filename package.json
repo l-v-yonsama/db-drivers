@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16 <19"
@@ -35,6 +35,7 @@
     "test": "npm run clean && jest --runInBand",
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
     "test:driver:postgres": "npm run clean && jest __tests__/db/drivers/PostgresDriver.test.ts",
+    "test:driver:redis": "npm run clean && jest __tests__/db/drivers/RedisDriver.test.ts",
     "test:minio": "npm run clean && jest __tests__/db/drivers/AwsS3Driver.test.ts",
     "test:access:mysql": "npm run clean && jest __tests__/service/DBAccessService.mysql.test.ts",
     "test:sql": "npm run clean && jest __tests__/service/SQLService.test.ts",

@@ -54,6 +54,7 @@ export class RedisDriver extends BaseDriver {
       } else {
         this.client = new Redis(options);
       }
+      await this.client.ping(); // test
       // dbs= [ [ null, '# Serverxxxx' ], [ null, [ 'databases', '16' ] ] ]
       try {
         // ReplyError: EXECABORT Transaction discarded because of previous errors.
@@ -72,7 +73,7 @@ export class RedisDriver extends BaseDriver {
         this.databases = 16;
       }
     } catch (e) {
-      return e.message;
+      return `failed to connect:${e.message}`;
     }
 
     return '';
