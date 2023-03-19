@@ -84,6 +84,10 @@ export class DbResource {
     return res;
   }
 
+  hasChildren(): boolean {
+    return this.children.length > 0;
+  }
+
   containsResource(filter: string): boolean {
     if (!filter) {
       return true;

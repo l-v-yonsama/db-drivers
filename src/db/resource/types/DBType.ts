@@ -21,7 +21,3 @@ export function isRDB(s: DBType): boolean {
   }
   return false;
 }
-
-export function values(): DBType[] {
-  return Object.values(DBType);
-}
