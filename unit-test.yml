@@ -39,3 +39,19 @@ services:
     ports:
       - 6003:9000
       - 6004:9001
+
+  localstack:
+    image: localstack/localstack:0.14.4
+    ports:
+      - 6005:4566 # すべてのサービスポート
+      - 6006:8080 # dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      # 有効にするサービス
+      - SERVICES=s3,sqs,ses
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=ap-northeast-1
+      - DATA_DIR=/tmp/localstack/data
+      - DISABLE_CORS_CHECKS=1

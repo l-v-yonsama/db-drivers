@@ -2,11 +2,11 @@ import { Redis, RedisOptions } from 'ioredis';
 import {
   RedisDriver,
   DbConnection,
-  DbKey,
   RedisDatabase,
-  RedisCommandType,
-  RedisRequest,
   RedisKeyType,
+  DBDriverResolver,
+  ConnectionSetting,
+  DBType,
 } from '../../../src';
 
 const connectOption: RedisOptions = {
@@ -16,12 +16,20 @@ const connectOption: RedisOptions = {
 };
 
 describe('RedisDriver', () => {
+  let driverResolver: DBDriverResolver;
   let redisClient: Redis;
   let driver: RedisDriver;
 
   beforeAll(async () => {
+    driverResolver = DBDriverResolver.getInstance();
     redisClient = new Redis({ ...connectOption, db: 0 });
-    driver = createDriver();
+    const setting: ConnectionSetting = {
+      name: 'localRedis',
+      dbType: DBType.Redis,
+      database: '0',
+      ...connectOption,
+    };
+    driver = driverResolver.createDriver<RedisDriver>(setting);
     await redisClient.flushall();
     await redisClient.set('s1', 'text', 'EX', 100);
     const user = {
@@ -91,76 +99,45 @@ describe('RedisDriver', () => {
 
   describe('asyncScan', () => {
     it('should return values', async () => {
-      const keys = await driver.scan(
-        0,
-        '*',
-        1000,
-        true,
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        () => {},
-      );
+      const keys = await driver.scan({
+        target: '0',
+        limit: 1000,
+        keyword: '*',
+        withValue: true,
+      });
+
       let key = keys.find((it) => it.name === 'n1');
-      expect(key.val).toBe('1');
-      expect(key.type).toBe(RedisKeyType.string);
-      expect(key.ttl).toBe(-1);
+      expect(key.params.val).toBe('1');
+      expect(key.params.type).toBe(RedisKeyType.string);
+      expect(key.params.ttl).toBe(-1);
 
       key = keys.find((it) => it.name === 'age');
-      expect(key.val).toBe('20');
-      expect(key.type).toBe(RedisKeyType.string);
+      expect(key.params.val).toBe('20');
+      expect(key.params.type).toBe(RedisKeyType.string);
 
       key = keys.find((it) => it.name === 'name');
-      expect(key.val).toBe('Bob');
-      expect(key.type).toBe(RedisKeyType.string);
+      expect(key.params.val).toBe('Bob');
+      expect(key.params.type).toBe(RedisKeyType.string);
 
       key = keys.find((it) => it.name === 'description');
-      expect(key.val).toBe('I am a programmer');
-      expect(key.type).toBe(RedisKeyType.string);
+      expect(key.params.val).toBe('I am a programmer');
+      expect(key.params.type).toBe(RedisKeyType.string);
 
       key = keys.find((it) => it.name === 'user-hash');
-      expect(key.val).toEqual({
+      expect(key.params.val).toEqual({
         name: 'Bob',
         age: '20',
         description: 'I am a programmer',
       });
-      expect(key.type).toBe(RedisKeyType.hash);
+      expect(key.params.type).toBe(RedisKeyType.hash);
 
       key = keys.find((it) => it.name === 'list3');
-      expect(key.val).toEqual(['1', '2', '3']);
-      expect(key.type).toBe(RedisKeyType.list);
+      expect(key.params.val).toEqual(['1', '2', '3']);
+      expect(key.params.type).toBe(RedisKeyType.list);
 
       key = keys.find((it) => it.name === 'sortedSet');
-      expect(key.val).toEqual(['one', 'dos', 'three', 'quatro']);
-      expect(key.type).toBe(RedisKeyType.zset);
+      expect(key.params.val).toEqual(['one', 'dos', 'three', 'quatro']);
+      expect(key.params.type).toBe(RedisKeyType.zset);
     });
   });
-
-  describe('RedisCommandType.GetValue', () => {
-    it('should return values', async () => {
-      const key = (await driver.executeCommand(
-        createRedisRequest(RedisCommandType.GetValue, {
-          key: 'n1',
-          type: RedisKeyType.string,
-        }),
-      )) as DbKey;
-      expect(key.val).toBe('1');
-      expect(key.ttl).toBe(-1);
-    });
-  });
-
-  function createDriver(): RedisDriver {
-    const con = new DbConnection({ ...connectOption, database: '0' });
-    return new RedisDriver(con);
-  }
-
-  function createRedisRequest(
-    command: RedisCommandType,
-    options: { key?: string; type?: RedisKeyType },
-  ): RedisRequest {
-    return {
-      connectionId: '1',
-      index: 0,
-      command,
-      ...options,
-    };
-  }
 });

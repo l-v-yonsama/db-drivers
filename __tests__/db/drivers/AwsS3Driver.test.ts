@@ -1,4 +1,5 @@
 import {
+  AwsRegion,
   AwsS3Driver,
   DbConnection,
   DbDatabase,
@@ -12,7 +13,7 @@ const connectOption = {
   user: 'testuser', // aws:accessKeyId
   password: 'testpass', // aws:secretAccessKey
   url: 'http://127.0.0.1:6003',
-  region: 'us-west-1',
+  region: AwsRegion.usWest1,
 };
 
 describe('AwsS3Driver', () => {
@@ -87,6 +88,21 @@ describe('AwsS3Driver', () => {
         key: 'text/empty.txt',
       });
       expect(textValue3).toBe('');
+    });
+
+    it('should have values2', async () => {
+      const keys = await driver.scan({
+        target: bucket,
+        limit: 2000,
+        withValue: true,
+      });
+      expect(keys.length).toBe(3);
+
+      const key2 = keys.find((it) => it.name === 'text/abc.txt');
+      expect(Buffer.from(key2.params.base64).toString()).toBe('abc');
+
+      const key3 = keys.find((it) => it.name === 'text/empty.txt');
+      expect(Buffer.from(key3.params.base64).toString()).toBe('');
     });
   });
 

@@ -1,3 +1,3 @@
-export * from './db';
+export * from './drivers';
+export * from './resource';
 export * from './types';
-export * from './service';
