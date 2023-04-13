@@ -14,67 +14,44 @@ import {
   S3Client,
   S3ClientConfig,
 } from '@aws-sdk/client-s3';
-import { BaseDriver, RequestSqlOptions } from './BaseDriver';
 import {
   DbConnection,
   DbDatabase,
   DbKey,
   DbS3Bucket,
   DbS3Owner,
+  RdhKey,
   ResultSetDataHolder,
   S3KeyParams,
-} from '../resource';
-import { DBType, ScanParams } from '../types';
+} from '../../resource';
+import { DBType, GeneralColumnType, ScanParams } from '../../types';
+import { AwsServiceClient } from './AwsServiceClient';
+import { ClientConfigType } from '../AwsDriver';
+import { Scannable } from '../BaseDriver';
 
-export class AwsS3Driver extends BaseDriver {
+export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   s3Client: S3Client;
-  finder: any;
-  config: S3ClientConfig;
 
-  constructor(conRes: DbConnection) {
-    super(conRes);
+  constructor(conRes: DbConnection, config: ClientConfigType) {
+    super(conRes, config);
   }
 
   async connectSub(): Promise<string> {
-    this.config = {};
-    this.config.region = 'us-west-1';
-
-    if (this.conRes.region) {
-      this.config.region = this.conRes.region;
-    }
-
-    this.config.credentials = {
-      accessKeyId: this.conRes.user,
-      secretAccessKey: this.conRes.password,
+    const config: S3ClientConfig = {
+      ...this.config,
     };
-    if (this.conRes.dbType === DBType.Minio) {
-      (<any>this.config).endpoint = this.conRes.url;
-      (<any>this.config).s3ForcePathStyle = 'true';
+    if (this.conRes.awsSetting?.s3ForcePathStyle) {
+      (<any>config).s3ForcePathStyle = this.conRes.awsSetting?.s3ForcePathStyle;
     }
-    this.s3Client = new S3Client(this.config);
+    this.s3Client = new S3Client(config);
 
     return this.test(false);
   }
 
-  async test(with_connect = false): Promise<string> {
-    let errorReason = '';
-    if (with_connect) {
-      errorReason = await this.connect();
-    }
+  protected async testSub(): Promise<void> {
     if (this.s3Client) {
-      try {
-        const a = await this.s3Client.send(new ListBucketsCommand({}));
-      } catch (e) {
-        console.error(e);
-        errorReason = e.message;
-      }
+      await this.s3Client.send(new ListBucketsCommand({}));
     }
-
-    if (with_connect) {
-      await this.disconnect();
-    }
-
-    return errorReason;
   }
 
   // getSignedUrl(bucket: string, key: string, expire_minutes: number): string {
@@ -87,157 +64,25 @@ export class AwsS3Driver extends BaseDriver {
   //   return url;
   // }
 
-  abortSearch(): void {
-    if (this.finder) {
-      this.finder.abort();
-    }
-  }
-
-  // async search(
-  //   bucket: string,
-  //   prefix = '',
-  //   options: {
-  //     date_modified_type?: DateModifiedType;
-  //     file_kind_type?: FileKindType;
-  //     name?: string;
-  //     progress_callback?: Function;
-  //   },
-  // ): Promise<S3KeySearchResult> {
-  //   const ret: S3KeySearchResult = {
-  //     prefix,
-  //     list: new Array<DbS3Key>(),
-  //     ContinuationToken: '',
-  //   };
-  //   return new Promise<S3KeySearchResult>(async (resolve) => {
-  //     try {
-  //       this.finder = this.super_client.listObjects({
-  //         recursive: true,
-  //         s3Params: {
-  //           Bucket: bucket,
-  //           Delimiter: '',
-  //           Prefix: prefix,
-  //         },
-  //       });
-  //       this.finder.on('data', async function (data: any) {
-  //         if (data.Contents) {
-  //           for (let i = 0; i < data.Contents.length; i++) {
-  //             const content = data.Contents[i];
-  //             // {
-  //             //   Key: 'HLS/tutorial/1M/abc.m3u8',
-  //             //   LastModified: 2018-03-06T04:01:11.000Z,
-  //             //   ETag: '"9bcb47a6acdf633f72e113f442c7ba44"',
-  //             //   Size: 188,
-  //             //   StorageClass: 'STANDARD'
-  //             // }
-  //             const k = content.Key;
-  //             if (k) {
-  //               let valid = true;
-  //               if (valid && options.name) {
-  //                 valid = ('' + k).indexOf(options.name) >= 0;
-  //               }
-  //               if (valid && options.date_modified_type) {
-  //                 valid = DateModifiedType.isValid(
-  //                   options.date_modified_type,
-  //                   content.LastModified,
-  //                 );
-  //               }
-  //               if (valid && options.file_kind_type) {
-  //                 valid = FileKindType.isValid(options.file_kind_type, k + '');
-  //               }
-  //               if (valid) {
-  //                 const key = new DbS3Key(k);
-  //                 key.updated = content.LastModified;
-  //                 // console.log('content.LastModified=', content.LastModified, content.LastModified.getTime());
-  //                 key.etag = content.ETag;
-  //                 key.size = content.Size;
-  //                 key.storage_class = content.StorageClass;
-  //                 // output_file_path
-  //                 const fResult = await FileUtil.getKeyFile(bucket, k);
-  //                 if (fResult.ok) {
-  //                   key.output_file_path = fResult.result;
-  //                   if (
-  //                     options.file_kind_type === FileKindType.Image &&
-  //                     key.size &&
-  //                     key.size < 100 * 1024
-  //                   ) {
-  //                     key.base64 = <string>(
-  //                       await FileUtil.readFile(fResult.result, 'base64')
-  //                     );
-  //                   }
-  //                 }
-  //                 ret.list.push(key);
-  //               }
-  //             }
-  //           }
-  //         }
-  //       });
-  //       this.finder.on('progress', () => {
-  //         if (options.progress_callback) {
-  //           options.progress_callback(
-  //             this.finder.objectsFound,
-  //             this.finder.progressAmount,
-  //             this.finder.dirsFound,
-  //             ret.list.length,
-  //           );
-  //         }
-  //       });
-  //       this.finder.on('end', function () {
-  //         ret.list.sort((a, b) => b.updated.getTime() - a.updated.getTime());
-  //         setTimeout(() => resolve(ret), 500);
-  //       });
-  //     } catch (e) {
-  //       ret.error_message = e.message;
-  //       resolve(ret);
-  //     }
-  //   });
-  // }
-
-  // async agetKeys(
-  //   bucket: string,
-  //   count: number,
-  //   config: { prefix?: string; token?: string; scan_pattern?: string },
-  // ): Promise<S3KeySearchResult> {
-  //   const opts: S3.ListObjectsV2Request = {
-  //     Bucket: bucket,
-  //     MaxKeys: count,
-  //     Delimiter: '/',
-  //     Prefix: '',
-  //   };
-  //   if (config) {
-  //     if (config.prefix && config.prefix !== '/') {
-  //       opts.Prefix = config.prefix;
-  //     }
-  //     if (config.scan_pattern) {
-  //       opts.Prefix += config.scan_pattern;
-  //     }
-  //     if (config.token) {
-  //       opts.ContinuationToken = config.token;
-  //     }
-  //   }
-  //   const ret: S3KeySearchResult = {
-  //     prefix: config.prefix,
-  //     list: new Array<DbS3Key>(),
-  //     ContinuationToken: '',
-  //   };
-  //   try {
-  //     await this.listAllKeys(opts, count, ret);
-  //   } catch (e) {
-  //     ret.error_message = e.message;
-  //   }
-  //   return ret;
-  // }
-
-  async scan(params: ScanParams): Promise<DbKey<S3KeyParams>[]> {
-    const { target, limit, keyword, withValue } = params;
-
+  async listObjects({
+    bucket,
+    prefix,
+    limit,
+    withValue,
+  }: {
+    bucket: string;
+    prefix: string;
+    limit: number;
+    withValue: boolean;
+  }): Promise<DbKey<S3KeyParams>[]> {
     // Declare truncated as a flag that the while loop is based on.
     let truncated = true;
     // Declare a variable to which the key of the last element is assigned to in the response.
     let pageMarker;
 
     const bucketParams: ListObjectsCommandInput = {
-      Bucket: target,
-      Prefix: keyword,
+      Bucket: bucket,
+      Prefix: prefix,
     };
 
     const list: DbKey<S3KeyParams>[] = [];
@@ -274,13 +119,39 @@ export class AwsS3Driver extends BaseDriver {
     if (withValue) {
       const promises = list.map(async (it) => {
         it.params.base64 = await this.getValueByKey({
-          bucket: target,
+          bucket,
           key: it.name,
         });
       });
       await Promise.all(promises);
     }
     return list;
+  }
+
+  async scan(params: ScanParams): Promise<ResultSetDataHolder> {
+    const { target, limit, keyword, withValue } = params;
+    const list = await this.listObjects({
+      bucket: target,
+      prefix: keyword,
+      limit,
+      withValue,
+    });
+    const rdh = new ResultSetDataHolder([
+      new RdhKey('key', GeneralColumnType.TEXT),
+      new RdhKey('size', GeneralColumnType.INTEGER),
+      new RdhKey('etag', GeneralColumnType.TEXT),
+      new RdhKey('storageClass', GeneralColumnType.TEXT),
+      new RdhKey('lastModified', GeneralColumnType.TIMESTAMP),
+      new RdhKey('value', GeneralColumnType.UNKNOWN),
+    ]);
+    list.forEach((dbKey) => {
+      rdh.addRow({
+        ...dbKey.params,
+        key: dbKey.getName(),
+        value: dbKey.params?.base64,
+      });
+    });
+    return rdh;
   }
 
   // async putObject(
@@ -301,16 +172,12 @@ export class AwsS3Driver extends BaseDriver {
   //   });
   // }
 
-  async getInfomationSchemas(options: {
-    progress_callback?: Function | undefined;
-    params?: any;
-  }): Promise<Array<DbDatabase>> {
+  async getInfomationSchemas(): Promise<DbDatabase> {
     if (!this.conRes) {
-      return [];
+      return null;
     }
-    const dbResources = new Array<DbDatabase>();
+
     const dbDatabase = new DbDatabase('S3');
-    dbResources.push(dbDatabase);
 
     try {
       const buckets = await this.s3Client.send(new ListBucketsCommand({}));
@@ -333,13 +200,7 @@ export class AwsS3Driver extends BaseDriver {
       console.error(e);
       // reject(e);
     }
-    return dbResources;
-  }
-  async requestSql(
-    sql: string,
-    options?: RequestSqlOptions,
-  ): Promise<ResultSetDataHolder> {
-    return new ResultSetDataHolder([]);
+    return dbDatabase;
   }
 
   // async asyncGetSignedUrl(
@@ -456,10 +317,7 @@ export class AwsS3Driver extends BaseDriver {
     }
   }
 
-  async closeSub(): Promise<string> {
-    if (this.s3Client) {
-      this.s3Client.destroy();
-    }
-    return '';
+  protected async closeSub(): Promise<void> {
+    await this.s3Client.destroy();
   }
 }

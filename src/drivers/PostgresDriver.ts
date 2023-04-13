@@ -3,7 +3,7 @@
 import { default as pg } from 'pg';
 import { EnumValues } from 'enum-values';
 import { PostgresColumnType } from '../types/PostgresColumnType';
-import { BaseDriver, RequestSqlOptions } from './BaseDriver';
+import { RequestSqlOptions } from './BaseDriver';
 import {
   ColumnResolver,
   DbColumn,
@@ -17,8 +17,9 @@ import {
   TableRows,
 } from '../resource';
 import { GeneralColumnType } from '../types';
+import { RDSBaseDriver } from './RDSBaseDriver';
 
-export class PostgresDriver extends BaseDriver {
+export class PostgresDriver extends RDSBaseDriver {
   private pool: pg.Pool;
 
   constructor(conRes: DbConnection) {
@@ -90,24 +91,8 @@ export class PostgresDriver extends BaseDriver {
     return errorReason;
   }
 
-  async test(with_connect = false): Promise<string> {
-    let errorReason = '';
-    try {
-      if (with_connect) {
-        errorReason = await this.connect();
-      }
-      const rdh = await this.requestSql('SELECT NOW()');
-      if (rdh && rdh.errorMessage) {
-        errorReason = rdh.errorMessage;
-      }
-    } catch (e) {
-      errorReason = e.message;
-    } finally {
-      if (with_connect) {
-        await this.disconnect();
-      }
-    }
-    return errorReason;
+  protected getTestSqlStatement(): string {
+    return 'SELECT NOW()';
   }
 
   // public
@@ -118,43 +103,40 @@ export class PostgresDriver extends BaseDriver {
     // log.info("sql2=", sql);
     let rdh = new ResultSetDataHolder([]);
 
-    try {
-      let binds: string[] = [];
-      if (options && options.binds) {
-        binds = options.binds;
-      }
-      const results = await this.pool.query(sql, binds);
-      // command: 'SELECT',
-      // rowCount: 5,
-      // oid: null,
-      // rows:
-      //  [ anonymous { name: 'pg_catalog' },
-      //    anonymous { name: 'pg_temp_1' },
-      //    anonymous { name: 'pg_toast' },
-      //    anonymous { name: 'pg_toast_temp_1' },
-      //    anonymous { name: 'public' } ],
-      // fields: [  ],
-      // console.log('done.', results.fields)
-      if (results) {
-        let resolver: ColumnResolver;
-        if (options && options.needs_column_resolve === true) {
-          resolver = this.createColumnResolver(sql);
-        }
-        const fields = results.fields;
-        rdh = new ResultSetDataHolder(
-          fields === undefined
-            ? []
-            : fields.map((f) => this.fieldInfo2Key(f, resolver)),
-        );
-        if (results.rows) {
-          results.rows.forEach((result: any) => {
-            rdh.addRow(result);
-          });
-        }
-      }
-    } catch (err) {
-      rdh = ResultSetDataHolder.create(err);
+    let binds: string[] = [];
+    if (options && options.binds) {
+      binds = options.binds;
     }
+    const results = await this.pool.query(sql, binds);
+    // command: 'SELECT',
+    // rowCount: 5,
+    // oid: null,
+    // rows:
+    //  [ anonymous { name: 'pg_catalog' },
+    //    anonymous { name: 'pg_temp_1' },
+    //    anonymous { name: 'pg_toast' },
+    //    anonymous { name: 'pg_toast_temp_1' },
+    //    anonymous { name: 'public' } ],
+    // fields: [  ],
+    // console.log('done.', results.fields)
+    if (results) {
+      let resolver: ColumnResolver;
+      if (options && options.needsColumnResolve === true) {
+        resolver = this.createColumnResolver(sql);
+      }
+      const fields = results.fields;
+      rdh = new ResultSetDataHolder(
+        fields === undefined
+          ? []
+          : fields.map((f) => this.fieldInfo2Key(f, resolver)),
+      );
+      if (results.rows) {
+        results.rows.forEach((result: any) => {
+          rdh.addRow(result);
+        });
+      }
+    }
+
     rdh.setSqlStatement(sql);
 
     return rdh;
@@ -191,10 +173,7 @@ export class PostgresDriver extends BaseDriver {
     return list;
   }
 
-  async getInfomationSchemas(options: {
-    progress_callback?: Function | undefined;
-    params?: any;
-  }): Promise<Array<DbDatabase>> {
+  async getInfomationSchemas(): Promise<Array<DbDatabase>> {
     if (!this.conRes) {
       return [];
     }

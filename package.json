@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.32",
+  "version": "0.1.42",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16 <19"
@@ -26,6 +26,7 @@
     "clean": "rimraf coverage built tmp",
     "prebuild": "npm run lint",
     "build": "npm run clean && tsc -p tsconfig.json",
+    "example": "npm run build && node built/src/example.js",
     "build:watch": "npm run clean && tsc -w -p tsconfig.json",
     "build:release": "npm run clean && tsc -p tsconfig.release.json",
     "prepublishOnly": "npm run build:release",
@@ -37,6 +38,7 @@
     "test:driver:postgres": "npm run clean && jest __tests__/db/drivers/PostgresDriver.test.ts",
     "test:driver:redis": "npm run clean && jest __tests__/db/drivers/RedisDriver.test.ts",
     "test:driver:sqs": "npm run clean && jest __tests__/db/drivers/AwsSQSDriver.test.ts",
+    "test:driver:cw": "npm run clean && jest __tests__/db/drivers/AwsCloudwatchDriver.test.ts",
     "test:driver:minio": "npm run clean && jest __tests__/db/drivers/AwsS3Driver.test.ts",
     "test:sql": "npm run clean && jest __tests__/service/SQLService.test.ts",
     "prettier": "prettier --config .prettierrc --write .",
@@ -45,6 +47,7 @@
   "author": "l-v-yonsama <32474032+l-v-yonsama@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.306.0",
     "@aws-sdk/client-s3": "^3.279.0",
     "@aws-sdk/client-sqs": "^3.303.0",
     "@aws-sdk/credential-providers": "^3.279.0",

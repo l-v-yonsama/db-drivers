@@ -173,19 +173,11 @@ export class RdhRow {
 }
 
 export class ResultSetDataHolder {
-  static create(err?: Error): ResultSetDataHolder {
-    const rdh = new ResultSetDataHolder([]);
-    if (err) {
-      rdh.errorMessage = err.message;
-    }
-    return rdh;
-  }
   is_empty = false;
   keys: RdhKey[];
   rows: Array<RdhRow>;
   meta?: { [key: string]: any };
   sqlStatement: string | undefined;
-  errorMessage: string | undefined;
   shuffledIndexes?: number[];
   shuffledNextCounter?: number;
   mergeCells?: MergedCell[];
@@ -268,7 +260,6 @@ export class ResultSetDataHolder {
         });
         rdh.sqlStatement = list.sqlStatement;
         rdh.mergeCells = list.mergeCells;
-        rdh.errorMessage = list.errorMessage;
         rdh.meta = list.meta;
         return rdh;
       }
@@ -746,11 +737,7 @@ export class ResultSetDataHolder {
 
   public toString(num_of_print = 8): string {
     if (this.keys.length < 0) {
-      if (this.errorMessage) {
-        return 'No Keys. Error:' + this.errorMessage;
-      } else {
-        return 'No Keys. There is nothing error.';
-      }
+      return 'No Keys.';
     }
     const buf = listit.buffer();
     buf.d('ROW');

@@ -1,12 +1,14 @@
 import {
   AwsRegion,
-  AwsS3Driver,
-  DbConnection,
+  AwsDriver,
   DbDatabase,
+  DBDriverResolver,
   DbS3Bucket,
   DbS3Owner,
   DBType,
 } from '../../../src';
+import { AwsServiceType } from '../../../src/types/AwsServiceType';
+import { SupplyCredentialType } from '../../../src/types/AwsSupplyCredentialType';
 
 const connectOption = {
   port: 6003,
@@ -17,26 +19,44 @@ const connectOption = {
 };
 
 describe('AwsS3Driver', () => {
-  let driver: AwsS3Driver;
+  let driver: AwsDriver;
   const bucket = 'testbucket';
 
   beforeAll(async () => {
-    driver = createDriver();
+    driver = DBDriverResolver.getInstance().createDriver({
+      ...connectOption,
+      dbType: DBType.Aws,
+      name: 'localMinio',
+      awsSetting: {
+        supplyCredentialType: SupplyCredentialType.ExplicitInProperty,
+        services: [AwsServiceType.S3],
+        region: connectOption.region,
+        s3ForcePathStyle: true,
+      },
+    });
     await driver.connect();
     try {
-      await driver.removeBucket({ bucket });
+      await driver.s3Client.removeBucket({ bucket });
     } catch (e) {
       // The specified bucket does not exist
       // console.error('error:' + e.message);
     }
-    await driver.createBucket({ bucket });
-    await driver.putObject({ bucket, key: 'text/abc.txt', body: 'abc' });
-    await driver.putObject({
+    await driver.s3Client.createBucket({ bucket });
+    await driver.s3Client.putObject({
+      bucket,
+      key: 'text/abc.txt',
+      body: 'abc',
+    });
+    await driver.s3Client.putObject({
       bucket,
       key: 'text/folder/abc.txt',
       body: 'abc',
     });
-    await driver.putObject({ bucket, key: 'text/empty.txt', body: '' });
+    await driver.s3Client.putObject({
+      bucket,
+      key: 'text/empty.txt',
+      body: '',
+    });
   });
 
   afterAll(async () => {
@@ -45,7 +65,7 @@ describe('AwsS3Driver', () => {
 
   describe('getName', () => {
     it('should return constructor name', () => {
-      expect(driver.getName()).toBe('AwsS3Driver');
+      expect(driver.getName()).toBe('AwsDriver');
     });
   });
 
@@ -54,7 +74,7 @@ describe('AwsS3Driver', () => {
     let testBucketRes: DbS3Bucket;
 
     it('should return Database resource', async () => {
-      const dbRootRes = await driver.getInfomationSchemas({});
+      const dbRootRes = await driver.getInfomationSchemas();
       expect(dbRootRes).toHaveLength(1);
       testDbRes = dbRootRes[0] as DbDatabase;
       expect(testDbRes.getName()).toBe('S3');
@@ -71,19 +91,19 @@ describe('AwsS3Driver', () => {
     });
 
     it('should have values', async () => {
-      const textValue = await driver.getValueByKey({
+      const textValue = await driver.s3Client.getValueByKey({
         bucket,
         key: 'text/abc.txt',
       });
       expect(textValue).toBe('abc');
 
-      const textValue2 = await driver.getValueByKey({
+      const textValue2 = await driver.s3Client.getValueByKey({
         bucket,
         key: 'text/folder/abc.txt',
       });
       expect(textValue2).toBe('abc');
 
-      const textValue3 = await driver.getValueByKey({
+      const textValue3 = await driver.s3Client.getValueByKey({
         bucket,
         key: 'text/empty.txt',
       });
@@ -91,23 +111,18 @@ describe('AwsS3Driver', () => {
     });
 
     it('should have values2', async () => {
-      const keys = await driver.scan({
+      const rdh = await driver.s3Client.scan({
         target: bucket,
         limit: 2000,
         withValue: true,
       });
-      expect(keys.length).toBe(3);
+      expect(rdh.rows.length).toBe(3);
 
-      const key2 = keys.find((it) => it.name === 'text/abc.txt');
-      expect(Buffer.from(key2.params.base64).toString()).toBe('abc');
-
-      const key3 = keys.find((it) => it.name === 'text/empty.txt');
-      expect(Buffer.from(key3.params.base64).toString()).toBe('');
+      console.log(rdh.toString());
+      const row2 = rdh.rows[1];
+      expect(Buffer.from(row2.values['value']).toString()).toBe('');
+      const row3 = rdh.rows[2];
+      expect(Buffer.from(row3.values['value']).toString()).toBe('abc');
     });
   });
-
-  function createDriver(): AwsS3Driver {
-    const con = new DbConnection({ ...connectOption, dbType: DBType.Minio });
-    return new AwsS3Driver(con);
-  }
 });

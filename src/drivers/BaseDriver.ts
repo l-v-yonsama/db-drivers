@@ -11,8 +11,19 @@ import {
   ResultSetDataHolder,
   SchemaAndTableHints,
 } from '../resource';
-import { GeneralResult, ResourceType } from '../types';
+import { GeneralResult, ResourceType, ScanParams } from '../types';
 import { DBError } from './DBError';
+
+export interface Scannable {
+  scan(params: ScanParams): Promise<ResultSetDataHolder>;
+}
+
+export function isScannable(arg: any): arg is Scannable {
+  if (!arg) {
+    return false;
+  }
+  return typeof arg === 'object' && typeof arg.scan === 'function';
+}
 
 export abstract class BaseDriver {
   public isConnected: boolean;
@@ -230,18 +241,12 @@ export abstract class BaseDriver {
     }
     return errorReason;
   }
+
   abstract connectSub(): Promise<string>;
   abstract closeSub(): Promise<string>;
-  abstract getInfomationSchemas(options: {
-    progress_callback?: Function | undefined;
-    params?: any;
-  }): Promise<Array<DbDatabase>>;
+  abstract getInfomationSchemas(): Promise<Array<DbDatabase>>;
   abstract test(with_connect: boolean): Promise<string>;
 
-  abstract requestSql(
-    sql: string,
-    options?: RequestSqlOptions,
-  ): Promise<ResultSetDataHolder>;
   createDBError(message: string, sourceError: any): DBError {
     return new DBError(
       message,
@@ -255,7 +260,6 @@ export abstract class BaseDriver {
 
 export interface RequestSqlOptions {
   binds?: string[];
-  needs_column_resolve?: boolean;
-  progress_callback?: Function;
-  max_rows?: number;
+  needsColumnResolve?: boolean;
+  maxRows?: number;
 }

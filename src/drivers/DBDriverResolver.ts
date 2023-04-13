@@ -5,8 +5,7 @@ import { DBType } from '../types';
 import { MySQLDriver } from './MySQLDriver';
 import { PostgresDriver } from './PostgresDriver';
 import { RedisDriver } from './RedisDriver';
-import { AwsS3Driver } from './AwsS3Driver';
-import { AwsSQSDriver } from './AwsSQSDriver';
+import { AwsDriver } from './AwsDriver';
 
 const uid = new ShortUniqueId();
 
@@ -59,12 +58,8 @@ export class DBDriverResolver {
       // case DBType.Firestore:
       //   // driver = new FirestoreDriver(conRes);
       //   break;
-      case DBType.AwsS3:
-      case DBType.Minio:
-        driver = new AwsS3Driver(conRes);
-        break;
-      case DBType.AwsSQS:
-        driver = new AwsSQSDriver(conRes);
+      case DBType.Aws:
+        driver = new AwsDriver(conRes);
         break;
       // case DBType.Mongodb:
       //   // driver = new MongoDriver(conDef)

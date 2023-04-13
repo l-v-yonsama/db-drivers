@@ -43,15 +43,19 @@ services:
   localstack:
     image: localstack/localstack:0.14.4
     ports:
-      - 6005:4566 # すべてのサービスポート
+      - 6005:4566 # all services
       - 6006:8080 # dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      # データのマウント
+      - 'localstack-data:/tmp/localstack'
     environment:
-      # 有効にするサービス
-      - SERVICES=s3,sqs,ses
+      - SERVICES=s3,sqs,ses,cloudwatch,logs
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=ap-northeast-1
       - DATA_DIR=/tmp/localstack/data
       - DISABLE_CORS_CHECKS=1
+volumes:
+  localstack-data:
+    driver: 'local'

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { Redis } from 'ioredis';
-import { BaseDriver, RequestSqlOptions } from './BaseDriver';
+import { BaseDriver, RequestSqlOptions, Scannable } from './BaseDriver';
 import {
   DbConnection,
   DbDatabase,
@@ -13,9 +13,8 @@ import {
 } from '../resource';
 import { GeneralColumnType, RedisKeyType, ScanParams } from '../types';
 
-export class RedisDriver extends BaseDriver {
+export class RedisDriver extends BaseDriver implements Scannable {
   client: Redis | undefined;
-  databases = 16;
 
   constructor(conRes: DbConnection) {
     super(conRes);
@@ -53,23 +52,6 @@ export class RedisDriver extends BaseDriver {
         this.client = new Redis(options);
       }
       await this.client.ping(); // test
-      // dbs= [ [ null, '# Serverxxxx' ], [ null, [ 'databases', '16' ] ] ]
-      try {
-        // ReplyError: EXECABORT Transaction discarded because of previous errors.
-        const dbs = await this.client
-          .multi()
-          .info()
-          .config('GET', 'databases')
-          .exec();
-        if (dbs && dbs.length > 1 && dbs[1].length > 1) {
-          const dbs2 = dbs[1][1] as any; // dbs2= [ 'databases', '16' ]
-          if (dbs2 && dbs2.length > 1) {
-            this.databases = parseInt(dbs2[1], 10);
-          }
-        }
-      } catch (e) {
-        this.databases = 16;
-      }
     } catch (e) {
       return `failed to connect:${e.message}`;
     }
@@ -94,13 +76,6 @@ export class RedisDriver extends BaseDriver {
       errorReason = e.message;
     }
     return errorReason;
-  }
-
-  async requestSql(
-    sql: string,
-    options?: RequestSqlOptions,
-  ): Promise<ResultSetDataHolder> {
-    return ResultSetDataHolder.createEmpty();
   }
 
   // async executeCommand(req: RedisRequest): Promise<DbKey | string | number> {
@@ -149,11 +124,11 @@ export class RedisDriver extends BaseDriver {
   //   return ret;
   // }
 
-  async scan(params: ScanParams): Promise<DbKey<RedisKeyParams>[]> {
+  async scanStream(params: ScanParams): Promise<DbKey<RedisKeyParams>[]> {
     const { target, limit, withValue, keyword } = params;
 
+    await this.client.select(target);
     const keys = await new Promise<string[]>((resolve) => {
-      this.client.select(target);
       const stream = this.client.scanStream({
         match: keyword,
         count: limit,
@@ -193,6 +168,24 @@ export class RedisDriver extends BaseDriver {
     return await Promise.all(promises);
   }
 
+  async scan(params: ScanParams): Promise<ResultSetDataHolder> {
+    const dbKeys = await this.scanStream(params);
+
+    const rdh = new ResultSetDataHolder([
+      new RdhKey('key', GeneralColumnType.TEXT),
+      new RdhKey('type', GeneralColumnType.ENUM),
+      new RdhKey('ttl', GeneralColumnType.INTEGER),
+      new RdhKey('val', GeneralColumnType.UNKNOWN),
+    ]);
+    dbKeys.forEach((dbKey) => {
+      rdh.addRow({
+        ...dbKey.params,
+        key: dbKey.getName(),
+      });
+    });
+    return rdh;
+  }
+
   async getValueByKey(
     client: Redis,
     key: string,
@@ -214,10 +207,7 @@ export class RedisDriver extends BaseDriver {
     }
     return undefined;
   }
-  async getInfomationSchemas(options: {
-    progress_callback?: Function | undefined;
-    params?: any;
-  }): Promise<Array<DbDatabase>> {
+  async getInfomationSchemas(): Promise<Array<DbDatabase>> {
     if (!this.conRes) {
       return [];
     }
@@ -231,17 +221,8 @@ export class RedisDriver extends BaseDriver {
     while ((m = re.exec(keyspace))) {
       const db = m[1];
       const keys = parseInt(m[2], 10);
-      const expires = parseInt(m[3], 10);
-      const avg_ttl = parseInt(m[4], 10);
-      const dbRes = new RedisDatabase(db, keys, expires, avg_ttl);
+      const dbRes = new RedisDatabase(db, keys);
       dbResources.push(dbRes);
-    }
-    for (let i = 0; i < this.databases; i++) {
-      const name = `${i}`;
-      if (!dbResources.some((r) => r.getName() === name)) {
-        const dbRes = new RedisDatabase(name, 0, 0, 0);
-        dbResources.push(dbRes);
-      }
     }
 
     return dbResources;

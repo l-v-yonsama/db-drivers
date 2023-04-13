@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import ShortUniqueId from 'short-unique-id';
 import {
   DBType,
@@ -6,6 +5,9 @@ import {
   RedisKeyType,
   ResourceType,
 } from '../types';
+import { AwsSQSAttributes } from '../types/AwsSQSAttributes';
+import { SupplyCredentialType } from '../types/AwsSupplyCredentialType';
+import { AwsServiceType } from '../types/AwsServiceType';
 
 const uid = new ShortUniqueId();
 
@@ -47,7 +49,7 @@ export class DbResource {
   public name: string;
   public comment?: string;
   protected children: Array<DbResource>;
-  public transientMeta: { [key: string]: any };
+  public meta: { [key: string]: any };
 
   public static createEmpty(): DbResource {
     const r = new DbResource(ResourceType.Database, '');
@@ -166,6 +168,17 @@ export interface SshSetting {
   dstHost: string;
 }
 
+export type AwsSetting = {
+  supplyCredentialType: SupplyCredentialType;
+  /**
+   * The configuration profile to use.
+   */
+  profile?: string;
+  region?: string;
+  services: AwsServiceType[];
+  s3ForcePathStyle?: boolean;
+};
+
 export interface FirebaseSetting {
   authMethod: string;
   projectid?: string;
@@ -185,78 +198,57 @@ export interface ConnectionSetting {
   database?: string;
   databaseVersion?: number;
   ds?: string;
-  region?: string;
-  isConnected?: boolean;
-  isInProgress?: boolean;
   apiVersion?: string;
   ssh?: SshSetting;
+  awsSetting?: AwsSetting;
   firebase?: FirebaseSetting;
 }
 
 export class DbConnection extends DbResource implements ConnectionSetting {
-  public property: Map<string, object>;
   public dbType = undefined;
-  public host = '';
-  public port = 0;
-  public user = '';
-  public password = '';
-  public database = '';
-  public databaseVersion = 1;
-  public enviroment = '';
-  public ds = '';
-  public url = '';
-  public isConnected = false;
-  public isInProgress = false;
+  public name: string;
+  public url?: string;
+  public host?: string;
+  public port?: number;
+  public user?: string;
+  public password?: string;
+  public database?: string;
+  public databaseVersion?: number;
+  public ds?: string;
+  public isConnected: boolean;
+  public isInProgress: boolean;
   public apiVersion?: string;
-  public region?: string;
   public ssh?: SshSetting;
+  public awsSetting?: AwsSetting;
   public firebase?: FirebaseSetting;
 
   constructor(prop: any) {
     super(ResourceType.Connection, prop.name);
     this.id = prop.id;
     this.dbType = prop.dbType;
-    this.property = new Map<string, object>();
     this.host = prop.host;
     this.port = prop.port;
     this.user = prop.user;
     this.password = prop.password;
-    this.enviroment = prop.enviroment;
     this.database = prop.database;
     this.databaseVersion = prop.databaseVersion;
     this.ds = prop.ds;
     this.url = prop.url;
     this.apiVersion = prop.apiVersion;
-    this.region = prop.region;
     this.ssh = prop.ssh;
+    this.awsSetting = prop.awsSetting;
     this.firebase = prop.firebase;
-    if (prop.property) {
-      for (const k in prop.property) {
-        this.property.set(k, prop.property[k]);
-      }
-    }
+    this.isConnected = false;
+    this.isInProgress = false;
   }
 
-  static deserialize(json: any): DbConnection {
-    const con = new DbConnection(json);
-    if (json.children && json.children.length > 0) {
-      json.children.forEach((childJson: any) => {
-        if (con.dbType === DBType.Redis) {
-          con.addChild(RedisDatabase.deserialize(childJson));
-        } else {
-          con.addChild(DbDatabase.deserialize(childJson));
-        }
-      });
-    }
-    con.isConnected = json.isConnected;
-    return con;
-  }
   public hasUrl(): boolean {
     if (this.url && this.url.length > 0) {
       return true;
     }
     return false;
   }
+
   public hasSshSetting(): boolean {
     if (this.ssh && this.ssh.use === true) {
       return true;
@@ -288,70 +280,21 @@ export class DbDatabase extends DbResource {
     }
     return null;
   }
-
-  static deserialize(json: any): DbDatabase {
-    const own = new DbDatabase(json.name);
-    if (json.comment) {
-      own.comment = json.comment;
-    }
-    if (json.version) {
-      own.version = json.version;
-    }
-    if (json.disabled) {
-      own.disabled = json.disabled;
-    }
-    if (json.children && json.children.length > 0) {
-      json.children.forEach((childJson: any) => {
-        // console.log('childJson=', childJson)
-        switch (childJson.resouceType) {
-          case ResourceType.Schema:
-            own.addChild(DbSchema.deserialize(own, childJson));
-            break;
-          case ResourceType.Bucket:
-            own.addChild(DbS3Bucket.deserialize(own, childJson));
-            break;
-          case ResourceType.Owner:
-            own.addChild(DbS3Owner.deserialize(own, childJson));
-            break;
-          default:
-            throw new Error(
-              `DbDatabase#deserialize Undefined resource type:${childJson.resouceType}`,
-            );
-        }
-      });
-    }
-    return own;
-  }
 }
 
 export class RedisDatabase extends DbDatabase {
-  public keys: number;
-  public expires: number;
-  public avgTtl: number;
+  /**
+   * number of keys in the currently-selected database
+   */
+  public numOfKeys: number;
 
-  constructor(name: string, keys: number, expires: number, avgTtl: number) {
+  constructor(name: string, numOfKeys: number) {
     super(name);
-    this.keys = keys;
-    this.expires = expires;
-    this.avgTtl = avgTtl;
+    this.numOfKeys = numOfKeys;
   }
 
   public getDBIndex(): number {
     return parseInt(this.name, 10);
-  }
-  static deserialize(json: any): RedisDatabase {
-    const own = new RedisDatabase(
-      json.name,
-      json.keys,
-      json.expires,
-      json.avgTtl,
-    );
-    if (json.children && json.children.length > 0) {
-      json.children.forEach((childJson: any) => {
-        own.addChild(DbKey.deserialize(childJson));
-      });
-    }
-    return own;
   }
 }
 
@@ -359,16 +302,6 @@ export class DbSchema extends DbResource {
   public isDefault = false;
   constructor(name: string) {
     super(ResourceType.Schema, name);
-  }
-  static deserialize(db: DbDatabase, json: any): DbSchema {
-    const own = new DbSchema(json.name);
-    own.isDefault = json.isDefault;
-    if (json.children && json.children.length > 0) {
-      json.children.forEach((childJson: any) => {
-        own.addChild(DbTable.deserialize(db, own, childJson));
-      });
-    }
-    return own;
   }
 }
 
@@ -385,31 +318,20 @@ export class DbTable extends DbResource {
   toString(): string {
     return `[${super.toString()}]: Type[${this.tableType}]`;
   }
-
-  static deserialize(db: DbDatabase, schema: DbSchema, json: any): DbTable {
-    const own = new DbTable(json.name, json.tableType, json.comment);
-    if (json.children && json.children.length > 0) {
-      json.children.forEach((childJson: any) => {
-        own.addChild(DbColumn.deserialize(db, schema, own, childJson));
-      });
-    }
-    return own;
-  }
 }
 
 export class DbKey<
-  T extends RedisKeyParams | S3KeyParams | SQSMessageParams = any,
+  T extends
+    | RedisKeyParams
+    | S3KeyParams
+    | SQSMessageParams
+    | LogMessageParams = any,
 > extends DbResource {
   public readonly params: T;
 
   constructor(name: string, params: T) {
     super(ResourceType.Key, name);
     this.params = params;
-  }
-
-  static deserialize(json: any): DbKey {
-    const own = new DbKey(json.name, json.params);
-    return own;
   }
 }
 
@@ -433,6 +355,12 @@ export type SQSMessageParams = {
   body: string;
   receiptHandle: string;
   md5OfBody: string;
+  sentTimestamp: Date;
+  approximateFirstReceiveTimestamp: Date;
+};
+
+export type LogMessageParams = {
+  message: string;
 };
 
 export class DbColumn extends DbResource {
@@ -460,21 +388,6 @@ export class DbColumn extends DbResource {
     }
   }
 
-  static deserialize(
-    db: DbDatabase,
-    schema: DbSchema,
-    table: DbTable,
-    json: any,
-  ): DbColumn {
-    const own = new DbColumn(
-      json.name,
-      json.colType,
-      json.params,
-      json.comment,
-    );
-    return own;
-  }
-
   toString(): string {
     return `[${super.toString()}]: Nullable[${this.nullable}] Key[${this.key}]`;
   }
@@ -489,35 +402,27 @@ export class DbS3Bucket extends DbResource {
     super(ResourceType.Bucket, name === undefined ? '' : name);
     this.created = created;
   }
-
-  static deserialize(db: DbDatabase, json: any): DbS3Bucket {
-    const own = new DbS3Bucket(json.name);
-    own.created = json.created;
-    if (json.refreshed) {
-      own.refreshed = dayjs(json.refreshed).toDate();
-    }
-    if (json.children && json.children.length > 0) {
-      json.children.forEach((childJson: any) => {
-        own.addChild(DbKey.deserialize(childJson));
-      });
-    }
-    return own;
-  }
 }
 
 export class DbSQSQueue extends DbResource {
   public readonly url: string;
-  public readonly attributes?: Record<string, string>;
+  public readonly attributes?: AwsSQSAttributes;
 
-  constructor(name: string, url: string, attributes?: Record<string, string>) {
+  constructor(name: string, url: string, attributes?: AwsSQSAttributes) {
     super(ResourceType.Queue, name);
     this.url = url;
     this.attributes = attributes;
   }
+}
 
-  static deserialize(db: DbDatabase, json: any): DbSQSQueue {
-    const own = new DbSQSQueue(json.name, json.url, json.attributes);
-    return own;
+export class DbLogGroup extends DbResource {
+  public readonly creationTime: Date;
+  public readonly storedBytes: number;
+
+  constructor(name: string, creationTime: Date, storedBytes: number) {
+    super(ResourceType.LogGroup, name);
+    this.creationTime = creationTime;
+    this.storedBytes = storedBytes;
   }
 }
 
@@ -525,10 +430,5 @@ export class DbS3Owner extends DbResource {
   constructor(id: string, name?: string) {
     super(ResourceType.Owner, name === undefined ? '' : name);
     this.id = id;
-  }
-  static deserialize(db: DbDatabase, json: any): DbS3Owner {
-    const own = new DbS3Owner(json.name);
-    own.id = json.id;
-    return own;
   }
 }

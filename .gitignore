@@ -30,3 +30,4 @@ l-v-yonsama-multi-platform-database-drivers-*.tgz
 
 # Misc
 .DS_Store
+./example.ts

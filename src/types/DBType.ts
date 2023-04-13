@@ -2,23 +2,20 @@ export const DBType = {
   MySQL: 'MySQL',
   Postgres: 'Postgres',
   Redis: 'Redis',
-  AwsS3: 'AwsS3',
-  Minio: 'Minio',
-  AwsSQS: 'AwsSQS',
+  Aws: 'AwsS',
 } as const;
 
 export type DBType = (typeof DBType)[keyof typeof DBType];
 
-export function isAwsOrMinio(s: DBType): boolean {
-  if (DBType.AwsS3 == s || DBType.Minio == s) {
-    return true;
-  }
-  return false;
-}
+export const DBTypeValues = Object.values(DBType);
 
-export function isRDB(s: DBType): boolean {
-  if (DBType.MySQL == s || DBType.Postgres == s) {
-    return true;
+export const isAws = (dbType: DBType): boolean => DBType.Aws === dbType;
+
+export const isRDSType = (dbType: DBType): boolean => {
+  switch (dbType) {
+    case DBType.MySQL:
+    case DBType.Postgres:
+      return true;
   }
   return false;
-}
+};

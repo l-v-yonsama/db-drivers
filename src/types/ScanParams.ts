@@ -1,4 +1,4 @@
-export type ScanParams<T = any> = {
+export type ScanParams = {
   /**
    * Specify target(Bucket, DB index or Queue url)
    * Redis: DB index
@@ -9,5 +9,4 @@ export type ScanParams<T = any> = {
   limit: number;
   withValue?: boolean;
   keyword?: string;
-  meta?: T;
 };

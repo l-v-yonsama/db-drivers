@@ -2,7 +2,7 @@ import * as mysql from 'mysql2/promise';
 import { EnumValues } from 'enum-values';
 import { ResultSetHeader } from 'mysql2/promise';
 import { MySQLColumnType } from '../types/MySQLColumnType';
-import { BaseDriver, RequestSqlOptions } from './BaseDriver';
+import { RequestSqlOptions } from './BaseDriver';
 import {
   ColumnResolver,
   DbColumn,
@@ -16,8 +16,9 @@ import {
   TableRows,
 } from '../resource';
 import { GeneralColumnType } from '../types';
+import { RDSBaseDriver } from './RDSBaseDriver';
 
-export class MySQLDriver extends BaseDriver {
+export class MySQLDriver extends RDSBaseDriver {
   private client: mysql.Pool | undefined;
 
   constructor(conRes: DbConnection) {
@@ -64,21 +65,8 @@ export class MySQLDriver extends BaseDriver {
     return errorMessage;
   }
 
-  async test(with_connect = false): Promise<string> {
-    let errorReason = '';
-    if (with_connect) {
-      errorReason = await this.connect();
-    }
-    if (!errorReason) {
-      const rdh = await this.requestSql('SELECT 1 from DUAL');
-      if (rdh && rdh.errorMessage) {
-        return rdh.errorMessage;
-      }
-      if (with_connect) {
-        await this.disconnect();
-      }
-    }
-    return errorReason;
+  protected getTestSqlStatement(): string {
+    return 'SELECT 1';
   }
 
   // public
@@ -95,53 +83,50 @@ export class MySQLDriver extends BaseDriver {
         binds = options.binds;
       }
       let resolver: ColumnResolver;
-      if (options && options.needs_column_resolve === true) {
+      if (options && options.needsColumnResolve === true) {
         resolver = this.createColumnResolver(sql);
       }
 
       const [rows, fields] = await this.client.execute(sql, binds);
-      try {
-        if (fields === undefined) {
-          // execute...
-          // Ok Packet {
-          //   fieldCount: 0,
-          //   affectedRows: 1,
-          //   insertId: 0,
-          //   serverStatus: 2,
-          //   warningCount: 0,
-          //   message: '',
-          //   protocol41: true,
-          //   changedRows: 0 }
-          const results = rows as ResultSetHeader;
 
-          rdh = new ResultSetDataHolder([
-            'fieldCount',
-            'affectedRows',
-            'insertId',
-            'serverStatus',
-            'warningStatus',
-            'changedRows',
-          ]);
-          rdh.addRow({
-            fieldCount: results.fieldCount,
-            affectedRows: results.affectedRows,
-            insertId: results.insertId,
-            serverStatus: results.serverStatus,
-            warningStatus: results.warningStatus,
-            changedRows: results.changedRows,
-          });
-        } else {
-          rdh = new ResultSetDataHolder(
-            fields === undefined
-              ? []
-              : fields.map((f) => this.fieldInfo2Key(f, resolver)),
-          );
-          (rows as any).forEach((result: any) => {
-            rdh.addRow(result);
-          });
-        }
-      } catch (err) {
-        rdh = ResultSetDataHolder.create(err);
+      if (fields === undefined) {
+        // execute...
+        // Ok Packet {
+        //   fieldCount: 0,
+        //   affectedRows: 1,
+        //   insertId: 0,
+        //   serverStatus: 2,
+        //   warningCount: 0,
+        //   message: '',
+        //   protocol41: true,
+        //   changedRows: 0 }
+        const results = rows as ResultSetHeader;
+
+        rdh = new ResultSetDataHolder([
+          'fieldCount',
+          'affectedRows',
+          'insertId',
+          'serverStatus',
+          'warningStatus',
+          'changedRows',
+        ]);
+        rdh.addRow({
+          fieldCount: results.fieldCount,
+          affectedRows: results.affectedRows,
+          insertId: results.insertId,
+          serverStatus: results.serverStatus,
+          warningStatus: results.warningStatus,
+          changedRows: results.changedRows,
+        });
+      } else {
+        rdh = new ResultSetDataHolder(
+          fields === undefined
+            ? []
+            : fields.map((f) => this.fieldInfo2Key(f, resolver)),
+        );
+        (rows as any).forEach((result: any) => {
+          rdh.addRow(result);
+        });
       }
     } else {
       new Error('No connection');
@@ -183,55 +168,25 @@ export class MySQLDriver extends BaseDriver {
     return list;
   }
 
-  async getInfomationSchemas(options: {
-    progress_callback?: Function | undefined;
-    params?: any;
-  }): Promise<Array<DbDatabase>> {
+  async getInfomationSchemas(): Promise<Array<DbDatabase>> {
     if (!this.conRes) {
       return [];
     }
     const dbResources = new Array<DbDatabase>();
     const dbDatabase = new DbDatabase(this.conRes.database);
     dbResources.push(dbDatabase);
-    let progress = 10;
-    if (options.progress_callback) {
-      options.progress_callback(
-        `${dbResources.length} Databases found.`,
-        progress,
-      );
-    }
 
     const dbSchemas = await this.getSchemas(dbDatabase);
     dbSchemas.forEach((res) => {
       dbDatabase.addChild(res);
     });
     this.resetDefaultSchema(dbDatabase);
-    progress = 30;
-    if (options.progress_callback) {
-      options.progress_callback(`${dbSchemas.length} Schemas found.`, progress);
-    }
 
-    // const parallels = [];
-    const incrPerSchema = Math.round(20 / dbSchemas.length);
     for (const dbSchema of dbSchemas) {
       const dbTables = await this.getTables(dbSchema);
       dbTables.forEach((res) => dbSchema.addChild(res));
-      if (options.progress_callback) {
-        progress += incrPerSchema;
-        options.progress_callback(
-          `${dbTables.length} Tables found in Schema[${dbSchema.getName()}].`,
-          progress,
-        );
-      }
     }
     for (const dbSchema of dbSchemas) {
-      if (options.progress_callback) {
-        progress += incrPerSchema;
-        options.progress_callback(
-          `Commnets finding now... in Schema[${dbSchema.getName()}].`,
-          progress,
-        );
-      }
       for (const dbTable of dbSchema.getChildren()) {
         const dbColumns = await this.getColumns(
           dbSchema.getName(),

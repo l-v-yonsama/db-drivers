@@ -3,10 +3,10 @@ import {
   RedisDriver,
   DbConnection,
   RedisDatabase,
-  RedisKeyType,
   DBDriverResolver,
   ConnectionSetting,
   DBType,
+  RedisKeyType,
 } from '../../../src';
 
 const connectOption: RedisOptions = {
@@ -88,18 +88,19 @@ describe('RedisDriver', () => {
     let testRedisDb0Res: RedisDatabase;
 
     it('should return Database resource', async () => {
-      const dbRootRes = await driver.getInfomationSchemas({});
-      expect(dbRootRes).toHaveLength(16);
+      const dbRootRes = await driver.getInfomationSchemas();
+      expect(dbRootRes).toHaveLength(1);
       testRedisDb0Res = dbRootRes[0] as RedisDatabase;
       expect(testRedisDb0Res.getName()).toBe(
         driver.getConnectionRes().database,
       );
+      expect(testRedisDb0Res.numOfKeys).toEqual(expect.any(Number));
     });
   });
 
-  describe('asyncScan', () => {
+  describe('scanStream', () => {
     it('should return values', async () => {
-      const keys = await driver.scan({
+      const keys = await driver.scanStream({
         target: '0',
         limit: 1000,
         keyword: '*',
