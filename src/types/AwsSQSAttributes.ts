@@ -101,9 +101,25 @@ export type AwsSQSAttributes = {
    */
   FifoThroughputLimit?: any;
   FifoQueue?: boolean;
+  /**
+   * キューから取得可能なメッセージのおおよその数
+   */
   ApproximateNumberOfMessages?: number;
+  /**
+   * 処理中のメッセージのおおよその数を取得します。
+   * メッセージがクライアントに送信されたが、まだ削除されていない場合、
+   * または表示期限に達していない場合、メッセージは処理中とみなされます。
+   */
   ApproximateNumberOfMessagesNotVisible?: number;
+  /**
+   * キュー内の、遅延が発生したためにすぐに読み取ることができないメッセージのおおよその数を取得します。
+   * これは、キューが遅延キューとして設定されている場合、
+   * またはメッセージが遅延パラメータとともに送信された場合に発生することがあります。
+   */
   ApproximateNumberOfMessagesDelayed?: number;
+
+  CreatedTimestamp?: number;
+  LastModifiedTimestamp?: number;
 
   [key: string]: any;
 };

@@ -9,6 +9,7 @@ export const ResourceType = {
   Queue: 'Queue',
   Owner: 'Owner',
   LogGroup: 'LogGroup',
+  LogStream: 'LogStream',
 } as const;
 
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];

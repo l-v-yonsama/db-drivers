@@ -1,5 +1,8 @@
 import * as mysql from 'mysql2/promise';
+import { promises as fs } from 'fs';
+import * as path from 'path';
 import { ResultSetHeader } from 'mysql2/promise';
+import { DbResource, fromJson } from '../../src';
 
 const baseConnectOption = {
   host: '127.0.0.1',
@@ -8,6 +11,30 @@ const baseConnectOption = {
   password: 'p@ssw0rd',
   database: 'testdb',
 };
+
+export const RES_FILE_NAMES = ['mysqlDbRes.json'] as const;
+export type ResFileNames = (typeof RES_FILE_NAMES)[number];
+
+const dataFolder = path.join('__tests__', 'data');
+
+export async function saveRes(
+  name: ResFileNames,
+  res: DbResource,
+): Promise<void> {
+  const data = res.toJsonStringify();
+  await fs.writeFile(path.join(dataFolder, name.toString()), data, {
+    encoding: 'utf8',
+  });
+}
+
+export async function loadRes<T extends DbResource>(
+  name: ResFileNames,
+): Promise<T> {
+  const jsonString = await fs.readFile(path.join(dataFolder, name.toString()), {
+    encoding: 'utf8',
+  });
+  return fromJson<T>(JSON.parse(jsonString));
+}
 
 export async function init(): Promise<void> {
   const con = await mysql.createConnection(baseConnectOption);

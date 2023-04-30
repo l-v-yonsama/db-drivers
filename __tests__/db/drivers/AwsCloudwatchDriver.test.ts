@@ -123,7 +123,7 @@ describe('AwsCloudwatchClient', () => {
     it('should have DbLogGroup resource', async () => {
       const logGroup = testDbRes.getChildByName('logGroupName1') as DbLogGroup;
       expect(logGroup.getName()).toBe('logGroupName1');
-      expect(logGroup.storedBytes).toBeDefined();
+      expect(logGroup.attr.storedBytes).toBeDefined();
     });
   });
 });

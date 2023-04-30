@@ -15,6 +15,7 @@ import {
   S3ClientConfig,
 } from '@aws-sdk/client-s3';
 import {
+  AwsDatabase,
   DbConnection,
   DbDatabase,
   DbKey,
@@ -24,10 +25,12 @@ import {
   ResultSetDataHolder,
   S3KeyParams,
 } from '../../resource';
-import { DBType, GeneralColumnType, ScanParams } from '../../types';
+import { GeneralColumnType, ScanParams } from '../../types';
 import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
+import { AwsServiceType } from '../../types/AwsServiceType';
+import { plural } from 'pluralize';
 
 export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   s3Client: S3Client;
@@ -73,7 +76,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
     bucket: string;
     prefix: string;
     limit: number;
-    withValue: boolean;
+    withValue: boolean | 'auto';
   }): Promise<DbKey<S3KeyParams>[]> {
     // Declare truncated as a flag that the while loop is based on.
     let truncated = true;
@@ -93,7 +96,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
           new ListObjectsCommand(bucketParams),
         );
 
-        response.Contents.forEach((item) => {
+        response.Contents?.forEach((item) => {
           const key = new DbKey<S3KeyParams>(item.Key, {
             etag: item.ETag,
             size: item.Size,
@@ -116,13 +119,19 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       }
     }
 
-    if (withValue) {
-      const promises = list.map(async (it) => {
-        it.params.base64 = await this.getValueByKey({
-          bucket,
-          key: it.name,
+    if (withValue === true || withValue === 'auto') {
+      const promises = list
+        .filter(
+          (it) =>
+            withValue === true ||
+            (withValue === 'auto' && it.params.size <= 10_000),
+        )
+        .map(async (it) => {
+          it.params.base64 = await this.getValueByKey({
+            bucket,
+            key: it.name,
+          });
         });
-      });
       await Promise.all(promises);
     }
     return list;
@@ -177,7 +186,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       return null;
     }
 
-    const dbDatabase = new DbDatabase('S3');
+    const dbDatabase = new AwsDatabase('S3', AwsServiceType.S3);
 
     try {
       const buckets = await this.s3Client.send(new ListBucketsCommand({}));
@@ -186,6 +195,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
           const dbBucket = new DbS3Bucket(bucket.Name, bucket.CreationDate);
           dbDatabase.addChild(dbBucket);
         }
+        dbDatabase.comment = `${buckets.Buckets.length} ${plural('bucket')}`;
       }
       if (buckets.Owner) {
         const dbOwner = new DbS3Owner(

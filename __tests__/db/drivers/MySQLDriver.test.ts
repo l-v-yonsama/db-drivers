@@ -8,7 +8,7 @@ import {
   DBType,
   GeneralColumnType,
 } from '../../../src';
-import { init } from '../../setup/mysql';
+import { init, saveRes } from '../../setup/mysql';
 
 const baseConnectOption = {
   host: '127.0.0.1',
@@ -57,6 +57,7 @@ describe('MySQLDriver', () => {
       expect(dbRootRes).toHaveLength(1);
       testDbRes = dbRootRes[0];
       expect(testDbRes.getName()).toBe(driver.getConnectionRes().database);
+      // await saveRes('mysqlDbRes.json', testDbRes);
     });
 
     it('should have Schema resource', async () => {

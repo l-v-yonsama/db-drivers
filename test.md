@@ -1,81 +1,54 @@
-### キュー作成
-
 ```sh
-aws sqs create-queue --queue-name test-queue --endpoint-url http://localhost:4566 --profile localstack
-{
-    "QueueUrl": "http://localhost:4566/000000000000/test-queue"
-}
-```
 
-### キューの確認
+aws logs create-log-group --log-group-name test-log-group --endpoint-url=http://localhost:6005 --profile test
 
-```sh
-aws sqs list-queues --endpoint-url http://localhost:4566 --profile test
-{
-    "QueueUrls": [
-        "http://localhost:4566/000000000000/test-queue"
-    ]
-}
+aws logs create-log-stream --log-group-name test-log-group --log-stream-name test-log-stream --endpoint-url=http://localhost:6005 --profile test
 
-aws sqs get-queue-attributes --queue-url http://localhost:4566/000000000000/test-queue --attribute-names All --endpoint-url http://localhost:4566 --profile test
+aws logs put-log-events --log-group-name test --log-stream-name test2 --log-events timestamp=1681607666426,message='LOG EVENTS 11' --profile cloudberry
+
 {
-    "Attributes": {
-        "ApproximateNumberOfMessages": "0",
-        "ApproximateNumberOfMessagesNotVisible": "0",
-        "ApproximateNumberOfMessagesDelayed": "0",
-        "CreatedTimestamp": "1680266943",
-        "DelaySeconds": "0",
-        "LastModifiedTimestamp": "1680266943",
-        "MaximumMessageSize": "262144",
-        "MessageRetentionPeriod": "345600",
-        "QueueArn": "arn:aws:sqs:ap-northeast-1:000000000000:test-queue",
-        "ReceiveMessageWaitTimeSeconds": "0",
-        "VisibilityTimeout": "30"
+    "nextSequenceToken": "00000000000000000000000000000000000000000000000000000001",
+    "rejectedLogEventsInfo": {
+        "tooOldLogEventEndIndex": 0
     }
 }
-```
 
-## メッセージをキューに送信する
+aws logs put-log-events \
+        --log-group-name test \
+        --log-stream-name test2 \
+        --log-events timestamp=1681607696426,message='LOG EVENTS 23' \
+        --sequence-token 49639713273617007071072697491034211142326635810749678770  --profile cloudberry
 
-```sh
-aws sqs send-message --queue-url "http://localhost:4566/000000000000/test-queue" --message-body "hello sqs" --endpoint-url http://localhost:4566 --profile test
 {
-    "MD5OfMessageBody": "3b7bef57d06c0021d0aafe8f6d587241",
-    "MessageId": "038802bd-8f57-423a-8b66-733ea3b89cbb"
+    "nextSequenceToken": "00000000000000000000000000000000000000000000000000000002",
+    "rejectedLogEventsInfo": {
+        "tooOldLogEventEndIndex": 0
+    }
+}
+
+ aws logs get-log-events --log-group-name test-log-group --log-stream-name test-log-stream --endpoint-url=http://localhost:6005 --profile test
+
+{
+    "events": [],
+    "nextForwardToken": "f/00000000000000000000000000000000000000000000000000000000",
+    "nextBackwardToken": "b/00000000000000000000000000000000000000000000000000000000"
 }
 ```
 
-### キューにあるメッセージ数を確認する
-
 ```sh
-aws sqs get-queue-attributes --queue-url 'http://localhost:4566/000000000000/test-queue' --attribute-names ApproximateNumberOfMessages --query 'Attributes.ApproximateNumberOfMessages' --endpoint-url http://localhost:4566 --profile test
-"1"
-```
-
-### メッセージをキューから消費する
-
-```sh
-aws sqs receive-message --queue-url 'http://localhost:4566/000000000000/test-queue' --endpoint-url http://localhost:4566 --profile test
+aws logs describe-log-streams --log-group-name test --log-stream-name test2 --profile cloudberry
 {
-    "Messages": [
+    "logStreams": [
         {
-            "MessageId": "038802bd-8f57-423a-8b66-733ea3b89cbb",
-            "ReceiptHandle": "MTZkY2U1MDYtN2NjYi00NzZlLTg5MjAtZmRhY2I5NjYzZjlmIGFybjphd3M6c3FzOmFwLW5vcnRoZWFzdC0xOjAwMDAwMDAwMDAwMDp0ZXN0LXF1ZXVlIDAzODgwMmJkLThmNTctNDIzYS04YjY2LTczM2VhM2I4OWNiYiAxNjgwMjY3MzUxLjcxMzU0ODI=",
-            "MD5OfBody": "3b7bef57d06c0021d0aafe8f6d587241",
-            "Body": "hello sqs"
+            "logStreamName": "test2",
+            "creationTime": 1681607603539,
+            "firstEventTimestamp": 1681607666426,
+            "lastEventTimestamp": 1681607666426,
+            "lastIngestionTime": 1681607666729,
+            "uploadSequenceToken": "49039859542948432010204560455350998343663879279092483684",
+            "arn": "arn:aws:logs:ap-northeast-1:305196851657:log-group:test:log-stream:test2",
+            "storedBytes": 0
         }
     ]
 }
-```
-
-### キューからメッセージを削除する
-
-```sh
-# メッセージ削除
-aws sqs delete-message --queue-url 'http://localhost:4566/000000000000/test-queue' --receipt-handle "MTZkY2U1MDYtN2NjYi00NzZlLTg5MjAtZmRhY2I5NjYzZjlmIGFybjphd3M6c3FzOmFwLW5vcnRoZWFzdC0xOjAwMDAwMDAwMDAwMDp0ZXN0LXF1ZXVlIDAzODgwMmJkLThmNTctNDIzYS04YjY2LTczM2VhM2I4OWNiYiAxNjgwMjY3MzUxLjcxMzU0ODI=" --endpoint-url http://localhost:4566 --profile test
-
-
-# メッセージ数確認
-aws sqs get-queue-attributes --queue-url 'http://localhost:4566/000000000000/test-queue' --attribute-names ApproximateNumberOfMessages --query 'Attributes.ApproximateNumberOfMessages' --endpoint-url http://localhost:4566 --profile test
-"0"
 ```

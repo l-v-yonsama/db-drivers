@@ -1,6 +1,7 @@
 /* eslint-disable no-async-promise-executor */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
+  AwsDatabase,
   DbConnection,
   DbDatabase,
   DbKey,
@@ -9,7 +10,7 @@ import {
   RdhKey,
   ResultSetDataHolder,
 } from '../../resource';
-import { GeneralColumnType, ScanParams } from '../../types';
+import { GeneralColumnType, ResourceType, ScanParams } from '../../types';
 import {
   CloudWatchLogsClient,
   DescribeLogGroupsCommand,
@@ -27,8 +28,10 @@ import {
 } from '@aws-sdk/client-cloudwatch-logs';
 import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
-import { sleep } from '../../util';
+import { sleep, toDate } from '../../util';
 import { Scannable } from '../BaseDriver';
+import { AwsServiceType } from '../../types/AwsServiceType';
+import { plural } from 'pluralize';
 
 export class AwsCloudwatchServiceClient
   extends AwsServiceClient
@@ -60,7 +63,7 @@ export class AwsCloudwatchServiceClient
     logStreamName: string;
     startTime?: number;
     limit?: number;
-  }): Promise<DbKey<LogMessageParams>[]> {
+  }): Promise<OutputLogEvent[]> {
     const list: OutputLogEvent[] = [];
     const { logGroupName, logStreamName, startTime } = params;
     const requiredLimit = params.limit ?? 100;
@@ -76,7 +79,7 @@ export class AwsCloudwatchServiceClient
           nextToken,
         }),
       );
-      console.log('ev=', result.events);
+
       list.push(...result.events);
       if (nextToken === result.nextForwardToken) {
         break; // EOF
@@ -87,12 +90,7 @@ export class AwsCloudwatchServiceClient
       nextToken = result.nextForwardToken;
     } while (nextToken);
 
-    return list.map((it) => {
-      const params: LogMessageParams = {
-        message: it.message,
-      };
-      return new DbKey(new Date(it.timestamp).toLocaleDateString(), params);
-    });
+    return list;
   }
 
   async query(
@@ -125,12 +123,16 @@ export class AwsCloudwatchServiceClient
     return results;
   }
 
-  async scan(
-    params: ScanParams & {
-      startTime: number;
-      endTime: number;
-    },
-  ): Promise<ResultSetDataHolder> {
+  async scan(params: ScanParams): Promise<ResultSetDataHolder> {
+    const { targetResourceType } = params;
+    if (targetResourceType === ResourceType.LogGroup) {
+      return this.scanLogGroup(params);
+    } else {
+      return this.scanLogStream(params);
+    }
+  }
+
+  async scanLogGroup(params: ScanParams): Promise<ResultSetDataHolder> {
     const { target, keyword, startTime, endTime, limit } = params;
 
     const { status, results } = await this.query({
@@ -154,14 +156,63 @@ export class AwsCloudwatchServiceClient
 
     const keys = results[0]
       .filter((it) => it.field !== undefined && it.field !== '@ptr')
-      .map((it) => new RdhKey(it.field, GeneralColumnType.TEXT));
+      .map((it) => {
+        const key = new RdhKey(it.field, GeneralColumnType.TEXT);
+        if (it.field === '@timestamp') {
+          key.type = GeneralColumnType.TIMESTAMP;
+        }
+        return key;
+      });
 
     const rdh: ResultSetDataHolder = new ResultSetDataHolder(keys);
     results.forEach((rowResult) => {
       const values = {};
       rowResult.forEach((it) => {
-        values[it.field] = it.value;
+        if (it.field === '@timestamp') {
+          // 2023-04-18 10:44:25.000  UTC
+          const iso8601 = it.value?.replace(
+            /([0-9]+-[0-9]+-[0-9]+) ([0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?)/,
+            '$1T$2Z',
+          );
+          values[it.field] = toDate(iso8601);
+        } else {
+          values[it.field] = it.value;
+        }
       });
+      rdh.addRow(values);
+    });
+    return rdh;
+  }
+
+  async scanLogStream(params: ScanParams): Promise<ResultSetDataHolder> {
+    const { target, parentTarget, startTime, limit } = params;
+
+    const list = await this.getLogEvents({
+      logGroupName: parentTarget,
+      logStreamName: target,
+      startTime,
+      limit,
+    });
+
+    const ingestionTime = new RdhKey(
+      'ingestionTime',
+      GeneralColumnType.TIMESTAMP,
+      'Time received by CloudWatch Logs',
+    );
+    const timestamp = new RdhKey(
+      'timestamp',
+      GeneralColumnType.TIMESTAMP,
+      'Timestamp field of the log event',
+    );
+    const message = new RdhKey('message', GeneralColumnType.TEXT, '');
+    const keys = [ingestionTime, timestamp, message];
+    const rdh: ResultSetDataHolder = new ResultSetDataHolder(keys);
+    list.forEach((rowResult) => {
+      const values = {
+        ingestionTime: toDate(rowResult.ingestionTime),
+        timestamp: toDate(rowResult.timestamp),
+        message: rowResult.message,
+      };
       rdh.addRow(values);
     });
     return rdh;
@@ -171,7 +222,7 @@ export class AwsCloudwatchServiceClient
     if (!this.conRes) {
       return null;
     }
-    const dbDatabase = new DbDatabase('Cloudwatch');
+    const dbDatabase = new AwsDatabase('Cloudwatch', AwsServiceType.Cloudwatch);
 
     try {
       let nextToken: string | undefined = undefined;
@@ -182,18 +233,15 @@ export class AwsCloudwatchServiceClient
         );
         if (result.logGroups) {
           for (const logGroup of result.logGroups) {
-            // console.log(attr.Attributes);
-            const dbQueue = new DbLogGroup(
-              logGroup.logGroupName,
-              new Date(logGroup.creationTime),
-              logGroup.storedBytes,
-            );
-            dbDatabase.addChild(dbQueue);
+            const res = new DbLogGroup(logGroup.logGroupName, logGroup);
+            dbDatabase.addChild(res);
           }
         }
         nextToken = result.nextToken;
       } while (nextToken);
-      dbDatabase.comment = `${dbDatabase.getChildren().length} groups`;
+      dbDatabase.comment = `${dbDatabase.getChildren().length} ${plural(
+        'group',
+      )}`;
     } catch (e) {
       console.error(e);
       // reject(e);
@@ -224,6 +272,10 @@ export class AwsCloudwatchServiceClient
       }
       nextToken = result.nextToken;
     } while (nextToken);
+    list[0].firstEventTimestamp;
+    list[0].lastEventTimestamp;
+    list[0].lastIngestionTime;
+    list[0].firstEventTimestamp;
     return list;
   }
 

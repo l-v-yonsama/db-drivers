@@ -130,8 +130,8 @@ describe('AwsSQSDriver', () => {
     it('should have DbSQSQueue resource', async () => {
       const queue = testDbRes.getChildByName('queueName1.fifo') as DbSQSQueue;
       expect(queue.getName()).toBe('queueName1.fifo');
-      expect(queue.attributes?.FifoQueue).toBe(true);
-      expect(queue.attributes?.ContentBasedDeduplication).toBe(true);
+      expect(queue.attr?.FifoQueue).toBe(true);
+      expect(queue.attr?.ContentBasedDeduplication).toBe(true);
     });
   });
 

@@ -14,6 +14,7 @@ import {
 } from '@aws-sdk/client-sqs';
 import * as url from 'url';
 import {
+  AwsDatabase,
   DbConnection,
   DbDatabase,
   DbKey,
@@ -28,6 +29,8 @@ import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
 import { toBoolean, toDate, toNum } from '../../util';
 import { Scannable } from '../BaseDriver';
+import { AwsServiceType } from '../../types/AwsServiceType';
+import { plural } from 'pluralize';
 
 export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
   sqsClient: SQSClient;
@@ -106,7 +109,7 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
     if (!this.conRes) {
       return null;
     }
-    const dbDatabase = new DbDatabase('SQS');
+    const dbDatabase = new AwsDatabase('SQS', AwsServiceType.SQS);
 
     try {
       let NextToken: string | undefined = undefined;
@@ -124,24 +127,24 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
             if (idx) {
               name = name.substring(idx + 1);
             }
-            const attr = await this.sqsClient.send(
+            const attrResult = await this.sqsClient.send(
               new GetQueueAttributesCommand({
                 QueueUrl: queueUrl,
                 AttributeNames: ['All'],
               }),
             );
             // console.log(attr.Attributes);
-            const dbQueue = new DbSQSQueue(
-              name,
-              queueUrl,
-              this.toAttributes(attr?.Attributes),
-            );
+            const attr = this.toAttributes(attrResult?.Attributes);
+
+            const dbQueue = new DbSQSQueue(name, queueUrl, attr);
             dbDatabase.addChild(dbQueue);
           }
         }
         NextToken = queues.NextToken;
       } while (NextToken);
-      dbDatabase.comment = `${dbDatabase.getChildren().length} queues`;
+      dbDatabase.comment = `${dbDatabase.getChildren().length} ${plural(
+        'queue',
+      )}`;
     } catch (e) {
       console.error(e);
       // reject(e);
@@ -150,6 +153,9 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
   }
 
   private toAttributes(it: Record<string, string>): AwsSQSAttributes {
+    if (it == undefined) {
+      return {};
+    }
     return {
       ...it,
       ApproximateNumberOfMessages: toNum(it.ApproximateNumberOfMessages),

@@ -3,6 +3,7 @@ import { EnumValues } from 'enum-values';
 import * as ss from 'simple-statistics';
 import ShuffleArray from 'shuffle-array';
 import { GeneralColumnType } from '../types';
+import { DbResource } from './DbResource';
 
 export class SampleClassPair {
   public clazz_value: any;
@@ -176,7 +177,12 @@ export class ResultSetDataHolder {
   is_empty = false;
   keys: RdhKey[];
   rows: Array<RdhRow>;
-  meta?: { [key: string]: any };
+  meta?: {
+    connectionName?: string;
+    tableName?: string;
+    res?: DbResource;
+    [key: string]: any;
+  };
   sqlStatement: string | undefined;
   shuffledIndexes?: number[];
   shuffledNextCounter?: number;
@@ -727,6 +733,9 @@ export class ResultSetDataHolder {
   }
 
   private toShortString(o: any): string {
+    if (typeof o === 'object' && o instanceof Date) {
+      return o.toISOString();
+    }
     const s = '' + o;
     if (s.length > 48) {
       return s.substring(0, 48) + '..';
@@ -770,6 +779,11 @@ export class ResultSetDataHolder {
         });
         buf.nl();
       });
+      buf.d('...');
+      this.keys.forEach(() => {
+        buf.d('...');
+      });
+      buf.nl();
       this.rows
         .slice(this.rows.length - num_of_head, this.rows.length)
         .forEach((v, idx) => {

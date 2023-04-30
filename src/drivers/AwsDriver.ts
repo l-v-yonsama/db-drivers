@@ -15,15 +15,8 @@ import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
 import { AwsCloudwatchServiceClient } from './aws/AwsCloudwatchServiceClient';
 import { AwsS3ServiceClient } from './aws/AwsS3ServiceClient';
 import { AwsServiceType } from '../types/AwsServiceType';
-
-export interface Destroyable {
-  /**
-   * Destroy underlying resources, like sockets. It's usually not necessary to do this.
-   * However in Node.js, it's best to explicitly shut down the client's agent when it is no longer needed.
-   * Otherwise, sockets might stay open for quite a long time before the server terminates them.
-   */
-  destroy(): void;
-}
+import { AwsServiceClient } from './aws/AwsServiceClient';
+import { ResourceType } from '../types';
 
 export type ClientConfigType = {
   region?: string;
@@ -53,6 +46,44 @@ export class AwsDriver extends BaseDriver {
       config.endpoint = url;
     }
     return config;
+  }
+
+  getClientByServiceType<T extends AwsServiceClient = AwsServiceClient>(
+    serviceType: AwsServiceType,
+  ): T | undefined {
+    let client: AwsServiceClient = undefined;
+    switch (serviceType) {
+      case 'Cloudwatch':
+        client = this.cloudwatchClient;
+        break;
+      case 'S3':
+        client = this.s3Client;
+        break;
+      case 'SQS':
+        client = this.sqsClient;
+        break;
+    }
+    return client as T;
+  }
+
+  getClientByResourceType<T extends AwsServiceClient = AwsServiceClient>(
+    resourceType: ResourceType,
+  ): T | undefined {
+    let client: AwsServiceClient = undefined;
+    switch (resourceType) {
+      case 'LogGroup':
+      case 'LogStream':
+        client = this.cloudwatchClient;
+        break;
+      case 'Bucket':
+      case 'Owner':
+        client = this.s3Client;
+        break;
+      case 'Queue':
+        client = this.sqsClient;
+        break;
+    }
+    return client as T;
   }
 
   private createAwsCredential():

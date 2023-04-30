@@ -23,14 +23,23 @@ export const toBoolean = (s: string | undefined): boolean | undefined => {
   return 'true' === s.toLowerCase();
 };
 
-export const toDate = (s: string | number | undefined): Date | undefined => {
+export const toDate = (
+  s: string | number | Date | undefined,
+): Date | undefined => {
   if (s === null || s === undefined) {
     return undefined;
+  }
+
+  if (typeof s === 'object') {
+    if (s instanceof Date) {
+      return s;
+    }
   }
 
   if (typeof s === 'number') {
     return new Date(s);
   }
+
   const r = dayjs(s).toDate();
   return r;
 };

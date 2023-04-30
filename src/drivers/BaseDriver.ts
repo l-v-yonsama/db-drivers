@@ -7,7 +7,6 @@ import {
   DbConnection,
   DbDatabase,
   DbSchema,
-  ResourceHelper,
   ResultSetDataHolder,
   SchemaAndTableHints,
 } from '../resource';
@@ -147,11 +146,7 @@ export abstract class BaseDriver {
     if (this.conRes) {
       for (let i = 0; i < resolver.hints.list.length; i++) {
         const hints = resolver.hints.list[i];
-        const t = ResourceHelper.findResource(
-          this.conRes,
-          ResourceType.Table,
-          hints.table,
-        );
+        const t = this.conRes.findResource(ResourceType.Table, hints.table);
         if (t) {
           // log.info(LOG_PREFIX, "#resolveColumn found table", hints.table);
           return <DbColumn>t.getChildByName(column, { unwrapQuote: true });

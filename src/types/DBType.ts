@@ -2,7 +2,7 @@ export const DBType = {
   MySQL: 'MySQL',
   Postgres: 'Postgres',
   Redis: 'Redis',
-  Aws: 'AwsS',
+  Aws: 'Aws',
 } as const;
 
 export type DBType = (typeof DBType)[keyof typeof DBType];

@@ -1,14 +1,16 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.42",
+  "version": "0.1.51",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16 <19"
   },
   "devDependencies": {
+    "@types/bytes": "^3.1.1",
     "@types/jest": "~29.2",
     "@types/node": "~18",
     "@types/pg": "^8.6.6",
+    "@types/pluralize": "^0.0.29",
     "@typescript-eslint/eslint-plugin": "~5.44",
     "@typescript-eslint/parser": "~5.44",
     "eslint": "~8.28",
@@ -26,7 +28,7 @@
     "clean": "rimraf coverage built tmp",
     "prebuild": "npm run lint",
     "build": "npm run clean && tsc -p tsconfig.json",
-    "example": "npm run build && node built/src/example.js",
+    "example:parser": "npm run build && node built/src/examples/parser.js",
     "build:watch": "npm run clean && tsc -w -p tsconfig.json",
     "build:release": "npm run clean && tsc -p tsconfig.release.json",
     "prepublishOnly": "npm run build:release",
@@ -40,7 +42,7 @@
     "test:driver:sqs": "npm run clean && jest __tests__/db/drivers/AwsSQSDriver.test.ts",
     "test:driver:cw": "npm run clean && jest __tests__/db/drivers/AwsCloudwatchDriver.test.ts",
     "test:driver:minio": "npm run clean && jest __tests__/db/drivers/AwsS3Driver.test.ts",
-    "test:sql": "npm run clean && jest __tests__/service/SQLService.test.ts",
+    "test:helper:sql": "npm run clean && jest __tests__/helpers/SQLHelper.test.ts",
     "prettier": "prettier --config .prettierrc --write .",
     "test:watch": "jest --watch"
   },
@@ -51,6 +53,7 @@
     "@aws-sdk/client-s3": "^3.279.0",
     "@aws-sdk/client-sqs": "^3.303.0",
     "@aws-sdk/credential-providers": "^3.279.0",
+    "bytes": "^3.1.2",
     "dayjs": "^1.11.7",
     "dt-sql-parser": "^4.0.0-beta.3.2",
     "enum-values": "^1.2.1",
@@ -61,6 +64,8 @@
     "mysql2": "^3.1.2",
     "node-sql-parser": "^4.6.5",
     "pg": "^8.9.0",
+    "pgsql-ast-parser": "^11.0.1",
+    "pluralize": "^8.0.0",
     "pretty-bytes": "^6.1.0",
     "short-unique-id": "^4.4.4",
     "shuffle-array": "^1.0.1",

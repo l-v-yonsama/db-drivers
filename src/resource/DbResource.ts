@@ -8,6 +8,9 @@ import {
 import { AwsSQSAttributes } from '../types/AwsSQSAttributes';
 import { SupplyCredentialType } from '../types/AwsSupplyCredentialType';
 import { AwsServiceType } from '../types/AwsServiceType';
+import { EnumValues } from 'enum-values';
+import { format } from 'bytes';
+import { toDate } from '../util';
 
 const uid = new ShortUniqueId();
 
@@ -17,14 +20,6 @@ const unwrapQuote = (n: string): string => {
   }
   return n;
 };
-
-export interface Proposal {
-  s?: string;
-  t?: string;
-  name: string;
-  comment?: string;
-  type: ResourceType;
-}
 
 export interface SchemaAndTableName {
   schema?: string;
@@ -43,6 +38,52 @@ export interface ColumnResolver {
   hints: SchemaAndTableHints;
 }
 
+export function fromJson<T extends DbResource>(json: any): T {
+  const resouceType: ResourceType = json.resouceType;
+  const { name } = json;
+  let res;
+  switch (resouceType) {
+    case ResourceType.Connection:
+      res = new DbConnection(json);
+      break;
+    case ResourceType.Database:
+      res = Object.assign(new DbDatabase(name), json);
+      break;
+    case ResourceType.Schema:
+      res = Object.assign(new DbSchema(name), json);
+      break;
+    case ResourceType.Table:
+      res = Object.assign(new DbTable(name, json.tableType), json);
+      break;
+    case ResourceType.Column:
+      res = Object.assign(new DbColumn(name, json.colType, null), json);
+      break;
+    case ResourceType.Key:
+      res = Object.assign(new DbKey(name, json.params), json);
+      break;
+    case ResourceType.Bucket:
+      res = Object.assign(new DbS3Bucket(name), json);
+      break;
+    case ResourceType.Queue:
+      res = Object.assign(new DbSQSQueue(name, json.url, json.attr), json);
+      break;
+    case ResourceType.Owner:
+      res = Object.assign(new DbS3Owner(json.id, name), json);
+      break;
+    case ResourceType.LogGroup:
+      res = Object.assign(new DbLogGroup(name, json.attr), json);
+      break;
+    case ResourceType.LogStream:
+      res = Object.assign(new DbLogStream(name, json.attr), json);
+      break;
+  }
+  if (json.children) {
+    const children = json.children.map((child) => fromJson(child));
+    res.children = children;
+  }
+  return res;
+}
+
 export class DbResource {
   public id = uid.randomUUID(8);
   protected resouceType: ResourceType;
@@ -50,6 +91,7 @@ export class DbResource {
   public comment?: string;
   protected children: Array<DbResource>;
   public meta: { [key: string]: any };
+  public isInProgress?: boolean;
 
   public static createEmpty(): DbResource {
     const r = new DbResource(ResourceType.Database, '');
@@ -60,6 +102,13 @@ export class DbResource {
     this.resouceType = resouceType;
     this.name = name;
     this.children = [];
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      name: this.name,
+      commnet: this.comment,
+    };
   }
 
   getName(): string {
@@ -137,6 +186,22 @@ export class DbResource {
     }
     return searchChildren.find((a) => name.test(a.getName()));
   }
+  findResource(type: ResourceType, name: string): DbResource {
+    if (this.resouceType === type && this.name === name) {
+      return this;
+    }
+    if (this.resouceType === type) {
+      return undefined;
+    }
+    const list = this.getChildren();
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i].findResource(type, name);
+      if (r) {
+        return r;
+      }
+    }
+    return undefined;
+  }
   toString(): string {
     return `[${this.resouceType}]:${this.name}`;
   }
@@ -144,7 +209,7 @@ export class DbResource {
     return JSON.stringify(
       this,
       (k, v) => {
-        if (['parent', 'disabled'].includes(k)) {
+        if (['disabled'].includes(k)) {
           return undefined;
         }
         return v;
@@ -216,7 +281,6 @@ export class DbConnection extends DbResource implements ConnectionSetting {
   public databaseVersion?: number;
   public ds?: string;
   public isConnected: boolean;
-  public isInProgress: boolean;
   public apiVersion?: string;
   public ssh?: SshSetting;
   public awsSetting?: AwsSetting;
@@ -264,6 +328,13 @@ export class DbDatabase extends DbResource {
     super(ResourceType.Database, name);
   }
 
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      version: this.version,
+    };
+  }
+
   public getSchema(option: { name?: string; isDefault?: boolean }): DbSchema {
     const { name, isDefault } = option;
     for (const child of this.children) {
@@ -282,6 +353,12 @@ export class DbDatabase extends DbResource {
   }
 }
 
+export class AwsDatabase extends DbDatabase {
+  constructor(name: string, readonly serviceType: AwsServiceType) {
+    super(name);
+  }
+}
+
 export class RedisDatabase extends DbDatabase {
   /**
    * number of keys in the currently-selected database
@@ -296,6 +373,13 @@ export class RedisDatabase extends DbDatabase {
   public getDBIndex(): number {
     return parseInt(this.name, 10);
   }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      'number of keys': this.numOfKeys,
+    };
+  }
 }
 
 export class DbSchema extends DbResource {
@@ -307,16 +391,23 @@ export class DbSchema extends DbResource {
 
 export class DbTable extends DbResource {
   public tableType: any;
-  public isInProgress = false;
 
   constructor(name: string, tableType: any, comment?: string) {
     super(ResourceType.Table, name);
     this.tableType = tableType;
     this.comment = comment;
+    this.isInProgress = false;
   }
 
   toString(): string {
     return `[${super.toString()}]: Type[${this.tableType}]`;
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      'table type': this.tableType,
+    };
   }
 }
 
@@ -332,6 +423,14 @@ export class DbKey<
   constructor(name: string, params: T) {
     super(ResourceType.Key, name);
     this.params = params;
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      'id or key': this.id,
+      ...super.getProperties(),
+      ...this.params,
+    };
   }
 }
 
@@ -391,44 +490,149 @@ export class DbColumn extends DbResource {
   toString(): string {
     return `[${super.toString()}]: Nullable[${this.nullable}] Key[${this.key}]`;
   }
-}
 
-export class DbS3Bucket extends DbResource {
-  public created?: Date;
-  public isInProgress = false;
-  public refreshed?: Date;
-
-  constructor(name?: string, created?: Date) {
-    super(ResourceType.Bucket, name === undefined ? '' : name);
-    this.created = created;
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      'column type': EnumValues.getNameFromValue(
+        GeneralColumnType,
+        this.colType,
+      ),
+      nullable: this.nullable,
+      key: this.key,
+      default: this.default,
+    };
   }
 }
 
-export class DbSQSQueue extends DbResource {
-  public readonly url: string;
-  public readonly attributes?: AwsSQSAttributes;
+export class AwsDbResource<T = any> extends DbResource {
+  private dateProperties?: string[];
+  private byteProperties?: string[];
 
-  constructor(name: string, url: string, attributes?: AwsSQSAttributes) {
-    super(ResourceType.Queue, name);
-    this.url = url;
-    this.attributes = attributes;
+  constructor(
+    resouceType: ResourceType,
+    name: string,
+    public readonly attr: T,
+  ) {
+    super(resouceType, name);
+  }
+
+  protected setPropertyFormat({
+    dates,
+    bytes,
+  }: {
+    dates?: string[];
+    bytes?: string[];
+  }): void {
+    this.dateProperties = dates;
+    this.byteProperties = bytes;
+  }
+
+  getProperties(): { [key: string]: any } {
+    const props = {
+      ...super.getProperties(),
+      ...this.attr,
+    };
+    this.dateProperties?.forEach((name) => {
+      const v = props[name];
+      (props as any)[name] = toDate(v)?.toISOString();
+    });
+    this.byteProperties?.forEach((name) => {
+      const v = props[name];
+      (props as any)[name] = format(v);
+    });
+    return props;
   }
 }
 
-export class DbLogGroup extends DbResource {
-  public readonly creationTime: Date;
-  public readonly storedBytes: number;
-
-  constructor(name: string, creationTime: Date, storedBytes: number) {
-    super(ResourceType.LogGroup, name);
-    this.creationTime = creationTime;
-    this.storedBytes = storedBytes;
+export class DbS3Bucket extends AwsDbResource<{
+  CreationDate?: Date;
+}> {
+  constructor(name?: string, CreationDate?: Date) {
+    super(ResourceType.Bucket, name === undefined ? '' : name, {
+      CreationDate,
+    });
+    this.setPropertyFormat({ dates: ['CreationDate'] });
   }
 }
 
-export class DbS3Owner extends DbResource {
-  constructor(id: string, name?: string) {
-    super(ResourceType.Owner, name === undefined ? '' : name);
+export class DbSQSQueue extends AwsDbResource<AwsSQSAttributes> {
+  constructor(
+    name: string,
+    public readonly url: string,
+    attr: AwsSQSAttributes,
+  ) {
+    super(ResourceType.Queue, name, attr);
+    this.setPropertyFormat({
+      dates: ['CreatedTimestamp', 'LastModifiedTimestamp'],
+    });
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      url: this.url,
+    };
+  }
+}
+
+export class DbLogGroup extends AwsDbResource<{
+  creationTime?: number;
+  storedBytes?: number;
+  retentionInDays?: number;
+  kmsKeyId?: string;
+}> {
+  constructor(
+    name: string,
+    attr: {
+      creationTime?: number;
+      storedBytes?: number;
+      retentionInDays?: number;
+      kmsKeyId?: string;
+    },
+  ) {
+    super(ResourceType.LogGroup, name, attr);
+    this.setPropertyFormat({ dates: ['creationTime'], bytes: ['storedBytes'] });
+  }
+}
+
+export class DbLogStream extends AwsDbResource<{
+  creationTime: Date;
+  firstEventTimestamp: Date;
+  lastEventTimestamp: Date;
+  lastIngestionTime: Date;
+}> {
+  constructor(
+    name: string,
+    attr: {
+      creationTime: Date;
+      firstEventTimestamp: Date;
+      lastEventTimestamp: Date;
+      lastIngestionTime: Date;
+    },
+  ) {
+    super(ResourceType.LogStream, name, attr);
+    this.setPropertyFormat({
+      dates: [
+        'creationTime',
+        'firstEventTimestamp',
+        'lastEventTimestamp',
+        'lastIngestionTime',
+      ],
+    });
+  }
+}
+
+export class DbS3Owner extends AwsDbResource<{}> {
+  constructor(id: string, name: string) {
+    super(ResourceType.Owner, name === undefined ? '' : name, {});
     this.id = id;
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      'Owner id': this.id,
+    };
   }
 }

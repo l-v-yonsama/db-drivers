@@ -1,3 +1,5 @@
+import { ResourceType } from './ResourceType';
+
 export type ScanParams = {
   /**
    * Specify target(Bucket, DB index or Queue url)
@@ -6,7 +8,11 @@ export type ScanParams = {
    * AWS SQS: Queue url
    */
   target: string;
+  parentTarget?: string;
   limit: number;
-  withValue?: boolean;
+  withValue?: boolean | 'auto';
   keyword?: string;
+  startTime?: number;
+  endTime?: number;
+  targetResourceType?: ResourceType;
 };
