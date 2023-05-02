@@ -1,1 +1,661 @@
-{"id":"yZqU0Udu","resouceType":"Database","name":"testdb","children":[{"id":"TGzStieE","resouceType":"Schema","name":"oradb","children":[{"id":"xMY4SWBA","resouceType":"Table","name":"DEPT","children":[{"id":"4QB1eIr3","resouceType":"Column","name":"DEPTNO","children":[],"colType":14,"comment":"","nullable":false,"key":"PRI","default":null,"extra":""},{"id":"Gm23uyqO","resouceType":"Column","name":"DNAME","children":[],"colType":4,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"NZo0v1b5","resouceType":"Column","name":"LOC","children":[],"colType":4,"comment":"","nullable":true,"key":"","default":null,"extra":""}],"tableType":"TABLE","comment":"","isInProgress":false},{"id":"oyOSi9tS","resouceType":"Table","name":"EMP","children":[{"id":"Nax2yZLr","resouceType":"Column","name":"COMM","children":[],"colType":20,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"LBQ4QRlF","resouceType":"Column","name":"DEPTNO","children":[],"colType":14,"comment":"","nullable":true,"key":"MUL","default":null,"extra":""},{"id":"Px10qU2Z","resouceType":"Column","name":"EMPNO","children":[],"colType":14,"comment":"","nullable":false,"key":"PRI","default":null,"extra":""},{"id":"iCUimqqq","resouceType":"Column","name":"ENAME","children":[],"colType":4,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"pEkDgsxp","resouceType":"Column","name":"HIREDATE","children":[],"colType":36,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"6CAiuu5v","resouceType":"Column","name":"JOB","children":[],"colType":4,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"hcdhMDMA","resouceType":"Column","name":"MGR","children":[],"colType":14,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"uDAeXxK4","resouceType":"Column","name":"SAL","children":[],"colType":20,"comment":"","nullable":true,"key":"","default":null,"extra":""}],"tableType":"TABLE","comment":"","isInProgress":false}],"isDefault":false},{"id":"RD7drJZc","resouceType":"Schema","name":"testdb","children":[{"id":"WYllYDLg","resouceType":"Table","name":"testtable","children":[{"id":"3xjLe6j3","resouceType":"Column","name":"d1","children":[],"colType":36,"comment":"“Zero” Value 0000-00-00","nullable":true,"key":"","default":null,"extra":""},{"id":"BzGtbUMN","resouceType":"Column","name":"d2","children":[],"colType":34,"comment":"“Zero” Value 00:00:00","nullable":true,"key":"","default":null,"extra":""},{"id":"lweNErxh","resouceType":"Column","name":"d3","children":[],"colType":37,"comment":"“Zero” Value 0000-00-00 00:00:00","nullable":true,"key":"","default":null,"extra":""},{"id":"vx1FZm8u","resouceType":"Column","name":"d4","children":[],"colType":37,"comment":"“Zero” Value 0000-00-00 00:00:00","nullable":true,"key":"","default":null,"extra":""},{"id":"lOYTqRGX","resouceType":"Column","name":"d5","children":[],"colType":39,"comment":"“Zero” Value 0000","nullable":true,"key":"","default":null,"extra":""},{"id":"hVWrybMA","resouceType":"Column","name":"f1","children":[],"colType":16,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"0vxoF5lb","resouceType":"Column","name":"f2","children":[],"colType":20,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"HdF1jaNr","resouceType":"Column","name":"f3","children":[],"colType":22,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"49loTwz6","resouceType":"Column","name":"g1","children":[],"colType":-1,"comment":"","nullable":false,"key":"","default":null,"extra":""},{"id":"KTvxGADT","resouceType":"Column","name":"ID","children":[],"colType":14,"comment":"","nullable":false,"key":"PRI","default":null,"extra":"auto_increment"},{"id":"UOURDaOm","resouceType":"Column","name":"j1","children":[],"colType":25,"comment":"JSON data type","nullable":true,"key":"","default":null,"extra":""},{"id":"twkL4yHe","resouceType":"Column","name":"n0","children":[],"colType":0,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"2wYvwU26","resouceType":"Column","name":"n1","children":[],"colType":11,"comment":"MAX 127","nullable":true,"key":"","default":null,"extra":""},{"id":"QBAJaRLL","resouceType":"Column","name":"n2","children":[],"colType":12,"comment":"MAX 32767","nullable":true,"key":"","default":null,"extra":""},{"id":"D7nM2aSQ","resouceType":"Column","name":"n3","children":[],"colType":13,"comment":"MAX 8388607","nullable":true,"key":"","default":null,"extra":""},{"id":"BIExSPhM","resouceType":"Column","name":"n4","children":[],"colType":15,"comment":"MAX 9223372036854775807","nullable":true,"key":"","default":null,"extra":""},{"id":"sw9kEMVi","resouceType":"Column","name":"s1","children":[],"colType":3,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"EPCyZooE","resouceType":"Column","name":"s2","children":[],"colType":4,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"9jDaZMsD","resouceType":"Column","name":"s3a","children":[],"colType":5,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"8dayyW6G","resouceType":"Column","name":"s3b","children":[],"colType":7,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"B5YYnnph","resouceType":"Column","name":"s3c","children":[],"colType":6,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"nk2VF533","resouceType":"Column","name":"s3d","children":[],"colType":8,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"TXp2EGLj","resouceType":"Column","name":"s4","children":[],"colType":40,"comment":"A list of a,b or c","nullable":true,"key":"","default":null,"extra":""},{"id":"1IyMEnJF","resouceType":"Column","name":"s5","children":[],"colType":50,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"OH73vl58","resouceType":"Column","name":"s6","children":[],"colType":-1,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"9XEotRnT","resouceType":"Column","name":"s7","children":[],"colType":51,"comment":"","nullable":true,"key":"","default":null,"extra":""},{"id":"IngQ7aqJ","resouceType":"Column","name":"s8","children":[],"colType":41,"comment":"","nullable":true,"key":"","default":null,"extra":""}],"tableType":"TABLE","comment":"table with various data types","isInProgress":false}],"isDefault":true}]}
+{
+  "id": "Lv2hme4O",
+  "resouceType": "Database",
+  "name": "testdb",
+  "children": [
+    {
+      "id": "EhAkDQnB",
+      "resouceType": "Schema",
+      "name": "oradb",
+      "children": [
+        {
+          "id": "Z7A75wW8",
+          "resouceType": "Table",
+          "name": "DEPT",
+          "children": [
+            {
+              "id": "SLfZrilz",
+              "resouceType": "Column",
+              "name": "DEPTNO",
+              "children": [],
+              "colType": 14,
+              "comment": "",
+              "nullable": false,
+              "key": "PRI",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "H0aK8cWl",
+              "resouceType": "Column",
+              "name": "DNAME",
+              "children": [],
+              "colType": 4,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "tZYcrKis",
+              "resouceType": "Column",
+              "name": "LOC",
+              "children": [],
+              "colType": 4,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            }
+          ],
+          "tableType": "TABLE",
+          "comment": "",
+          "isInProgress": false
+        },
+        {
+          "id": "w6X8kX4a",
+          "resouceType": "Table",
+          "name": "EMP",
+          "children": [
+            {
+              "id": "6EtWm18j",
+              "resouceType": "Column",
+              "name": "COMM",
+              "children": [],
+              "colType": 20,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "enjyHx6S",
+              "resouceType": "Column",
+              "name": "DEPTNO",
+              "children": [],
+              "colType": 14,
+              "comment": "",
+              "nullable": true,
+              "key": "MUL",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "U77rbohR",
+              "resouceType": "Column",
+              "name": "EMPNO",
+              "children": [],
+              "colType": 14,
+              "comment": "",
+              "nullable": false,
+              "key": "PRI",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "8CYonmN2",
+              "resouceType": "Column",
+              "name": "ENAME",
+              "children": [],
+              "colType": 4,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "SnN7GUB5",
+              "resouceType": "Column",
+              "name": "HIREDATE",
+              "children": [],
+              "colType": 36,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "od4ghszo",
+              "resouceType": "Column",
+              "name": "JOB",
+              "children": [],
+              "colType": 4,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "K0RS2UR6",
+              "resouceType": "Column",
+              "name": "MGR",
+              "children": [],
+              "colType": 14,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "FUNmh43S",
+              "resouceType": "Column",
+              "name": "SAL",
+              "children": [],
+              "colType": 20,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            }
+          ],
+          "tableType": "TABLE",
+          "comment": "",
+          "isInProgress": false
+        }
+      ],
+      "isDefault": false
+    },
+    {
+      "id": "A46ZzEoT",
+      "resouceType": "Schema",
+      "name": "testdb",
+      "children": [
+        {
+          "id": "bhUC5syP",
+          "resouceType": "Table",
+          "name": "DEPT",
+          "children": [
+            {
+              "id": "AXOMXUHV",
+              "resouceType": "Column",
+              "name": "DEPTNO",
+              "children": [],
+              "colType": 14,
+              "comment": "",
+              "nullable": false,
+              "key": "PRI",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "jHyMjsHP",
+              "resouceType": "Column",
+              "name": "DNAME",
+              "children": [],
+              "colType": 4,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "YdZz81rm",
+              "resouceType": "Column",
+              "name": "LOC",
+              "children": [],
+              "colType": 4,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            }
+          ],
+          "tableType": "TABLE",
+          "comment": "",
+          "isInProgress": false
+        },
+        {
+          "id": "OjL4WrSp",
+          "resouceType": "Table",
+          "name": "EMP",
+          "children": [
+            {
+              "id": "VDVr02Tj",
+              "resouceType": "Column",
+              "name": "COMM",
+              "children": [],
+              "colType": 20,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "XCOBvDd3",
+              "resouceType": "Column",
+              "name": "DEPTNO",
+              "children": [],
+              "colType": 14,
+              "comment": "",
+              "nullable": true,
+              "key": "MUL",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "yCXITY1R",
+              "resouceType": "Column",
+              "name": "EMPNO",
+              "children": [],
+              "colType": 14,
+              "comment": "",
+              "nullable": false,
+              "key": "PRI",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "aXzTBfsq",
+              "resouceType": "Column",
+              "name": "ENAME",
+              "children": [],
+              "colType": 4,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "coNiFQR4",
+              "resouceType": "Column",
+              "name": "HIREDATE",
+              "children": [],
+              "colType": 36,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "W9ffj8lR",
+              "resouceType": "Column",
+              "name": "JOB",
+              "children": [],
+              "colType": 4,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "YGjm4LS7",
+              "resouceType": "Column",
+              "name": "MGR",
+              "children": [],
+              "colType": 14,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "UqtYfpLH",
+              "resouceType": "Column",
+              "name": "SAL",
+              "children": [],
+              "colType": 20,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            }
+          ],
+          "tableType": "TABLE",
+          "comment": "",
+          "isInProgress": false
+        },
+        {
+          "id": "icSYi30G",
+          "resouceType": "Table",
+          "name": "testtable",
+          "children": [
+            {
+              "id": "P9vL5UJg",
+              "resouceType": "Column",
+              "name": "d1",
+              "children": [],
+              "colType": 36,
+              "comment": "“Zero” Value 0000-00-00",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "pjHJg121",
+              "resouceType": "Column",
+              "name": "d2",
+              "children": [],
+              "colType": 34,
+              "comment": "“Zero” Value 00:00:00",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "6B9CsFRq",
+              "resouceType": "Column",
+              "name": "d3",
+              "children": [],
+              "colType": 37,
+              "comment": "“Zero” Value 0000-00-00 00:00:00",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "Ztb1JyDz",
+              "resouceType": "Column",
+              "name": "d4",
+              "children": [],
+              "colType": 37,
+              "comment": "“Zero” Value 0000-00-00 00:00:00",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "pyRbKmaJ",
+              "resouceType": "Column",
+              "name": "d5",
+              "children": [],
+              "colType": 39,
+              "comment": "“Zero” Value 0000",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "ugFihWCZ",
+              "resouceType": "Column",
+              "name": "f1",
+              "children": [],
+              "colType": 16,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "8nCFcbFu",
+              "resouceType": "Column",
+              "name": "f2",
+              "children": [],
+              "colType": 20,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "huntck2D",
+              "resouceType": "Column",
+              "name": "f3",
+              "children": [],
+              "colType": 22,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "aja1Fdgq",
+              "resouceType": "Column",
+              "name": "g1",
+              "children": [],
+              "colType": -1,
+              "comment": "",
+              "nullable": false,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "8zuTCZnT",
+              "resouceType": "Column",
+              "name": "ID",
+              "children": [],
+              "colType": 14,
+              "comment": "",
+              "nullable": false,
+              "key": "PRI",
+              "default": null,
+              "extra": "auto_increment"
+            },
+            {
+              "id": "zovcEmW8",
+              "resouceType": "Column",
+              "name": "j1",
+              "children": [],
+              "colType": 25,
+              "comment": "JSON data type",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "HhEkhbod",
+              "resouceType": "Column",
+              "name": "n0",
+              "children": [],
+              "colType": 0,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "TPYtcgdf",
+              "resouceType": "Column",
+              "name": "n1",
+              "children": [],
+              "colType": 11,
+              "comment": "MAX 127",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "ZnU1uQdF",
+              "resouceType": "Column",
+              "name": "n2",
+              "children": [],
+              "colType": 12,
+              "comment": "MAX 32767",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "8lo6d47Q",
+              "resouceType": "Column",
+              "name": "n3",
+              "children": [],
+              "colType": 13,
+              "comment": "MAX 8388607",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "BlWsDRG3",
+              "resouceType": "Column",
+              "name": "n4",
+              "children": [],
+              "colType": 15,
+              "comment": "MAX 9223372036854775807",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "oGIttuFt",
+              "resouceType": "Column",
+              "name": "s1",
+              "children": [],
+              "colType": 3,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "xHnnWAr1",
+              "resouceType": "Column",
+              "name": "s2",
+              "children": [],
+              "colType": 4,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "kAgyfNTr",
+              "resouceType": "Column",
+              "name": "s3a",
+              "children": [],
+              "colType": 5,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "QMEp64G4",
+              "resouceType": "Column",
+              "name": "s3b",
+              "children": [],
+              "colType": 7,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "bxLh6Ysu",
+              "resouceType": "Column",
+              "name": "s3c",
+              "children": [],
+              "colType": 6,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "vv2fDPDc",
+              "resouceType": "Column",
+              "name": "s3d",
+              "children": [],
+              "colType": 8,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "bZfvD34i",
+              "resouceType": "Column",
+              "name": "s4",
+              "children": [],
+              "colType": 40,
+              "comment": "A list of a,b or c",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "60tpIXuv",
+              "resouceType": "Column",
+              "name": "s5",
+              "children": [],
+              "colType": 50,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "kFzBhwIY",
+              "resouceType": "Column",
+              "name": "s6",
+              "children": [],
+              "colType": -1,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "LpHlqyXz",
+              "resouceType": "Column",
+              "name": "s7",
+              "children": [],
+              "colType": 51,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            },
+            {
+              "id": "3PgV8DGp",
+              "resouceType": "Column",
+              "name": "s8",
+              "children": [],
+              "colType": 41,
+              "comment": "",
+              "nullable": true,
+              "key": "",
+              "default": null,
+              "extra": ""
+            }
+          ],
+          "tableType": "TABLE",
+          "comment": "table with various data types",
+          "isInProgress": false
+        }
+      ],
+      "isDefault": true
+    }
+  ]
+}

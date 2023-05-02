@@ -16,91 +16,118 @@ export type Proposal = {
   desc?: string;
 };
 
-export const getProposals = (
-  db: DbDatabase,
-  sql: string,
-  keyword: string,
-  parentWord?: string,
-): Proposal[] => {
+export type ProposalParams = {
+  sql: string;
+  lastChar: string;
+  keyword: string;
+  parentWord?: string;
+  db?: DbDatabase;
+};
+
+export const getProposals = (params: ProposalParams): Proposal[] => {
+  const { db, sql, lastChar, keyword, parentWord } = params;
   const upperKeyword = keyword.toUpperCase();
   const upperParentWord = parentWord?.toUpperCase();
   let ast: Statement | undefined;
+  const retList: Proposal[] = [];
+
   try {
-    [ast] = parse(sql, { locationTracking: true });
+    if (db) {
+      try {
+        [ast] = parse(sql, { locationTracking: true });
+      } catch (_) {
+        // do nothing.
+      }
+
+      // console.log(ast);
+
+      if (parentWord) {
+        let list = getProposalsByKeywordWithParent(
+          db,
+          ast,
+          upperKeyword,
+          upperParentWord,
+          lastChar,
+        );
+        if (list.length === 0) {
+          list = getProposalsByKeyword(db, upperKeyword, lastChar);
+        }
+        retList.push(...list);
+      } else {
+        if (keyword) {
+          const list = getProposalsByKeyword(db, upperKeyword, lastChar);
+          retList.push(...list);
+        } else {
+          retList.push(...getAllProposals(db));
+        }
+      }
+    }
+
+    if (lastChar !== '.' && !parentWord) {
+      RESERVED_WORDS.filter((s) => s.startsWith(upperKeyword)).forEach((s) => {
+        retList.push({
+          label: s,
+          kind: ProposalKind.ReservedWord,
+        });
+      });
+    }
   } catch (_) {
     // do nothing.
   }
 
-  // console.log(ast);
-
-  const retList: Proposal[] = [];
-  if (keyword) {
-    if (parentWord) {
-      retList.push(
-        ...getProposalsByKeywordWithParent(db, upperKeyword, upperParentWord),
-      );
-    } else {
-      retList.push(...getProposalsByKeyword(db, upperKeyword));
-    }
-  } else {
-    retList.push(...getAllProposals(db));
-  }
-
-  RESERVED_WORDS.filter((s) => s.startsWith(upperKeyword)).forEach((s) => {
-    retList.push({
-      label: s,
-      kind: ProposalKind.ReservedWord,
-    });
-  });
-
   return retList;
+};
+
+const resolveAlias = (ast: Statement, alias: string): string | undefined => {
+  if (!ast || !alias) {
+    return undefined;
+  }
+  if (ast.type === 'select') {
+    for (const tbl of ast.from) {
+      if (tbl.type === 'table') {
+        if (tbl.name.alias.toUpperCase() === alias) {
+          return tbl.name.name;
+        }
+      }
+    }
+  }
+  return undefined;
 };
 
 const matchKeyword = (list: string[], keyword: string): boolean => {
   return list.some((it) => it.toUpperCase().startsWith(keyword));
 };
 
-const createTableProposal = (schema: DbSchema, table: DbResource): Proposal => {
-  const detail =
-    (schema.isDefault ? '' : schema.getName() + ' ') + (table.comment ?? '');
-  return {
-    label: table.name,
-    kind: ProposalKind.Table,
-    detail,
-  };
-};
-
-const createColumnProposal = (
-  table: DbResource,
-  column: DbResource,
-): Proposal => {
-  const detail = `${table.comment ?? table.name}.${
-    column.comment ?? column.name
-  }`;
-  return {
-    label: column.name,
-    kind: ProposalKind.Column,
-    detail,
-  };
-};
-
 const getProposalsByKeywordWithParent = (
   db: DbDatabase,
+  ast: Statement | undefined,
   keyword: string,
   parentWord: string,
+  lastChar: string,
 ): Proposal[] => {
   const retList: Proposal[] = [];
 
   const schema = db.getChildByName(parentWord) as DbSchema;
-  schema.getChildren().forEach((table) => {
-    const table_comment = table.comment ?? '';
-    if (matchKeyword([table.name, table_comment], keyword)) {
-      retList.push(createTableProposal(schema, table));
-    }
-  });
+  if (schema) {
+    schema.getChildren().forEach((table) => {
+      const table_comment = table.comment ?? '';
+      if (
+        keyword === '' ||
+        matchKeyword([table.name, table_comment], keyword)
+      ) {
+        retList.push(createTableProposal(schema, table));
+      }
+    });
+  }
 
   const defaultSchema = db.getSchema({ isDefault: true });
-  const table = defaultSchema.getChildByName(parentWord);
+  let table = defaultSchema.getChildByName(parentWord);
+  if (!table) {
+    const resolvedName = resolveAlias(ast, parentWord);
+    if (resolvedName) {
+      table = defaultSchema.getChildByName(resolvedName.toUpperCase());
+    }
+  }
   if (table) {
     const table_comment = table.comment ?? '';
     if (matchKeyword([table.name, table_comment], keyword)) {
@@ -109,7 +136,10 @@ const getProposalsByKeywordWithParent = (
 
     table.getChildren().forEach((column) => {
       const columnComment = column.comment ?? '';
-      if (matchKeyword([column.name, columnComment], keyword)) {
+      if (
+        keyword === '' ||
+        matchKeyword([column.name, columnComment], keyword)
+      ) {
         retList.push(createColumnProposal(table, column));
       }
     });
@@ -117,9 +147,27 @@ const getProposalsByKeywordWithParent = (
   return retList;
 };
 
-const getProposalsByKeyword = (db: DbDatabase, keyword: string): Proposal[] => {
+const getProposalsByKeyword = (
+  db: DbDatabase,
+  keyword: string,
+  lastChar: string,
+): Proposal[] => {
   const retList: Proposal[] = [];
   const schema = db.getSchema({ isDefault: true });
+
+  if (lastChar === ' ') {
+    if (['INTO', 'UPDATE', 'FROM'].includes(keyword)) {
+      // insert, update statement
+      schema.getChildren().forEach((table) => {
+        retList.push(createTableProposal(schema, table));
+      });
+      return retList;
+    }
+    if ('DELETE' === keyword) {
+      retList.push(createReservedWordProposal('FROM'));
+    }
+  }
+
   schema.getChildren().forEach((table) => {
     const table_comment = table.comment ?? '';
 
@@ -148,6 +196,39 @@ const getAllProposals = (db: DbDatabase): Proposal[] => {
     });
   });
   return retList;
+};
+
+const createTableProposal = (schema: DbSchema, table: DbResource): Proposal => {
+  let detail = table.comment ?? '';
+  if (schema?.isDefault === false) {
+    detail = schema.getName() + ' ' + detail;
+  }
+  return {
+    label: table.name,
+    kind: ProposalKind.Table,
+    detail,
+  };
+};
+
+const createColumnProposal = (
+  table: DbResource,
+  column: DbResource,
+): Proposal => {
+  const detail = `${table.comment ?? table.name}.${
+    column.comment ?? column.name
+  }`;
+  return {
+    label: column.name,
+    kind: ProposalKind.Column,
+    detail,
+  };
+};
+
+const createReservedWordProposal = (word: string): Proposal => {
+  return {
+    label: word,
+    kind: ProposalKind.ReservedWord,
+  };
 };
 
 export const RESERVED_WORDS = [
