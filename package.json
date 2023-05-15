@@ -1,9 +1,9 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.52",
+  "version": "0.1.88",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
-    "node": ">= 16 <19"
+    "node": ">= 16"
   },
   "devDependencies": {
     "@types/bytes": "^3.1.1",
@@ -28,7 +28,6 @@
     "clean": "rimraf coverage built tmp",
     "prebuild": "npm run lint",
     "build": "npm run clean && tsc -p tsconfig.json",
-    "example:parser": "npm run build && node built/src/examples/parser.js",
     "build:watch": "npm run clean && tsc -w -p tsconfig.json",
     "build:release": "npm run clean && tsc -p tsconfig.release.json",
     "prepublishOnly": "npm run build:release",
@@ -43,6 +42,7 @@
     "test:driver:cw": "npm run clean && jest __tests__/db/drivers/AwsCloudwatchDriver.test.ts",
     "test:driver:minio": "npm run clean && jest __tests__/db/drivers/AwsS3Driver.test.ts",
     "test:helper:sql": "npm run clean && jest __tests__/helpers/SQLHelper.test.ts",
+    "test:helper:resource": "npm run clean && jest __tests__/helpers/ResourceHelper.test.ts",
     "prettier": "prettier --config .prettierrc --write .",
     "test:watch": "jest --watch"
   },
@@ -55,7 +55,6 @@
     "@aws-sdk/credential-providers": "^3.279.0",
     "bytes": "^3.1.2",
     "dayjs": "^1.11.7",
-    "dt-sql-parser": "^4.0.0-beta.3.2",
     "enum-values": "^1.2.1",
     "get-port-please": "^3.0.1",
     "ioredis": "^5.3.1",

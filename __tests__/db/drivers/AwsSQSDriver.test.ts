@@ -4,9 +4,11 @@ import {
   DBDriverResolver,
   ConnectionSetting,
   DBType,
-  DbDatabase,
   DbSQSQueue,
   ResultSetDataHolder,
+  AwsDatabase,
+  SupplyCredentialType,
+  AwsServiceType,
 } from '../../../src';
 import {
   CreateQueueCommand,
@@ -15,8 +17,6 @@ import {
   SQSClient,
   SendMessageCommand,
 } from '@aws-sdk/client-sqs';
-import { AwsServiceType } from '../../../src/types/AwsServiceType';
-import { SupplyCredentialType } from '../../../src/types/AwsSupplyCredentialType';
 
 const connectOption = {
   url: 'http://localhost:6005',
@@ -118,18 +118,20 @@ describe('AwsSQSDriver', () => {
   });
 
   describe('asyncGetResouces', () => {
-    let testDbRes: DbDatabase;
+    let testDbRes: AwsDatabase;
 
     it('should return Database resource', async () => {
       const dbRootRes = await driver.getInfomationSchemas();
       expect(dbRootRes).toHaveLength(1);
-      testDbRes = dbRootRes[0] as DbDatabase;
-      expect(testDbRes.getName()).toBe('SQS');
+      testDbRes = dbRootRes[0];
+      expect(testDbRes.name).toBe('SQS');
     });
 
     it('should have DbSQSQueue resource', async () => {
-      const queue = testDbRes.getChildByName('queueName1.fifo') as DbSQSQueue;
-      expect(queue.getName()).toBe('queueName1.fifo');
+      const queue = testDbRes.children.find(
+        (it) => it.name == 'queueName1.fifo',
+      ) as DbSQSQueue;
+      expect(queue.name).toBe('queueName1.fifo');
       expect(queue.attr?.FifoQueue).toBe(true);
       expect(queue.attr?.ContentBasedDeduplication).toBe(true);
     });

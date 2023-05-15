@@ -16,26 +16,28 @@ import {
 } from '@aws-sdk/client-s3';
 import {
   AwsDatabase,
-  DbConnection,
-  DbDatabase,
   DbKey,
   DbS3Bucket,
   DbS3Owner,
-  RdhKey,
   ResultSetDataHolder,
   S3KeyParams,
+  createRdhKey,
 } from '../../resource';
-import { GeneralColumnType, ScanParams } from '../../types';
+import {
+  AwsServiceType,
+  ConnectionSetting,
+  GeneralColumnType,
+  ScanParams,
+} from '../../types';
 import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
-import { AwsServiceType } from '../../types/AwsServiceType';
 import { plural } from 'pluralize';
 
 export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   s3Client: S3Client;
 
-  constructor(conRes: DbConnection, config: ClientConfigType) {
+  constructor(conRes: ConnectionSetting, config: ClientConfigType) {
     super(conRes, config);
   }
 
@@ -146,17 +148,17 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       withValue,
     });
     const rdh = new ResultSetDataHolder([
-      new RdhKey('key', GeneralColumnType.TEXT),
-      new RdhKey('size', GeneralColumnType.INTEGER),
-      new RdhKey('etag', GeneralColumnType.TEXT),
-      new RdhKey('storageClass', GeneralColumnType.TEXT),
-      new RdhKey('lastModified', GeneralColumnType.TIMESTAMP),
-      new RdhKey('value', GeneralColumnType.UNKNOWN),
+      createRdhKey({ name: 'key', type: GeneralColumnType.TEXT }),
+      createRdhKey({ name: 'size', type: GeneralColumnType.INTEGER }),
+      createRdhKey({ name: 'etag', type: GeneralColumnType.TEXT }),
+      createRdhKey({ name: 'storageClass', type: GeneralColumnType.TEXT }),
+      createRdhKey({ name: 'lastModified', type: GeneralColumnType.TIMESTAMP }),
+      createRdhKey({ name: 'value', type: GeneralColumnType.UNKNOWN }),
     ]);
     list.forEach((dbKey) => {
       rdh.addRow({
         ...dbKey.params,
-        key: dbKey.getName(),
+        key: dbKey.name,
         value: dbKey.params?.base64,
       });
     });
@@ -181,7 +183,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   //   });
   // }
 
-  async getInfomationSchemas(): Promise<DbDatabase> {
+  async getInfomationSchemas(): Promise<AwsDatabase> {
     if (!this.conRes) {
       return null;
     }

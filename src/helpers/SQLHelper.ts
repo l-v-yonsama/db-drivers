@@ -1,6 +1,7 @@
 import { DbResource, DbSchema } from '../resource';
-import { DbDatabase } from '../resource/DbResource';
+import { RdsDatabase } from '../resource/DbResource';
 import { parse, Statement } from 'pgsql-ast-parser';
+import { tolines } from '../util';
 
 export enum ProposalKind {
   Schema = 0,
@@ -21,7 +22,299 @@ export type ProposalParams = {
   lastChar: string;
   keyword: string;
   parentWord?: string;
-  db?: DbDatabase;
+  db?: RdsDatabase;
+};
+
+type BindParamPosition = {
+  firstPosition: number;
+  numOfBinds: number;
+  kind: 'single' | 'multiple';
+};
+
+export const normalizeQuery = ({
+  query,
+  toPositionedParameter,
+  bindParams,
+}: {
+  query: string;
+  toPositionedParameter?: boolean;
+  bindParams?: { [key: string]: any };
+}): { query: string; binds: any[] } => {
+  if (toPositionedParameter) {
+    return normalizePositionedParametersQuery(query, bindParams);
+  }
+  return normalizeSimpleParametersQuery(query, bindParams);
+};
+
+/**
+ * Transform a named query to a standard positioned parameters query
+ * named parameters like :name
+ * to
+ * positionals parameters (i.e. $1, $2, etc...)
+ */
+export const normalizePositionedParametersQuery = (
+  query: string,
+  bindParams?: { [key: string]: any },
+): { query: string; binds: any[] } => {
+  let i = 0;
+  const nameWithPos: { [key: string]: BindParamPosition } = {};
+  const missingParams = new Set<string>();
+
+  const checkBindParam = (s: string): void => {
+    if (bindParams && bindParams[s] === undefined) {
+      missingParams.add(s);
+    }
+  };
+
+  const getOrCreateSinglePosition = (word: string): string => {
+    if (!nameWithPos[word]) {
+      nameWithPos[word] = {
+        firstPosition: ++i,
+        kind: 'single',
+        numOfBinds: 1,
+      };
+    }
+    return `$${nameWithPos[word].firstPosition}`;
+  };
+
+  const getOrCreateMultiplePosition = (word: string): string => {
+    if (!nameWithPos[word]) {
+      const numOfBinds = bindParams ? bindParams[word]?.length ?? 0 : 0;
+      if (numOfBinds) {
+        ++i;
+      }
+      nameWithPos[word] = {
+        firstPosition: i,
+        kind: 'multiple',
+        numOfBinds,
+      };
+      if (numOfBinds > 1) {
+        i += numOfBinds - 1;
+      }
+    }
+    // Iterable が空であるとき、IN句の括弧内の値は null になります
+    if (nameWithPos[word].numOfBinds === 0) {
+      return ' null ';
+    }
+    const list: string[] = [];
+    const first = nameWithPos[word].firstPosition;
+    for (let j = first; j < first + nameWithPos[word].numOfBinds; j++) {
+      list.push(`$${j}`);
+    }
+    return list.join(',');
+  };
+
+  const lines = tolines(query);
+  const newLines: string[] = [];
+
+  // /\w/	[A-Za-z0-9] すべての英数字
+  // /\s/ ユニコード空白文字(スペース, 全角スペース, タブ, 改行 等)
+  // /\S/ ユニコード空白文字以外のあらゆる文字
+  lines.forEach((line) => {
+    const reg =
+      /(((?<!:):(\w+)\b)|(( *IN +)\/\* *(\w+) *\*\/ *\([^)]+?\))|(\/\* *(\w+) *\*\/\S*)|(\/\*\$ *(\w+) *\*\/)|(^\s*(#|--)\s+.*$))/gi;
+    const normalized = line.replace(
+      reg,
+      (substring, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, offset) => {
+        // g1: outer group.
+        //------------------
+        // g2: ((?<!:):(\w+)\b) ... simple named parameter
+        // g3: (\w+)
+        //------------------
+        // g4: (( *IN +)\/\* *(\w+) *\*\/ *\([^)]+\)) ... IN clauses. multiple parameters
+        // g5: ( *IN +)
+        // g6: (\w+)
+        //------------------
+        // g7: (\/\* *(\w+) *\*\/\S*) ... simple named parameter
+        // g8: (\w+)
+        //------------------
+        // g9:(\/\*\$ *(\w+) *\*\/) ... replace parameter
+        // g10: (\w+)
+        //------------------
+        // g11: (^(#|--)\s+.*$)
+        // g12: (#|--)
+        //------------------
+        // offset: position
+
+        // console.log('substring', substring);
+        // console.log('g1', g1);
+        // console.log('g2', g2);
+        // console.log('g3', g3);
+        // console.log('g4', g4);
+        // console.log('g5', g5);
+        // console.log('g6', g6);
+        // console.log('g7', g7);
+        // console.log('g8', g8);
+        // console.log('g9', g9);
+        // console.log('g10', g10);
+        // console.log('offset', offset);
+        // return substring;
+
+        if (g2) {
+          const word = g3;
+          checkBindParam(word);
+          return getOrCreateSinglePosition(word);
+        } else if (g4) {
+          const word = g6;
+          checkBindParam(word);
+          if (!bindParams || bindParams[word].length === 0) {
+            return `${g5}( null )`;
+          }
+          return `${g5}(${getOrCreateMultiplePosition(word)})`;
+        } else if (g7) {
+          const word = g8;
+          checkBindParam(word);
+          return getOrCreateSinglePosition(word);
+        } else if (g9) {
+          // replace only.
+          const word = g10;
+          checkBindParam(word);
+          return bindParams[word] ?? '';
+        } else if (g11) {
+          // comment line
+          return substring;
+        }
+        return '';
+      },
+    );
+    newLines.push(normalized);
+  });
+
+  const keys = Object.keys(nameWithPos);
+  const binds: any[] = new Array(i);
+
+  if (bindParams) {
+    if (missingParams.size) {
+      const arr = [...missingParams];
+      if (arr.length === 1) {
+        throw new Error(`Missing bind parameter [${arr[0]}]`);
+      }
+      throw new Error(`Missing bind parameters [${arr.join(',')}]`);
+    }
+    keys.forEach((k) => {
+      const pos = nameWithPos[k];
+      const v = bindParams[k];
+      if (pos.kind === 'single') {
+        const idx = pos.firstPosition - 1;
+        binds[idx] = v;
+      } else {
+        for (let j = 0; j < pos.numOfBinds; j++) {
+          const idx = pos.firstPosition + j - 1;
+          binds[idx] = v[j];
+        }
+      }
+    });
+  }
+  return { query: newLines.join('\n'), binds };
+};
+
+/**
+ * Transform a named query to a standard positioned parameters query
+ * named parameters like :name
+ * to
+ * positionals parameters (i.e. $1, $2, etc...)
+ */
+export const normalizeSimpleParametersQuery = (
+  query: string,
+  bindParams?: { [key: string]: any },
+): { query: string; binds: any[] } => {
+  const binds: any[] = [];
+  const missingParams = new Set<string>();
+
+  const checkBindParam = (s: string): void => {
+    if (bindParams && bindParams[s] === undefined) {
+      missingParams.add(s);
+    }
+  };
+
+  const pushBindParam = (s: string): void => {
+    if (bindParams) {
+      binds.push(bindParams[s]);
+    }
+  };
+
+  const lines = tolines(query);
+  const newLines: string[] = [];
+
+  // /\w/	[A-Za-z0-9] すべての英数字
+  // /\s/ ユニコード空白文字(スペース, 全角スペース, タブ, 改行 等)
+  // /\S/ ユニコード空白文字以外のあらゆる文字
+  lines.forEach((line) => {
+    const reg =
+      /(((?<!:):(\w+)\b)|(( *IN +)\/\* *(\w+) *\*\/ *\([^)]+?\))|(\/\* *(\w+) *\*\/\S*)|(\/\*\$ *(\w+) *\*\/)|(^\s*(#|--)\s+.*$))/gi;
+    const normalized = line.replace(
+      reg,
+      (substring, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, offset) => {
+        // g1: outer group.
+        //------------------
+        // g2: ((?<!:):(\w+)\b) ... simple named parameter
+        // g3: (\w+)
+        //------------------
+        // g4: (( *IN +)\/\* *(\w+) *\*\/ *\([^)]+\)) ... IN clauses. multiple parameters
+        // g5: ( *IN +)
+        // g6: (\w+)
+        //------------------
+        // g7: (\/\* *(\w+) *\*\/\S*) ... simple named parameter
+        // g8: (\w+)
+        //------------------
+        // g9:(\/\*\$ *(\w+) *\*\/) ... replace parameter
+        // g10: (\w+)
+        //------------------
+        // g11: (^(#|--)\s+.*$)
+        // g12: (#|--)
+        //------------------
+        // offset: position
+
+        // console.log('substring', substring);
+        // console.log('g1', g1);
+        // console.log('g2', g2);
+        // console.log('g3', g3);
+        // console.log('g4', g4);
+        // console.log('g5', g5);
+        // console.log('g6', g6);
+        // console.log('g7', g7);
+        // console.log('g8', g8);
+        // console.log('g9', g9);
+        // console.log('g10', g10);
+        // console.log('offset', offset);
+        // return substring;
+
+        if (g2) {
+          const word = g3;
+          pushBindParam(word);
+          checkBindParam(word);
+          return '?';
+        } else if (g4) {
+          const word = g6;
+          checkBindParam(word);
+          if (!bindParams || bindParams[word].length === 0) {
+            return `${g5}( null )`;
+          }
+          const numOfBinds = bindParams[word].length;
+          binds.push(...bindParams[word]);
+          const bindStr = '?,'.repeat(numOfBinds);
+          return `${g5}(${bindStr.substring(0, bindStr.length - 1)})`;
+        } else if (g7) {
+          const word = g8;
+          pushBindParam(word);
+          checkBindParam(word);
+          return '?';
+        } else if (g9) {
+          // replace only.
+          const word = g10;
+          checkBindParam(word);
+          return bindParams[word] ?? '';
+        } else if (g11) {
+          // comment line
+          return substring;
+        }
+        return '';
+      },
+    );
+    newLines.push(normalized);
+  });
+
+  return { query: newLines.join('\n'), binds };
 };
 
 export const getProposals = (params: ProposalParams): Proposal[] => {
@@ -99,7 +392,7 @@ const matchKeyword = (list: string[], keyword: string): boolean => {
 };
 
 const getProposalsByKeywordWithParent = (
-  db: DbDatabase,
+  db: RdsDatabase,
   ast: Statement | undefined,
   keyword: string,
   parentWord: string,
@@ -107,9 +400,9 @@ const getProposalsByKeywordWithParent = (
 ): Proposal[] => {
   const retList: Proposal[] = [];
 
-  const schema = db.getChildByName(parentWord) as DbSchema;
+  const schema = db.children.find((it) => it.name.toUpperCase() === parentWord);
   if (schema) {
-    schema.getChildren().forEach((table) => {
+    schema.children.forEach((table) => {
       const table_comment = table.comment ?? '';
       if (
         keyword === '' ||
@@ -121,11 +414,15 @@ const getProposalsByKeywordWithParent = (
   }
 
   const defaultSchema = db.getSchema({ isDefault: true });
-  let table = defaultSchema.getChildByName(parentWord);
+  let table = defaultSchema.children.find(
+    (it) => it.name.toUpperCase() === parentWord,
+  );
   if (!table) {
     const resolvedName = resolveAlias(ast, parentWord);
     if (resolvedName) {
-      table = defaultSchema.getChildByName(resolvedName.toUpperCase());
+      table = defaultSchema.children.find(
+        (it) => it.name.toUpperCase() === resolvedName.toUpperCase(),
+      );
     }
   }
   if (table) {
@@ -134,7 +431,7 @@ const getProposalsByKeywordWithParent = (
       retList.push(createTableProposal(schema, table));
     }
 
-    table.getChildren().forEach((column) => {
+    table.children.forEach((column) => {
       const columnComment = column.comment ?? '';
       if (
         keyword === '' ||
@@ -148,7 +445,7 @@ const getProposalsByKeywordWithParent = (
 };
 
 const getProposalsByKeyword = (
-  db: DbDatabase,
+  db: RdsDatabase,
   keyword: string,
   lastChar: string,
 ): Proposal[] => {
@@ -158,7 +455,7 @@ const getProposalsByKeyword = (
   if (lastChar === ' ') {
     if (['INTO', 'UPDATE', 'FROM'].includes(keyword)) {
       // insert, update statement
-      schema.getChildren().forEach((table) => {
+      schema.children.forEach((table) => {
         retList.push(createTableProposal(schema, table));
       });
       return retList;
@@ -168,14 +465,14 @@ const getProposalsByKeyword = (
     }
   }
 
-  schema.getChildren().forEach((table) => {
+  schema.children.forEach((table) => {
     const table_comment = table.comment ?? '';
 
     if (matchKeyword([table.name, table_comment], keyword)) {
       retList.push(createTableProposal(schema, table));
     }
 
-    table.getChildren().forEach((column) => {
+    table.children.forEach((column) => {
       const columnComment = column.comment ?? '';
       if (matchKeyword([column.name, columnComment], keyword)) {
         retList.push(createColumnProposal(table, column));
@@ -185,13 +482,13 @@ const getProposalsByKeyword = (
   return retList;
 };
 
-const getAllProposals = (db: DbDatabase): Proposal[] => {
+const getAllProposals = (db: RdsDatabase): Proposal[] => {
   const retList: Proposal[] = [];
   const schema = db.getSchema({ isDefault: true });
-  schema.getChildren().forEach((table) => {
+  schema.children.forEach((table) => {
     retList.push(createTableProposal(schema, table));
 
-    table.getChildren().forEach((column) => {
+    table.children.forEach((column) => {
       retList.push(createColumnProposal(table, column));
     });
   });
@@ -201,7 +498,7 @@ const getAllProposals = (db: DbDatabase): Proposal[] => {
 const createTableProposal = (schema: DbSchema, table: DbResource): Proposal => {
   let detail = table.comment ?? '';
   if (schema?.isDefault === false) {
-    detail = schema.getName() + ' ' + detail;
+    detail = schema.name + ' ' + detail;
   }
   return {
     label: table.name,

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { BaseDriver } from './BaseDriver';
-import { DbConnection, DbDatabase } from '../resource';
+import { AwsDatabase } from '../resource';
 import {
   AwsCredentialIdentityProvider,
   AwsCredentialIdentity,
@@ -10,13 +10,16 @@ import {
 
 import { fromEnv, fromIni } from '@aws-sdk/credential-providers';
 
-import { SupplyCredentialType } from '../types/AwsSupplyCredentialType';
 import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
 import { AwsCloudwatchServiceClient } from './aws/AwsCloudwatchServiceClient';
 import { AwsS3ServiceClient } from './aws/AwsS3ServiceClient';
-import { AwsServiceType } from '../types/AwsServiceType';
 import { AwsServiceClient } from './aws/AwsServiceClient';
-import { ResourceType } from '../types';
+import {
+  AwsServiceType,
+  ConnectionSetting,
+  ResourceType,
+  SupplyCredentialType,
+} from '../types';
 
 export type ClientConfigType = {
   region?: string;
@@ -24,12 +27,12 @@ export type ClientConfigType = {
   credentials: AwsCredentialIdentityProvider | AwsCredentialIdentity;
 };
 
-export class AwsDriver extends BaseDriver {
+export class AwsDriver extends BaseDriver<AwsDatabase> {
   public sqsClient: AwsSQSServiceClient;
   public cloudwatchClient: AwsCloudwatchServiceClient;
   public s3Client: AwsS3ServiceClient;
 
-  constructor(conRes: DbConnection) {
+  constructor(conRes: ConnectionSetting) {
     super(conRes);
   }
 
@@ -143,7 +146,7 @@ export class AwsDriver extends BaseDriver {
     return messageList.join(',');
   }
 
-  async getInfomationSchemas(): Promise<DbDatabase[]> {
+  async getInfomationSchemasSub(): Promise<AwsDatabase[]> {
     const list = [];
     for (const client of [
       this.s3Client,

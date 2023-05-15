@@ -15,27 +15,29 @@ import {
 import * as url from 'url';
 import {
   AwsDatabase,
-  DbConnection,
-  DbDatabase,
   DbKey,
   DbSQSQueue,
-  RdhKey,
   ResultSetDataHolder,
   SQSMessageParams,
+  createRdhKey,
 } from '../../resource';
-import { GeneralColumnType, ScanParams } from '../../types';
-import { AwsSQSAttributes } from '../../types/AwsSQSAttributes';
+import {
+  AwsSQSAttributes,
+  AwsServiceType,
+  ConnectionSetting,
+  GeneralColumnType,
+  ScanParams,
+} from '../../types';
 import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
 import { toBoolean, toDate, toNum } from '../../util';
 import { Scannable } from '../BaseDriver';
-import { AwsServiceType } from '../../types/AwsServiceType';
 import { plural } from 'pluralize';
 
 export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
   sqsClient: SQSClient;
 
-  constructor(conRes: DbConnection, config: ClientConfigType) {
+  constructor(conRes: ConnectionSetting, config: ClientConfigType) {
     super(conRes, config);
   }
 
@@ -87,25 +89,28 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
     }
 
     const rdh = new ResultSetDataHolder([
-      new RdhKey('messageId', GeneralColumnType.TEXT),
-      new RdhKey('body', GeneralColumnType.TEXT),
-      new RdhKey('receiptHandle', GeneralColumnType.TEXT),
-      new RdhKey('sentTimestamp', GeneralColumnType.TIMESTAMP),
-      new RdhKey(
-        'approximateFirstReceiveTimestamp',
-        GeneralColumnType.TIMESTAMP,
-      ),
+      createRdhKey({ name: 'messageId', type: GeneralColumnType.TEXT }),
+      createRdhKey({ name: 'body', type: GeneralColumnType.TEXT }),
+      createRdhKey({ name: 'receiptHandle', type: GeneralColumnType.TEXT }),
+      createRdhKey({
+        name: 'sentTimestamp',
+        type: GeneralColumnType.TIMESTAMP,
+      }),
+      createRdhKey({
+        name: 'approximateFirstReceiveTimestamp',
+        type: GeneralColumnType.TIMESTAMP,
+      }),
     ]);
     keys.forEach((dbKey) => {
       rdh.addRow({
         ...dbKey.params,
-        messageId: dbKey.getName(),
+        messageId: dbKey.name,
       });
     });
     return rdh;
   }
 
-  async getInfomationSchemas(): Promise<DbDatabase> {
+  async getInfomationSchemas(): Promise<AwsDatabase> {
     if (!this.conRes) {
       return null;
     }
@@ -142,9 +147,7 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
         }
         NextToken = queues.NextToken;
       } while (NextToken);
-      dbDatabase.comment = `${dbDatabase.getChildren().length} ${plural(
-        'queue',
-      )}`;
+      dbDatabase.comment = `${dbDatabase.children.length} ${plural('queue')}`;
     } catch (e) {
       console.error(e);
       // reject(e);

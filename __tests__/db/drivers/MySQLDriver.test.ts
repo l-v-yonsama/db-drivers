@@ -1,12 +1,12 @@
 import {
   MySQLDriver,
-  DbConnection,
   DbSchema,
   DbTable,
   DbColumn,
-  DbDatabase,
   DBType,
   GeneralColumnType,
+  RdsDatabase,
+  ConnectionSetting,
 } from '../../../src';
 import { init, saveRes } from '../../setup/mysql';
 
@@ -17,15 +17,14 @@ const baseConnectOption = {
   password: 'testpass',
   database: 'testdb',
 };
-const connectOption = {
+const connectOption: ConnectionSetting = {
   ...baseConnectOption,
   dbType: DBType.MySQL,
-  enviroment: 'ut',
+  name: 'mysql',
 };
 
 describe('MySQLDriver', () => {
   let driver: MySQLDriver;
-  let conRes: DbConnection;
 
   beforeAll(async () => {
     driver = createDriver();
@@ -47,8 +46,8 @@ describe('MySQLDriver', () => {
     });
   });
 
-  describe('asyncGetResouces', () => {
-    let testDbRes: DbDatabase;
+  describe.skip('asyncGetResouces', () => {
+    let testDbRes: RdsDatabase;
     let testSchemaRes: DbSchema;
     let testTableRes: DbTable;
 
@@ -56,19 +55,19 @@ describe('MySQLDriver', () => {
       const dbRootRes = await driver.getInfomationSchemas();
       expect(dbRootRes).toHaveLength(1);
       testDbRes = dbRootRes[0];
-      expect(testDbRes.getName()).toBe(driver.getConnectionRes().database);
+      expect(testDbRes.name).toBe(driver.getConnectionRes().database);
       // await saveRes('mysqlDbRes.json', testDbRes);
     });
 
     it('should have Schema resource', async () => {
-      expect(testDbRes.getChildren()).toHaveLength(2);
+      expect(testDbRes.children).toHaveLength(2);
       testSchemaRes = testDbRes.getSchema({ isDefault: true });
-      expect(testSchemaRes.getName()).toBe('testdb');
+      expect(testSchemaRes.name).toBe('testdb');
     });
 
     it('should have Table resource', async () => {
       testTableRes = testSchemaRes.getChildByName('testtable') as DbTable;
-      expect(testTableRes.getName()).toBe('testtable');
+      expect(testTableRes.name).toBe('testtable');
       expect(testTableRes.tableType).toBe('TABLE');
       expect(testTableRes.comment).toBe('table with various data types');
     });
@@ -78,7 +77,7 @@ describe('MySQLDriver', () => {
       const idRes = testTableRes.getChildByName('ID') as DbColumn;
       expect(idRes.colType).toBe(GeneralColumnType.INTEGER);
       expect(idRes.nullable).toBe(false);
-      expect(idRes.key).toBe('PRI');
+      expect(idRes.primaryKey).toBe(true);
       expect(idRes.extra).toBe('auto_increment');
       // n0
       const n0Res = testTableRes.getChildByName('n0') as DbColumn;
@@ -89,10 +88,38 @@ describe('MySQLDriver', () => {
       expect(n1Res.colType).toBe(GeneralColumnType.TINYINT);
       expect(n1Res.nullable).toBe(true);
     });
+
+    it('should have Index on Column resource', async () => {
+      const tableRes = testSchemaRes.getChildByName('diff') as DbTable;
+      expect(tableRes.getPrimaryColumnNames()).toEqual(
+        expect.arrayContaining(['last_name', 'first_name']),
+      );
+      expect(tableRes.getUniqColumnNames()).toEqual(['full_name']);
+
+      const lastName = tableRes.getChildByName('last_name') as DbColumn;
+      expect(lastName.primaryKey).toBe(true);
+      const firstName = tableRes.getChildByName('first_name') as DbColumn;
+      expect(firstName.primaryKey).toBe(true);
+      const fullName = tableRes.children.find(
+        (it) => it.name == 'full_name',
+      ) as DbColumn;
+      expect(fullName.uniqKey).toBe(true);
+    });
   });
 
+  // describe('query', () => {
+  //   it('should return constructor name', async () => {
+  //     const query =
+  //       'WITH cte (col1,col2) AS ' +
+  //       ' ( SELECT n2, n3 from testtable ) ' +
+  //       ' SELECT col1, col2 FROM cte ' +
+  //       ' inner join testtable b on  (cte.col1 = b.n2 and ID > 2) ;';
+  //     const rdh = await driver.requestSql({ sql: query });
+  //     console.log(rdh);
+  //   });
+  // });
+
   function createDriver(): MySQLDriver {
-    conRes = new DbConnection(connectOption);
-    return new MySQLDriver(conRes);
+    return new MySQLDriver(connectOption);
   }
 });

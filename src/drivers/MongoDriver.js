@@ -63,7 +63,7 @@ export class MongoDriver {
     console.log('driver.js 43 create promsie');
     return new Promise((resolve, reject) => {
       let dbResources = [];
-      console.log('start refreshResouces ');
+      console.log('start refreshResources ');
       let promiseList = [];
       Object.values(self.dbMap).forEach((database) => {
         let schema = new DbRes.DbSchema();

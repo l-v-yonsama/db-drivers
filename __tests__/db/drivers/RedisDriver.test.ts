@@ -1,7 +1,6 @@
 import { Redis, RedisOptions } from 'ioredis';
 import {
   RedisDriver,
-  DbConnection,
   RedisDatabase,
   DBDriverResolver,
   ConnectionSetting,
@@ -67,13 +66,15 @@ describe('RedisDriver', () => {
   });
 
   it('failed to connect', async () => {
-    const con = new DbConnection({
+    const con: ConnectionSetting = {
+      dbType: DBType.Redis,
       port: 6379,
       database: '0',
       host: '127.0.0.1',
       user: 'xxxx',
       password: 'xxxx',
-    });
+      name: 'redis',
+    };
     const testDriver = new RedisDriver(con);
     expect(await testDriver.connect()).toContain('failed to connect');
   });
@@ -90,10 +91,8 @@ describe('RedisDriver', () => {
     it('should return Database resource', async () => {
       const dbRootRes = await driver.getInfomationSchemas();
       expect(dbRootRes).toHaveLength(1);
-      testRedisDb0Res = dbRootRes[0] as RedisDatabase;
-      expect(testRedisDb0Res.getName()).toBe(
-        driver.getConnectionRes().database,
-      );
+      testRedisDb0Res = dbRootRes[0];
+      expect(testRedisDb0Res.name).toBe(driver.getConnectionRes().database);
       expect(testRedisDb0Res.numOfKeys).toEqual(expect.any(Number));
     });
   });

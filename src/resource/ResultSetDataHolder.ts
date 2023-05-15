@@ -1,9 +1,19 @@
+import * as os from 'os';
 import { default as listit } from 'list-it';
 import { EnumValues } from 'enum-values';
 import * as ss from 'simple-statistics';
 import ShuffleArray from 'shuffle-array';
-import { GeneralColumnType } from '../types';
-import { DbResource } from './DbResource';
+import {
+  AnnotationOptions,
+  AnnotationType,
+  CellAnnotation,
+  GeneralColumnType,
+  QueryConditions,
+  RdhMeta,
+} from '../types';
+import dayjs from 'dayjs';
+import { isDateTimeOrDate, isNumericLike } from './GeneralColumnUtil';
+import { toDate } from '../util';
 
 export class SampleClassPair {
   public clazz_value: any;
@@ -20,65 +30,46 @@ export class SampleGroupByClass {
     this.clazz_key = clazz_key;
   }
 }
-export class RdhKey {
-  public name: string;
-  public comment: string;
-  public type = GeneralColumnType.UNKNOWN;
-  public width?: number;
-  public meta?: {
-    is_image?: boolean;
-    is_hyperlink?: boolean;
-  };
 
-  constructor(name: string, type = GeneralColumnType.UNKNOWN, comment = '') {
-    this.name = name;
-    this.type = type;
-    this.comment = comment;
-  }
-
-  public toString(): string {
-    return `${this.name} [${EnumValues.getNameFromValue(
-      GeneralColumnType,
-      this.type,
-    )}:${GeneralColumnType.parseHandsonType(this.type)}]`;
-  }
-}
-export enum AnnotationType {
-  Del,
-  Upd,
-  Add,
-  Err,
-  Lnt,
-  Stl,
-}
-export interface AnnotationOptions {
-  message?: string;
-  result?: any;
-  style?: AnnotationStyleOptions;
-}
-export interface AnnotationStyleOptions {
-  f?: { s: number; n: string };
-  a?: { h?: string; v?: string };
-  b?: string;
-  fmt?: string;
-}
-export class CellAnnotation {
-  type: AnnotationType;
-  options?: AnnotationOptions;
-  styles?: AnnotationStyleOptions;
-  constructor(type: AnnotationType, options?: AnnotationOptions) {
-    this.type = type;
-    this.options = options;
-  }
-}
 export interface MergedCell {
   row: number;
   col: number;
   rowspan: number;
   colspan: number;
 }
+
+export type RdhKey = {
+  name: string;
+  comment: string;
+  type: GeneralColumnType;
+  width?: number;
+  meta?: {
+    is_image?: boolean;
+    is_hyperlink?: boolean;
+  };
+};
+
+export function createRdhKey({
+  name,
+  type,
+  width,
+  comment,
+}: {
+  name: string;
+  type?: GeneralColumnType;
+  width?: number;
+  comment?: string;
+}): RdhKey {
+  return {
+    name,
+    type: type ?? GeneralColumnType.UNKNOWN,
+    comment,
+    width,
+  };
+}
+
 export class RdhRow {
-  public meta: any;
+  public meta: { [key: string]: CellAnnotation[] };
   public values: any;
 
   constructor(meta: any, values: any) {
@@ -95,6 +86,10 @@ export class RdhRow {
       this.meta[key] = new Array<CellAnnotation>();
     }
     this.meta[key].push(new CellAnnotation(type, options));
+  }
+
+  public clearAllAnnotations(): void {
+    this.meta = {};
   }
 
   public clearAnnotations(type: AnnotationType): void {
@@ -173,57 +168,95 @@ export class RdhRow {
   }
 }
 
+export type ToStringParam = {
+  maxPrintLines?: number;
+  withType?: boolean;
+  withComment?: boolean;
+  keyNames?: string[];
+};
+
 export class ResultSetDataHolder {
-  is_empty = false;
+  readonly created: Date;
   keys: RdhKey[];
   rows: Array<RdhRow>;
-  meta?: {
-    connectionName?: string;
-    tableName?: string;
-    res?: DbResource;
-    [key: string]: any;
-  };
+  queryConditions?: QueryConditions;
   sqlStatement: string | undefined;
   shuffledIndexes?: number[];
   shuffledNextCounter?: number;
   mergeCells?: MergedCell[];
+  readonly meta: RdhMeta;
 
   constructor(keys: Array<string | RdhKey>) {
+    this.created = new Date();
     this.keys = [];
     this.rows = [];
     this.setKeys(keys);
+    this.meta = {};
+  }
+
+  clearAllAnotations(): void {
+    this.rows.forEach((row) => row.clearAllAnnotations());
   }
 
   static createEmpty(): ResultSetDataHolder {
-    const rdh = new ResultSetDataHolder(['message']);
-    rdh.is_empty = true;
+    const rdh = new ResultSetDataHolder([
+      {
+        name: 'message',
+        comment: '',
+        type: GeneralColumnType.TEXT,
+        width: 200,
+      },
+    ]);
     rdh.addRow({ message: 'empty result set' });
     return rdh;
   }
 
-  static from(list: any, i_titles?: string | string[]): ResultSetDataHolder {
+  static from(
+    list: any,
+    options?: {
+      keyNames?: string[];
+    },
+  ): ResultSetDataHolder {
     if (list === undefined || list === null || list === '') {
       throw new Error(typeof list + ' has no value.');
     }
+    const clone = (): ResultSetDataHolder => {
+      const plainObj = JSON.parse(JSON.stringify(list));
+      const rdh = new ResultSetDataHolder(plainObj.keys);
+      const dateKeys = rdh.keys
+        .filter((k) => isDateTimeOrDate(k.type))
+        .map((k) => k.name);
+      plainObj.rows?.forEach((row) => {
+        const { values, meta } = row;
+        for (const dateKey of dateKeys) {
+          values[dateKey] = toDate(values[dateKey]);
+        }
+        rdh.addRow(values, meta);
+      });
+      if (plainObj.meta) {
+        Object.keys(plainObj.meta).forEach((key) => {
+          rdh.meta[key] = plainObj.meta[key];
+        });
+      }
+      (rdh as any)['created'] = toDate(plainObj.created);
+      rdh.sqlStatement = plainObj.sqlStatement;
+      rdh.shuffledIndexes = plainObj.shuffledIndexes;
+      rdh.shuffledNextCounter = plainObj.shuffledNextCounter;
+      rdh.mergeCells = plainObj.mergeCells;
+      rdh.queryConditions = plainObj.queryConditions;
+      return rdh;
+    };
     const constructor = list.constructor.name;
     if (constructor === 'ResultSetDataHolder') {
-      return list;
+      return clone();
     }
     const t = typeof list;
     let ret = ResultSetDataHolder.createEmpty();
     // console.log('outputToSpread, list=', list, t, list.constructor.name)
-    const str_titles = new Array<string>();
+    const strTitles: string[] = [];
 
-    if (i_titles) {
-      console.log('has i_titles', i_titles);
-      if (typeof i_titles === 'string') {
-        str_titles.push(i_titles);
-      }
-      if (i_titles instanceof Array) {
-        i_titles.forEach((s) => {
-          str_titles.push(s);
-        });
-      }
+    if (options?.keyNames) {
+      strTitles.push(...options.keyNames);
     }
     if (list instanceof Array) {
       if (list.length > 0) {
@@ -231,17 +264,17 @@ export class ResultSetDataHolder {
 
         if (elm instanceof Array) {
           // number[][]
-          let i = str_titles.length + 1;
-          while (str_titles.length < elm.length) {
-            str_titles.push(`K${i++}`);
+          let i = strTitles.length + 1;
+          while (strTitles.length < elm.length) {
+            strTitles.push(`K${i++}`);
           }
-          ret = new ResultSetDataHolder(str_titles);
+          ret = new ResultSetDataHolder(strTitles);
 
           for (let r = 0; r < list.length; r++) {
             elm = list[r];
             const values: any = {};
             for (let c = 0; c < elm.length; c++) {
-              values[str_titles[c]] = elm[c];
+              values[strTitles[c]] = elm[c];
             }
             ret.addRow(values);
           }
@@ -250,39 +283,30 @@ export class ResultSetDataHolder {
     } else {
       // console.log('list.keys=', list.keys);
       // console.log('list.rows=', list.rows);
-      // console.log('list.is_empty=', list.is_empty);
-      if (list.keys && list.rows && list.is_empty !== undefined) {
+      if (list.keys && list.rows) {
         // rdh
-        const keyList = new Array<RdhKey>();
-        list.keys.forEach((k: RdhKey) => {
-          const new_key = new RdhKey(k.name, k.type, k.comment);
-          new_key.width = k.width;
-          keyList.push(new_key);
-        });
-        const rdh = new ResultSetDataHolder(keyList);
-        rdh.is_empty = list.is_empty;
-        list.rows.forEach((r: RdhRow) => {
-          rdh.rows.push(new RdhRow(r.meta, r.values));
-        });
-        rdh.sqlStatement = list.sqlStatement;
-        rdh.mergeCells = list.mergeCells;
-        rdh.meta = list.meta;
-        return rdh;
+        return clone();
       }
 
       switch (t) {
         case 'object':
-          if (str_titles.length !== 2) {
-            str_titles.splice(0, str_titles.length);
-            str_titles.push('KEY');
-            str_titles.push('VALUE');
+          if (strTitles.length !== 2) {
+            strTitles.splice(0, strTitles.length);
+            strTitles.push('KEY');
+            strTitles.push('TYPE');
+            strTitles.push('VALUE');
           }
-          ret = new ResultSetDataHolder(str_titles);
+          ret = new ResultSetDataHolder(strTitles);
           Object.keys(list).forEach((k: string) => {
             const v = list[k];
+            let type: string = typeof v;
+            if (v === null) {
+              type = 'null';
+            }
             const values: any = {};
-            values[str_titles[0]] = k;
-            values[str_titles[1]] = v;
+            values[strTitles[0]] = k;
+            values[strTitles[1]] = type;
+            values[strTitles[2]] = v;
 
             ret.addRow(values);
           });
@@ -317,11 +341,17 @@ export class ResultSetDataHolder {
     // # max    3.000000  1.100000
     const desc_keys = new Array<RdhKey>();
     this.keys
-      .filter((k) => GeneralColumnType.isNumericLike(k.type))
+      .filter((k) => isNumericLike(k.type))
       .forEach((k) => {
-        desc_keys.push(new RdhKey(k.name, k.type, k.comment));
+        desc_keys.push({
+          name: k.name,
+          type: k.type,
+          comment: k.comment ?? '',
+        });
       });
-    desc_keys.unshift(new RdhKey('stat', GeneralColumnType.TEXT));
+    desc_keys.unshift(
+      createRdhKey({ name: 'stat', type: GeneralColumnType.TEXT }),
+    );
     const ret = new ResultSetDataHolder(desc_keys);
 
     const count_values: any = { stat: 'count' };
@@ -494,14 +524,18 @@ export class ResultSetDataHolder {
     this.drop(key);
     if (constructor === 'Float32Array' || constructor === 'Float64Array') {
       list = Array.from(list);
-      this.keys.push(new RdhKey(key, GeneralColumnType.NUMERIC));
+      this.keys.push(
+        createRdhKey({ name: key, type: GeneralColumnType.NUMERIC }),
+      );
     } else if (
       constructor === 'Int8Array' ||
       constructor === 'Int16Array' ||
       constructor === 'Int32Array'
     ) {
       list = Array.from(list);
-      this.keys.push(new RdhKey(key, GeneralColumnType.INTEGER));
+      this.keys.push(
+        createRdhKey({ name: key, type: GeneralColumnType.INTEGER }),
+      );
     } else {
       const types = new Set<string>();
       list.forEach((v: any) => {
@@ -510,9 +544,13 @@ export class ResultSetDataHolder {
         }
       });
       if (types.size === 1 && types.has('number')) {
-        this.keys.push(new RdhKey(key, GeneralColumnType.NUMERIC));
+        this.keys.push(
+          createRdhKey({ name: key, type: GeneralColumnType.NUMERIC }),
+        );
       } else {
-        this.keys.push(new RdhKey(key, GeneralColumnType.UNKNOWN));
+        this.keys.push(
+          createRdhKey({ name: key, type: GeneralColumnType.UNKNOWN }),
+        );
       }
     }
     list.forEach((v: any, i: number) => {
@@ -526,7 +564,9 @@ export class ResultSetDataHolder {
     dictionary: string[],
   ): void {
     this.drop(new_key);
-    this.keys.push(new RdhKey(new_key, GeneralColumnType.TEXT));
+    this.keys.push(
+      createRdhKey({ name: new_key, type: GeneralColumnType.TEXT }),
+    );
     this.rows.forEach((row: any) => {
       const existing_val = row.values[existing_key];
       if (
@@ -578,30 +618,96 @@ export class ResultSetDataHolder {
     return retList;
   }
 
-  toCsv(config?: { key_names?: string[] }): string {
-    if (config === undefined) {
-      config = {};
+  toCsv(params?: ToStringParam): string {
+    const { withType, withComment, keyNames }: ToStringParam = {
+      withType: false,
+      withComment: false,
+      keyNames: [],
+      ...params,
+    };
+
+    const rdhKeys =
+      keyNames.length > 0
+        ? this.keys.filter((k) => keyNames.includes(k.name))
+        : this.keys;
+    if (rdhKeys.length < 0) {
+      return 'No Keys.';
     }
     const retList = new Array<string>();
-    if (config.key_names && config.key_names.length > 0) {
-      retList.push(config.key_names.join(','));
-    } else {
-      retList.push(this.keys.map((k) => k.name).join(','));
+    retList.push(rdhKeys.map((k) => this.toCsvString(k.name)).join(','));
+    if (withComment) {
+      retList.push(
+        rdhKeys.map((k) => this.toCsvString(k.comment ?? '')).join(','),
+      );
     }
+    if (withType) {
+      retList.push(
+        rdhKeys
+          .map((k) =>
+            this.toCsvString(
+              EnumValues.getNameFromValue(GeneralColumnType, k.type),
+            ),
+          )
+          .join(','),
+      );
+    }
+
     this.rows.forEach((row: RdhRow) => {
       const retRow = new Array<any>();
-      if (config.key_names && config.key_names.length > 0) {
-        config.key_names.forEach((key_name: any) => {
-          retRow.push((<any>row.values)[key_name]);
-        });
-      } else {
-        this.keys.forEach((key: any) => {
-          retRow.push((<any>row.values)[key.name]);
-        });
-      }
+      rdhKeys.forEach((key) => {
+        retRow.push(this.toCsvString(row.values[key.name], key.type));
+      });
       retList.push(retRow.join(','));
     });
-    return retList.join('\r\n');
+    return retList.join(os.EOL);
+  }
+
+  toMarkdown(params?: ToStringParam): string {
+    const { withType, withComment, keyNames }: ToStringParam = {
+      withType: false,
+      withComment: false,
+      keyNames: [],
+      ...params,
+    };
+
+    const rdhKeys =
+      keyNames.length > 0
+        ? this.keys.filter((k) => keyNames.includes(k.name))
+        : this.keys;
+
+    if (rdhKeys.length < 0) {
+      return 'No Keys.';
+    }
+    const retList = new Array<string>();
+    const pushLine = (s: string) => retList.push(`| ${s} |`);
+
+    pushLine(rdhKeys.map((k) => this.toMarkdownString(k.name)).join(' | '));
+    pushLine(rdhKeys.map((_) => ':---:').join(' | '));
+    if (withComment) {
+      pushLine(
+        rdhKeys.map((k) => this.toMarkdownString(k.comment ?? '')).join(' | '),
+      );
+    }
+    if (withType) {
+      pushLine(
+        rdhKeys
+          .map((k) =>
+            this.toMarkdownString(
+              EnumValues.getNameFromValue(GeneralColumnType, k.type),
+            ),
+          )
+          .join(' | '),
+      );
+    }
+
+    this.rows.forEach((row: RdhRow) => {
+      const retRow = new Array<any>();
+      rdhKeys.forEach((key) => {
+        retRow.push(this.toMarkdownString(row.values[key.name], key.type));
+      });
+      pushLine(retRow.join(' | '));
+    });
+    return retList.join(os.EOL);
   }
 
   addRow(recordData: any, default_meta?: any): void {
@@ -611,7 +717,8 @@ export class ResultSetDataHolder {
     }
     const values = <any>{};
     this.keys.forEach((key) => {
-      values[key.name] = recordData[key.name];
+      const v = recordData[key.name];
+      values[key.name] = v;
     });
     this.rows.push(new RdhRow(meta, values));
   }
@@ -643,7 +750,7 @@ export class ResultSetDataHolder {
   }
   fillnull(how: 'mean' | 'median'): void {
     this.keys
-      .filter((k) => GeneralColumnType.isNumericLike(k.type))
+      .filter((k) => isNumericLike(k.type))
       .forEach((k) => {
         const num_list = new Array<number>();
         for (let i = 0; i < this.rows.length; i++) {
@@ -691,18 +798,16 @@ export class ResultSetDataHolder {
   }
   setKeys(keys: Array<string | RdhKey>): void {
     keys.forEach((k) => {
-      if (k instanceof RdhKey) {
-        this.keys.push(k);
+      if (typeof k === 'string') {
+        this.keys.push(createRdhKey({ name: k }));
       } else {
-        this.keys.push(new RdhKey(k));
+        this.keys.push(k);
       }
     });
   }
   public keynames(is_only_numeric_like = false): string[] {
     if (is_only_numeric_like) {
-      return this.keys
-        .filter((k) => GeneralColumnType.isNumericLike(k.type))
-        .map((k) => k.name);
+      return this.keys.filter((k) => isNumericLike(k.type)).map((k) => k.name);
     }
     return this.keys.map((k) => k.name);
   }
@@ -725,18 +830,18 @@ export class ResultSetDataHolder {
     if (this.keys === undefined) {
       this.keys = [];
     }
-    if (k instanceof RdhKey) {
-      this.keys.push(k);
+    if (typeof k === 'string') {
+      this.keys.push(createRdhKey({ name: k }));
     } else {
-      this.keys.push(new RdhKey(k));
+      this.keys.push(k);
     }
   }
 
-  private toShortString(o: any): string {
-    if (typeof o === 'object' && o instanceof Date) {
-      return o.toISOString();
+  private toShortString(o: any, keyType?: GeneralColumnType): string {
+    let s = '' + o;
+    if (isDateTimeOrDate(keyType)) {
+      s = dayjs(o).format('YYYY-MM-dd HH:mm:ss');
     }
-    const s = '' + o;
     if (s.length > 48) {
       return s.substring(0, 48) + '..';
     } else {
@@ -744,43 +849,81 @@ export class ResultSetDataHolder {
     }
   }
 
-  public toString(num_of_print = 8): string {
-    if (this.keys.length < 0) {
+  private toCsvString(o: any, keyType?: GeneralColumnType): string {
+    let s = '' + o;
+    if (isDateTimeOrDate(keyType)) {
+      s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
+    }
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+
+  private toMarkdownString(o: any, keyType?: GeneralColumnType): string {
+    let s = '' + o;
+    if (isDateTimeOrDate(keyType)) {
+      s = dayjs(o).format('YYYY-MM-dd HH:mm:ss');
+    }
+    return `${s.replace(/\|/g, '&#124;').replace(/(\r?\n)/g, '<br>')}`;
+  }
+
+  public toString(params?: ToStringParam): string {
+    const { maxPrintLines, withType, withComment, keyNames }: ToStringParam = {
+      maxPrintLines: 8,
+      withType: false,
+      withComment: false,
+      keyNames: [],
+      ...params,
+    };
+
+    const rdhKeys =
+      keyNames.length > 0
+        ? this.keys.filter((k) => keyNames.includes(k.name))
+        : this.keys;
+
+    if (rdhKeys.length < 0) {
       return 'No Keys.';
     }
+
     const buf = listit.buffer();
     buf.d('ROW');
-    this.keys.forEach((k) => {
-      buf.d(this.toShortString(k.name));
-    });
+    rdhKeys.forEach((k) => buf.d(this.toShortString(k.name)));
     buf.nl();
-    buf.d(
-      EnumValues.getNameFromValue(GeneralColumnType, GeneralColumnType.INTEGER),
-    );
-    this.keys.forEach((k) => {
-      buf.d(EnumValues.getNameFromValue(GeneralColumnType, k.type));
-    });
-    buf.nl();
+    if (withComment) {
+      buf.d('');
+      rdhKeys.forEach((k) => buf.d(this.toShortString(k.comment) ?? ''));
+      buf.nl();
+    }
+    if (withType) {
+      buf.d(
+        EnumValues.getNameFromValue(
+          GeneralColumnType,
+          GeneralColumnType.INTEGER,
+        ),
+      );
+      rdhKeys.forEach((k) => {
+        buf.d(EnumValues.getNameFromValue(GeneralColumnType, k.type));
+      });
+      buf.nl();
+    }
 
-    if (this.rows.length <= num_of_print) {
+    if (this.rows.length <= maxPrintLines) {
       this.rows.forEach((v, idx) => {
         buf.d(idx + 1);
-        this.keys.forEach((k) => {
-          buf.d(this.toShortString(v.values[k.name]));
+        rdhKeys.forEach((k) => {
+          buf.d(this.toShortString(v.values[k.name], k.type));
         });
         buf.nl();
       });
     } else {
-      const num_of_head = Math.ceil(num_of_print / 2);
+      const num_of_head = Math.ceil(maxPrintLines / 2);
       this.rows.slice(0, num_of_head).forEach((v, idx) => {
         buf.d(idx + 1);
-        this.keys.forEach((k) => {
-          buf.d(this.toShortString(v.values[k.name]));
+        rdhKeys.forEach((k) => {
+          buf.d(this.toShortString(v.values[k.name], k.type));
         });
         buf.nl();
       });
       buf.d('...');
-      this.keys.forEach(() => {
+      rdhKeys.forEach(() => {
         buf.d('...');
       });
       buf.nl();
@@ -788,12 +931,15 @@ export class ResultSetDataHolder {
         .slice(this.rows.length - num_of_head, this.rows.length)
         .forEach((v, idx) => {
           buf.d(this.rows.length - num_of_head + idx + 1);
-          this.keys.forEach((k) => {
-            buf.d(this.toShortString(v.values[k.name]));
+          rdhKeys.forEach((k) => {
+            buf.d(this.toShortString(v.values[k.name], k.type));
           });
           buf.nl();
         });
     }
-    return `RDH NumOfRows:${this.rows.length}\n` + buf.toString();
+    if (this.rows.length === 0) {
+      return buf.toString() + 'No records.';
+    }
+    return buf.toString();
   }
 }

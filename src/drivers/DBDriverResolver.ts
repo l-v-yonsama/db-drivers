@@ -1,7 +1,6 @@
 import ShortUniqueId from 'short-unique-id';
 import { BaseDriver } from './BaseDriver';
-import { ConnectionSetting, DbConnection } from '../resource';
-import { DBType } from '../types';
+import { ConnectionSetting, DBType } from '../types';
 import { MySQLDriver } from './MySQLDriver';
 import { PostgresDriver } from './PostgresDriver';
 import { RedisDriver } from './RedisDriver';
@@ -36,10 +35,10 @@ export class DBDriverResolver {
   }
 
   createDriver<T extends BaseDriver>(setting: ConnectionSetting): T {
-    const conRes = new DbConnection({
+    const conRes = {
       ...setting,
       id: uid.randomUUID(8),
-    });
+    };
 
     let driver = undefined;
     switch (conRes.dbType) {

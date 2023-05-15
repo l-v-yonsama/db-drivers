@@ -45,8 +45,14 @@ export async function init(): Promise<void> {
 
     const now = new Date();
     for (let i = 1; i <= 10; i++) {
-      const integers = [0, 1, 2, 3, 4];
-      const decimals = [12.3456, 0.1, 0.01];
+      const integers = [
+        0,
+        1 + i,
+        2 + i + i * 10,
+        3 + i + i * 100,
+        4 + i + i * 1000,
+      ];
+      const decimals = [12.3456 + i, 0.1 + i, 0.05 + i];
       const datetimes = [now, now, now, now, now];
       const strings = [
         'No' + i,
@@ -71,6 +77,20 @@ export async function init(): Promise<void> {
       ];
       await con.execute(INSERT_STATEMENT, binds);
     }
+
+    await con.execute('DROP TABLE IF EXISTS testdb.diff');
+    await con.execute(CREATE_TABLE_STATEMENT2);
+    for (let i = 1; i <= 10; i++) {
+      const binds = [
+        `Uchida${i}`,
+        `Takeshi${i}`,
+        `Uchida${i} Takeshi${i}`,
+        `note${i}`,
+        new Date(2023, 10, i),
+      ];
+      await con.execute(INSERT_STATEMENT2, binds);
+    }
+
     await con.execute('DROP TABLE IF EXISTS testdb.DEPT');
     await con.execute(CREATE_TABLE_ORA_DEPT.replace('oradb', 'testdb'));
     await con.execute('DROP TABLE IF EXISTS testdb.EMP');
@@ -137,6 +157,18 @@ CREATE TABLE testdb.testtable (
 ) COMMENT='table with various data types'
 `;
 
+const CREATE_TABLE_STATEMENT2 = `
+CREATE TABLE testdb.diff (
+  last_name VARCHAR(128),
+  first_name VARCHAR(128),
+  full_name VARCHAR(128) unique,
+  note VARCHAR(128),
+  birthday DATE,
+  PRIMARY KEY(last_name, first_name)
+
+) COMMENT='test diff'
+`;
+
 const CREATE_TABLE_ORA_DEPT = `CREATE TABLE oradb.DEPT (
   DEPTNO integer NOT NULL,
   DNAME varchar(14) default NULL,
@@ -169,3 +201,7 @@ const INSERT_STATEMENT = `INSERT INTO testdb.testtable (
     ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
     ST_GeomFromText('POINT(35.702727 100)'), ? )`;
+
+const INSERT_STATEMENT2 = `INSERT INTO testdb.diff (
+  last_name, first_name, full_name, note, birthday )
+  VALUES(?, ?, ?, ?, ?)`;

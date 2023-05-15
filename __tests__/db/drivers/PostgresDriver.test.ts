@@ -1,12 +1,12 @@
 import {
   PostgresDriver,
-  DbConnection,
   DbSchema,
   DbTable,
   DbColumn,
-  DbDatabase,
   DBType,
   GeneralColumnType,
+  RdsDatabase,
+  ConnectionSetting,
 } from '../../../src';
 import { default as pg } from 'pg';
 
@@ -17,10 +17,10 @@ const baseConnectOption = {
   password: 'testpass',
   database: 'testdb',
 };
-const connectOption = {
+const connectOption: ConnectionSetting = {
   ...baseConnectOption,
   dbType: DBType.Postgres,
-  enviroment: 'ut',
+  name: 'postgres',
 };
 
 const CREATE_TABLE_STATEMENT = `
@@ -54,7 +54,6 @@ CREATE TABLE testtable (
 
 describe('PostgresDriver', () => {
   let driver: PostgresDriver;
-  let conRes: DbConnection;
   let client: pg.Client;
 
   beforeAll(async () => {
@@ -91,35 +90,35 @@ describe('PostgresDriver', () => {
   });
 
   describe('asyncGetResouces', () => {
-    let testDbRes: DbDatabase;
+    let testDbRes: RdsDatabase;
     let testSchemaRes: DbSchema;
     let testTableRes: DbTable;
 
     it('should return Database resource', async () => {
       const dbRootRes = await driver.getInfomationSchemas();
       testDbRes = dbRootRes.find((it) => it.name === 'testdb');
-      expect(testDbRes.getName()).toBe(driver.getConnectionRes().database);
+      expect(testDbRes.name).toBe(driver.getConnectionRes().database);
     });
 
     it('should have Schema resource', async () => {
-      expect(testDbRes.getChildren()).toHaveLength(1);
+      expect(testDbRes.children).toHaveLength(1);
       testSchemaRes = testDbRes.getSchema({ isDefault: true });
-      expect(testSchemaRes.getName()).toBe('public');
+      expect(testSchemaRes.name).toBe('public');
     });
 
     it('should have Table resource', async () => {
       testTableRes = testSchemaRes.getChildByName('testtable') as DbTable;
-      expect(testTableRes.getName()).toBe('testtable');
+      expect(testTableRes.name).toBe('testtable');
       expect(testTableRes.tableType).toBe('TABLE');
       expect(testTableRes.comment).toBe('table with various data types');
     });
 
     it('should have Column resource', async () => {
       // ID
-      const idRes = testTableRes.getChildByName('ID') as DbColumn;
+      const idRes = testTableRes.getChildByName('ID', true) as DbColumn;
       expect(idRes.colType).toBe(GeneralColumnType.INTEGER);
       expect(idRes.nullable).toBe(false);
-      expect(idRes.key).toBe('PRI');
+      expect(idRes.primaryKey).toBe(true);
       expect(idRes.default).toContain('nextval');
       // n0
       const n0Res = testTableRes.getChildByName('n0') as DbColumn;
@@ -133,7 +132,6 @@ describe('PostgresDriver', () => {
   });
 
   function createDriver(): PostgresDriver {
-    conRes = new DbConnection(connectOption);
-    return new PostgresDriver(conRes);
+    return new PostgresDriver(connectOption);
   }
 });

@@ -1,22 +1,30 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { Redis } from 'ioredis';
-import { BaseDriver, RequestSqlOptions, Scannable } from './BaseDriver';
+import { BaseDriver, Scannable } from './BaseDriver';
 import {
-  DbConnection,
   DbDatabase,
   DbKey,
   RdhKey,
   RedisDatabase,
   RedisKeyParams,
   ResultSetDataHolder,
+  createRdhKey,
 } from '../resource';
-import { GeneralColumnType, RedisKeyType, ScanParams } from '../types';
+import {
+  ConnectionSetting,
+  GeneralColumnType,
+  RedisKeyType,
+  ScanParams,
+} from '../types';
 
-export class RedisDriver extends BaseDriver implements Scannable {
+export class RedisDriver
+  extends BaseDriver<RedisDatabase>
+  implements Scannable
+{
   client: Redis | undefined;
 
-  constructor(conRes: DbConnection) {
+  constructor(conRes: ConnectionSetting) {
     super(conRes);
   }
 
@@ -44,7 +52,7 @@ export class RedisDriver extends BaseDriver implements Scannable {
         options.port = this.sshLocalPort;
       }
       options.connectTimeout = 5_000;
-      if (this.conRes.hasUrl()) {
+      if (this.conRes.url) {
         // Connect to 127.0.0.1:6380, db 4, using password "authpassword":
         // "redis://:authpassword@127.0.0.1:6380/4"
         this.client = new Redis(this.conRes.url);
@@ -172,15 +180,19 @@ export class RedisDriver extends BaseDriver implements Scannable {
     const dbKeys = await this.scanStream(params);
 
     const rdh = new ResultSetDataHolder([
-      new RdhKey('key', GeneralColumnType.TEXT),
-      new RdhKey('type', GeneralColumnType.ENUM),
-      new RdhKey('ttl', GeneralColumnType.INTEGER),
-      new RdhKey('val', GeneralColumnType.UNKNOWN),
+      createRdhKey({ name: 'key', type: GeneralColumnType.TEXT, width: 150 }),
+      createRdhKey({ name: 'type', type: GeneralColumnType.ENUM, width: 70 }),
+      createRdhKey({ name: 'ttl', type: GeneralColumnType.INTEGER, width: 50 }),
+      createRdhKey({
+        name: 'val',
+        type: GeneralColumnType.UNKNOWN,
+        width: 300,
+      }),
     ]);
     dbKeys.forEach((dbKey) => {
       rdh.addRow({
         ...dbKey.params,
-        key: dbKey.getName(),
+        key: dbKey.name,
       });
     });
     return rdh;
@@ -207,11 +219,11 @@ export class RedisDriver extends BaseDriver implements Scannable {
     }
     return undefined;
   }
-  async getInfomationSchemas(): Promise<Array<DbDatabase>> {
+  async getInfomationSchemasSub(): Promise<Array<RedisDatabase>> {
     if (!this.conRes) {
       return [];
     }
-    const dbResources = new Array<DbDatabase>();
+    const dbResources = new Array<RedisDatabase>();
 
     const keyspace = await this.client.info('keyspace');
     // db0:keys=7,expires=0,avg_ttl=0

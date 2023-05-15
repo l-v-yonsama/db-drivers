@@ -3,15 +3,13 @@ import { getPort } from 'get-port-please';
 import * as fs from 'fs';
 import {
   ColumnResolver,
-  DbColumn,
-  DbConnection,
   DbDatabase,
-  DbSchema,
   ResultSetDataHolder,
   SchemaAndTableHints,
 } from '../resource';
-import { GeneralResult, ResourceType, ScanParams } from '../types';
+import { ConnectionSetting, GeneralResult, ScanParams } from '../types';
 import { DBError } from './DBError';
+import { parseFirst, Statement } from 'pgsql-ast-parser';
 
 export interface Scannable {
   scan(params: ScanParams): Promise<ResultSetDataHolder>;
@@ -24,13 +22,38 @@ export function isScannable(arg: any): arg is Scannable {
   return typeof arg === 'object' && typeof arg.scan === 'function';
 }
 
-export abstract class BaseDriver {
+class SharedDbRes {
+  static instance;
+  private map = new Map<string, DbDatabase>();
+
+  public static getInstance(): SharedDbRes {
+    if (this.instance) {
+      return this.instance;
+    }
+    this.instance = new SharedDbRes();
+    return this.instance;
+  }
+
+  get(conName: string): DbDatabase | undefined {
+    return this.map.get(conName);
+  }
+
+  set(conName: string, res: DbDatabase): void {
+    this.map.set(conName, res);
+  }
+
+  remove(conName: string): void {
+    this.map.delete(conName);
+  }
+}
+
+export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
   public isConnected: boolean;
-  protected conRes: DbConnection;
+  protected conRes: ConnectionSetting;
   protected sshServer: any;
   protected sshLocalPort?: number;
 
-  constructor(conRes: DbConnection) {
+  constructor(conRes: ConnectionSetting) {
     this.conRes = conRes;
     this.isConnected = false;
     // log.info(this.getName(), '★CREATED', this.conRes.id);
@@ -38,7 +61,7 @@ export abstract class BaseDriver {
   getName(): string {
     return this.constructor.name;
   }
-  getConnectionRes(): DbConnection {
+  getConnectionRes(): ConnectionSetting {
     return this.conRes;
   }
 
@@ -47,7 +70,7 @@ export abstract class BaseDriver {
   }
 
   isNeedsSsh(): boolean {
-    return this.conRes.hasSshSetting();
+    return this.conRes.ssh != undefined;
   }
   isQuery(sql: string): boolean {
     sql = sql.toLocaleLowerCase();
@@ -60,6 +83,20 @@ export abstract class BaseDriver {
     return false;
   }
 
+  parseQuery(sql: string): Statement | undefined {
+    // select * from testtable where id > ?
+    // Unexpected op_compare token: "?".
+    const replacedSql = sql.replace(/\?/g, '$1');
+    try {
+      // console.log('sql', sql);
+      return parseFirst(replacedSql);
+    } catch (_) {
+      // console.error(_);
+      // do nothing.
+    }
+    return undefined;
+  }
+
   createColumnResolver(sql?: string): ColumnResolver {
     if (sql) {
       const hints = this.parseSchemaAndTableHints(sql);
@@ -67,6 +104,7 @@ export abstract class BaseDriver {
     }
     return { hints: { list: [] } };
   }
+
   parseSchemaAndTableHints(sql: string): SchemaAndTableHints {
     const ret: SchemaAndTableHints = { list: [] };
     const myRegexp = /(FROM|UPDATE)[\s]+(([^\s()]+)\.)?([^\s()]+)/gim;
@@ -106,66 +144,6 @@ export abstract class BaseDriver {
       message,
       result,
     };
-  }
-
-  resetDefaultSchema(database: DbDatabase): void {
-    const searchNames = [];
-    if (this.conRes.database) {
-      searchNames.push(this.conRes.database);
-    }
-    if (this.conRes.user) {
-      searchNames.push(this.conRes.user);
-    }
-    searchNames.push('public');
-    for (const searchName of searchNames) {
-      const child = database.getChildByName(searchName, {
-        resouceType: ResourceType.Schema,
-      }) as DbSchema;
-
-      if (child) {
-        child.isDefault = true;
-        return;
-      }
-    }
-
-    const child = database
-      .getChildren()
-      .find((it) => it.getResouceType() === ResourceType.Schema) as DbSchema;
-    if (child) {
-      child.isDefault = true;
-    }
-  }
-
-  resolveColumn(
-    column: string,
-    resolver?: ColumnResolver,
-  ): DbColumn | undefined {
-    if (resolver === undefined) {
-      return undefined;
-    }
-    if (this.conRes) {
-      for (let i = 0; i < resolver.hints.list.length; i++) {
-        const hints = resolver.hints.list[i];
-        const t = this.conRes.findResource(ResourceType.Table, hints.table);
-        if (t) {
-          // log.info(LOG_PREFIX, "#resolveColumn found table", hints.table);
-          return <DbColumn>t.getChildByName(column, { unwrapQuote: true });
-        } else {
-          // log.warn(LOG_PREFIX, "#resolveColumn not found table", hints.table);
-        }
-      }
-    } else {
-      // log.warn(LOG_PREFIX, '#resolveColumn no connection res.')
-    }
-    return undefined;
-  }
-
-  resolveColumnComment(column: string, resolver?: ColumnResolver): string {
-    const c = this.resolveColumn(column, resolver);
-    if (c && c.comment) {
-      return c.comment;
-    }
-    return '';
   }
 
   async connectToSshServer(): Promise<string> {
@@ -239,7 +217,25 @@ export abstract class BaseDriver {
 
   abstract connectSub(): Promise<string>;
   abstract closeSub(): Promise<string>;
-  abstract getInfomationSchemas(): Promise<Array<DbDatabase>>;
+  async getInfomationSchemas(): Promise<T[]> {
+    if (!this.conRes) {
+      return undefined;
+    }
+    const dbResource = await this.getInfomationSchemasSub();
+    if (dbResource.length) {
+      SharedDbRes.getInstance().set(this.conRes.name, dbResource[0]);
+    } else {
+      SharedDbRes.getInstance().remove(this.conRes.name);
+    }
+    return dbResource;
+  }
+
+  abstract getInfomationSchemasSub(): Promise<T[]>;
+
+  protected getDbDatabase(): DbDatabase | undefined {
+    return SharedDbRes.getInstance().get(this.conRes.name);
+  }
+
   abstract test(with_connect: boolean): Promise<string>;
 
   createDBError(message: string, sourceError: any): DBError {
@@ -251,10 +247,4 @@ export abstract class BaseDriver {
       sourceError.sqlState,
     );
   }
-}
-
-export interface RequestSqlOptions {
-  binds?: string[];
-  needsColumnResolve?: boolean;
-  maxRows?: number;
 }

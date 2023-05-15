@@ -1,43 +1,45 @@
 import * as mysql from 'mysql2/promise';
 import { EnumValues } from 'enum-values';
 import { ResultSetHeader } from 'mysql2/promise';
-import { MySQLColumnType } from '../types/MySQLColumnType';
-import { RequestSqlOptions } from './BaseDriver';
 import {
-  ColumnResolver,
   DbColumn,
-  DbConnection,
-  DbDatabase,
   DbSchema,
   DbTable,
   RdhKey,
+  RdsDatabase,
   ResultSetDataHolder,
   SchemaAndTableHints,
   TableRows,
+  createRdhKey,
+  parseColumnType,
 } from '../resource';
-import { GeneralColumnType } from '../types';
+import { ConnectionSetting, GeneralColumnType, QueryParams } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { MySQLColumnType } from '../types/resource/MySQLColumnType';
+import { toBoolean } from '../util';
 
 export class MySQLDriver extends RDSBaseDriver {
   private client: mysql.Pool | undefined;
 
-  constructor(conRes: DbConnection) {
+  constructor(conRes: ConnectionSetting) {
     super(conRes);
   }
 
-  fieldInfo2Key(fieldInfo, resolver?: ColumnResolver): RdhKey {
-    if (resolver) {
-      resolver.hints.list.push({ table: fieldInfo.orgTable });
-    }
+  fieldInfo2Key(fieldInfo, table?: DbTable): RdhKey {
     const name = EnumValues.getNameFromValue(
       MySQLColumnType,
       MySQLColumnType.parseByFieldInfo(fieldInfo),
     );
-    const key = new RdhKey(
-      fieldInfo.name,
-      GeneralColumnType.parse(name),
-      super.resolveColumnComment(fieldInfo.orgName, resolver),
-    );
+    let comment = '';
+    if (table) {
+      comment =
+        table.children.find((it) => it.name === fieldInfo.name)?.comment ?? '';
+    }
+    const key = createRdhKey({
+      name: fieldInfo.name,
+      type: parseColumnType(name),
+      comment,
+    });
     if (key.type === GeneralColumnType.UNKNOWN) {
       // log.error(LOG_PREFIX, 'Unknownt=', fieldInfo)
     }
@@ -69,24 +71,17 @@ export class MySQLDriver extends RDSBaseDriver {
     return 'SELECT 1';
   }
 
-  // public
-  async requestSql(
-    sql: string,
-    options?: RequestSqlOptions,
-  ): Promise<ResultSetDataHolder> {
-    // console.log('requestSql', sql);
+  async requestSql(params: QueryParams): Promise<ResultSetDataHolder> {
+    const { sql, conditions } = params;
     let rdh = new ResultSetDataHolder([]);
 
-    if (this.client) {
-      let binds: string[] = [];
-      if (options && options.binds) {
-        binds = options.binds;
-      }
-      let resolver: ColumnResolver;
-      if (options && options.needsColumnResolve === true) {
-        resolver = this.createColumnResolver(sql);
-      }
+    const ast = this.parseQuery(sql);
 
+    const astTableName = this.getTableName(ast);
+    const dbTable = this.getDbTable(astTableName);
+
+    if (this.client) {
+      const binds = conditions?.binds ?? [];
       const [rows, fields] = await this.client.execute(sql, binds);
 
       if (fields === undefined) {
@@ -122,16 +117,22 @@ export class MySQLDriver extends RDSBaseDriver {
         rdh = new ResultSetDataHolder(
           fields === undefined
             ? []
-            : fields.map((f) => this.fieldInfo2Key(f, resolver)),
+            : fields.map((f) => this.fieldInfo2Key(f, dbTable)),
         );
         (rows as any).forEach((result: any) => {
+          rdh.keys.forEach((key) => {
+            const v = result[key.name];
+            if (key.type === GeneralColumnType.BIT) {
+              result[key.name] = toBoolean(v);
+            }
+          });
           rdh.addRow(result);
         });
       }
     } else {
       new Error('No connection');
     }
-    rdh.setSqlStatement(sql);
+    this.setRdhMetaAndStatement(params, rdh, ast?.type, astTableName, dbTable);
 
     return rdh;
   }
@@ -168,12 +169,9 @@ export class MySQLDriver extends RDSBaseDriver {
     return list;
   }
 
-  async getInfomationSchemas(): Promise<Array<DbDatabase>> {
-    if (!this.conRes) {
-      return [];
-    }
-    const dbResources = new Array<DbDatabase>();
-    const dbDatabase = new DbDatabase(this.conRes.database);
+  async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
+    const dbResources = new Array<RdsDatabase>();
+    const dbDatabase = new RdsDatabase(this.conRes.database);
     dbResources.push(dbDatabase);
 
     const dbSchemas = await this.getSchemas(dbDatabase);
@@ -187,23 +185,22 @@ export class MySQLDriver extends RDSBaseDriver {
       dbTables.forEach((res) => dbSchema.addChild(res));
     }
     for (const dbSchema of dbSchemas) {
-      for (const dbTable of dbSchema.getChildren()) {
-        const dbColumns = await this.getColumns(
-          dbSchema.getName(),
-          <DbTable>dbTable,
-        );
-        dbColumns.forEach((res: DbColumn) => dbTable.addChild(res));
+      for (const dbTable of dbSchema.children) {
+        const dbColumns = await this.getColumns(dbSchema.name, dbTable);
+        dbColumns.forEach((res) => dbTable.addChild(res));
       }
     }
     return dbResources;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getSchemas(dbDatabase: DbDatabase): Promise<Array<DbSchema>> {
-    const rdh = await this.requestSql(`SELECT SCHEMA_NAME AS name
+  async getSchemas(dbDatabase: RdsDatabase): Promise<Array<DbSchema>> {
+    const rdh = await this.requestSql({
+      sql: `SELECT SCHEMA_NAME AS name
       FROM INFORMATION_SCHEMA.SCHEMATA
       WHERE LOWER(SCHEMA_NAME) NOT IN ('information_schema', 'sys', 'performance_schema')
-      ORDER BY name`);
+      ORDER BY name`,
+    });
 
     return rdh.rows.map((r) => {
       const res = new DbSchema(r.values.name);
@@ -212,14 +209,15 @@ export class MySQLDriver extends RDSBaseDriver {
   }
 
   async getTables(dbSchema: DbSchema): Promise<Array<DbTable>> {
-    const rdh = await this
-      .requestSql(`SELECT TABLE_NAME as name, CASE TABLE_TYPE
+    const rdh = await this.requestSql({
+      sql: `SELECT TABLE_NAME as name, CASE TABLE_TYPE
           WHEN 'BASE TABLE' THEN 'TABLE'
           WHEN 'SYSTEM VIEW' THEN 'VIEW'
           ELSE 'TABLE' END  AS table_type,
           TABLE_COMMENT as comment
           FROM INFORMATION_SCHEMA.TABLES
-          WHERE TABLE_SCHEMA = '${dbSchema.getName()}' `);
+          WHERE TABLE_SCHEMA = '${dbSchema.name}' `,
+    });
 
     return rdh.rows.map((r) => {
       const res = new DbTable(
@@ -235,9 +233,9 @@ export class MySQLDriver extends RDSBaseDriver {
     schemaName: string,
     dbTable: DbTable,
   ): Promise<Array<DbColumn>> {
-    const binds = [schemaName, dbTable.getName()];
-    const rdh = await this.requestSql(
-      `SELECT COLUMN_NAME as name,
+    const binds = [schemaName, dbTable.name];
+    const rdh = await this.requestSql({
+      sql: `SELECT COLUMN_NAME as name,
             DATA_TYPE as col_type,
             CASE WHEN IS_NULLABLE = 'YES' THEN 1 ELSE 0 END as nullable,
             COLUMN_KEY as col_key,
@@ -246,8 +244,8 @@ export class MySQLDriver extends RDSBaseDriver {
             COLUMN_COMMENT as comment
             FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_SCHEMA = ? AND  TABLE_NAME = ?`,
-      { binds },
-    );
+      conditions: { binds },
+    });
 
     return rdh.rows.map((r) => {
       const type_name = EnumValues.getNameFromValue(
@@ -256,7 +254,7 @@ export class MySQLDriver extends RDSBaseDriver {
       );
       const res = new DbColumn(
         r.values.name,
-        GeneralColumnType.parse(type_name),
+        parseColumnType(type_name),
         {
           nullable: r.values.nullable === 1,
           key: r.values.col_key,

@@ -2,15 +2,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   AwsDatabase,
-  DbConnection,
-  DbDatabase,
-  DbKey,
   DbLogGroup,
-  LogMessageParams,
   RdhKey,
   ResultSetDataHolder,
+  createRdhKey,
 } from '../../resource';
-import { GeneralColumnType, ResourceType, ScanParams } from '../../types';
+import {
+  AwsServiceType,
+  ConnectionSetting,
+  GeneralColumnType,
+  ResourceType,
+  ScanParams,
+} from '../../types';
 import {
   CloudWatchLogsClient,
   DescribeLogGroupsCommand,
@@ -30,7 +33,6 @@ import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
 import { sleep, toDate } from '../../util';
 import { Scannable } from '../BaseDriver';
-import { AwsServiceType } from '../../types/AwsServiceType';
 import { plural } from 'pluralize';
 
 export class AwsCloudwatchServiceClient
@@ -39,7 +41,7 @@ export class AwsCloudwatchServiceClient
 {
   logClient: CloudWatchLogsClient;
 
-  constructor(conRes: DbConnection, config: ClientConfigType) {
+  constructor(conRes: ConnectionSetting, config: ClientConfigType) {
     super(conRes, config);
   }
 
@@ -157,9 +159,16 @@ export class AwsCloudwatchServiceClient
     const keys = results[0]
       .filter((it) => it.field !== undefined && it.field !== '@ptr')
       .map((it) => {
-        const key = new RdhKey(it.field, GeneralColumnType.TEXT);
+        const key = createRdhKey({
+          name: it.field,
+          type: GeneralColumnType.TEXT,
+        });
         if (it.field === '@timestamp') {
           key.type = GeneralColumnType.TIMESTAMP;
+        } else if (it.field === '@message') {
+          key.width = 500;
+        } else if (it.field === '@logStream') {
+          key.width = 100;
         }
         return key;
       });
@@ -194,17 +203,21 @@ export class AwsCloudwatchServiceClient
       limit,
     });
 
-    const ingestionTime = new RdhKey(
-      'ingestionTime',
-      GeneralColumnType.TIMESTAMP,
-      'Time received by CloudWatch Logs',
-    );
-    const timestamp = new RdhKey(
-      'timestamp',
-      GeneralColumnType.TIMESTAMP,
-      'Timestamp field of the log event',
-    );
-    const message = new RdhKey('message', GeneralColumnType.TEXT, '');
+    const ingestionTime = createRdhKey({
+      name: 'ingestionTime',
+      type: GeneralColumnType.TIMESTAMP,
+      comment: 'Time received by CloudWatch Logs',
+    });
+    const timestamp = createRdhKey({
+      name: 'timestamp',
+      type: GeneralColumnType.TIMESTAMP,
+      comment: 'Timestamp field of the log event',
+    });
+    const message = createRdhKey({
+      name: 'message',
+      type: GeneralColumnType.TEXT,
+      width: 500,
+    });
     const keys = [ingestionTime, timestamp, message];
     const rdh: ResultSetDataHolder = new ResultSetDataHolder(keys);
     list.forEach((rowResult) => {
@@ -218,7 +231,7 @@ export class AwsCloudwatchServiceClient
     return rdh;
   }
 
-  async getInfomationSchemas(): Promise<DbDatabase> {
+  async getInfomationSchemas(): Promise<AwsDatabase> {
     if (!this.conRes) {
       return null;
     }
@@ -239,9 +252,7 @@ export class AwsCloudwatchServiceClient
         }
         nextToken = result.nextToken;
       } while (nextToken);
-      dbDatabase.comment = `${dbDatabase.getChildren().length} ${plural(
-        'group',
-      )}`;
+      dbDatabase.comment = `${dbDatabase.children.length} ${plural('group')}`;
     } catch (e) {
       console.error(e);
       // reject(e);

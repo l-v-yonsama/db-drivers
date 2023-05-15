@@ -15,11 +15,16 @@ export const toNum = (s: string | undefined): number | undefined => {
   return n;
 };
 
-export const toBoolean = (s: string | undefined): boolean | undefined => {
+export const toBoolean = (
+  s: Buffer | string | undefined,
+): boolean | undefined => {
   if (s === null || s === undefined) {
     return undefined;
   }
-
+  if (s instanceof Buffer) {
+    const buf = s as Buffer;
+    return buf.at(0) === 1;
+  }
   return 'true' === s.toLowerCase();
 };
 
@@ -42,4 +47,8 @@ export const toDate = (
 
   const r = dayjs(s).toDate();
   return r;
+};
+
+export const tolines = (s: string): string[] => {
+  return s.replace(/\r\n/, '\n').replace(/\r/, '\n').split(/\n/);
 };

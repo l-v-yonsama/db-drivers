@@ -2,27 +2,26 @@
 
 import { default as pg } from 'pg';
 import { EnumValues } from 'enum-values';
-import { PostgresColumnType } from '../types/PostgresColumnType';
-import { RequestSqlOptions } from './BaseDriver';
 import {
-  ColumnResolver,
   DbColumn,
-  DbConnection,
-  DbDatabase,
   DbSchema,
   DbTable,
   RdhKey,
+  RdsDatabase,
   ResultSetDataHolder,
   SchemaAndTableHints,
   TableRows,
+  createRdhKey,
+  parseColumnType,
 } from '../resource';
-import { GeneralColumnType } from '../types';
+import { ConnectionSetting, QueryParams } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 
 export class PostgresDriver extends RDSBaseDriver {
   private pool: pg.Pool;
 
-  constructor(conRes: DbConnection) {
+  constructor(conRes: ConnectionSetting) {
     super(conRes);
   }
 
@@ -33,7 +32,7 @@ export class PostgresDriver extends RDSBaseDriver {
   //      dataTypeSize: -1,
   //      dataTypeModifier: -1,
   //      format: 'text' }
-  fieldInfo2Key(fieldInfo: pg.FieldDef, resolver?: ColumnResolver): RdhKey {
+  fieldInfo2Key(fieldInfo: pg.FieldDef, table?: DbTable): RdhKey {
     if (fieldInfo.name.startsWith('c_')) {
       console.log(
         `★ ${fieldInfo.name.substring(2).toUpperCase()} = ${
@@ -45,11 +44,16 @@ export class PostgresDriver extends RDSBaseDriver {
       PostgresColumnType,
       PostgresColumnType.parse(fieldInfo.dataTypeID),
     );
-    const key = new RdhKey(
-      fieldInfo.name,
-      GeneralColumnType.parse(name),
-      super.resolveColumnComment(fieldInfo.name, resolver),
-    );
+    let comment = '';
+    if (table) {
+      comment =
+        table.children.find((it) => it.name === fieldInfo.name)?.comment ?? '';
+    }
+    const key = createRdhKey({
+      name: fieldInfo.name,
+      type: parseColumnType(name),
+      comment,
+    });
     return key;
   }
 
@@ -96,17 +100,16 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   // public
-  async requestSql(
-    sql: string,
-    options?: RequestSqlOptions,
-  ): Promise<ResultSetDataHolder> {
+  async requestSql(params: QueryParams): Promise<ResultSetDataHolder> {
+    const { sql, conditions } = params;
     // log.info("sql2=", sql);
     let rdh = new ResultSetDataHolder([]);
 
-    let binds: string[] = [];
-    if (options && options.binds) {
-      binds = options.binds;
-    }
+    const ast = this.parseQuery(sql);
+    const astTableName = this.getTableName(ast);
+    const dbTable = this.getDbTable(astTableName);
+
+    const binds = conditions?.binds ?? [];
     const results = await this.pool.query(sql, binds);
     // command: 'SELECT',
     // rowCount: 5,
@@ -120,15 +123,11 @@ export class PostgresDriver extends RDSBaseDriver {
     // fields: [  ],
     // console.log('done.', results.fields)
     if (results) {
-      let resolver: ColumnResolver;
-      if (options && options.needsColumnResolve === true) {
-        resolver = this.createColumnResolver(sql);
-      }
       const fields = results.fields;
       rdh = new ResultSetDataHolder(
         fields === undefined
           ? []
-          : fields.map((f) => this.fieldInfo2Key(f, resolver)),
+          : fields.map((f) => this.fieldInfo2Key(f, dbTable)),
       );
       if (results.rows) {
         results.rows.forEach((result: any) => {
@@ -137,7 +136,7 @@ export class PostgresDriver extends RDSBaseDriver {
       }
     }
 
-    rdh.setSqlStatement(sql);
+    this.setRdhMetaAndStatement(params, rdh, ast?.type, astTableName, dbTable);
 
     return rdh;
   }
@@ -173,11 +172,8 @@ export class PostgresDriver extends RDSBaseDriver {
     return list;
   }
 
-  async getInfomationSchemas(): Promise<Array<DbDatabase>> {
-    if (!this.conRes) {
-      return [];
-    }
-    const dbResources = new Array<DbDatabase>();
+  async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
+    const dbResources = new Array<RdsDatabase>();
     const db_list = await this.asyncGetDatabases(this.conRes.database);
     db_list.forEach((db) => dbResources.push(db));
     const dbDatabase = db_list.find((d) => d.name === this.conRes.database);
@@ -193,36 +189,36 @@ export class PostgresDriver extends RDSBaseDriver {
       dbTables.forEach((res) => dbSchema.addChild(res));
     }
     for (const dbSchema of dbSchemas) {
-      for (const dbTable of dbSchema.getChildren()) {
-        const dbColumns = await this.getColumns(
-          dbSchema.getName(),
-          <DbTable>dbTable,
-        );
+      for (const dbTable of dbSchema.children) {
+        const dbColumns = await this.getColumns(dbSchema.name, dbTable);
         dbColumns.forEach((res) => dbTable.addChild(res));
       }
     }
+
     return dbResources;
   }
 
   async asyncGetDatabases(
     connection_database: string,
-  ): Promise<Array<DbDatabase>> {
-    const rdh = await this
-      .requestSql(`SELECT datname AS name, pg_encoding_to_char(encoding) AS comment
-      FROM pg_database ORDER BY datname`);
+  ): Promise<Array<RdsDatabase>> {
+    const rdh = await this.requestSql({
+      sql: `SELECT datname AS name, pg_encoding_to_char(encoding) AS comment
+      FROM pg_database ORDER BY datname`,
+    });
     return rdh.rows.map((r) => {
-      const res = new DbDatabase(r.values.name);
+      const res = new RdsDatabase(r.values.name);
       res.comment = r.values.comment;
-      res.disabled = res.name !== connection_database;
       return res;
     });
   }
 
-  async getSchemas(dbDatabase: DbDatabase): Promise<Array<DbSchema>> {
-    const rdh = await this.requestSql(`SELECT SCHEMA_NAME AS name
+  async getSchemas(dbDatabase: RdsDatabase): Promise<Array<DbSchema>> {
+    const rdh = await this.requestSql({
+      sql: `SELECT SCHEMA_NAME AS name
       FROM INFORMATION_SCHEMA.SCHEMATA
       WHERE LOWER(SCHEMA_NAME) NOT IN ('information_schema', 'sys', 'performance_schema', 'pg_catalog', 'pg_toast', 'pg_temp_1', 'pg_toast_temp_1')
-      ORDER BY name`);
+      ORDER BY name`,
+    });
 
     return rdh.rows.map((r) => {
       const res = new DbSchema(r.values.name);
@@ -231,22 +227,24 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   async getTables(dbSchema: DbSchema): Promise<Array<DbTable>> {
-    let rdh = await this
-      .requestSql(`select quote_ident(m.relname) as qname, COALESCE(d.description, '') as comment
+    let rdh = await this.requestSql({
+      sql: `select quote_ident(m.relname) as qname, COALESCE(d.description, '') as comment
       from pg_stat_all_tables as m
       LEFT JOIN pg_description as d ON (m.relid = d.objoid AND d.objsubid=0)
-      WHERE m.schemaname='${dbSchema.getName()}'
-      ORDER BY m.relname`);
+      WHERE m.schemaname='${dbSchema.name}'
+      ORDER BY m.relname`,
+    });
 
     const list = rdh.rows.map((r) => {
       const res = new DbTable(r.values.qname, 'TABLE', r.values.comment);
       return res;
     });
 
-    rdh = await this
-      .requestSql(`select quote_ident(viewname) as qname, definition from pg_catalog.pg_views 
-      where schemaname = '${dbSchema.getName()}' 
-      order by viewname`);
+    rdh = await this.requestSql({
+      sql: `select quote_ident(viewname) as qname, definition from pg_catalog.pg_views 
+      where schemaname = '${dbSchema.name}' 
+      order by viewname`,
+    });
 
     return list.concat(
       rdh.rows.map((r) => {
@@ -260,9 +258,9 @@ export class PostgresDriver extends RDSBaseDriver {
     schemaName: string,
     dbTable: DbTable,
   ): Promise<Array<DbColumn>> {
-    const binds = [schemaName, dbTable.getName()];
-    const rdh = await this.requestSql(
-      `select
+    const binds = [schemaName, dbTable.name];
+    const rdh = await this.requestSql({
+      sql: `select
       col.COLUMN_NAME as name,
       quote_ident(col.COLUMN_NAME) as qname,
       data_type as col_type,
@@ -315,8 +313,8 @@ export class PostgresDriver extends RDSBaseDriver {
     col.table_schema = $1 AND  quote_ident(col.table_name) = $2
     order by
       col.ordinal_position`,
-      { binds },
-    );
+      conditions: { binds },
+    });
 
     return rdh.rows.map((r) => {
       const type_name = EnumValues.getNameFromValue(
@@ -325,7 +323,7 @@ export class PostgresDriver extends RDSBaseDriver {
       );
       const res = new DbColumn(
         r.values.qname,
-        GeneralColumnType.parse(type_name),
+        parseColumnType(type_name),
         {
           nullable: r.values.nullable === 1,
           key: r.values.col_key,

@@ -1,14 +1,14 @@
 import {
   AwsRegion,
   AwsDriver,
-  DbDatabase,
   DBDriverResolver,
   DbS3Bucket,
   DbS3Owner,
   DBType,
+  AwsDatabase,
+  SupplyCredentialType,
+  AwsServiceType,
 } from '../../../src';
-import { AwsServiceType } from '../../../src/types/AwsServiceType';
-import { SupplyCredentialType } from '../../../src/types/AwsSupplyCredentialType';
 
 const connectOption = {
   port: 6003,
@@ -70,24 +70,28 @@ describe('AwsS3Driver', () => {
   });
 
   describe('asyncGetResouces', () => {
-    let testDbRes: DbDatabase;
+    let testDbRes: AwsDatabase;
     let testBucketRes: DbS3Bucket;
 
     it('should return Database resource', async () => {
       const dbRootRes = await driver.getInfomationSchemas();
       expect(dbRootRes).toHaveLength(1);
-      testDbRes = dbRootRes[0] as DbDatabase;
-      expect(testDbRes.getName()).toBe('S3');
+      testDbRes = dbRootRes[0];
+      expect(testDbRes.name).toBe('S3');
     });
 
     it('should have DbS3Bucket resource', async () => {
-      testBucketRes = testDbRes.getChildByName(bucket) as DbS3Bucket;
-      expect(testBucketRes.getName()).toBe(bucket);
+      testBucketRes = testDbRes.children.find(
+        (it) => it.name == bucket,
+      ) as DbS3Bucket;
+      expect(testBucketRes.name).toBe(bucket);
     });
 
     it('should have DbS3Owner resource', async () => {
-      const owner = testDbRes.getChildByName('minio') as DbS3Owner;
-      expect(owner.getName()).toBe('minio');
+      const owner = testDbRes.children.find(
+        (it) => it.name == 'minio',
+      ) as DbS3Owner;
+      expect(owner.name).toBe('minio');
     });
 
     it('should have values', async () => {

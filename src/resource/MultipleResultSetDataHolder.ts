@@ -1,5 +1,6 @@
 import ShortUniqueId from 'short-unique-id';
-import { AnnotationType, ResultSetDataHolder } from './ResultSetDataHolder';
+import { ResultSetDataHolder } from './ResultSetDataHolder';
+import { AnnotationType } from '../types';
 
 const uid = new ShortUniqueId();
 

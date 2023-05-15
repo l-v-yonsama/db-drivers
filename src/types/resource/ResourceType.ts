@@ -1,6 +1,8 @@
 export const ResourceType = {
   Connection: 'Connection',
-  Database: 'Database',
+  RdsDatabase: 'RdsDatabase',
+  AwsDatabase: 'AwsDatabase',
+  RedisDatabase: 'RedisDatabase',
   Schema: 'Schema',
   Table: 'Table',
   Column: 'Column',

@@ -11,11 +11,12 @@ import {
   ConnectionSetting,
   DBType,
   AwsDriver,
-  DbDatabase,
   DbLogGroup,
+  AwsDatabase,
+  ResourceType,
+  SupplyCredentialType,
+  AwsServiceType,
 } from '../../../src';
-import { SupplyCredentialType } from '../../../src/types/AwsSupplyCredentialType';
-import { AwsServiceType } from '../../../src/types/AwsServiceType';
 
 const connectOption = {
   url: 'http://localhost:6005',
@@ -111,18 +112,22 @@ describe('AwsCloudwatchClient', () => {
   });
 
   describe('asyncGetResouces', () => {
-    let testDbRes: DbDatabase;
+    let testDbRes: AwsDatabase;
 
     it('should return Database resource', async () => {
       const dbRootRes = await driver.getInfomationSchemas();
       expect(dbRootRes).toHaveLength(1);
-      testDbRes = dbRootRes[0] as DbDatabase;
-      expect(testDbRes.getName()).toBe('Cloudwatch');
+      testDbRes = dbRootRes[0];
+      expect(testDbRes.name).toBe('Cloudwatch');
     });
 
     it('should have DbLogGroup resource', async () => {
-      const logGroup = testDbRes.getChildByName('logGroupName1') as DbLogGroup;
-      expect(logGroup.getName()).toBe('logGroupName1');
+      const logGroup = testDbRes.findChildren<DbLogGroup>({
+        keyword: 'logGroupName1',
+        resourceType: ResourceType.LogGroup,
+        recursively: false,
+      })[0];
+      expect(logGroup.name).toBe('logGroupName1');
       expect(logGroup.attr.storedBytes).toBeDefined();
     });
   });

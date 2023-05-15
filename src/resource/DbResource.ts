@@ -1,25 +1,22 @@
 import ShortUniqueId from 'short-unique-id';
 import {
-  DBType,
+  AwsSQSAttributes,
+  AwsServiceType,
+  AwsSetting,
+  CompareKey,
+  ConnectionSetting,
+  FirebaseSetting,
   GeneralColumnType,
   RedisKeyType,
   ResourceType,
+  SshSetting,
+  UniqKey,
 } from '../types';
-import { AwsSQSAttributes } from '../types/AwsSQSAttributes';
-import { SupplyCredentialType } from '../types/AwsSupplyCredentialType';
-import { AwsServiceType } from '../types/AwsServiceType';
 import { EnumValues } from 'enum-values';
 import { format } from 'bytes';
 import { toDate } from '../util';
 
 const uid = new ShortUniqueId();
-
-const unwrapQuote = (n: string): string => {
-  if (n && n.startsWith('"') && n.endsWith('"')) {
-    return n.substring(1, n.length - 1);
-  }
-  return n;
-};
 
 export interface SchemaAndTableName {
   schema?: string;
@@ -39,15 +36,21 @@ export interface ColumnResolver {
 }
 
 export function fromJson<T extends DbResource>(json: any): T {
-  const resouceType: ResourceType = json.resouceType;
+  const resourceType: ResourceType = json.resourceType;
   const { name } = json;
   let res;
-  switch (resouceType) {
+  switch (resourceType) {
     case ResourceType.Connection:
-      res = new DbConnection(json);
+      res = Object.assign(new DbConnection(name), json);
       break;
-    case ResourceType.Database:
-      res = Object.assign(new DbDatabase(name), json);
+    case ResourceType.RdsDatabase:
+      res = Object.assign(new RdsDatabase(name), json);
+      break;
+    case ResourceType.AwsDatabase:
+      res = Object.assign(new AwsDatabase(name, json.serviceType), json);
+      break;
+    case ResourceType.RedisDatabase:
+      res = Object.assign(new RedisDatabase(name, json.numOfKeys), json);
       break;
     case ResourceType.Schema:
       res = Object.assign(new DbSchema(name), json);
@@ -84,22 +87,33 @@ export function fromJson<T extends DbResource>(json: any): T {
   return res;
 }
 
-export class DbResource {
-  public id = uid.randomUUID(8);
-  protected resouceType: ResourceType;
-  public name: string;
+export type DbDatabase = RdsDatabase | AwsDatabase | RedisDatabase;
+
+type AllSubDbResource =
+  | RdsDatabase
+  | AwsDatabase
+  | RedisDatabase
+  | DbSchema
+  | DbTable
+  | DbKey
+  | DbColumn
+  | DbS3Bucket
+  | DbSQSQueue
+  | DbLogGroup
+  | DbLogStream
+  | DbS3Owner;
+
+export abstract class DbResource<T extends DbResource = AllSubDbResource> {
+  public readonly id = uid.randomUUID(8);
+  public readonly resourceType: ResourceType;
+  public readonly name: string;
   public comment?: string;
-  protected children: Array<DbResource>;
+  public readonly children: Array<T>;
   public meta: { [key: string]: any };
   public isInProgress?: boolean;
 
-  public static createEmpty(): DbResource {
-    const r = new DbResource(ResourceType.Database, '');
-    return r;
-  }
-
-  constructor(resouceType: ResourceType, name: string) {
-    this.resouceType = resouceType;
+  constructor(resourceType: ResourceType, name: string) {
+    this.resourceType = resourceType;
     this.name = name;
     this.children = [];
   }
@@ -111,24 +125,7 @@ export class DbResource {
     };
   }
 
-  getName(): string {
-    return this.name;
-  }
-
-  getResouceType(): ResourceType {
-    return this.resouceType;
-  }
-
-  getChildren(options?: { resouceType?: ResourceType }): DbResource[] {
-    if (options?.resouceType) {
-      return this.children.filter(
-        (it) => it.resouceType === options.resouceType,
-      );
-    }
-    return this.children;
-  }
-
-  addChild(res: DbResource): DbResource {
+  addChild(res: T): T {
     this.children.push(res);
     return res;
   }
@@ -137,73 +134,54 @@ export class DbResource {
     return this.children.length > 0;
   }
 
-  containsResource(filter: string): boolean {
-    if (!filter) {
-      return true;
-    }
-    if (this.name.toUpperCase().indexOf(filter) >= 0) {
-      return true;
-    }
-    if (
-      this.comment &&
-      ('' || this.comment).toUpperCase().indexOf(filter) >= 0
-    ) {
-      return true;
-    }
-    for (const child of this.children) {
-      if (child.containsResource(filter)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   clearChildren(): void {
     this.children.splice(0, this.children.length);
   }
 
-  getChildByName(
-    name: string | RegExp,
-    options?: { unwrapQuote?: boolean; resouceType?: ResourceType },
-  ): DbResource {
-    let searchChildren = this.children;
-    if (options && options.resouceType) {
-      searchChildren = this.children.filter(
-        (it) => it.resouceType === options.resouceType,
-      );
+  getChildByName(name: string, insensitive?: boolean): T | undefined {
+    if (insensitive === true) {
+      const uname = name.toUpperCase();
+      return this.children.find((it) => it.name.toUpperCase() == uname);
     }
+    return this.children.find((it) => it.name == name);
+  }
 
-    if (typeof name === 'string') {
-      let uname = name.toUpperCase();
-      if (options && options.unwrapQuote === true) {
-        uname = unwrapQuote(uname);
-        return searchChildren.find(
-          (a) => unwrapQuote(a.getName()).toUpperCase() === uname,
-        );
-      } else {
-        return searchChildren.find((a) => a.getName().toUpperCase() === uname);
+  findChildren<U extends DbResource = AllSubDbResource>({
+    keyword,
+    resourceType,
+    recursively,
+  }: {
+    resourceType: ResourceType;
+    keyword?: string | RegExp;
+    recursively?: boolean;
+  }): U[] {
+    if (this.children.some((it) => it.resourceType === resourceType)) {
+      const children2 = this.children.filter(
+        (it) => it.resourceType === resourceType,
+      );
+      if (keyword == undefined) {
+        return (children2 ?? []) as unknown[] as U[];
       }
-    }
-    return searchChildren.find((a) => name.test(a.getName()));
-  }
-  findResource(type: ResourceType, name: string): DbResource {
-    if (this.resouceType === type && this.name === name) {
-      return this;
-    }
-    if (this.resouceType === type) {
-      return undefined;
-    }
-    const list = this.getChildren();
-    for (let i = 0; i < list.length; i++) {
-      const r = list[i].findResource(type, name);
-      if (r) {
-        return r;
+      if (typeof keyword === 'string') {
+        const k = keyword.toUpperCase();
+        return (children2.filter((it) => it.name.toUpperCase() == k) ??
+          []) as unknown[] as U[];
       }
+      return (children2.filter((it) => keyword.test(it.name)) ??
+        []) as unknown[] as U[];
     }
-    return undefined;
+    if (recursively === true) {
+      const ret = [];
+      this.children.forEach((it) => {
+        ret.push(...it.findChildren({ keyword, resourceType, recursively }));
+      });
+      return ret;
+    }
+    return [];
   }
+
   toString(): string {
-    return `[${this.resouceType}]:${this.name}`;
+    return `[${this.resourceType}]:${this.name}`;
   }
   toJsonStringify(space = 0): string {
     return JSON.stringify(
@@ -219,57 +197,10 @@ export class DbResource {
   }
 }
 
-export interface SshSetting {
-  use: boolean;
-  authMethod: string;
-  username: string;
-  password?: string;
-  host: string;
-  port: number;
-  privateKeyPath?: string;
-  privateKey?: string;
-  passphrase?: string;
-  dstPort: number;
-  dstHost: string;
-}
-
-export type AwsSetting = {
-  supplyCredentialType: SupplyCredentialType;
-  /**
-   * The configuration profile to use.
-   */
-  profile?: string;
-  region?: string;
-  services: AwsServiceType[];
-  s3ForcePathStyle?: boolean;
-};
-
-export interface FirebaseSetting {
-  authMethod: string;
-  projectid?: string;
-  privateKey?: string;
-  clientEmail?: string;
-  serviceAccountCredentialsPath?: string;
-}
-
-export interface ConnectionSetting {
-  dbType: DBType;
-  name: string;
-  url?: string;
-  host?: string;
-  port?: number;
-  user?: string;
-  password?: string;
-  database?: string;
-  databaseVersion?: number;
-  ds?: string;
-  apiVersion?: string;
-  ssh?: SshSetting;
-  awsSetting?: AwsSetting;
-  firebase?: FirebaseSetting;
-}
-
-export class DbConnection extends DbResource implements ConnectionSetting {
+export class DbConnection
+  extends DbResource<DbDatabase>
+  implements ConnectionSetting
+{
   public dbType = undefined;
   public name: string;
   public url?: string;
@@ -288,7 +219,6 @@ export class DbConnection extends DbResource implements ConnectionSetting {
 
   constructor(prop: any) {
     super(ResourceType.Connection, prop.name);
-    this.id = prop.id;
     this.dbType = prop.dbType;
     this.host = prop.host;
     this.port = prop.port;
@@ -321,11 +251,10 @@ export class DbConnection extends DbResource implements ConnectionSetting {
   }
 }
 
-export class DbDatabase extends DbResource {
-  public disabled = false;
+export class RdsDatabase extends DbResource<DbSchema> {
   version?: number;
   constructor(name: string) {
-    super(ResourceType.Database, name);
+    super(ResourceType.RdsDatabase, name);
   }
 
   getProperties(): { [key: string]: any } {
@@ -338,11 +267,11 @@ export class DbDatabase extends DbResource {
   public getSchema(option: { name?: string; isDefault?: boolean }): DbSchema {
     const { name, isDefault } = option;
     for (const child of this.children) {
-      if (child.getResouceType() !== ResourceType.Schema) {
+      if (child.resourceType !== ResourceType.Schema) {
         continue;
       }
       const currentSchema = child as DbSchema;
-      if (name && name === child.getName()) {
+      if (name && name === child.name) {
         return currentSchema;
       }
       if (isDefault && currentSchema.isDefault) {
@@ -353,21 +282,17 @@ export class DbDatabase extends DbResource {
   }
 }
 
-export class AwsDatabase extends DbDatabase {
-  constructor(name: string, readonly serviceType: AwsServiceType) {
-    super(name);
+export class AwsDatabase extends DbResource<
+  DbS3Bucket | DbSQSQueue | DbLogGroup | DbS3Owner
+> {
+  constructor(name: string, public readonly serviceType: AwsServiceType) {
+    super(ResourceType.AwsDatabase, name);
   }
 }
 
-export class RedisDatabase extends DbDatabase {
-  /**
-   * number of keys in the currently-selected database
-   */
-  public numOfKeys: number;
-
-  constructor(name: string, numOfKeys: number) {
-    super(name);
-    this.numOfKeys = numOfKeys;
+export class RedisDatabase extends DbResource<DbKey> {
+  constructor(name: string, public numOfKeys: number) {
+    super(ResourceType.RedisDatabase, name);
   }
 
   public getDBIndex(): number {
@@ -382,14 +307,14 @@ export class RedisDatabase extends DbDatabase {
   }
 }
 
-export class DbSchema extends DbResource {
+export class DbSchema extends DbResource<DbTable> {
   public isDefault = false;
   constructor(name: string) {
     super(ResourceType.Schema, name);
   }
 }
 
-export class DbTable extends DbResource {
+export class DbTable extends DbResource<DbColumn> {
   public tableType: any;
 
   constructor(name: string, tableType: any, comment?: string) {
@@ -397,6 +322,37 @@ export class DbTable extends DbResource {
     this.tableType = tableType;
     this.comment = comment;
     this.isInProgress = false;
+  }
+
+  getCompareKeys(): CompareKey[] {
+    const ret: CompareKey[] = [];
+    const pks = this.getPrimaryColumnNames();
+    if (pks.length) {
+      ret.push({
+        kind: 'primary',
+        names: pks,
+      });
+    }
+    ret.push(
+      ...this.getUniqColumnNames().map(
+        (it) =>
+          ({
+            kind: 'uniq',
+            name: it,
+          } as UniqKey),
+      ),
+    );
+    return ret;
+  }
+
+  getPrimaryColumnNames(): string[] {
+    return (
+      this.children.filter((it) => it.primaryKey).map((it) => it.name) ?? []
+    );
+  }
+
+  getUniqColumnNames(): string[] {
+    return this.children.filter((it) => it.uniqKey).map((it) => it.name) ?? [];
   }
 
   toString(): string {
@@ -465,7 +421,8 @@ export type LogMessageParams = {
 export class DbColumn extends DbResource {
   public readonly colType: GeneralColumnType;
   public readonly nullable: boolean;
-  public readonly key: string | undefined;
+  public readonly primaryKey: boolean;
+  public readonly uniqKey: boolean;
   public readonly default: any;
   public readonly extra: any;
   constructor(
@@ -479,7 +436,8 @@ export class DbColumn extends DbResource {
     this.comment = comment;
     if (params) {
       this.nullable = params.nullable || false;
-      this.key = params.key;
+      this.primaryKey = params.key === 'PRI';
+      this.uniqKey = params.key === 'UNI';
       this.default = params.default;
       this.extra = params.extra;
     } else {
@@ -488,7 +446,7 @@ export class DbColumn extends DbResource {
   }
 
   toString(): string {
-    return `[${super.toString()}]: Nullable[${this.nullable}] Key[${this.key}]`;
+    return `[${super.toString()}]: Nullable[${this.nullable}]]`;
   }
 
   getProperties(): { [key: string]: any } {
@@ -499,7 +457,8 @@ export class DbColumn extends DbResource {
         this.colType,
       ),
       nullable: this.nullable,
-      key: this.key,
+      primaryKey: this.primaryKey,
+      uniqKey: this.uniqKey,
       default: this.default,
     };
   }
@@ -510,11 +469,11 @@ export class AwsDbResource<T = any> extends DbResource {
   private byteProperties?: string[];
 
   constructor(
-    resouceType: ResourceType,
+    resourceType: ResourceType,
     name: string,
     public readonly attr: T,
   ) {
-    super(resouceType, name);
+    super(resourceType, name);
   }
 
   protected setPropertyFormat({
@@ -624,15 +583,14 @@ export class DbLogStream extends AwsDbResource<{
 }
 
 export class DbS3Owner extends AwsDbResource<{}> {
-  constructor(id: string, name: string) {
+  constructor(public readonly ownerId: string, name: string) {
     super(ResourceType.Owner, name === undefined ? '' : name, {});
-    this.id = id;
   }
 
   getProperties(): { [key: string]: any } {
     return {
       ...super.getProperties(),
-      'Owner id': this.id,
+      'Owner id': this.ownerId,
     };
   }
 }

@@ -1,13 +1,21 @@
-import { BaseDriver, RequestSqlOptions } from './BaseDriver';
+import { BaseDriver } from './BaseDriver';
 import {
-  DbConnection,
+  DbTable,
+  RdsDatabase,
   ResultSetDataHolder,
   SchemaAndTableHints,
   TableRows,
 } from '../resource';
+import { Statement } from 'pgsql-ast-parser';
+import {
+  CompareKey,
+  ConnectionSetting,
+  QueryParams,
+  ResourceType,
+} from '../types';
 
-export abstract class RDSBaseDriver extends BaseDriver {
-  constructor(conRes: DbConnection) {
+export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
+  constructor(conRes: ConnectionSetting) {
     super(conRes);
   }
 
@@ -20,7 +28,7 @@ export abstract class RDSBaseDriver extends BaseDriver {
     }
     if (!errorReason) {
       try {
-        await this.requestSql(this.getTestSqlStatement());
+        await this.requestSql({ sql: this.getTestSqlStatement() });
       } catch (e) {
         errorReason = e.message;
       }
@@ -36,6 +44,8 @@ export abstract class RDSBaseDriver extends BaseDriver {
     options?: {
       schemaName?: string;
       columnNames?: string[];
+      maxRows?: number;
+      compareKeys?: CompareKey[];
     },
   ): Promise<ResultSetDataHolder> {
     let sp = '';
@@ -49,18 +59,111 @@ export abstract class RDSBaseDriver extends BaseDriver {
     } else {
       cols = '*';
     }
-    return await this.requestSql(`SELECT ${cols} FROM ${sp}${tableName} `, {
-      needsColumnResolve: false,
+    return await this.requestSql({
+      sql: `SELECT ${cols} FROM ${sp}${tableName} `,
+      meta: {
+        tableName,
+        maxRows: options?.maxRows,
+        compareKeys: options?.compareKeys,
+      },
     });
   }
 
-  // public
-  public abstract requestSql(
-    sql: string,
-    options?: RequestSqlOptions,
-  ): Promise<ResultSetDataHolder>;
+  protected getRdsDatabase(): RdsDatabase | undefined {
+    const db = this.getDbDatabase();
+    if (db instanceof RdsDatabase) {
+      return db;
+    }
+    return undefined;
+  }
 
-  public abstract countTables(
+  getTableName(ast: Statement): string | undefined {
+    if (ast) {
+      // console.log(JSON.stringify(ast, null, 2));
+      switch (ast.type) {
+        case 'select':
+          if (ast.from && ast.from[0].type === 'table') {
+            return ast.from[0].name.name;
+          }
+          break;
+        case 'insert':
+          return ast.into.name;
+        case 'update':
+          return ast.table.name;
+        case 'delete':
+          return ast.from.name;
+      }
+    }
+    return undefined;
+  }
+
+  getDbTable(name: string): DbTable | undefined {
+    if (!name) {
+      return undefined;
+    }
+    const list = this.getRdsDatabase()?.findChildren<DbTable>({
+      keyword: name,
+      resourceType: ResourceType.Table,
+      recursively: true,
+    });
+    if (list) {
+      return list[0];
+    }
+    return undefined;
+  }
+
+  setRdhMetaAndStatement(
+    params: QueryParams,
+    rdh: ResultSetDataHolder,
+    type: Statement['type'],
+    astTableName?: string,
+    dbTable?: DbTable,
+  ): void {
+    const { sql, conditions, meta } = params;
+    rdh.setSqlStatement(sql);
+    rdh.meta.connectionName = this.conRes.name;
+    rdh.meta.tableName = meta?.tableName;
+    rdh.meta.compareKeys = meta?.compareKeys;
+    rdh.meta.type = type;
+    if (!rdh.meta.tableName) {
+      rdh.meta.tableName = astTableName;
+    }
+    if (!rdh.meta.compareKeys && rdh.meta.tableName) {
+      if (dbTable) {
+        rdh.meta.compareKeys = dbTable.getCompareKeys();
+      }
+    }
+    rdh.queryConditions = conditions;
+  }
+
+  resetDefaultSchema(database: RdsDatabase): void {
+    const searchNames = [];
+    if (this.conRes.database) {
+      searchNames.push(this.conRes.database);
+    }
+    if (this.conRes.user) {
+      searchNames.push(this.conRes.user);
+    }
+    searchNames.push('public');
+
+    for (const searchName of searchNames) {
+      const idx = database.children.findIndex((it) => it.name == searchName);
+      if (idx >= 0) {
+        database.children[idx].isDefault = true;
+        const [defaultSchema] = database.children.splice(idx, 1);
+        database.children.unshift(defaultSchema);
+        return;
+      }
+    }
+
+    if (database.children.length) {
+      database.children[0].isDefault = true;
+    }
+  }
+
+  abstract requestSql(params: QueryParams): Promise<ResultSetDataHolder>;
+
+  abstract countTables(
     tables: SchemaAndTableHints,
     options: any,
   ): Promise<TableRows[]>;
