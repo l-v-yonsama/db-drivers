@@ -10,23 +10,6 @@ export const AnnotationType = {
 export type AnnotationType =
   (typeof AnnotationType)[keyof typeof AnnotationType];
 
-export const displayAnnotationType = (name: AnnotationType): string => {
-  switch (name) {
-    case 0:
-      return 'Del';
-    case 1:
-      return 'Upd';
-    case 2:
-      return 'Add';
-    case 3:
-      return 'Err';
-    case 4:
-      return 'Lnt';
-    case 5:
-      return 'Stl';
-  }
-};
-
 export interface AnnotationOptions {
   message?: string;
   result?: any;

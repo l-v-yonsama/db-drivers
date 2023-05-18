@@ -336,6 +336,10 @@ export class PostgresDriver extends RDSBaseDriver {
     });
   }
 
+  isPositionedParameterAvailable(): boolean {
+    return true;
+  }
+
   async closeSub(): Promise<string> {
     try {
       if (this.pool) {

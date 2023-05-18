@@ -9,6 +9,7 @@ import {
   ConnectionSetting,
 } from '../../../src';
 import { default as pg } from 'pg';
+import { init } from '../../setup/postgres';
 
 const baseConnectOption = {
   host: '127.0.0.1',
@@ -23,60 +24,47 @@ const connectOption: ConnectionSetting = {
   name: 'postgres',
 };
 
-const CREATE_TABLE_STATEMENT = `
-CREATE TABLE testtable (
-  ID SERIAL NOT NULL PRIMARY KEY,
-  n0 BIT,
-  n1 INT,
-  n2 BIGINT,
-  n3 SMALLSERIAL,
-  n4 BIGSERIAL,
-  f1 NUMERIC(6,4),
-  f2 DOUBLE PRECISION,
-  f3 REAL,
+// const CREATE_TABLE_STATEMENT = `
+// CREATE TABLE testtable (
+//   ID SERIAL NOT NULL PRIMARY KEY,
+//   n0 BIT,
+//   n1 INT,
+//   n2 BIGINT,
+//   n3 SMALLSERIAL,
+//   n4 BIGSERIAL,
+//   f1 NUMERIC(6,4),
+//   f2 DOUBLE PRECISION,
+//   f3 REAL,
 
-  d1 DATE,
-  d2 TIME, 
-  d3 TIMESTAMP, 
-  d4 TIMESTAMP WITH TIME ZONE, 
-  d5 INTERVAL YEAR,
+//   d1 DATE,
+//   d2 TIME,
+//   d3 TIMESTAMP,
+//   d4 TIMESTAMP WITH TIME ZONE,
+//   d5 INTERVAL YEAR,
 
-  s1 CHAR(10),
-  s2 VARCHAR(10), 
-  s3 TEXT,
-  s4 mood, 
-  s5 BYTEA,
-  s6 uuid,
+//   s1 CHAR(10),
+//   s2 VARCHAR(10),
+//   s3 TEXT,
+//   s4 mood,
+//   s5 BYTEA,
+//   s6 uuid,
 
-  j1 JSON
+//   j1 JSON
 
-)`;
+// )`;
 
 describe('PostgresDriver', () => {
   let driver: PostgresDriver;
-  let client: pg.Client;
 
   beforeAll(async () => {
     driver = createDriver();
 
-    client = new pg.Client(baseConnectOption);
-
-    await client.connect();
-
-    await client.query('DROP TABLE IF EXISTS testtable');
-    await client.query('DROP TYPE IF EXISTS mood');
-    await client.query("CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy')");
-
-    await client.query(CREATE_TABLE_STATEMENT);
-
-    await client.query(
-      "COMMENT ON TABLE testtable IS 'table with various data types'",
-    );
+    await init();
   });
 
   afterAll(async () => {
     await driver.disconnect();
-    client.end();
+    // client.end();
   });
 
   it('connect', async () => {

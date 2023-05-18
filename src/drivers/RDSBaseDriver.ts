@@ -167,4 +167,6 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     tables: SchemaAndTableHints,
     options: any,
   ): Promise<TableRows[]>;
+
+  abstract isPositionedParameterAvailable(): boolean;
 }

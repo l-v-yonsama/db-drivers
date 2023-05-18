@@ -267,6 +267,10 @@ export class MySQLDriver extends RDSBaseDriver {
     });
   }
 
+  isPositionedParameterAvailable(): boolean {
+    return false;
+  }
+
   async closeSub(): Promise<string> {
     try {
       if (this.client) {

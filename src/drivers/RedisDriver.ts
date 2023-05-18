@@ -86,6 +86,18 @@ export class RedisDriver
     return errorReason;
   }
 
+  async flushAll(): Promise<void> {
+    await this.client.flushall();
+  }
+
+  async flushDb(): Promise<void> {
+    await this.client.flushdb();
+  }
+
+  async delete(key: string): Promise<void> {
+    await this.client.del(key);
+  }
+
   // async executeCommand(req: RedisRequest): Promise<DbKey | string | number> {
   //   let ret: DbKey | string | number = '';
   //   if (!this.client) {
@@ -195,6 +207,14 @@ export class RedisDriver
         key: dbKey.name,
       });
     });
+    rdh.meta.tableName = `RedisDB${this.conRes.database}`;
+    rdh.meta.connectionName = this.conRes.name;
+    rdh.meta.compareKeys = [
+      {
+        kind: 'primary',
+        names: ['key'],
+      },
+    ];
     return rdh;
   }
 
@@ -234,6 +254,11 @@ export class RedisDriver
       const db = m[1];
       const keys = parseInt(m[2], 10);
       const dbRes = new RedisDatabase(db, keys);
+      dbResources.push(dbRes);
+    }
+    // flushallすると情報が何も取れない状態の救済
+    if (dbResources.length === 0) {
+      const dbRes = new RedisDatabase(this.conRes.database, 0);
       dbResources.push(dbRes);
     }
 

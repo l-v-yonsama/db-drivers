@@ -1,6 +1,6 @@
 import ShortUniqueId from 'short-unique-id';
 import { BaseDriver } from './BaseDriver';
-import { ConnectionSetting, DBType } from '../types';
+import { ConnectionSetting, DBType, GeneralResult } from '../types';
 import { MySQLDriver } from './MySQLDriver';
 import { PostgresDriver } from './PostgresDriver';
 import { RedisDriver } from './RedisDriver';
@@ -71,6 +71,16 @@ export class DBDriverResolver {
     }
     this.driverMap.set(conRes.id, driver);
     return driver;
+  }
+
+  async workflow<T extends BaseDriver, U = any>(
+    setting: ConnectionSetting,
+    f: (driver: T) => Promise<U>,
+  ): Promise<GeneralResult<U>> {
+    const driver = this.createDriver<T>(setting);
+    const r = await driver.flow(f);
+    this.removeDriver(driver);
+    return r;
   }
 
   removeDriver(driver: BaseDriver): void {

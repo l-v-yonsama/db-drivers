@@ -121,7 +121,9 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
     return ret;
   }
 
-  async flow<T = any>(f: () => Promise<T>): Promise<GeneralResult<T>> {
+  async flow<T = any>(
+    f: (driver: this) => Promise<T>,
+  ): Promise<GeneralResult<T>> {
     let ok = true;
     let message = await this.connect();
     let result: T;
@@ -132,7 +134,7 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
       };
     }
     try {
-      result = await f();
+      result = await f(this);
     } catch (e) {
       ok = false;
       message = e.message;
