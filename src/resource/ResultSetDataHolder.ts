@@ -840,7 +840,7 @@ export class ResultSetDataHolder {
   private toShortString(o: any, keyType?: GeneralColumnType): string {
     let s = '' + o;
     if (isDateTimeOrDate(keyType)) {
-      s = dayjs(o).format('YYYY-MM-dd HH:mm:ss');
+      s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
     }
     if (s.length > 48) {
       return s.substring(0, 48) + '..';
@@ -860,7 +860,7 @@ export class ResultSetDataHolder {
   private toMarkdownString(o: any, keyType?: GeneralColumnType): string {
     let s = '' + o;
     if (isDateTimeOrDate(keyType)) {
-      s = dayjs(o).format('YYYY-MM-dd HH:mm:ss');
+      s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
     }
     return `${s.replace(/\|/g, '&#124;').replace(/(\r?\n)/g, '<br>')}`;
   }

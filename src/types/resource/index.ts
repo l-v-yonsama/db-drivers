@@ -6,6 +6,7 @@ export * from './AwsSupplyCredentialType';
 export * from './CompareKey';
 export * from './ConnectionSetting';
 export * from './DBType';
+export * from './ForeignKeyConstraint';
 export * from './GeneralColumnType';
 export * from './ResultSetHelperMetadata';
 export * from './RedisKeyType';

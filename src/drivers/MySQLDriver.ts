@@ -190,6 +190,8 @@ export class MySQLDriver extends RDSBaseDriver {
         dbColumns.forEach((res) => dbTable.addChild(res));
       }
     }
+    const defaultSchema = dbDatabase.getSchema({ isDefault: true });
+    await this.setForinKeys(defaultSchema);
     return dbResources;
   }
 
@@ -264,6 +266,75 @@ export class MySQLDriver extends RDSBaseDriver {
         r.values.comment,
       );
       return res;
+    });
+  }
+
+  //  table_name   column_name referenced_table_name referenced_column_name constraint_name
+  //  order        customer_no customer              customer_no            order_ibfk_1
+  //  order_detail order_no    order                 order_no               order_detail_ibfk_1
+  async setForinKeys(dbSchema: DbSchema): Promise<void> {
+    const binds = [dbSchema.name.toLowerCase()];
+
+    const rdh = await this.requestSql({
+      sql: `SELECT 
+      usg.table_name as table_name,
+      usg.column_name as column_name,
+      usg.referenced_table_name as referenced_table_name,
+      usg.referenced_column_name as referenced_column_name,
+      cst.constraint_name as constraint_name
+    FROM information_schema.key_column_usage usg
+    LEFT JOIN information_schema.table_constraints cst
+      ON ( usg.table_schema = cst.table_schema AND usg.constraint_name = cst.constraint_name )
+    WHERE
+      cst.constraint_type = 'FOREIGN KEY'
+      AND LOWER(usg.constraint_schema) = ?`,
+      conditions: { binds },
+    });
+
+    rdh.rows.forEach((row) => {
+      const tableName = row.values['table_name']; // order_detail
+      const columnName = row.values['column_name'];
+      const referencedTableName = row.values['referenced_table_name']; // order
+      const referencedColumnName = row.values['referenced_column_name'];
+      const constraintName = row.values['constraint_name'];
+
+      // FROM order.customer_no -> TO customer.customer_no
+      // FROM order_detail.order_no -> TO order.order_no
+      const tableRes = dbSchema.getChildByName(tableName);
+      if (tableRes) {
+        if (tableRes.getChildByName(columnName)) {
+          if (tableRes.foreignKeys === undefined) {
+            tableRes.foreignKeys = {};
+          }
+          if (tableRes.foreignKeys.referenceTo === undefined) {
+            tableRes.foreignKeys.referenceTo = {};
+          }
+          tableRes.foreignKeys.referenceTo[columnName] = {
+            tableName: referencedTableName, // customer
+            columnName: referencedColumnName,
+            constraintName,
+          };
+        }
+      }
+
+      // TO customer.customer_no <- FROM order.customer_no
+      // TO order.order_no <- FROM order_detail.order_no
+      const tableRes2 = dbSchema.getChildByName(referencedTableName);
+      if (tableRes2) {
+        if (tableRes2.getChildByName(referencedColumnName)) {
+          if (tableRes2.foreignKeys === undefined) {
+            tableRes2.foreignKeys = {};
+          }
+          if (tableRes2.foreignKeys.referencedFrom === undefined) {
+            tableRes2.foreignKeys.referencedFrom = {};
+          }
+          tableRes2.foreignKeys.referencedFrom[referencedColumnName] = {
+            tableName: tableName, // order_detail
+            columnName: columnName,
+            constraintName,
+          };
+        }
+      }
     });
   }
 

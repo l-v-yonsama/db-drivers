@@ -6,6 +6,7 @@ import {
   CompareKey,
   ConnectionSetting,
   FirebaseSetting,
+  ForeignKeyConstraint,
   GeneralColumnType,
   RedisKeyType,
   ResourceType,
@@ -316,6 +317,7 @@ export class DbSchema extends DbResource<DbTable> {
 
 export class DbTable extends DbResource<DbColumn> {
   public tableType: any;
+  public foreignKeys?: ForeignKeyConstraint = {};
 
   constructor(name: string, tableType: any, comment?: string) {
     super(ResourceType.Table, name);

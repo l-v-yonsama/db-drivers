@@ -60,7 +60,7 @@ export async function init(): Promise<void> {
         's3a-' + i,
         's3b-' + i,
         's3c-' + i,
-        's3d-' + i,
+        'long_column_name_long_text-' + i,
         'a',
         's5',
         's6',
@@ -113,6 +113,13 @@ export async function init(): Promise<void> {
         binds2,
       );
     }
+
+    await con.execute('DROP TABLE IF EXISTS testdb.order_detail');
+    await con.execute('DROP TABLE IF EXISTS testdb.order');
+    await con.execute('DROP TABLE IF EXISTS testdb.customer');
+    await con.execute(CREATE_CUSTOMER_TABLE_STATEMENT);
+    await con.execute(CREATE_ORDER_TABLE_STATEMENT);
+    await con.execute(CREATE_ORDER_DETAIL_TABLE_STATEMENT);
   } finally {
     if (con) {
       await con.destroy();
@@ -143,7 +150,7 @@ CREATE TABLE testdb.testtable (
   s3a TINYTEXT,
   s3b TEXT,
   s3c MEDIUMTEXT,
-  s3d LONGTEXT,
+  long_column_name_long_text LONGTEXT,
   s4 ENUM('a','b','c') COMMENT 'A list of a,b or c', 
   s5 BINARY(10),
   s6 VARBINARY(10),
@@ -193,7 +200,7 @@ const INSERT_STATEMENT = `INSERT INTO testdb.testtable (
   n0, n1, n2, n3, n4, 
   f1, f2, f3,
   d1, d2, d3, d4, d5,
-  s1, s2, s3a, s3b, s3c, s3d, s4, s5, s6, s7, s8,
+  s1, s2, s3a, s3b, s3c, long_column_name_long_text, s4, s5, s6, s7, s8,
   g1, j1 )
   VALUES(
     ?, ?, ?, ?, ?, 
@@ -205,3 +212,30 @@ const INSERT_STATEMENT = `INSERT INTO testdb.testtable (
 const INSERT_STATEMENT2 = `INSERT INTO testdb.diff (
   last_name, first_name, full_name, note, birthday )
   VALUES(?, ?, ?, ?, ?)`;
+
+const CREATE_CUSTOMER_TABLE_STATEMENT = `CREATE TABLE testdb.customer (
+  customer_no int auto_increment PRIMARY KEY COMMENT '顧客番号',
+  tel VARCHAR(20) COMMENT '電話番号'
+) COMMENT='顧客'
+`;
+
+const CREATE_ORDER_TABLE_STATEMENT = `CREATE TABLE testdb.order (
+  order_no int auto_increment PRIMARY KEY COMMENT '受注番号',
+  customer_no int COMMENT '顧客番号',
+  order_date DATE COMMENT '受注日',
+  amount int COMMENT '受注金額',
+
+  FOREIGN KEY fk_customer_no(customer_no) REFERENCES testdb.customer(customer_no)
+) COMMENT='受注'
+`;
+
+const CREATE_ORDER_DETAIL_TABLE_STATEMENT = `CREATE TABLE testdb.order_detail (
+  order_no int COMMENT '受注番号',
+  detail_no int COMMENT '受注明細番号',
+  item_no int COMMENT '商品番号',
+  amount int COMMENT '金額',
+
+  PRIMARY KEY(order_no, detail_no),
+  FOREIGN KEY fk_order_no(order_no) REFERENCES testdb.order(order_no)
+) COMMENT='受注明細'
+`;

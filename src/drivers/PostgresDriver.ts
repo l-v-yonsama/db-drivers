@@ -111,6 +111,7 @@ export class PostgresDriver extends RDSBaseDriver {
 
     const binds = conditions?.binds ?? [];
     const results = await this.pool.query(sql, binds);
+    // console.log(results);
     // command: 'SELECT',
     // rowCount: 5,
     // oid: null,
@@ -124,15 +125,18 @@ export class PostgresDriver extends RDSBaseDriver {
     // console.log('done.', results.fields)
     if (results) {
       const fields = results.fields;
-      rdh = new ResultSetDataHolder(
-        fields === undefined
-          ? []
-          : fields.map((f) => this.fieldInfo2Key(f, dbTable)),
-      );
-      if (results.rows) {
-        results.rows.forEach((result: any) => {
-          rdh.addRow(result);
-        });
+      if (fields?.length) {
+        rdh = new ResultSetDataHolder(
+          fields.map((f) => this.fieldInfo2Key(f, dbTable)),
+        );
+        if (results.rows) {
+          results.rows.forEach((result: any) => {
+            rdh.addRow(result);
+          });
+        }
+      } else {
+        rdh = new ResultSetDataHolder(['Result']);
+        rdh.addRow({ Result: 'OK' });
       }
     }
 
@@ -199,17 +203,25 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   async asyncGetDatabases(
-    connection_database: string,
+    connectionDatabase: string,
   ): Promise<Array<RdsDatabase>> {
     const rdh = await this.requestSql({
       sql: `SELECT datname AS name, pg_encoding_to_char(encoding) AS comment
       FROM pg_database ORDER BY datname`,
     });
-    return rdh.rows.map((r) => {
+    const list = rdh.rows.map((r) => {
       const res = new RdsDatabase(r.values.name);
       res.comment = r.values.comment;
       return res;
     });
+    const idx = list.findIndex(
+      (it) => it.name.toUpperCase() == connectionDatabase.toUpperCase(),
+    );
+    if (idx > 0) {
+      const arr = list.splice(idx, 1);
+      list.unshift(arr[0]);
+    }
+    return list;
   }
 
   async getSchemas(dbDatabase: RdsDatabase): Promise<Array<DbSchema>> {
