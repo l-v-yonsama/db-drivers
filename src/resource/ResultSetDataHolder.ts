@@ -150,19 +150,25 @@ export class RdhRow {
     }
     return r;
   }
+
+  public hasAnyAnnotation(types: AnnotationType[]): boolean {
+    if (this.meta && types.length) {
+      return (
+        Object.values(this.meta)
+          ?.flat()
+          ?.some((it) => types.includes(it.type)) ?? false
+      );
+    }
+    return false;
+  }
+
   public hasAnnotation(type: AnnotationType): boolean {
     if (this.meta) {
-      const meta_keys = Object.keys(this.meta);
-      if (meta_keys && meta_keys.length > 0) {
-        for (let i = 0; i < meta_keys.length; i++) {
-          const annotations: CellAnnotation[] = this.meta[meta_keys[i]];
-          if (annotations) {
-            if (annotations.some((annotation) => annotation.type === type)) {
-              return true;
-            }
-          }
-        }
-      }
+      return (
+        Object.values(this.meta)
+          ?.flat()
+          ?.some((it) => it.type == type) ?? false
+      );
     }
     return false;
   }

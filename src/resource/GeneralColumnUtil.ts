@@ -1,6 +1,12 @@
 import { EnumValues } from 'enum-values';
 import { GeneralColumnType } from '../types';
 
+export function displayGeneralColumnType(
+  columnType: GeneralColumnType,
+): string {
+  return EnumValues.getNameFromValue(GeneralColumnType, columnType);
+}
+
 export function parseColumnType(
   s: string | null | undefined,
 ): GeneralColumnType {
