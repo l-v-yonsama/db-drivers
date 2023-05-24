@@ -1,6 +1,5 @@
 import * as os from 'os';
 import { default as listit } from 'list-it';
-import { EnumValues } from 'enum-values';
 import * as ss from 'simple-statistics';
 import ShuffleArray from 'shuffle-array';
 import {
@@ -12,7 +11,11 @@ import {
   RdhMeta,
 } from '../types';
 import dayjs from 'dayjs';
-import { isDateTimeOrDate, isNumericLike } from './GeneralColumnUtil';
+import {
+  displayGeneralColumnType,
+  isDateTimeOrDate,
+  isNumericLike,
+} from './GeneralColumnUtil';
 import { toDate } from '../util';
 
 export class SampleClassPair {
@@ -649,11 +652,7 @@ export class ResultSetDataHolder {
     if (withType) {
       retList.push(
         rdhKeys
-          .map((k) =>
-            this.toCsvString(
-              EnumValues.getNameFromValue(GeneralColumnType, k.type),
-            ),
-          )
+          .map((k) => this.toCsvString(displayGeneralColumnType(k.type)))
           .join(','),
       );
     }
@@ -697,11 +696,7 @@ export class ResultSetDataHolder {
     if (withType) {
       pushLine(
         rdhKeys
-          .map((k) =>
-            this.toMarkdownString(
-              EnumValues.getNameFromValue(GeneralColumnType, k.type),
-            ),
-          )
+          .map((k) => this.toMarkdownString(displayGeneralColumnType(k.type)))
           .join(' | '),
       );
     }
@@ -844,6 +839,9 @@ export class ResultSetDataHolder {
   }
 
   private toShortString(o: any, keyType?: GeneralColumnType): string {
+    if (o === null || o === undefined) {
+      return '';
+    }
     let s = '' + o;
     if (isDateTimeOrDate(keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
@@ -856,6 +854,9 @@ export class ResultSetDataHolder {
   }
 
   private toCsvString(o: any, keyType?: GeneralColumnType): string {
+    if (o === null || o === undefined) {
+      return '';
+    }
     let s = '' + o;
     if (isDateTimeOrDate(keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
@@ -864,6 +865,9 @@ export class ResultSetDataHolder {
   }
 
   private toMarkdownString(o: any, keyType?: GeneralColumnType): string {
+    if (o === null || o === undefined) {
+      return '';
+    }
     let s = '' + o;
     if (isDateTimeOrDate(keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
@@ -899,14 +903,9 @@ export class ResultSetDataHolder {
       buf.nl();
     }
     if (withType) {
-      buf.d(
-        EnumValues.getNameFromValue(
-          GeneralColumnType,
-          GeneralColumnType.INTEGER,
-        ),
-      );
+      buf.d(displayGeneralColumnType(GeneralColumnType.INTEGER));
       rdhKeys.forEach((k) => {
-        buf.d(EnumValues.getNameFromValue(GeneralColumnType, k.type));
+        buf.d(displayGeneralColumnType(k.type));
       });
       buf.nl();
     }

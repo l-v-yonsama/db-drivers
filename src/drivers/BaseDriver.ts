@@ -91,7 +91,7 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
       // console.log('sql', sql);
       return parseFirst(replacedSql);
     } catch (_) {
-      // console.error(_);
+      console.error(_);
       // do nothing.
     }
     return undefined;

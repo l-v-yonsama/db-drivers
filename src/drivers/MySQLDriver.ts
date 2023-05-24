@@ -76,6 +76,7 @@ export class MySQLDriver extends RDSBaseDriver {
     let rdh = new ResultSetDataHolder([]);
 
     const ast = this.parseQuery(sql);
+    console.log('parse result.', ast);
 
     const astTableName = this.getTableName(ast);
     const dbTable = this.getDbTable(astTableName);

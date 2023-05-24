@@ -13,9 +13,9 @@ import {
   SshSetting,
   UniqKey,
 } from '../types';
-import { EnumValues } from 'enum-values';
 import { format } from 'bytes';
 import { toDate } from '../util';
+import { displayGeneralColumnType } from './GeneralColumnUtil';
 
 const uid = new ShortUniqueId();
 
@@ -454,10 +454,7 @@ export class DbColumn extends DbResource {
   getProperties(): { [key: string]: any } {
     return {
       ...super.getProperties(),
-      'column type': EnumValues.getNameFromValue(
-        GeneralColumnType,
-        this.colType,
-      ),
+      'column type': displayGeneralColumnType(this.colType),
       nullable: this.nullable,
       primaryKey: this.primaryKey,
       uniqKey: this.uniqKey,

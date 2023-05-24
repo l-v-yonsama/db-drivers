@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
   MySQLDriver,
   DbSchema,
@@ -7,6 +8,7 @@ import {
   GeneralColumnType,
   RdsDatabase,
   ConnectionSetting,
+  toDate,
 } from '../../../src';
 import { init, saveRes } from '../../setup/mysql';
 
@@ -151,17 +153,20 @@ describe('MySQLDriver', () => {
     });
   });
 
-  // describe('query', () => {
-  //   it('should return constructor name', async () => {
-  //     const query =
-  //       'WITH cte (col1,col2) AS ' +
-  //       ' ( SELECT n2, n3 from testtable ) ' +
-  //       ' SELECT col1, col2 FROM cte ' +
-  //       ' inner join testtable b on  (cte.col1 = b.n2 and ID > 2) ;';
-  //     const rdh = await driver.requestSql({ sql: query });
-  //     console.log(rdh);
-  //   });
-  // });
+  describe('requestSql', () => {
+    it('should return GLOBAL VARIABLES', async () => {
+      const query = "SHOW GLOBAL VARIABLES  LIKE 'group_concat_max_len'";
+      const rdh = await driver.requestSql({ sql: query });
+      expect(rdh.rows[0].values).toEqual({
+        Variable_name: 'group_concat_max_len',
+        Value: expect.any(String),
+      });
+    });
+    it('should not throw error', async () => {
+      const query = 'SET group_concat_max_len = 10000000';
+      await expect(driver.requestSql({ sql: query })).resolves.not.toThrow();
+    });
+  });
 
   function createDriver(): MySQLDriver {
     return new MySQLDriver(connectOption);

@@ -123,6 +123,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     rdh.setSqlStatement(sql);
     rdh.meta.connectionName = this.conRes.name;
     rdh.meta.tableName = meta?.tableName;
+    rdh.meta.comment = meta?.comment ?? dbTable?.comment;
     rdh.meta.compareKeys = meta?.compareKeys;
     rdh.meta.type = type;
     if (!rdh.meta.tableName) {

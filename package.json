@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.97",
+  "version": "0.1.101",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16"
@@ -33,6 +33,7 @@
     "prepublishOnly": "npm run build:release",
     "lint": "eslint . --ext .ts --ext .mts",
     "lint:fix": "eslint --fix . --ext .ts --ext .mts",
+    "examples:mysql": "npm run build && node built/src/examples/mysql.js",
     "test0": "jest --coverage",
     "test": "npm run clean && jest --runInBand",
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",

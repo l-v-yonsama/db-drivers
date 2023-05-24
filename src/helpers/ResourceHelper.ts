@@ -95,7 +95,7 @@ export const diff = (
 };
 
 function createCompareKeysValue(compareKey: CompareKey, row1: RdhRow): string {
-  if (compareKey.kind === 'primary') {
+  if (compareKey.kind === 'primary' || compareKey.kind === 'custom') {
     return compareKey.names.map((k) => row1.values[k] ?? '').join('|:|');
   }
   return row1.values[compareKey.name] ?? '';
@@ -106,7 +106,7 @@ function getAvailableCompareKey(
   compareKeys: CompareKey[],
 ): CompareKey | undefined {
   for (const ckey of compareKeys) {
-    if (ckey.kind === 'primary') {
+    if (ckey.kind === 'primary' || ckey.kind === 'custom') {
       if (ckey.names.every((it) => keynames.includes(it))) {
         return ckey;
       }
