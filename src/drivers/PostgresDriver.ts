@@ -100,14 +100,12 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   // public
-  async requestSql(params: QueryParams): Promise<ResultSetDataHolder> {
-    const { sql, conditions } = params;
+  async requestSqlSub(
+    params: QueryParams & { dbTable: DbTable },
+  ): Promise<ResultSetDataHolder> {
+    const { sql, conditions, dbTable } = params;
     // log.info("sql2=", sql);
     let rdh = new ResultSetDataHolder([]);
-
-    const ast = this.parseQuery(sql);
-    const astTableName = this.getTableName(ast);
-    const dbTable = this.getDbTable(astTableName);
 
     const binds = conditions?.binds ?? [];
     const results = await this.pool.query(sql, binds);
@@ -139,8 +137,6 @@ export class PostgresDriver extends RDSBaseDriver {
         rdh.addRow({ Result: 'OK' });
       }
     }
-
-    this.setRdhMetaAndStatement(params, rdh, ast?.type, astTableName, dbTable);
 
     return rdh;
   }

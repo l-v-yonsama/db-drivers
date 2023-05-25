@@ -10,6 +10,7 @@ import {
 import { ConnectionSetting, GeneralResult, ScanParams } from '../types';
 import { DBError } from './DBError';
 import { parseFirst, Statement } from 'pgsql-ast-parser';
+import { toSafeQueryForPgsqlAst } from '../helpers';
 
 export interface Scannable {
   scan(params: ScanParams): Promise<ResultSetDataHolder>;
@@ -84,13 +85,12 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
   }
 
   parseQuery(sql: string): Statement | undefined {
-    // select * from testtable where id > ?
-    // Unexpected op_compare token: "?".
-    const replacedSql = sql.replace(/\?/g, '$1');
+    const replacedSql = toSafeQueryForPgsqlAst(sql);
     try {
-      // console.log('sql', sql);
       return parseFirst(replacedSql);
     } catch (_) {
+      console.log('sql=', sql);
+      console.log('replacedSql=', replacedSql);
       console.error(_);
       // do nothing.
     }

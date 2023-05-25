@@ -69,6 +69,13 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     });
   }
 
+  abstract countTables(
+    tables: SchemaAndTableHints,
+    options: any,
+  ): Promise<TableRows[]>;
+
+  abstract isPositionedParameterAvailable(): boolean;
+
   protected getRdsDatabase(): RdsDatabase | undefined {
     const db = this.getDbDatabase();
     if (db instanceof RdsDatabase) {
@@ -77,7 +84,26 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     return undefined;
   }
 
-  getTableName(ast: Statement): string | undefined {
+  async requestSql(params: QueryParams): Promise<ResultSetDataHolder> {
+    const { sql, conditions } = params;
+    const ast = this.parseQuery(sql);
+    const astTableName = this.getTableName(ast);
+    const dbTable = this.getDbTable(astTableName);
+
+    const rdh = await this.requestSqlSub({
+      ...params,
+      dbTable,
+    });
+    this.setRdhMetaAndStatement(params, rdh, ast?.type, astTableName, dbTable);
+
+    return rdh;
+  }
+
+  abstract requestSqlSub(
+    params: QueryParams & { dbTable: DbTable },
+  ): Promise<ResultSetDataHolder>;
+
+  private getTableName(ast: Statement): string | undefined {
     if (ast) {
       // console.log(JSON.stringify(ast, null, 2));
       switch (ast.type) {
@@ -97,7 +123,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     return undefined;
   }
 
-  getDbTable(name: string): DbTable | undefined {
+  private getDbTable(name: string): DbTable | undefined {
     if (!name) {
       return undefined;
     }
@@ -161,13 +187,4 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       database.children[0].isDefault = true;
     }
   }
-
-  abstract requestSql(params: QueryParams): Promise<ResultSetDataHolder>;
-
-  abstract countTables(
-    tables: SchemaAndTableHints,
-    options: any,
-  ): Promise<TableRows[]>;
-
-  abstract isPositionedParameterAvailable(): boolean;
 }

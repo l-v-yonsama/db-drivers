@@ -71,15 +71,17 @@ export class MySQLDriver extends RDSBaseDriver {
     return 'SELECT 1';
   }
 
-  async requestSql(params: QueryParams): Promise<ResultSetDataHolder> {
-    const { sql, conditions } = params;
+  async requestSqlSub(
+    params: QueryParams & { dbTable: DbTable },
+  ): Promise<ResultSetDataHolder> {
+    const { sql, conditions, dbTable } = params;
     let rdh = new ResultSetDataHolder([]);
 
-    const ast = this.parseQuery(sql);
-    console.log('parse result.', ast);
-
-    const astTableName = this.getTableName(ast);
-    const dbTable = this.getDbTable(astTableName);
+    if (sql.trim().match(/set\s+global\s+.+/i)) {
+      // This query will crash current node process.
+      // RangeError [ERR_OUT_OF_RANGE]: The value of "offset" is out of range. It must be >= 0 and <= 9. Received 11
+      throw new Error('Setting global system variables is not supported');
+    }
 
     if (this.client) {
       const binds = conditions?.binds ?? [];
@@ -133,7 +135,6 @@ export class MySQLDriver extends RDSBaseDriver {
     } else {
       new Error('No connection');
     }
-    this.setRdhMetaAndStatement(params, rdh, ast?.type, astTableName, dbTable);
 
     return rdh;
   }

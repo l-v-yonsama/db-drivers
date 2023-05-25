@@ -31,6 +31,21 @@ type BindParamPosition = {
   kind: 'single' | 'multiple';
 };
 
+/**
+ * Replace query for postgres query parser.
+ * select * from table where id > ? => select * from table where id > $1
+ * set global general_log = on; => set general_log TO 1;
+ */
+export const toSafeQueryForPgsqlAst = (query: string): string => {
+  let replacedSql = query.replace(/\?/g, '$1');
+  replacedSql = replacedSql.replace(/^\s*(SHOW)\s+(\S+).*$/i, '$1 $2');
+  replacedSql = replacedSql.replace(
+    /^\s*(SET)(\s+global)?\s+(\S+)\s+=\s+\S+$/i,
+    '$1 $3 TO dummy',
+  );
+  return replacedSql.replace(FUNCTION_MATCHER, '1');
+};
+
 export const normalizeQuery = ({
   query,
   toPositionedParameter,
@@ -754,3 +769,51 @@ export const RESERVED_WORDS = [
   'YEAR_MONTH',
   'ZEROFILL',
 ];
+
+export const FUNCTIONS = [
+  // 日付および時間関数
+  'ADDDATE',
+  'ADDTIME',
+  'CONVERT_TZ',
+  'CURDATE',
+  'CURRENT_DATE',
+  'CURRENT_TIME',
+  'CURRENT_TIMESTAMP',
+  'CURTIME',
+  'DATE',
+  'DATE_ADD',
+  'DATE_FORMAT',
+  'DATE_SUB',
+  'DATEDIFF',
+  'DAY',
+  'DAYNAME',
+  'DAYOFMONTH',
+  'DAYOFWEEK',
+  'DAYOFYEAR',
+  'EXTRACT',
+  'FROM_DAYS',
+  'FROM_UNIXTIME',
+  'GET_FORMAT',
+  'HOUR',
+  'LAST_DAY',
+  'LOCALTIME',
+  'LOCALTIMESTAMP',
+  'MAKEDATE',
+  'MAKETIME',
+  'MICROSECOND',
+  'MINUTE',
+  'MONTH',
+  'MONTHNAME',
+  'NOW',
+  'SYSDATE',
+  'TIMESTAMP',
+
+  // フロー制御関数
+  'IFNULL',
+  'NULLIF',
+];
+
+const FUNCTION_MATCHER = new RegExp(
+  `(${FUNCTIONS.join('|')})\\([^)]+?\\)`,
+  'gi',
+);
