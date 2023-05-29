@@ -79,5 +79,7 @@ export const displayAnnotationType = (name: AnnotationType): string => {
       return 'Lnt';
     case 5:
       return 'Stl';
+    case 6:
+      return 'Rul';
   }
 };

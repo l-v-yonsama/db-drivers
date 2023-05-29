@@ -5,6 +5,7 @@ export const AnnotationType = {
   Err: 3,
   Lnt: 4,
   Stl: 5,
+  Rul: 6,
 } as const;
 
 export type AnnotationType =

@@ -8,3 +8,10 @@ export type RdhMeta = {
   type?: string;
   [key: string]: any;
 };
+
+export type ToStringParam = {
+  maxPrintLines?: number;
+  withType?: boolean;
+  withComment?: boolean;
+  keyNames?: string[];
+};

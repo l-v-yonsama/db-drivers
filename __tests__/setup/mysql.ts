@@ -61,7 +61,7 @@ export async function init(): Promise<void> {
         's3b-' + i,
         's3c-' + i,
         'long_column_name_long_text-' + i,
-        'a',
+        'b',
         's5',
         's6',
         's7',
@@ -77,6 +77,9 @@ export async function init(): Promise<void> {
       ];
       await con.execute(INSERT_STATEMENT, binds);
     }
+    await con.execute(
+      "UPDATE testtable set s4='b', d1=NULL, d2=NULL WHERE id=9 ",
+    );
 
     await con.execute('DROP TABLE IF EXISTS testdb.diff');
     await con.execute(CREATE_TABLE_STATEMENT2);

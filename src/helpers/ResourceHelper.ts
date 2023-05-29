@@ -1,5 +1,6 @@
 import { RdhRow, ResultSetDataHolder } from '../resource';
 import { AnnotationType, CompareKey } from '../types';
+import { Engine, RuleProperties } from 'json-rules-engine';
 
 export type DiffResult = {
   ok: boolean;
@@ -92,6 +93,42 @@ export const diff = (
   }
 
   return result;
+};
+
+/**
+ *
+ * @ref https://github.com/CacheControl/json-rules-engine/blob/beb656df2502c8716ffab9dc37dc134271b56506/docs/rules.md#operators
+ * @param rdh
+ * @param rules
+ */
+export const runRuleEngine = async (
+  rdh: ResultSetDataHolder,
+  rules: RuleProperties[],
+): Promise<boolean> => {
+  let ok = true;
+  const engine = new Engine();
+  rules.forEach((rule) => engine.addRule(rule));
+
+  for (const row of rdh.rows) {
+    const facts = row.getRuleEngineValues(rdh.keys);
+    const { failureResults } = await engine.run(facts);
+    if (failureResults.length) {
+      ok = false;
+      const { event, name } = failureResults[0];
+      let eventMessage = (event.params?.message as string) ?? '';
+      if (eventMessage) {
+        eventMessage = eventMessage.replace(/\$\{(.+?)\}/g, (_, g1): string => {
+          return facts[g1];
+        });
+      }
+      const message = `Error: ${eventMessage}`;
+      row.pushAnnotation(event.params.key, AnnotationType.Rul, {
+        result: name,
+        message,
+      });
+    }
+  }
+  return ok;
 };
 
 function createCompareKeysValue(compareKey: CompareKey, row1: RdhRow): string {

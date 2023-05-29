@@ -8,6 +8,6 @@ export * from './ConnectionSetting';
 export * from './DBType';
 export * from './ForeignKeyConstraint';
 export * from './GeneralColumnType';
-export * from './ResultSetHelperMetadata';
+export * from './ResultSetDataType';
 export * from './RedisKeyType';
 export * from './ResourceType';

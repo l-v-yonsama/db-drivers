@@ -9,6 +9,7 @@ import {
   GeneralColumnType,
   QueryConditions,
   RdhMeta,
+  ToStringParam,
 } from '../types';
 import dayjs from 'dayjs';
 import {
@@ -78,6 +79,23 @@ export class RdhRow {
   constructor(meta: any, values: any) {
     this.meta = meta;
     this.values = values;
+  }
+
+  getRuleEngineValues(keys: RdhKey[]): any {
+    const ret = {};
+    keys.forEach((key) => {
+      const v = this.values[key.name];
+      if (isDateTimeOrDate(key.type)) {
+        if (v === null || v === undefined) {
+          ret[key.name] = v;
+        } else {
+          ret[key.name] = dayjs(v).format('YYYY-MM-DD HH:mm:ss');
+        }
+      } else {
+        ret[key.name] = v;
+      }
+    });
+    return ret;
   }
 
   pushAnnotation(
@@ -176,13 +194,6 @@ export class RdhRow {
     return false;
   }
 }
-
-export type ToStringParam = {
-  maxPrintLines?: number;
-  withType?: boolean;
-  withComment?: boolean;
-  keyNames?: string[];
-};
 
 export class ResultSetDataHolder {
   readonly created: Date;

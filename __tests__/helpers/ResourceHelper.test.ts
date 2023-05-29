@@ -4,6 +4,7 @@ import {
   DBType,
   diff,
   MySQLDriver,
+  runRuleEngine,
 } from '../../src';
 import { init } from '../setup/mysql';
 
@@ -170,6 +171,78 @@ describe('ResourceHelper', () => {
         expect(rdh1.rows[3].hasAnnotation(AnnotationType.Del)).toBe(true);
         expect(rdh1.rows[4].hasAnnotation(AnnotationType.Del)).toBe(true);
       });
+    });
+  });
+
+  describe('runRuleEngine', () => {
+    it('simple rule', async () => {
+      const query = 'select id,n1,n2,n3,n4,d1,d2,s4,s8 from testtable';
+      const rdh = await driver.requestSql({
+        sql: query,
+      });
+
+      const r = await runRuleEngine(rdh, [
+        {
+          conditions: {
+            any: [
+              {
+                all: [
+                  {
+                    fact: 's4',
+                    operator: 'in',
+                    value: ['a', 'c'],
+                  },
+                  {
+                    fact: 'd1',
+                    operator: 'equal',
+                    value: null,
+                  },
+                ],
+              },
+              {
+                all: [
+                  {
+                    fact: 's4',
+                    operator: 'equal',
+                    value: 'b',
+                  },
+                  {
+                    fact: 'd1',
+                    operator: 'notEqual',
+                    value: null,
+                  },
+                ],
+              },
+              {
+                all: [
+                  {
+                    fact: 's4',
+                    operator: 'equal',
+                    value: null,
+                  },
+                ],
+              },
+            ],
+          },
+          event: {
+            type: 'testtable',
+            params: {
+              message: 's4:${s4} & d1:${d1} combination violation',
+              key: 's4',
+            },
+          },
+          name: 'S4, D1 combination',
+        },
+      ]);
+      expect(r).toBe(false);
+      const ruleError = rdh.rows.find((it) =>
+        it.hasAnnotation(AnnotationType.Rul),
+      );
+      expect(ruleError).not.toBeUndefined();
+      expect(ruleError.meta['s4'][0].options.result).toBe('S4, D1 combination');
+      expect(ruleError.meta['s4'][0].options.message).toBe(
+        'Error: s4:b & d1:null combination violation',
+      );
     });
   });
 });
