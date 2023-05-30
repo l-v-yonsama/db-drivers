@@ -8,7 +8,6 @@ import {
   RdsDatabase,
   ConnectionSetting,
 } from '../../../src';
-import { default as pg } from 'pg';
 import { init } from '../../setup/postgres';
 
 const baseConnectOption = {

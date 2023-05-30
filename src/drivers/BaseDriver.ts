@@ -1,19 +1,19 @@
 import * as tunnel from 'tunnel-ssh';
 import { getPort } from 'get-port-please';
 import * as fs from 'fs';
+import { ColumnResolver, DbDatabase, SchemaAndTableHints } from '../resource';
 import {
-  ColumnResolver,
-  DbDatabase,
-  ResultSetDataHolder,
-  SchemaAndTableHints,
-} from '../resource';
-import { ConnectionSetting, GeneralResult, ScanParams } from '../types';
+  ConnectionSetting,
+  GeneralResult,
+  ScanParams,
+  ResultSetData,
+} from '../types';
 import { DBError } from './DBError';
 import { parseFirst, Statement } from 'pgsql-ast-parser';
 import { toSafeQueryForPgsqlAst } from '../helpers';
 
 export interface Scannable {
-  scan(params: ScanParams): Promise<ResultSetDataHolder>;
+  scan(params: ScanParams): Promise<ResultSetData>;
 }
 
 export function isScannable(arg: any): arg is Scannable {

@@ -3,18 +3,17 @@
 import { Redis } from 'ioredis';
 import { BaseDriver, Scannable } from './BaseDriver';
 import {
-  DbDatabase,
   DbKey,
-  RdhKey,
   RedisDatabase,
   RedisKeyParams,
-  ResultSetDataHolder,
+  ResultSetDataBuilder,
   createRdhKey,
 } from '../resource';
 import {
   ConnectionSetting,
   GeneralColumnType,
   RedisKeyType,
+  ResultSetData,
   ScanParams,
 } from '../types';
 
@@ -188,10 +187,10 @@ export class RedisDriver
     return await Promise.all(promises);
   }
 
-  async scan(params: ScanParams): Promise<ResultSetDataHolder> {
+  async scan(params: ScanParams): Promise<ResultSetData> {
     const dbKeys = await this.scanStream(params);
 
-    const rdh = new ResultSetDataHolder([
+    const rdb = new ResultSetDataBuilder([
       createRdhKey({ name: 'key', type: GeneralColumnType.TEXT, width: 150 }),
       createRdhKey({ name: 'type', type: GeneralColumnType.ENUM, width: 70 }),
       createRdhKey({ name: 'ttl', type: GeneralColumnType.INTEGER, width: 50 }),
@@ -202,20 +201,22 @@ export class RedisDriver
       }),
     ]);
     dbKeys.forEach((dbKey) => {
-      rdh.addRow({
+      rdb.addRow({
         ...dbKey.params,
         key: dbKey.name,
       });
     });
-    rdh.meta.tableName = `RedisDB${this.conRes.database}`;
-    rdh.meta.connectionName = this.conRes.name;
-    rdh.meta.compareKeys = [
-      {
-        kind: 'primary',
-        names: ['key'],
-      },
-    ];
-    return rdh;
+    rdb.updateMeta({
+      tableName: `RedisDB${this.conRes.database}`,
+      connectionName: this.conRes.name,
+      compareKeys: [
+        {
+          kind: 'primary',
+          names: ['key'],
+        },
+      ],
+    });
+    return rdb.build();
   }
 
   async getValueByKey(

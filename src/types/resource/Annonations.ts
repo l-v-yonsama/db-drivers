@@ -1,15 +1,15 @@
-export const AnnotationType = {
-  Del: 0,
-  Upd: 1,
-  Add: 2,
-  Err: 3,
-  Lnt: 4,
-  Stl: 5,
-  Rul: 6,
+export const AnnotationTypeConst = {
+  Del: 'Del',
+  Upd: 'Upd',
+  Add: 'Add',
+  Err: 'Err',
+  Lnt: 'Lnt',
+  Stl: 'Stl',
+  Rul: 'Rul',
 } as const;
 
 export type AnnotationType =
-  (typeof AnnotationType)[keyof typeof AnnotationType];
+  (typeof AnnotationTypeConst)[keyof typeof AnnotationTypeConst];
 
 export interface AnnotationOptions {
   message?: string;
@@ -22,12 +22,32 @@ export interface AnnotationStyleOptions {
   b?: string;
   fmt?: string;
 }
-export class CellAnnotation {
-  type: AnnotationType;
-  options?: AnnotationOptions;
-  styles?: AnnotationStyleOptions;
-  constructor(type: AnnotationType, options?: AnnotationOptions) {
-    this.type = type;
-    this.options = options;
+export type CellAnnotation =
+  | DeleteAnnotation
+  | AddAnnotation
+  | UpdateAnnotation
+  | RuleAnnotation;
+
+export type BaseCellAnnotation<T = AnnotationType, U = any> = {
+  type: T;
+  values?: U;
+};
+
+export type DeleteAnnotation = BaseCellAnnotation<'Del'>;
+
+export type AddAnnotation = BaseCellAnnotation<'Add'>;
+
+export type UpdateAnnotation = BaseCellAnnotation<
+  'Upd',
+  {
+    otherValue: any;
   }
-}
+>;
+
+export type RuleAnnotation = BaseCellAnnotation<
+  'Rul',
+  {
+    name: string;
+    message: string;
+  }
+>;

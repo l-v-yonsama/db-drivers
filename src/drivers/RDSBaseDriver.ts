@@ -2,7 +2,7 @@ import { BaseDriver } from './BaseDriver';
 import {
   DbTable,
   RdsDatabase,
-  ResultSetDataHolder,
+  ResultSetDataBuilder,
   SchemaAndTableHints,
   TableRows,
 } from '../resource';
@@ -12,6 +12,7 @@ import {
   ConnectionSetting,
   QueryParams,
   ResourceType,
+  ResultSetData,
 } from '../types';
 
 export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
@@ -47,7 +48,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       maxRows?: number;
       compareKeys?: CompareKey[];
     },
-  ): Promise<ResultSetDataHolder> {
+  ): Promise<ResultSetData> {
     let sp = '';
     let cols = '';
 
@@ -84,24 +85,24 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     return undefined;
   }
 
-  async requestSql(params: QueryParams): Promise<ResultSetDataHolder> {
-    const { sql, conditions } = params;
+  async requestSql(params: QueryParams): Promise<ResultSetData> {
+    const { sql } = params;
     const ast = this.parseQuery(sql);
     const astTableName = this.getTableName(ast);
     const dbTable = this.getDbTable(astTableName);
 
-    const rdh = await this.requestSqlSub({
+    const rdb = await this.requestSqlSub({
       ...params,
       dbTable,
     });
-    this.setRdhMetaAndStatement(params, rdh, ast?.type, astTableName, dbTable);
+    this.setRdhMetaAndStatement(params, rdb, ast?.type, astTableName, dbTable);
 
-    return rdh;
+    return rdb.build();
   }
 
   abstract requestSqlSub(
     params: QueryParams & { dbTable: DbTable },
-  ): Promise<ResultSetDataHolder>;
+  ): Promise<ResultSetDataBuilder>;
 
   private getTableName(ast: Statement): string | undefined {
     if (ast) {
@@ -140,27 +141,34 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
 
   setRdhMetaAndStatement(
     params: QueryParams,
-    rdh: ResultSetDataHolder,
+    rdb: ResultSetDataBuilder,
     type: Statement['type'],
     astTableName?: string,
     dbTable?: DbTable,
   ): void {
     const { sql, conditions, meta } = params;
-    rdh.setSqlStatement(sql);
-    rdh.meta.connectionName = this.conRes.name;
-    rdh.meta.tableName = meta?.tableName;
-    rdh.meta.comment = meta?.comment ?? dbTable?.comment;
-    rdh.meta.compareKeys = meta?.compareKeys;
-    rdh.meta.type = type;
-    if (!rdh.meta.tableName) {
-      rdh.meta.tableName = astTableName;
+    rdb.setSqlStatement(sql);
+    const connectionName = this.conRes.name;
+    let tableName = meta?.tableName;
+    const comment = meta?.comment ?? dbTable?.comment;
+    let compareKeys = meta?.compareKeys;
+    if (!rdb.rs.meta.tableName) {
+      tableName = astTableName;
     }
-    if (!rdh.meta.compareKeys && rdh.meta.tableName) {
+
+    if (!rdb.rs.meta.compareKeys && !compareKeys) {
       if (dbTable) {
-        rdh.meta.compareKeys = dbTable.getCompareKeys();
+        compareKeys = dbTable.getCompareKeys();
       }
     }
-    rdh.queryConditions = conditions;
+    rdb.updateMeta({
+      connectionName,
+      comment,
+      tableName,
+      compareKeys,
+      type,
+    });
+    rdb.rs.queryConditions = conditions;
   }
 
   resetDefaultSchema(database: RdsDatabase): void {

@@ -5,10 +5,10 @@ import {
   ConnectionSetting,
   DBType,
   DbSQSQueue,
-  ResultSetDataHolder,
   AwsDatabase,
   SupplyCredentialType,
   AwsServiceType,
+  ResultSetData,
 } from '../../../src';
 import {
   CreateQueueCommand,
@@ -140,7 +140,7 @@ describe('AwsSQSDriver', () => {
   describe('asyncScan', () => {
     it('should return values', async () => {
       const { ok, message, result } = await driver.flow(
-        async (): Promise<ResultSetDataHolder> => {
+        async (): Promise<ResultSetData> => {
           return await driver.sqsClient.scan({
             target: queueUrl1,
             limit: 1000,

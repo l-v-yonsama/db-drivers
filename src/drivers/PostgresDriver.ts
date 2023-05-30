@@ -6,15 +6,14 @@ import {
   DbColumn,
   DbSchema,
   DbTable,
-  RdhKey,
   RdsDatabase,
-  ResultSetDataHolder,
+  ResultSetDataBuilder,
   SchemaAndTableHints,
   TableRows,
   createRdhKey,
   parseColumnType,
 } from '../resource';
-import { ConnectionSetting, QueryParams } from '../types';
+import { ConnectionSetting, QueryParams, RdhKey } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 
@@ -102,10 +101,10 @@ export class PostgresDriver extends RDSBaseDriver {
   // public
   async requestSqlSub(
     params: QueryParams & { dbTable: DbTable },
-  ): Promise<ResultSetDataHolder> {
+  ): Promise<ResultSetDataBuilder> {
     const { sql, conditions, dbTable } = params;
     // log.info("sql2=", sql);
-    let rdh = new ResultSetDataHolder([]);
+    let rdb: ResultSetDataBuilder;
 
     const binds = conditions?.binds ?? [];
     const results = await this.pool.query(sql, binds);
@@ -124,21 +123,21 @@ export class PostgresDriver extends RDSBaseDriver {
     if (results) {
       const fields = results.fields;
       if (fields?.length) {
-        rdh = new ResultSetDataHolder(
+        rdb = new ResultSetDataBuilder(
           fields.map((f) => this.fieldInfo2Key(f, dbTable)),
         );
         if (results.rows) {
           results.rows.forEach((result: any) => {
-            rdh.addRow(result);
+            rdb.addRow(result);
           });
         }
       } else {
-        rdh = new ResultSetDataHolder(['Result']);
-        rdh.addRow({ Result: 'OK' });
+        rdb = new ResultSetDataBuilder(['Result']);
+        rdb.addRow({ Result: 'OK' });
       }
     }
 
-    return rdh;
+    return rdb;
   }
 
   async countTables(

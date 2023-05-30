@@ -17,7 +17,7 @@ import {
   AwsDatabase,
   DbKey,
   DbSQSQueue,
-  ResultSetDataHolder,
+  ResultSetDataBuilder,
   SQSMessageParams,
   createRdhKey,
 } from '../../resource';
@@ -26,6 +26,7 @@ import {
   AwsServiceType,
   ConnectionSetting,
   GeneralColumnType,
+  ResultSetData,
   ScanParams,
 } from '../../types';
 import { AwsServiceClient } from './AwsServiceClient';
@@ -73,7 +74,7 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
     });
   }
 
-  async scan(params: ScanParams): Promise<ResultSetDataHolder> {
+  async scan(params: ScanParams): Promise<ResultSetData> {
     const { target, limit, keyword } = params;
 
     let keys = await this.receiveMessages({
@@ -88,7 +89,7 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
       );
     }
 
-    const rdh = new ResultSetDataHolder([
+    const rdb = new ResultSetDataBuilder([
       createRdhKey({ name: 'messageId', type: GeneralColumnType.TEXT }),
       createRdhKey({ name: 'body', type: GeneralColumnType.TEXT }),
       createRdhKey({ name: 'receiptHandle', type: GeneralColumnType.TEXT }),
@@ -102,12 +103,12 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
       }),
     ]);
     keys.forEach((dbKey) => {
-      rdh.addRow({
+      rdb.addRow({
         ...dbKey.params,
         messageId: dbKey.name,
       });
     });
-    return rdh;
+    return rdb.build();
   }
 
   async getInfomationSchemas(): Promise<AwsDatabase> {

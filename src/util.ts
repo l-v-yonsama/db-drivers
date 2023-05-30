@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { AnnotationType, DBType } from './types';
+import { DBType } from './types';
 
 export const sleep = (ms: number): Promise<void> =>
   new Promise((res) => setTimeout(res, ms));
@@ -63,23 +63,4 @@ export const isRDSType = (dbType: DBType): boolean => {
       return true;
   }
   return false;
-};
-
-export const displayAnnotationType = (name: AnnotationType): string => {
-  switch (name) {
-    case 0:
-      return 'Del';
-    case 1:
-      return 'Upd';
-    case 2:
-      return 'Add';
-    case 3:
-      return 'Err';
-    case 4:
-      return 'Lnt';
-    case 5:
-      return 'Stl';
-    case 6:
-      return 'Rul';
-  }
 };

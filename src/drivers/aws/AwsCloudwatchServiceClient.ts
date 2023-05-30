@@ -3,15 +3,16 @@
 import {
   AwsDatabase,
   DbLogGroup,
-  RdhKey,
-  ResultSetDataHolder,
+  ResultSetDataBuilder,
   createRdhKey,
+  isResultSetDataBuilder,
 } from '../../resource';
 import {
   AwsServiceType,
   ConnectionSetting,
   GeneralColumnType,
   ResourceType,
+  ResultSetData,
   ScanParams,
 } from '../../types';
 import {
@@ -125,7 +126,7 @@ export class AwsCloudwatchServiceClient
     return results;
   }
 
-  async scan(params: ScanParams): Promise<ResultSetDataHolder> {
+  async scan(params: ScanParams): Promise<ResultSetData> {
     const { targetResourceType } = params;
     if (targetResourceType === ResourceType.LogGroup) {
       return this.scanLogGroup(params);
@@ -134,7 +135,7 @@ export class AwsCloudwatchServiceClient
     }
   }
 
-  async scanLogGroup(params: ScanParams): Promise<ResultSetDataHolder> {
+  async scanLogGroup(params: ScanParams): Promise<ResultSetData> {
     const { target, keyword, startTime, endTime, limit } = params;
 
     const { status, results } = await this.query({
@@ -153,7 +154,7 @@ export class AwsCloudwatchServiceClient
     }
 
     if (!results || results.length === 0) {
-      return ResultSetDataHolder.createEmpty();
+      return ResultSetDataBuilder.createEmpty();
     }
 
     const keys = results[0]
@@ -173,7 +174,7 @@ export class AwsCloudwatchServiceClient
         return key;
       });
 
-    const rdh: ResultSetDataHolder = new ResultSetDataHolder(keys);
+    const rdb = new ResultSetDataBuilder(keys);
     results.forEach((rowResult) => {
       const values = {};
       rowResult.forEach((it) => {
@@ -188,12 +189,12 @@ export class AwsCloudwatchServiceClient
           values[it.field] = it.value;
         }
       });
-      rdh.addRow(values);
+      rdb.addRow(values);
     });
-    return rdh;
+    return rdb.build();
   }
 
-  async scanLogStream(params: ScanParams): Promise<ResultSetDataHolder> {
+  async scanLogStream(params: ScanParams): Promise<ResultSetData> {
     const { target, parentTarget, startTime, limit } = params;
 
     const list = await this.getLogEvents({
@@ -219,16 +220,16 @@ export class AwsCloudwatchServiceClient
       width: 500,
     });
     const keys = [ingestionTime, timestamp, message];
-    const rdh: ResultSetDataHolder = new ResultSetDataHolder(keys);
+    const rdb = new ResultSetDataBuilder(keys);
     list.forEach((rowResult) => {
       const values = {
         ingestionTime: toDate(rowResult.ingestionTime),
         timestamp: toDate(rowResult.timestamp),
         message: rowResult.message,
       };
-      rdh.addRow(values);
+      rdb.addRow(values);
     });
-    return rdh;
+    return rdb.build();
   }
 
   async getInfomationSchemas(): Promise<AwsDatabase> {

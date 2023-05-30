@@ -5,15 +5,19 @@ import {
   DbColumn,
   DbSchema,
   DbTable,
-  RdhKey,
   RdsDatabase,
-  ResultSetDataHolder,
+  ResultSetDataBuilder,
   SchemaAndTableHints,
   TableRows,
   createRdhKey,
   parseColumnType,
 } from '../resource';
-import { ConnectionSetting, GeneralColumnType, QueryParams } from '../types';
+import {
+  ConnectionSetting,
+  GeneralColumnType,
+  QueryParams,
+  RdhKey,
+} from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
 import { toBoolean } from '../util';
@@ -73,9 +77,9 @@ export class MySQLDriver extends RDSBaseDriver {
 
   async requestSqlSub(
     params: QueryParams & { dbTable: DbTable },
-  ): Promise<ResultSetDataHolder> {
+  ): Promise<ResultSetDataBuilder> {
     const { sql, conditions, dbTable } = params;
-    let rdh = new ResultSetDataHolder([]);
+    let rdb: ResultSetDataBuilder;
 
     if (sql.trim().match(/set\s+global\s+.+/i)) {
       // This query will crash current node process.
@@ -100,7 +104,7 @@ export class MySQLDriver extends RDSBaseDriver {
         //   changedRows: 0 }
         const results = rows as ResultSetHeader;
 
-        rdh = new ResultSetDataHolder([
+        rdb = new ResultSetDataBuilder([
           'fieldCount',
           'affectedRows',
           'insertId',
@@ -108,7 +112,7 @@ export class MySQLDriver extends RDSBaseDriver {
           'warningStatus',
           'changedRows',
         ]);
-        rdh.addRow({
+        rdb.addRow({
           fieldCount: results.fieldCount,
           affectedRows: results.affectedRows,
           insertId: results.insertId,
@@ -117,26 +121,26 @@ export class MySQLDriver extends RDSBaseDriver {
           changedRows: results.changedRows,
         });
       } else {
-        rdh = new ResultSetDataHolder(
+        rdb = new ResultSetDataBuilder(
           fields === undefined
             ? []
             : fields.map((f) => this.fieldInfo2Key(f, dbTable)),
         );
         (rows as any).forEach((result: any) => {
-          rdh.keys.forEach((key) => {
+          rdb.rs.keys.forEach((key) => {
             const v = result[key.name];
             if (key.type === GeneralColumnType.BIT) {
               result[key.name] = toBoolean(v);
             }
           });
-          rdh.addRow(result);
+          rdb.addRow(result);
         });
       }
     } else {
       new Error('No connection');
     }
 
-    return rdh;
+    return rdb;
   }
 
   async countTables(

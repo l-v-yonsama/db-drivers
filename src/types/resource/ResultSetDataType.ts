@@ -1,4 +1,7 @@
+import { QueryConditions } from '../drivers';
+import { CellAnnotation } from './Annonations';
 import { CompareKey } from './CompareKey';
+import { GeneralColumnType } from './GeneralColumnType';
 
 export type RdhMeta = {
   connectionName?: string;
@@ -15,3 +18,53 @@ export type ToStringParam = {
   withComment?: boolean;
   keyNames?: string[];
 };
+
+export type SampleClassPair = {
+  clazzValue: any;
+  sampleValues: any[];
+};
+
+export type SampleGroupByClass = {
+  readonly clazzKey: string;
+  readonly sampleKeys: string[];
+  pairs: SampleClassPair[];
+  is_shuffled: boolean;
+};
+
+export type MergedCell = {
+  row: number;
+  col: number;
+  rowspan: number;
+  colspan: number;
+};
+
+export type RdhKey = {
+  name: string;
+  comment: string;
+  type: GeneralColumnType;
+  width?: number;
+  meta?: {
+    is_image?: boolean;
+    is_hyperlink?: boolean;
+  };
+};
+
+export type RdhRow = {
+  readonly meta: { [key: string]: CellAnnotation[] };
+  readonly values: { [key: string]: any };
+};
+
+export type ResultSetData = {
+  readonly created: Date;
+  readonly keys: RdhKey[];
+  readonly rows: RdhRow[];
+  readonly meta: RdhMeta;
+  queryConditions?: QueryConditions;
+  sqlStatement?: string | undefined;
+  shuffledIndexes?: number[];
+  shuffledNextCounter?: number;
+  mergeCells?: MergedCell[];
+};
+
+export const isResultSetData = (item: any): item is ResultSetData =>
+  item.created && item.keys && item.rows && item.meta;

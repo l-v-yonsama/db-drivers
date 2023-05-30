@@ -19,7 +19,7 @@ import {
   DbKey,
   DbS3Bucket,
   DbS3Owner,
-  ResultSetDataHolder,
+  ResultSetDataBuilder,
   S3KeyParams,
   createRdhKey,
 } from '../../resource';
@@ -27,6 +27,7 @@ import {
   AwsServiceType,
   ConnectionSetting,
   GeneralColumnType,
+  ResultSetData,
   ScanParams,
 } from '../../types';
 import { AwsServiceClient } from './AwsServiceClient';
@@ -139,7 +140,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
     return list;
   }
 
-  async scan(params: ScanParams): Promise<ResultSetDataHolder> {
+  async scan(params: ScanParams): Promise<ResultSetData> {
     const { target, limit, keyword, withValue } = params;
     const list = await this.listObjects({
       bucket: target,
@@ -147,7 +148,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       limit,
       withValue,
     });
-    const rdh = new ResultSetDataHolder([
+    const rdb = new ResultSetDataBuilder([
       createRdhKey({ name: 'key', type: GeneralColumnType.TEXT }),
       createRdhKey({ name: 'size', type: GeneralColumnType.INTEGER }),
       createRdhKey({ name: 'etag', type: GeneralColumnType.TEXT }),
@@ -156,13 +157,13 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       createRdhKey({ name: 'value', type: GeneralColumnType.UNKNOWN }),
     ]);
     list.forEach((dbKey) => {
-      rdh.addRow({
+      rdb.addRow({
         ...dbKey.params,
         key: dbKey.name,
         value: dbKey.params?.base64,
       });
     });
-    return rdh;
+    return rdb.build();
   }
 
   // async putObject(

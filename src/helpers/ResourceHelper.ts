@@ -1,5 +1,5 @@
-import { RdhRow, ResultSetDataHolder } from '../resource';
-import { AnnotationType, CompareKey } from '../types';
+import { ResultSetDataBuilder, RowHelper } from '../resource';
+import { CompareKey, RdhRow, ResultSetData } from '../types';
 import { Engine, RuleProperties } from 'json-rules-engine';
 
 export type DiffResult = {
@@ -10,10 +10,7 @@ export type DiffResult = {
   message: string;
 };
 
-export const diff = (
-  rdh1: ResultSetDataHolder,
-  rdh2: ResultSetDataHolder,
-): DiffResult => {
+export const diff = (rdh1: ResultSetData, rdh2: ResultSetData): DiffResult => {
   const result: DiffResult = {
     ok: false,
     deleted: 0,
@@ -25,7 +22,10 @@ export const diff = (
     result.message = 'Missing compare key (Primary or uniq key).';
     return result;
   }
-  const keynames = rdh1.keynames();
+  const rdb1 = ResultSetDataBuilder.from(rdh1);
+  const rdb2 = ResultSetDataBuilder.from(rdh2);
+
+  const keynames = rdb1.keynames();
   const compareKey = getAvailableCompareKey(keynames, rdh1.meta?.compareKeys);
   if (!compareKey) {
     result.message = 'Missing available compare key (Primary or uniq key).';
@@ -34,12 +34,10 @@ export const diff = (
 
   const hasAlreadyChecked = new Set<string>();
 
-  rdh2.rows.forEach((row2) => {
-    row2.clearAllAnnotations();
-  });
+  rdb1.clearAllAnotations();
+  rdb2.clearAllAnotations();
 
   rdh1.rows.forEach((row1) => {
-    row1.clearAllAnnotations();
     const key1 = createCompareKeysValue(compareKey, row1);
     hasAlreadyChecked.add(key1);
     let removed = true;
@@ -54,11 +52,17 @@ export const diff = (
           const v2 = row2.values[name]?.toString() ?? '';
           if (v1 != v2) {
             updated = true;
-            row1.pushAnnotation(name, AnnotationType.Upd, {
-              result: row2.values[name],
+            RowHelper.pushAnnotation(row1, name, {
+              type: 'Upd',
+              values: {
+                otherValue: row2.values[name],
+              },
             });
-            row2.pushAnnotation(name, AnnotationType.Upd, {
-              result: row1.values[name],
+            RowHelper.pushAnnotation(row2, name, {
+              type: 'Upd',
+              values: {
+                otherValue: row1.values[name],
+              },
             });
           }
         });
@@ -70,7 +74,7 @@ export const diff = (
     }
     if (removed) {
       keynames.forEach((name) => {
-        row1.pushAnnotation(name, AnnotationType.Del);
+        RowHelper.pushAnnotation(row1, name, { type: 'Del' });
       });
       result.deleted++;
     }
@@ -80,7 +84,7 @@ export const diff = (
     const key2 = createCompareKeysValue(compareKey, row2);
     if (!hasAlreadyChecked.has(key2)) {
       keynames.forEach((name) => {
-        row2.pushAnnotation(name, AnnotationType.Add);
+        RowHelper.pushAnnotation(row2, name, { type: 'Add' });
       });
       result.inserted++;
     }
@@ -102,7 +106,7 @@ export const diff = (
  * @param rules
  */
 export const runRuleEngine = async (
-  rdh: ResultSetDataHolder,
+  rdh: ResultSetData,
   rules: RuleProperties[],
 ): Promise<boolean> => {
   let ok = true;
@@ -110,7 +114,7 @@ export const runRuleEngine = async (
   rules.forEach((rule) => engine.addRule(rule));
 
   for (const row of rdh.rows) {
-    const facts = row.getRuleEngineValues(rdh.keys);
+    const facts = RowHelper.getRuleEngineValues(row, rdh.keys);
     const { failureResults } = await engine.run(facts);
     if (failureResults.length) {
       ok = false;
@@ -122,9 +126,12 @@ export const runRuleEngine = async (
         });
       }
       const message = `Error: ${eventMessage}`;
-      row.pushAnnotation(event.params.key, AnnotationType.Rul, {
-        result: name,
-        message,
+      RowHelper.pushAnnotation(row, event.params.key, {
+        type: 'Rul',
+        values: {
+          name,
+          message,
+        },
       });
     }
   }

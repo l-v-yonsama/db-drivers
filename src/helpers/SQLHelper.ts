@@ -130,7 +130,7 @@ export const normalizePositionedParametersQuery = (
       /(((?<!:):(\w+)\b)|(( *IN +)\/\* *(\w+) *\*\/ *\([^)]+?\))|(\/\* *(\w+) *\*\/\S*)|(\/\*\$ *(\w+) *\*\/)|(^\s*(#|--)\s+.*$))/gi;
     const normalized = line.replace(
       reg,
-      (substring, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, offset) => {
+      (substring, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11) => {
         // g1: outer group.
         //------------------
         // g2: ((?<!:):(\w+)\b) ... simple named parameter
@@ -259,7 +259,7 @@ export const normalizeSimpleParametersQuery = (
       /(((?<!:):(\w+)\b)|(( *IN +)\/\* *(\w+) *\*\/ *\([^)]+?\))|(\/\* *(\w+) *\*\/\S*)|(\/\*\$ *(\w+) *\*\/)|(^\s*(#|--)\s+.*$))/gi;
     const normalized = line.replace(
       reg,
-      (substring, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, offset) => {
+      (substring, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11) => {
         // g1: outer group.
         //------------------
         // g2: ((?<!:):(\w+)\b) ... simple named parameter

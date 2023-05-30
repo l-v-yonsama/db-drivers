@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import {
   MySQLDriver,
   DbSchema,
@@ -8,7 +7,6 @@ import {
   GeneralColumnType,
   RdsDatabase,
   ConnectionSetting,
-  toDate,
 } from '../../../src';
 import { init, saveRes } from '../../setup/mysql';
 

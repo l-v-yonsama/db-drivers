@@ -1,9 +1,10 @@
 import {
-  AnnotationType,
   ConnectionSetting,
   DBType,
   diff,
   MySQLDriver,
+  RowHelper,
+  RuleAnnotation,
   runRuleEngine,
 } from '../../src';
 import { init } from '../setup/mysql';
@@ -81,8 +82,8 @@ describe('ResourceHelper', () => {
           updated: 1,
           message: 'Inserted:1, Deleted:2, Updated:1',
         });
-        expect(rdh1.rows[3].hasAnnotation(AnnotationType.Del)).toBe(true);
-        expect(rdh1.rows[4].hasAnnotation(AnnotationType.Del)).toBe(true);
+        expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(true);
+        expect(RowHelper.hasAnnotation(rdh1.rows[4], 'Del')).toBe(true);
       });
     });
 
@@ -96,6 +97,7 @@ describe('ResourceHelper', () => {
           sql: 'SELECT * FROM testtable order by n2 asc',
         });
         const { tableName, compareKeys } = rdh1.meta;
+        console.log(rdh1.meta);
         expect(tableName).toBe('testtable');
         expect(compareKeys).toHaveLength(1);
         expect(compareKeys[0]).toEqual({
@@ -125,8 +127,8 @@ describe('ResourceHelper', () => {
           updated: 1,
           message: 'Inserted:1, Deleted:2, Updated:1',
         });
-        expect(rdh1.rows[3].hasAnnotation(AnnotationType.Del)).toBe(true);
-        expect(rdh1.rows[4].hasAnnotation(AnnotationType.Del)).toBe(true);
+        expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(true);
+        expect(RowHelper.hasAnnotation(rdh1.rows[4], 'Del')).toBe(true);
       });
 
       it('should has uniq compareKey in meta', async () => {
@@ -168,8 +170,8 @@ describe('ResourceHelper', () => {
           updated: 1,
           message: 'Inserted:1, Deleted:2, Updated:1',
         });
-        expect(rdh1.rows[3].hasAnnotation(AnnotationType.Del)).toBe(true);
-        expect(rdh1.rows[4].hasAnnotation(AnnotationType.Del)).toBe(true);
+        expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(true);
+        expect(RowHelper.hasAnnotation(rdh1.rows[4], 'Del')).toBe(true);
       });
     });
   });
@@ -236,11 +238,17 @@ describe('ResourceHelper', () => {
       ]);
       expect(r).toBe(false);
       const ruleError = rdh.rows.find((it) =>
-        it.hasAnnotation(AnnotationType.Rul),
+        RowHelper.hasAnnotation(it, 'Rul'),
       );
+
       expect(ruleError).not.toBeUndefined();
-      expect(ruleError.meta['s4'][0].options.result).toBe('S4, D1 combination');
-      expect(ruleError.meta['s4'][0].options.message).toBe(
+      const ruleAnnotation = RowHelper.getFirstAnnotationOf<RuleAnnotation>(
+        ruleError,
+        's4',
+        'Rul',
+      );
+      expect(ruleAnnotation.values.name).toBe('S4, D1 combination');
+      expect(ruleAnnotation.values.message).toBe(
         'Error: s4:b & d1:null combination violation',
       );
     });
