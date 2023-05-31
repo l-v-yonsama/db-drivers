@@ -3,9 +3,11 @@ import {
   DBType,
   diff,
   MySQLDriver,
+  ResultSetDataBuilder,
   RowHelper,
   RuleAnnotation,
   runRuleEngine,
+  TableRule,
 } from '../../src';
 import { init } from '../setup/mysql';
 
@@ -97,7 +99,6 @@ describe('ResourceHelper', () => {
           sql: 'SELECT * FROM testtable order by n2 asc',
         });
         const { tableName, compareKeys } = rdh1.meta;
-        console.log(rdh1.meta);
         expect(tableName).toBe('testtable');
         expect(compareKeys).toHaveLength(1);
         expect(compareKeys[0]).toEqual({
@@ -183,72 +184,114 @@ describe('ResourceHelper', () => {
         sql: query,
       });
 
-      const r = await runRuleEngine(rdh, [
-        {
-          conditions: {
-            any: [
-              {
-                all: [
-                  {
-                    fact: 's4',
-                    operator: 'in',
-                    value: ['a', 'c'],
+      const tableRule: TableRule = {
+        table: 'testtable',
+        details: [
+          {
+            ruleName: 'N1, N2 combination',
+            conditions: {
+              any: [
+                {
+                  fact: 'n1',
+                  operator: 'equal',
+                  value: null,
+                },
+                {
+                  fact: 'n2',
+                  operator: 'equal',
+                  value: null,
+                },
+                {
+                  fact: 'n2',
+                  operator: 'greaterThanInclusive', // >=
+                  value: {
+                    fact: 'n1',
                   },
-                  {
-                    fact: 'd1',
-                    operator: 'equal',
-                    value: null,
-                  },
-                ],
-              },
-              {
-                all: [
-                  {
-                    fact: 's4',
-                    operator: 'equal',
-                    value: 'b',
-                  },
-                  {
-                    fact: 'd1',
-                    operator: 'notEqual',
-                    value: null,
-                  },
-                ],
-              },
-              {
-                all: [
-                  {
-                    fact: 's4',
-                    operator: 'equal',
-                    value: null,
-                  },
-                ],
-              },
-            ],
-          },
-          event: {
-            type: 'testtable',
-            params: {
-              message: 's4:${s4} & d1:${d1} combination violation',
-              key: 's4',
+                },
+              ],
             },
+            error: {
+              column: 'n2',
+              message: 'n2:${n2} should be greater equal n1:${n1}',
+            },
+            limit: 100,
           },
-          name: 'S4, D1 combination',
-        },
-      ]);
+          {
+            ruleName: 'S4, D1 combination',
+            conditions: {
+              any: [
+                {
+                  all: [
+                    {
+                      fact: 's4',
+                      operator: 'in',
+                      value: ['a', 'c'],
+                    },
+                    {
+                      fact: 'd1',
+                      operator: 'equal',
+                      value: null,
+                    },
+                  ],
+                },
+                {
+                  all: [
+                    {
+                      fact: 's4',
+                      operator: 'equal',
+                      value: 'b',
+                    },
+                    {
+                      fact: 'd1',
+                      operator: 'notEqual',
+                      value: null,
+                    },
+                  ],
+                },
+                {
+                  all: [
+                    {
+                      fact: 's4',
+                      operator: 'equal',
+                      value: null,
+                    },
+                  ],
+                },
+              ],
+            },
+            error: {
+              column: 's4',
+              message: 's4:${s4} & d1:${d1} combination violation',
+            },
+            limit: 100,
+          },
+        ],
+      };
+
+      const r = await runRuleEngine(rdh, tableRule);
       expect(r).toBe(false);
-      const ruleError = rdh.rows.find((it) =>
-        RowHelper.hasAnnotation(it, 'Rul'),
+
+      const id8Row = rdh.rows.find((it) => it.values.id === 8);
+      expect(id8Row).not.toBeUndefined();
+      const ruleAnnotation8 = RowHelper.getFirstAnnotationOf<RuleAnnotation>(
+        id8Row,
+        'n2',
+        'Rul',
+      );
+      expect(ruleAnnotation8.values.name).toBe('N1, N2 combination');
+      expect(ruleAnnotation8.values.message).toBe(
+        'Error: n2:90 should be greater equal n1:91',
       );
 
-      expect(ruleError).not.toBeUndefined();
-      const ruleAnnotation = RowHelper.getFirstAnnotationOf<RuleAnnotation>(
-        ruleError,
+      const id9Row = rdh.rows.find((it) => it.values.id === 9);
+      expect(id9Row).not.toBeUndefined();
+      const ruleAnnotation9 = RowHelper.getFirstAnnotationOf<RuleAnnotation>(
+        id9Row,
         's4',
         'Rul',
       );
-      expect(ruleAnnotation.values.name).toBe('S4, D1 combination');
-      expect(ruleAnnotation.values.message).toBe(
+      expect(ruleAnnotation9.values.name).toBe('S4, D1 combination');
+      expect(ruleAnnotation9.values.message).toBe(
         'Error: s4:b & d1:null combination violation',
       );
     });

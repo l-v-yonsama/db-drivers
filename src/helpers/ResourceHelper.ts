@@ -1,5 +1,11 @@
-import { ResultSetDataBuilder, RowHelper } from '../resource';
-import { CompareKey, RdhRow, ResultSetData } from '../types';
+import { RdhHelper, ResultSetDataBuilder, RowHelper } from '../resource';
+import {
+  CompareKey,
+  RdhRow,
+  ResultSetData,
+  TableRule,
+  TableRuleDetail,
+} from '../types';
 import { Engine, RuleProperties } from 'json-rules-engine';
 
 export type DiffResult = {
@@ -34,8 +40,8 @@ export const diff = (rdh1: ResultSetData, rdh2: ResultSetData): DiffResult => {
 
   const hasAlreadyChecked = new Set<string>();
 
-  rdb1.clearAllAnotations();
-  rdb2.clearAllAnotations();
+  RdhHelper.clearAllAnotations(rdb1.rs);
+  RdhHelper.clearAllAnotations(rdb2.rs);
 
   rdh1.rows.forEach((row1) => {
     const key1 = createCompareKeysValue(compareKey, row1);
@@ -107,32 +113,65 @@ export const diff = (rdh1: ResultSetData, rdh2: ResultSetData): DiffResult => {
  */
 export const runRuleEngine = async (
   rdh: ResultSetData,
-  rules: RuleProperties[],
+  tableRule: TableRule,
 ): Promise<boolean> => {
   let ok = true;
   const engine = new Engine();
-  rules.forEach((rule) => engine.addRule(rule));
+  const limitCounters: {
+    [key: string]: {
+      limit: number;
+      count: number;
+    };
+  } = {};
+
+  tableRule.details.forEach((detail, idx) => {
+    limitCounters[detail.ruleName] = {
+      limit: detail.limit,
+      count: 0,
+    };
+
+    engine.addRule({
+      conditions: detail.conditions,
+      event: {
+        type: `type${idx}`,
+        params: detail.error,
+      },
+      name: detail.ruleName,
+    });
+  });
 
   for (const row of rdh.rows) {
     const facts = RowHelper.getRuleEngineValues(row, rdh.keys);
     const { failureResults } = await engine.run(facts);
     if (failureResults.length) {
       ok = false;
-      const { event, name } = failureResults[0];
-      let eventMessage = (event.params?.message as string) ?? '';
-      if (eventMessage) {
-        eventMessage = eventMessage.replace(/\$\{(.+?)\}/g, (_, g1): string => {
-          return facts[g1];
-        });
+      for (const result of failureResults) {
+        const { event, name } = result;
+        const error = event.params as TableRuleDetail['error'];
+        let eventMessage = error.message ?? '';
+        if (eventMessage) {
+          eventMessage = eventMessage.replace(
+            /\$\{(.+?)\}/g,
+            (_, g1): string => {
+              return facts[g1];
+            },
+          );
+        }
+        const message = `Error: ${eventMessage}`;
+        if (limitCounters[name].count < limitCounters[name].limit) {
+          RowHelper.pushAnnotation(row, error.column, {
+            type: 'Rul',
+            values: {
+              name,
+              message,
+            },
+          });
+          limitCounters[name].count++;
+        }
       }
-      const message = `Error: ${eventMessage}`;
-      RowHelper.pushAnnotation(row, event.params.key, {
-        type: 'Rul',
-        values: {
-          name,
-          message,
-        },
-      });
+    }
+    if (Object.values(limitCounters).every((v) => v.count >= v.limit)) {
+      break;
     }
   }
   return ok;

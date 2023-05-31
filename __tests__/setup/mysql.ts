@@ -77,6 +77,7 @@ export async function init(): Promise<void> {
       ];
       await con.execute(INSERT_STATEMENT, binds);
     }
+    await con.execute('UPDATE testtable set n1 = n2 + 1 WHERE id=8 ');
     await con.execute(
       "UPDATE testtable set s4='b', d1=NULL, d2=NULL WHERE id=9 ",
     );

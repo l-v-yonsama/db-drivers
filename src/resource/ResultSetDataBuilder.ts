@@ -155,6 +155,12 @@ export class RowHelper {
   }
 }
 
+export class RdhHelper {
+  static clearAllAnotations(rdh: ResultSetData): void {
+    rdh.rows.forEach((row) => RowHelper.clearAllAnnotations(row));
+  }
+}
+
 export class ResultSetDataBuilder {
   readonly rs: ResultSetData;
 
@@ -175,10 +181,6 @@ export class ResultSetDataBuilder {
     Object.entries(params).forEach(([k, v]) => {
       this.rs.meta[k] = v;
     });
-  }
-
-  clearAllAnotations(): void {
-    this.rs.rows.forEach((row) => RowHelper.clearAllAnnotations(row));
   }
 
   static createEmpty(): ResultSetData {

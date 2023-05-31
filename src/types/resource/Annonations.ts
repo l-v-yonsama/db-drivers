@@ -11,22 +11,13 @@ export const AnnotationTypeConst = {
 export type AnnotationType =
   (typeof AnnotationTypeConst)[keyof typeof AnnotationTypeConst];
 
-export interface AnnotationOptions {
-  message?: string;
-  result?: any;
-  style?: AnnotationStyleOptions;
-}
-export interface AnnotationStyleOptions {
-  f?: { s: number; n: string };
-  a?: { h?: string; v?: string };
-  b?: string;
-  fmt?: string;
-}
 export type CellAnnotation =
   | DeleteAnnotation
   | AddAnnotation
   | UpdateAnnotation
-  | RuleAnnotation;
+  | RuleAnnotation
+  | LintAnnotation
+  | StyleAnnotation;
 
 export type BaseCellAnnotation<T = AnnotationType, U = any> = {
   type: T;
@@ -49,5 +40,24 @@ export type RuleAnnotation = BaseCellAnnotation<
   {
     name: string;
     message: string;
+  }
+>;
+
+export type LintAnnotation = BaseCellAnnotation<
+  'Lnt',
+  {
+    ruleId: string;
+    message: string;
+    fix: string;
+  }
+>;
+
+export type StyleAnnotation = BaseCellAnnotation<
+  'Stl',
+  {
+    f?: { s: number; n: string };
+    a?: { h?: string; v?: string };
+    b?: string;
+    fmt?: string;
   }
 >;
