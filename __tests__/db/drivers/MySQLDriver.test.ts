@@ -87,6 +87,10 @@ describe('MySQLDriver', () => {
       const n1Res = testTableRes.getChildByName('n1');
       expect(n1Res.colType).toBe(GeneralColumnType.TINYINT);
       expect(n1Res.nullable).toBe(true);
+      // s71
+      const s71Res = testTableRes.getChildByName('s71');
+      expect(s71Res.colType).toBe(GeneralColumnType.TINYBLOB);
+      expect(s71Res.nullable).toBe(true);
     });
 
     it('should have Index on Column resource', async () => {

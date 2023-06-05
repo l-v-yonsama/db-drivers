@@ -1,6 +1,7 @@
 import {
   getProposals,
   normalizeQuery,
+  parseQuery,
   ProposalKind,
   RdsDatabase,
 } from '../../src';
@@ -525,6 +526,20 @@ describe('SQLHelper', () => {
           }),
         ).toThrow('Missing bind parameters [id,orderByColumn,limit]');
       });
+    });
+  });
+
+  describe('parseQuery', () => {
+    it('Calculate timestamp', () => {
+      const sql =
+        'select 1 from hoge where a_timestamp >= currenttimestamp - interval 1 hour';
+      const ast = parseQuery(sql);
+      expect(ast).not.toBeUndefined();
+    });
+    it('Limit n1,n2', () => {
+      const sql = 'select 1 from hoge LIMIT 1, 20';
+      const ast = parseQuery(sql);
+      expect(ast).not.toBeUndefined();
     });
   });
 });

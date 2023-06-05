@@ -6,7 +6,7 @@ import {
   TableRule,
   TableRuleDetail,
 } from '../types';
-import { Engine, RuleProperties } from 'json-rules-engine';
+import { Engine } from 'json-rules-engine';
 
 export type DiffResult = {
   ok: boolean;
@@ -117,6 +117,35 @@ export const runRuleEngine = async (
 ): Promise<boolean> => {
   let ok = true;
   const engine = new Engine();
+
+  // ADD CUSTOM OPERATORS
+  engine.addOperator('isNull', (factValue) => {
+    return factValue === null;
+  });
+  engine.addOperator('isNotNull', (factValue) => {
+    return factValue !== null;
+  });
+  engine.addOperator('isNil', (factValue) => {
+    return factValue === null || factValue === undefined;
+  });
+  engine.addOperator('isNotNil', (factValue) => {
+    return factValue !== null && factValue !== undefined;
+  });
+  engine.addOperator('startsWith', (factValue, jsonValue) => {
+    const v = (factValue ?? '').toString();
+    if (v.length === 0) {
+      return false;
+    }
+    return v.startsWith(jsonValue.toString());
+  });
+  engine.addOperator('endsWith', (factValue, jsonValue) => {
+    const v = (factValue ?? '').toString();
+    if (v.length === 0) {
+      return false;
+    }
+    return v.endsWith(jsonValue.toString());
+  });
+
   const limitCounters: {
     [key: string]: {
       limit: number;
@@ -126,7 +155,7 @@ export const runRuleEngine = async (
 
   tableRule.details.forEach((detail, idx) => {
     limitCounters[detail.ruleName] = {
-      limit: detail.limit,
+      limit: detail.error.limit,
       count: 0,
     };
 

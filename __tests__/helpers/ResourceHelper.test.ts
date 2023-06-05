@@ -213,8 +213,8 @@ describe('ResourceHelper', () => {
             error: {
               column: 'n2',
               message: 'n2:${n2} should be greater equal n1:${n1}',
+              limit: 100,
             },
-            limit: 100,
           },
           {
             ruleName: 'S4, D1 combination',
@@ -229,8 +229,8 @@ describe('ResourceHelper', () => {
                     },
                     {
                       fact: 'd1',
-                      operator: 'equal',
-                      value: null,
+                      operator: 'isNull',
+                      value: 12345, // ignored
                     },
                   ],
                 },
@@ -243,8 +243,8 @@ describe('ResourceHelper', () => {
                     },
                     {
                       fact: 'd1',
-                      operator: 'notEqual',
-                      value: null,
+                      operator: 'isNotNull',
+                      value: null, // ignored
                     },
                   ],
                 },
@@ -252,8 +252,8 @@ describe('ResourceHelper', () => {
                   all: [
                     {
                       fact: 's4',
-                      operator: 'equal',
-                      value: null,
+                      operator: 'isNil',
+                      value: 'hgoegohoe', // ignored
                     },
                   ],
                 },
@@ -262,8 +262,8 @@ describe('ResourceHelper', () => {
             error: {
               column: 's4',
               message: 's4:${s4} & d1:${d1} combination violation',
+              limit: 100,
             },
-            limit: 100,
           },
         ],
       };

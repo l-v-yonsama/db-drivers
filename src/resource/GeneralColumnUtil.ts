@@ -79,6 +79,7 @@ export function isBinaryLike(type: GeneralColumnType): boolean {
     case GeneralColumnType.BLOB:
     case GeneralColumnType.MEDIUMBLOB:
     case GeneralColumnType.LONGBLOB:
+    case GeneralColumnType.TINYBLOB:
     case GeneralColumnType.BINARY:
       return true;
   }
@@ -200,6 +201,7 @@ export function parseFaIconType(type: GeneralColumnType): string {
     case GeneralColumnType.BLOB:
     case GeneralColumnType.MEDIUMBLOB:
     case GeneralColumnType.LONGBLOB:
+    case GeneralColumnType.TINYBLOB:
       return 'fa-chess-board';
     // array
     case GeneralColumnType.ARRAY:

@@ -14,6 +14,7 @@ import {
   ResourceType,
   ResultSetData,
 } from '../types';
+import { parseQuery } from '../helpers';
 
 export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   constructor(conRes: ConnectionSetting) {
@@ -87,7 +88,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
 
   async requestSql(params: QueryParams): Promise<ResultSetData> {
     const { sql } = params;
-    const ast = this.parseQuery(sql);
+    const ast = parseQuery(sql);
     const astTableName = this.getTableName(ast);
     const dbTable = this.getDbTable(astTableName);
 

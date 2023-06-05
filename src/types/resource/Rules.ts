@@ -11,6 +11,6 @@ export type TableRuleDetail = {
   error: {
     column: string;
     message: string;
+    limit: number;
   };
-  limit: number;
 };

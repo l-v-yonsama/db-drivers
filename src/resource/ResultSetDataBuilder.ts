@@ -104,6 +104,21 @@ export class RowHelper {
     return undefined;
   }
 
+  static filterAnnotationOf<T extends CellAnnotation = CellAnnotation>(
+    row: RdhRow,
+    type: T['type'],
+  ): { [key: string]: T[] } {
+    const keys = Object.keys(row.meta);
+    return keys
+      .filter((key) => row.meta[key].some((it) => it.type === type))
+      .reduce((p, key) => {
+        return {
+          ...p,
+          key: row.meta[key].filter((it) => it.type === type),
+        };
+      }, {});
+  }
+
   static clearAllAnnotations(row: RdhRow): void {
     Object.keys(row.meta).forEach((key) => {
       delete row.meta[key];
@@ -647,7 +662,8 @@ export class ResultSetDataBuilder {
   }
 
   toMarkdown(params?: ToStringParam): string {
-    const { withType, withComment, keyNames }: ToStringParam = {
+    const { withType, withComment, keyNames, maxPrintLines }: ToStringParam = {
+      maxPrintLines: 8,
       withType: false,
       withComment: false,
       keyNames: [],
@@ -680,14 +696,39 @@ export class ResultSetDataBuilder {
       );
     }
 
-    this.rs.rows.forEach((row: RdhRow) => {
-      const retRow = new Array<any>();
-      rdhKeys.forEach((key) => {
-        retRow.push(this.toMarkdownString(row.values[key.name], key.type));
+    if (this.rs.rows.length <= maxPrintLines) {
+      this.rs.rows.forEach((row: RdhRow) => {
+        const retRow = new Array<any>();
+        rdhKeys.forEach((key) => {
+          retRow.push(this.toMarkdownString(row.values[key.name], key.type));
+        });
+        pushLine(retRow.join(' | '));
+      });
+    } else {
+      const num_of_head = Math.ceil(maxPrintLines / 2);
+      this.rs.rows.slice(0, num_of_head).forEach((row: RdhRow) => {
+        const retRow = new Array<any>();
+        rdhKeys.forEach((key) => {
+          retRow.push(this.toMarkdownString(row.values[key.name], key.type));
+        });
+        pushLine(retRow.join(' | '));
+      });
+      const retRow = new Array<string>();
+      rdhKeys.forEach((_) => {
+        retRow.push('...');
       });
       pushLine(retRow.join(' | '));
-    });
-    return retList.join(os.EOL);
+      this.rs.rows
+        .slice(this.rs.rows.length - num_of_head, this.rs.rows.length)
+        .forEach((row: RdhRow) => {
+          const retRow = new Array<any>();
+          rdhKeys.forEach((key) => {
+            retRow.push(this.toMarkdownString(row.values[key.name], key.type));
+          });
+          pushLine(retRow.join(' | '));
+        });
+    }
+    return retList.join(os.EOL) + os.EOL;
   }
 
   toString(params?: ToStringParam): string {

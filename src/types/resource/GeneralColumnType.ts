@@ -51,6 +51,7 @@ export enum GeneralColumnType {
   BYTEA,
   BINARY,
   BLOB,
+  TINYBLOB,
   MEDIUMBLOB,
   LONGBLOB,
   XML,

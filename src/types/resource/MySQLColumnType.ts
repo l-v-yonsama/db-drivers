@@ -25,10 +25,7 @@ export enum MySQLColumnType {
   NUMERIC = 0xf6, // (246)DECIMAL
   ENUM = 0xf7, // ENUM
   SET = 0xf8, // SET
-  // TINY_BLOB = 0xf9, // TINYBLOB, TINYTEXT
-  // MEDIUM_BLOB = 0xfa, // MEDIUMBLOB, MEDIUMTEXT
-  // LONG_BLOB = 0xfb, // LONGBLOG, LONGTEXT
-  // BLOB = 0xfc, // (252)BLOB, TEXT
+  TINYBLOB = 0xf9, // TINYBLOB, TINYTEXT
   VARCHAR = 0xfd, // (253)VARCHAR, VARBINARY
   POINT = 0xff, // (255)GEOMETRY,
   TINYTEXT = 1001, // (252)BLOB, TINYTEXT(length: 765, flags: 16,)
@@ -60,6 +57,8 @@ export namespace MySQLColumnType {
             return MySQLColumnType.MEDIUMBLOB;
           } else if (numOfLength === 65535) {
             return MySQLColumnType.BLOB;
+          } else if (numOfLength === 255) {
+            return MySQLColumnType.TINYBLOB;
           }
           if (numOfLength === 262140) {
             // Default type

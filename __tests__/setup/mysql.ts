@@ -95,6 +95,14 @@ export async function init(): Promise<void> {
       await con.execute(INSERT_STATEMENT2, binds);
     }
 
+    for (let i = 0; i < 20; i++) {
+      await con.execute(`DROP TABLE IF EXISTS testdb.tmp${i}`);
+      await con.execute(`CREATE TABLE testdb.tmp${i} (
+        ID integer NOT NULL,
+        PRIMARY KEY  (ID)
+      ) `);
+    }
+
     await con.execute('DROP TABLE IF EXISTS testdb.DEPT');
     await con.execute(CREATE_TABLE_ORA_DEPT.replace('oradb', 'testdb'));
     await con.execute('DROP TABLE IF EXISTS testdb.EMP');
@@ -159,6 +167,7 @@ CREATE TABLE testdb.testtable (
   s5 BINARY(10),
   s6 VARBINARY(10),
   s7 BLOB,
+  s71 TINYBLOB,
   s8 SET('a','b','c'),
 
   g1 geometry NOT NULL,

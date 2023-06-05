@@ -1,6 +1,6 @@
 import { DbResource, DbSchema } from '../resource';
 import { RdsDatabase } from '../resource/DbResource';
-import { parse, Statement } from 'pgsql-ast-parser';
+import { parse, parseFirst, Statement } from 'pgsql-ast-parser';
 import { tolines } from '../util';
 
 export enum ProposalKind {
@@ -40,10 +40,31 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
   let replacedSql = query.replace(/\?/g, '$1');
   replacedSql = replacedSql.replace(/^\s*(SHOW)\s+(\S+).*$/i, '$1 $2');
   replacedSql = replacedSql.replace(
+    /\s*INTERVAL\s+([\d]+)\s+(\S+)/i,
+    " cast('$1 $2' as INTERVAL)",
+  );
+  replacedSql = replacedSql.replace(
+    /\bLIMIT\s+([\d]+)\s*,\s*([\d]+)/i,
+    'LIMIT $2 OFFSET $1',
+  );
+  replacedSql = replacedSql.replace(
     /^\s*(SET)(\s+global)?\s+(\S+)\s+=\s+\S+$/i,
     '$1 $3 TO dummy',
   );
   return replacedSql.replace(FUNCTION_MATCHER, '1');
+};
+
+export const parseQuery = (sql: string): Statement | undefined => {
+  const replacedSql = toSafeQueryForPgsqlAst(sql);
+  try {
+    return parseFirst(replacedSql);
+  } catch (_) {
+    console.log('sql=', sql);
+    console.log('replacedSql=', replacedSql);
+    console.error(_);
+    // do nothing.
+  }
+  return undefined;
 };
 
 export const normalizeQuery = ({

@@ -9,8 +9,6 @@ import {
   ResultSetData,
 } from '../types';
 import { DBError } from './DBError';
-import { parseFirst, Statement } from 'pgsql-ast-parser';
-import { toSafeQueryForPgsqlAst } from '../helpers';
 
 export interface Scannable {
   scan(params: ScanParams): Promise<ResultSetData>;
@@ -82,19 +80,6 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
       return true;
     }
     return false;
-  }
-
-  parseQuery(sql: string): Statement | undefined {
-    const replacedSql = toSafeQueryForPgsqlAst(sql);
-    try {
-      return parseFirst(replacedSql);
-    } catch (_) {
-      console.log('sql=', sql);
-      console.log('replacedSql=', replacedSql);
-      console.error(_);
-      // do nothing.
-    }
-    return undefined;
   }
 
   createColumnResolver(sql?: string): ColumnResolver {

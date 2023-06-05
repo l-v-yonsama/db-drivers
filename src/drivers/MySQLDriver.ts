@@ -30,7 +30,7 @@ export class MySQLDriver extends RDSBaseDriver {
   }
 
   fieldInfo2Key(fieldInfo, table?: DbTable): RdhKey {
-    const name = EnumValues.getNameFromValue(
+    const mysqlColumnTypename = EnumValues.getNameFromValue(
       MySQLColumnType,
       MySQLColumnType.parseByFieldInfo(fieldInfo),
     );
@@ -41,13 +41,13 @@ export class MySQLDriver extends RDSBaseDriver {
     }
     const key = createRdhKey({
       name: fieldInfo.name,
-      type: parseColumnType(name),
+      type: parseColumnType(mysqlColumnTypename),
       comment,
     });
-    if (key.type === GeneralColumnType.UNKNOWN) {
-      // log.error(LOG_PREFIX, 'Unknownt=', fieldInfo)
-    }
-    // console.log('key=', key, EnumValues.getNameFromValue(GeneralColumnType, key.type));
+    //  if (key.type === GeneralColumnType.UNKNOWN) {
+    //   console.log('Unknownt=', fieldInfo);
+    // }
+
     return key;
   }
 
