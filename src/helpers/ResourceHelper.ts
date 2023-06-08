@@ -177,16 +177,7 @@ export const runRuleEngine = async (
       for (const result of failureResults) {
         const { event, name } = result;
         const error = event.params as TableRuleDetail['error'];
-        let eventMessage = error.message ?? '';
-        if (eventMessage) {
-          eventMessage = eventMessage.replace(
-            /\$\{(.+?)\}/g,
-            (_, g1): string => {
-              return facts[g1];
-            },
-          );
-        }
-        const message = `Error: ${eventMessage}`;
+        const message = `Error: ${name}`;
         if (limitCounters[name].count < limitCounters[name].limit) {
           RowHelper.pushAnnotation(row, error.column, {
             type: 'Rul',

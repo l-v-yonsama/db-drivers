@@ -1,5 +1,6 @@
 import {
   getProposals,
+  getResourcePositions,
   normalizeQuery,
   parseQuery,
   ProposalKind,
@@ -540,6 +541,36 @@ describe('SQLHelper', () => {
       const sql = 'select 1 from hoge LIMIT 1, 20';
       const ast = parseQuery(sql);
       expect(ast).not.toBeUndefined();
+    });
+  });
+
+  describe('getResourcePositions', () => {
+    it('should return table and column positions', () => {
+      const sql =
+        'select n1,n2, a.ID, note from testtable a inner join diff b on (a.id=b.id) where a_timestamp >= currenttimestamp - interval 1 hour';
+      const positions = getResourcePositions({ sql, db });
+
+      const pos = positions.find(
+        (it) => it.kind === ProposalKind.Table && it.name === 'testtable',
+      );
+      expect(pos).not.toBeUndefined();
+      expect(pos).toEqual({
+        kind: 1,
+        name: 'testtable',
+        comment: 'table with various data types',
+        offset: 30,
+        length: 9,
+      });
+      const pos2 = positions.find(
+        (it) => it.kind === ProposalKind.Column && it.name === 'n1',
+      );
+      expect(pos2).toEqual({
+        kind: 2,
+        name: 'n1',
+        comment: 'MAX 127',
+        offset: 7,
+        length: 2,
+      });
     });
   });
 });

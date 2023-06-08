@@ -10,7 +10,6 @@ export type TableRuleDetail = {
   conditions: TopLevelCondition;
   error: {
     column: string;
-    message: string;
     limit: number;
   };
 };

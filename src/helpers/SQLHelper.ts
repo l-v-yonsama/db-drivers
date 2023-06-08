@@ -1,5 +1,5 @@
 import { DbResource, DbSchema } from '../resource';
-import { RdsDatabase } from '../resource/DbResource';
+import { DbTable, RdsDatabase } from '../resource/DbResource';
 import { parse, parseFirst, Statement } from 'pgsql-ast-parser';
 import { tolines } from '../util';
 
@@ -22,6 +22,19 @@ export type ProposalParams = {
   lastChar: string;
   keyword: string;
   parentWord?: string;
+  db?: RdsDatabase;
+};
+
+export type ResourcePosition = {
+  name: string;
+  kind: ProposalKind;
+  comment?: string;
+  offset: number;
+  length: number;
+};
+
+export type ResourcePositionParams = {
+  sql: string;
   db?: RdsDatabase;
 };
 
@@ -402,6 +415,72 @@ export const getProposals = (params: ProposalParams): Proposal[] => {
     }
   } catch (_) {
     // do nothing.
+  }
+
+  return retList;
+};
+
+export const getResourcePositions = (
+  params: ResourcePositionParams,
+): ResourcePosition[] => {
+  const { db, sql } = params;
+  const sqlLowerCase = sql.toLocaleLowerCase();
+
+  const retList: ResourcePosition[] = [];
+
+  const schema = db.getSchema({ isDefault: true });
+  const tableNames = schema.children
+    .map((it) => it.name.toLocaleLowerCase())
+    .join('|');
+
+  const reg = new RegExp('\\b(' + tableNames + ')\\b', 'g');
+  let m: RegExpExecArray | null;
+  const tableResList: DbTable[] = [];
+  const columnNameSet = new Set<string>();
+  while ((m = reg.exec(sqlLowerCase)) !== null) {
+    const name = m[0];
+    let comment: string | undefined = undefined;
+    const tableRes = schema.children.find(
+      (it) => it.name.toLocaleLowerCase() === name,
+    );
+    if (tableRes) {
+      tableResList.push(tableRes);
+      comment = tableRes.comment;
+      tableRes.children.forEach((it) => {
+        columnNameSet.add(it.name.toLowerCase());
+      });
+    }
+    retList.push({
+      kind: ProposalKind.Table,
+      name: tableRes.name,
+      comment,
+      offset: m.index,
+      length: name.length,
+    });
+  }
+
+  const reg2 = new RegExp(
+    '\\b(' + Array.from(columnNameSet).join('|') + ')\\b',
+    'g',
+  );
+
+  let m2: RegExpExecArray | null;
+  while ((m2 = reg2.exec(sqlLowerCase)) !== null) {
+    const name = m2[0];
+    const columnRes = tableResList
+      .flatMap((table) => table.children)
+      .find((column) => column.name.toLocaleLowerCase() === name);
+    if (!columnRes) {
+      continue;
+    }
+
+    retList.push({
+      kind: ProposalKind.Column,
+      name: columnRes.name,
+      comment: columnRes.comment,
+      offset: m2.index,
+      length: name.length,
+    });
   }
 
   return retList;

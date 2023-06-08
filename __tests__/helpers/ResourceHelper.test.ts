@@ -212,7 +212,6 @@ describe('ResourceHelper', () => {
             },
             error: {
               column: 'n2',
-              message: 'n2:${n2} should be greater equal n1:${n1}',
               limit: 100,
             },
           },
@@ -261,7 +260,6 @@ describe('ResourceHelper', () => {
             },
             error: {
               column: 's4',
-              message: 's4:${s4} & d1:${d1} combination violation',
               limit: 100,
             },
           },
@@ -279,9 +277,7 @@ describe('ResourceHelper', () => {
         'Rul',
       );
       expect(ruleAnnotation8.values.name).toBe('N1, N2 combination');
-      expect(ruleAnnotation8.values.message).toBe(
-        'Error: n2:90 should be greater equal n1:91',
-      );
+      expect(ruleAnnotation8.values.message).toBe('Error: N1, N2 combination');
 
       const id9Row = rdh.rows.find((it) => it.values.id === 9);
       expect(id9Row).not.toBeUndefined();
@@ -291,9 +287,6 @@ describe('ResourceHelper', () => {
         'Rul',
       );
       expect(ruleAnnotation9.values.name).toBe('S4, D1 combination');
-      expect(ruleAnnotation9.values.message).toBe(
-        'Error: s4:b & d1:null combination violation',
-      );
     });
   });
 });

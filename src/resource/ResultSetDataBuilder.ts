@@ -112,10 +112,11 @@ export class RowHelper {
     return keys
       .filter((key) => row.meta[key].some((it) => it.type === type))
       .reduce((p, key) => {
-        return {
+        const obj = {
           ...p,
-          key: row.meta[key].filter((it) => it.type === type),
         };
+        obj[key] = row.meta[key].filter((it) => it.type === type);
+        return obj;
       }, {});
   }
 
@@ -888,17 +889,6 @@ export class ResultSetDataBuilder {
     return this.rs.keys.map((k) => k.name);
   }
 
-  // addKey(k: string | RdhKey): void {
-  //   if (this.rs.keys === undefined) {
-  //     this.rs.keys = [];
-  //   }
-  //   if (typeof k === 'string') {
-  //     this.rs.keys.push(createRdhKey({ name: k }));
-  //   } else {
-  //     this.rs.keys.push(k);
-  //   }
-  // }
-
   private toShortString(o: any, keyType?: GeneralColumnType): string {
     if (o === null || o === undefined) {
       return '';
@@ -932,6 +922,9 @@ export class ResultSetDataBuilder {
     let s = '' + o;
     if (isDateTimeOrDate(keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
+    }
+    if (s.length > 256) {
+      s = s.substring(0, 256) + '..';
     }
     return `${s.replace(/\|/g, '&#124;').replace(/(\r?\n)/g, '<br>')}`;
   }
