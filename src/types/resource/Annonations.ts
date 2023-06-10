@@ -40,6 +40,7 @@ export type RuleAnnotation = BaseCellAnnotation<
   {
     name: string;
     message: string;
+    conditionValues: { [key: string]: any };
   }
 >;
 

@@ -10,8 +10,12 @@ import {
   RdhMeta,
   RdhRow,
   ResultSetData,
+  RuleAnnotation,
   SampleClassPair,
   SampleGroupByClass,
+  TableRule,
+  TableRuleDetail,
+  TableRuleValidationResult,
   ToStringParam,
   isResultSetData,
 } from '../types';
@@ -169,11 +173,59 @@ export class RowHelper {
   static hasAnnotation(row: RdhRow, type: AnnotationType): boolean {
     return this.hasAnyAnnotation(row, [type]);
   }
+
+  static hasRuleAnnotation(row: RdhRow, ruleDetail: TableRuleDetail): boolean {
+    if (row.meta && row.meta[ruleDetail.error.column]) {
+      const v = row.meta[ruleDetail.error.column];
+      return v.some(
+        (it) => it.type === 'Rul' && it.values.name === ruleDetail.ruleName,
+      );
+    }
+    return false;
+  }
+
+  static getFirstRuleAnnotation(
+    row: RdhRow,
+    ruleDetail: TableRuleDetail,
+  ): RuleAnnotation | undefined {
+    if (row.meta && row.meta[ruleDetail.error.column]) {
+      const v = row.meta[ruleDetail.error.column];
+      return v.find(
+        (it) => it.type === 'Rul' && it.values.name === ruleDetail.ruleName,
+      ) as RuleAnnotation;
+    }
+    return undefined;
+  }
 }
 
 export class RdhHelper {
   static clearAllAnotations(rdh: ResultSetData): void {
     rdh.rows.forEach((row) => RowHelper.clearAllAnnotations(row));
+  }
+
+  static getRecordRuleResults(rdh: ResultSetData): TableRuleValidationResult[] {
+    const list: TableRuleValidationResult[] = [];
+    const tableRule: TableRule = rdh.meta.tableRule;
+
+    if (tableRule) {
+      tableRule.details.forEach((detail) => {
+        for (let i = 0; i < rdh.rows.length; i++) {
+          const row = rdh.rows[i];
+          const anno = RowHelper.getFirstRuleAnnotation(row, detail);
+          if (anno === undefined) {
+            continue;
+          }
+
+          list.push({
+            ruleName: detail.ruleName,
+            ruleDetail: detail,
+            conditionValues: anno.values.conditionValues,
+            rowNo: i + 1,
+          });
+        }
+      });
+    }
+    return list;
   }
 }
 

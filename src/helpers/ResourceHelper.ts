@@ -6,7 +6,22 @@ import {
   TableRule,
   TableRuleDetail,
 } from '../types';
-import { Engine } from 'json-rules-engine';
+import {
+  AllConditions,
+  AnyConditions,
+  Engine,
+  TopLevelCondition,
+} from 'json-rules-engine';
+
+function isAllConditions(item: any): item is AllConditions {
+  return item.all && item.all.length !== undefined;
+}
+function isAnyConditions(item: any): item is AnyConditions {
+  return item.any && item.any.length !== undefined;
+}
+function isTopLevelCondition(item: any): item is TopLevelCondition {
+  return isAllConditions(item) || isAnyConditions(item);
+}
 
 export type DiffResult = {
   ok: boolean;
@@ -118,6 +133,8 @@ export const runRuleEngine = async (
   let ok = true;
   const engine = new Engine();
 
+  rdh.meta.tableRule = tableRule;
+
   // ADD CUSTOM OPERATORS
   engine.addOperator('isNull', (factValue) => {
     return factValue === null;
@@ -175,15 +192,18 @@ export const runRuleEngine = async (
     if (failureResults.length) {
       ok = false;
       for (const result of failureResults) {
-        const { event, name } = result;
+        const { event, name, conditions } = result;
         const error = event.params as TableRuleDetail['error'];
         const message = `Error: ${name}`;
+        const conditionValues = getConditionalValues(conditions, facts);
+
         if (limitCounters[name].count < limitCounters[name].limit) {
           RowHelper.pushAnnotation(row, error.column, {
             type: 'Rul',
             values: {
               name,
               message,
+              conditionValues,
             },
           });
           limitCounters[name].count++;
@@ -196,6 +216,34 @@ export const runRuleEngine = async (
   }
   return ok;
 };
+
+function getConditionalValues(
+  condition: TopLevelCondition,
+  facts: { [key: string]: any },
+): { [key: string]: any } {
+  let obj = {};
+
+  const nestedList = isAllConditions(condition) ? condition.all : condition.any;
+  for (const nest of nestedList) {
+    if (isTopLevelCondition(nest)) {
+      obj = {
+        ...obj,
+        ...getConditionalValues(nest, facts),
+      };
+    } else {
+      // condition
+      obj[nest.fact] = facts[nest.fact];
+      if (
+        typeof nest.value === 'object' &&
+        nest.value?.fact &&
+        typeof nest.value.fact === 'string'
+      ) {
+        obj[nest.value.fact] = facts[nest.value.fact];
+      }
+    }
+  }
+  return obj;
+}
 
 function createCompareKeysValue(compareKey: CompareKey, row1: RdhRow): string {
   if (compareKey.kind === 'primary' || compareKey.kind === 'custom') {

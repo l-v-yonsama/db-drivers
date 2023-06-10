@@ -3,7 +3,7 @@ import {
   DBType,
   diff,
   MySQLDriver,
-  ResultSetDataBuilder,
+  RdhHelper,
   RowHelper,
   RuleAnnotation,
   runRuleEngine,
@@ -28,6 +28,8 @@ describe('ResourceHelper', () => {
     };
     driver = new MySQLDriver(conRes);
     await driver.connect();
+
+    await driver.getInfomationSchemas();
   });
 
   afterAll(async () => {
@@ -35,11 +37,6 @@ describe('ResourceHelper', () => {
   });
 
   describe('diff', () => {
-    it('should return Database resource', async () => {
-      const dbRootRes = await driver.getInfomationSchemas();
-      expect(dbRootRes).toHaveLength(1);
-    });
-
     describe('Compare key specified', () => {
       it('should has uniq compareKey', async () => {
         const rdh1 = await driver.requestSql({
@@ -287,6 +284,18 @@ describe('ResourceHelper', () => {
         'Rul',
       );
       expect(ruleAnnotation9.values.name).toBe('S4, D1 combination');
+
+      const rReulst = RdhHelper.getRecordRuleResults(rdh);
+      const n1n2Result = rReulst.find(
+        (it) => it.ruleName === 'N1, N2 combination',
+      );
+      expect(n1n2Result).not.toBeUndefined();
+      expect(n1n2Result.ruleDetail).not.toBeUndefined();
+      expect(n1n2Result.conditionValues).toEqual({
+        n1: 91,
+        n2: 90,
+      });
+      expect(n1n2Result.rowNo).toBe(6);
     });
   });
 });

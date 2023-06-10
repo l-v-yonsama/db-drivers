@@ -13,3 +13,10 @@ export type TableRuleDetail = {
     limit: number;
   };
 };
+
+export type TableRuleValidationResult = {
+  ruleName: string;
+  ruleDetail: TableRuleDetail;
+  conditionValues: { [key: string]: any };
+  rowNo: number;
+};
