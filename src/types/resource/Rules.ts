@@ -14,9 +14,23 @@ export type TableRuleDetail = {
   };
 };
 
-export type TableRuleValidationResult = {
-  ruleName: string;
+export type ConditionPropertyParam = {
+  comment: string;
+  valType: 'static' | 'column';
+  valColumn: string;
+  [key: string]: any;
+};
+
+export type RecordRuleValidationResult = {
+  tableName: string;
+  details: RecordRuleValidationResultDetail[];
+};
+
+export type RecordRuleValidationResultDetail = {
   ruleDetail: TableRuleDetail;
-  conditionValues: { [key: string]: any };
-  rowNo: number;
+  conditionText: string;
+  errorRows: {
+    rowNo: number;
+    conditionValues: { [key: string]: any };
+  }[];
 };

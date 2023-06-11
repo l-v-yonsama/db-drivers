@@ -9,13 +9,14 @@ import {
   RdhKey,
   RdhMeta,
   RdhRow,
+  RecordRuleValidationResult,
+  RecordRuleValidationResultDetail,
   ResultSetData,
   RuleAnnotation,
   SampleClassPair,
   SampleGroupByClass,
   TableRule,
   TableRuleDetail,
-  TableRuleValidationResult,
   ToStringParam,
   isResultSetData,
 } from '../types';
@@ -26,6 +27,7 @@ import {
   isNumericLike,
 } from './GeneralColumnUtil';
 import { toDate } from '../util';
+import { conditionsToString } from '../helpers';
 
 export function createRdhKey({
   name,
@@ -203,29 +205,37 @@ export class RdhHelper {
     rdh.rows.forEach((row) => RowHelper.clearAllAnnotations(row));
   }
 
-  static getRecordRuleResults(rdh: ResultSetData): TableRuleValidationResult[] {
-    const list: TableRuleValidationResult[] = [];
+  static getRecordRuleResults(
+    rdh: ResultSetData,
+  ): RecordRuleValidationResult | undefined {
     const tableRule: TableRule = rdh.meta.tableRule;
-
-    if (tableRule) {
-      tableRule.details.forEach((detail) => {
-        for (let i = 0; i < rdh.rows.length; i++) {
-          const row = rdh.rows[i];
-          const anno = RowHelper.getFirstRuleAnnotation(row, detail);
-          if (anno === undefined) {
-            continue;
-          }
-
-          list.push({
-            ruleName: detail.ruleName,
-            ruleDetail: detail,
-            conditionValues: anno.values.conditionValues,
-            rowNo: i + 1,
-          });
-        }
-      });
+    if (tableRule === undefined) {
+      return undefined;
     }
-    return list;
+    const details: RecordRuleValidationResultDetail[] = [];
+    tableRule.details.forEach((detail) => {
+      const vDetail: RecordRuleValidationResultDetail = {
+        ruleDetail: detail,
+        conditionText: conditionsToString(detail.conditions, rdh.keys),
+        errorRows: [],
+      };
+      details.push(vDetail);
+      for (let i = 0; i < rdh.rows.length; i++) {
+        const row = rdh.rows[i];
+        const anno = RowHelper.getFirstRuleAnnotation(row, detail);
+        if (anno === undefined) {
+          continue;
+        }
+        vDetail.errorRows.push({
+          conditionValues: anno.values.conditionValues,
+          rowNo: i + 1,
+        });
+      }
+    });
+    return {
+      tableName: tableRule.table,
+      details,
+    };
   }
 }
 

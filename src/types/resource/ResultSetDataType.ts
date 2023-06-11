@@ -2,6 +2,7 @@ import { QueryConditions } from '../drivers';
 import { CellAnnotation } from './Annonations';
 import { CompareKey } from './CompareKey';
 import { GeneralColumnType } from './GeneralColumnType';
+import { TableRule } from './Rules';
 
 export type RdhMeta = {
   connectionName?: string;
@@ -9,6 +10,7 @@ export type RdhMeta = {
   comment?: string;
   compareKeys?: CompareKey[];
   type?: string;
+  tableRule?: TableRule;
   [key: string]: any;
 };
 
