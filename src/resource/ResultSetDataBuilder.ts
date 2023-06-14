@@ -29,6 +29,8 @@ import {
 import { toDate } from '../util';
 import { conditionsToString } from '../helpers';
 
+const MAX_PRINT_LINE = 10;
+
 export function createRdhKey({
   name,
   type,
@@ -684,13 +686,15 @@ export class ResultSetDataBuilder {
     return retList;
   }
 
-  toCsv(params?: ToStringParam): string {
-    const { withType, withComment, keyNames }: ToStringParam = {
+  toCsv(params?: ToStringParam & { delimiter?: string }): string {
+    const { withType, withComment, keyNames, maxPrintLines }: ToStringParam = {
+      maxPrintLines: MAX_PRINT_LINE,
       withType: false,
       withComment: false,
       keyNames: [],
       ...params,
     };
+    const delimiter = params.delimiter ?? ',';
 
     const rdhKeys =
       keyNames.length > 0
@@ -700,33 +704,60 @@ export class ResultSetDataBuilder {
       return 'No Keys.';
     }
     const retList = new Array<string>();
-    retList.push(rdhKeys.map((k) => this.toCsvString(k.name)).join(','));
+    retList.push(rdhKeys.map((k) => this.toCsvString(k.name)).join(delimiter));
     if (withComment) {
       retList.push(
-        rdhKeys.map((k) => this.toCsvString(k.comment ?? '')).join(','),
+        rdhKeys.map((k) => this.toCsvString(k.comment ?? '')).join(delimiter),
       );
     }
     if (withType) {
       retList.push(
         rdhKeys
           .map((k) => this.toCsvString(displayGeneralColumnType(k.type)))
-          .join(','),
+          .join(delimiter),
       );
     }
 
-    this.rs.rows.forEach((row: RdhRow) => {
-      const retRow = new Array<any>();
-      rdhKeys.forEach((key) => {
-        retRow.push(this.toCsvString(row.values[key.name], key.type));
+    if (this.rs.rows.length <= maxPrintLines) {
+      this.rs.rows.forEach((row: RdhRow) => {
+        const rowValues: string[] = [];
+        rdhKeys.forEach((key) => {
+          rowValues.push(this.toCsvString(row.values[key.name], key.type));
+        });
+        retList.push(rowValues.join(delimiter));
       });
-      retList.push(retRow.join(','));
-    });
+    } else {
+      const num_of_head = Math.ceil(maxPrintLines / 2);
+      this.rs.rows.slice(0, num_of_head).forEach((row: RdhRow) => {
+        const rowValues: string[] = [];
+        rdhKeys.forEach((key) => {
+          rowValues.push(this.toCsvString(row.values[key.name], key.type));
+        });
+        retList.push(rowValues.join(delimiter));
+      });
+      {
+        const rowValues: string[] = [];
+        rdhKeys.forEach((_) => {
+          rowValues.push('...');
+        });
+        retList.push(rowValues.join(delimiter));
+      }
+      this.rs.rows
+        .slice(this.rs.rows.length - num_of_head, this.rs.rows.length)
+        .forEach((row: RdhRow) => {
+          const rowValues: string[] = [];
+          rdhKeys.forEach((key) => {
+            rowValues.push(this.toCsvString(row.values[key.name], key.type));
+          });
+          retList.push(rowValues.join(delimiter));
+        });
+    }
     return retList.join(os.EOL);
   }
 
   toMarkdown(params?: ToStringParam): string {
     const { withType, withComment, keyNames, maxPrintLines }: ToStringParam = {
-      maxPrintLines: 8,
+      maxPrintLines: MAX_PRINT_LINE,
       withType: false,
       withComment: false,
       keyNames: [],
@@ -796,7 +827,7 @@ export class ResultSetDataBuilder {
 
   toString(params?: ToStringParam): string {
     const { maxPrintLines, withType, withComment, keyNames }: ToStringParam = {
-      maxPrintLines: 8,
+      maxPrintLines: MAX_PRINT_LINE,
       withType: false,
       withComment: false,
       keyNames: [],
@@ -862,7 +893,7 @@ export class ResultSetDataBuilder {
         });
     }
     if (this.rs.rows.length === 0) {
-      return buf.toString() + 'No records.';
+      return buf.toString() + os.EOL + 'No records.';
     }
     return buf.toString();
   }
