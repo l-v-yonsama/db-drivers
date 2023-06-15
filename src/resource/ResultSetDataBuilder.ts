@@ -687,10 +687,17 @@ export class ResultSetDataBuilder {
   }
 
   toCsv(params?: ToStringParam & { delimiter?: string }): string {
-    const { withType, withComment, keyNames, maxPrintLines }: ToStringParam = {
+    const {
+      withType,
+      withComment,
+      keyNames,
+      withRowNo,
+      maxPrintLines,
+    }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
       withType: false,
       withComment: false,
+      withRowNo: false,
       keyNames: [],
       ...params,
     };
@@ -704,14 +711,27 @@ export class ResultSetDataBuilder {
       return 'No Keys.';
     }
     const retList = new Array<string>();
-    retList.push(rdhKeys.map((k) => this.toCsvString(k.name)).join(delimiter));
+    const pushLine = (sRow: string | undefined, s: string): void => {
+      if (sRow === undefined) {
+        retList.push(s);
+      } else {
+        retList.push(`${sRow}${delimiter}${s}`);
+      }
+    };
+
+    pushLine(
+      withRowNo ? 'ROW' : undefined,
+      rdhKeys.map((k) => this.toCsvString(k.name)).join(delimiter),
+    );
     if (withComment) {
-      retList.push(
+      pushLine(
+        withRowNo ? '' : undefined,
         rdhKeys.map((k) => this.toCsvString(k.comment ?? '')).join(delimiter),
       );
     }
     if (withType) {
-      retList.push(
+      pushLine(
+        withRowNo ? '' : undefined,
         rdhKeys
           .map((k) => this.toCsvString(displayGeneralColumnType(k.type)))
           .join(delimiter),
@@ -719,8 +739,11 @@ export class ResultSetDataBuilder {
     }
 
     if (this.rs.rows.length <= maxPrintLines) {
-      this.rs.rows.forEach((row: RdhRow) => {
+      this.rs.rows.forEach((row, idx) => {
         const rowValues: string[] = [];
+        if (withRowNo) {
+          rowValues.push(`${idx + 1}`);
+        }
         rdhKeys.forEach((key) => {
           rowValues.push(this.toCsvString(row.values[key.name], key.type));
         });
@@ -728,8 +751,11 @@ export class ResultSetDataBuilder {
       });
     } else {
       const num_of_head = Math.ceil(maxPrintLines / 2);
-      this.rs.rows.slice(0, num_of_head).forEach((row: RdhRow) => {
+      this.rs.rows.slice(0, num_of_head).forEach((row, idx) => {
         const rowValues: string[] = [];
+        if (withRowNo) {
+          rowValues.push(`${idx + 1}`);
+        }
         rdhKeys.forEach((key) => {
           rowValues.push(this.toCsvString(row.values[key.name], key.type));
         });
@@ -737,6 +763,9 @@ export class ResultSetDataBuilder {
       });
       {
         const rowValues: string[] = [];
+        if (withRowNo) {
+          rowValues.push('...');
+        }
         rdhKeys.forEach((_) => {
           rowValues.push('...');
         });
@@ -744,8 +773,11 @@ export class ResultSetDataBuilder {
       }
       this.rs.rows
         .slice(this.rs.rows.length - num_of_head, this.rs.rows.length)
-        .forEach((row: RdhRow) => {
+        .forEach((row, idx) => {
           const rowValues: string[] = [];
+          if (withRowNo) {
+            rowValues.push(`${this.rs.rows.length - num_of_head + idx + 1}`);
+          }
           rdhKeys.forEach((key) => {
             rowValues.push(this.toCsvString(row.values[key.name], key.type));
           });
@@ -756,10 +788,17 @@ export class ResultSetDataBuilder {
   }
 
   toMarkdown(params?: ToStringParam): string {
-    const { withType, withComment, keyNames, maxPrintLines }: ToStringParam = {
+    const {
+      withType,
+      withComment,
+      keyNames,
+      withRowNo,
+      maxPrintLines,
+    }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
       withType: false,
       withComment: false,
+      withRowNo: false,
       keyNames: [],
       ...params,
     };
@@ -773,17 +812,31 @@ export class ResultSetDataBuilder {
       return 'No Keys.';
     }
     const retList = new Array<string>();
-    const pushLine = (s: string): number => retList.push(`| ${s} |`);
+    const pushLine = (sRow: string | undefined, s: string): void => {
+      if (sRow === undefined) {
+        retList.push(`| ${s} |`);
+      } else {
+        retList.push(`| ${sRow} | ${s} |`);
+      }
+    };
 
-    pushLine(rdhKeys.map((k) => this.toMarkdownString(k.name)).join(' | '));
-    pushLine(rdhKeys.map((_) => ':---:').join(' | '));
+    pushLine(
+      withRowNo ? 'ROW' : undefined,
+      rdhKeys.map((k) => this.toMarkdownString(k.name)).join(' | '),
+    );
+    pushLine(
+      withRowNo ? '---:' : undefined,
+      rdhKeys.map((_) => ':---:').join(' | '),
+    );
     if (withComment) {
       pushLine(
+        withRowNo ? '' : undefined,
         rdhKeys.map((k) => this.toMarkdownString(k.comment ?? '')).join(' | '),
       );
     }
     if (withType) {
       pushLine(
+        withRowNo ? '' : undefined,
         rdhKeys
           .map((k) => this.toMarkdownString(displayGeneralColumnType(k.type)))
           .join(' | '),
@@ -791,45 +844,57 @@ export class ResultSetDataBuilder {
     }
 
     if (this.rs.rows.length <= maxPrintLines) {
-      this.rs.rows.forEach((row: RdhRow) => {
+      this.rs.rows.forEach((row, idx) => {
         const retRow = new Array<any>();
         rdhKeys.forEach((key) => {
           retRow.push(this.toMarkdownString(row.values[key.name], key.type));
         });
-        pushLine(retRow.join(' | '));
+        pushLine(withRowNo ? `${idx + 1}` : undefined, retRow.join(' | '));
       });
     } else {
       const num_of_head = Math.ceil(maxPrintLines / 2);
-      this.rs.rows.slice(0, num_of_head).forEach((row: RdhRow) => {
+      this.rs.rows.slice(0, num_of_head).forEach((row, idx) => {
         const retRow = new Array<any>();
         rdhKeys.forEach((key) => {
           retRow.push(this.toMarkdownString(row.values[key.name], key.type));
         });
-        pushLine(retRow.join(' | '));
+        pushLine(withRowNo ? `${idx + 1}` : undefined, retRow.join(' | '));
       });
       const retRow = new Array<string>();
       rdhKeys.forEach((_) => {
         retRow.push('...');
       });
-      pushLine(retRow.join(' | '));
+      pushLine(withRowNo ? '...' : undefined, retRow.join(' | '));
       this.rs.rows
         .slice(this.rs.rows.length - num_of_head, this.rs.rows.length)
-        .forEach((row: RdhRow) => {
+        .forEach((row, idx) => {
           const retRow = new Array<any>();
           rdhKeys.forEach((key) => {
             retRow.push(this.toMarkdownString(row.values[key.name], key.type));
           });
-          pushLine(retRow.join(' | '));
+          pushLine(
+            withRowNo
+              ? `${this.rs.rows.length - num_of_head + idx + 1}`
+              : undefined,
+            retRow.join(' | '),
+          );
         });
     }
     return retList.join(os.EOL) + os.EOL;
   }
 
   toString(params?: ToStringParam): string {
-    const { maxPrintLines, withType, withComment, keyNames }: ToStringParam = {
+    const {
+      maxPrintLines,
+      withType,
+      withComment,
+      withRowNo,
+      keyNames,
+    }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
       withType: false,
       withComment: false,
+      withRowNo: false,
       keyNames: [],
       ...params,
     };
@@ -844,7 +909,9 @@ export class ResultSetDataBuilder {
     }
 
     const buf = listit.buffer();
-    buf.d('ROW');
+    if (withRowNo) {
+      buf.d('ROW');
+    }
     rdhKeys.forEach((k) => buf.d(this.toShortString(k.name)));
     buf.nl();
     if (withComment) {
@@ -862,7 +929,9 @@ export class ResultSetDataBuilder {
 
     if (this.rs.rows.length <= maxPrintLines) {
       this.rs.rows.forEach((v, idx) => {
-        buf.d(idx + 1);
+        if (withRowNo) {
+          buf.d(idx + 1);
+        }
         rdhKeys.forEach((k) => {
           buf.d(this.toShortString(v.values[k.name], k.type));
         });
@@ -871,13 +940,17 @@ export class ResultSetDataBuilder {
     } else {
       const num_of_head = Math.ceil(maxPrintLines / 2);
       this.rs.rows.slice(0, num_of_head).forEach((v, idx) => {
-        buf.d(idx + 1);
+        if (withRowNo) {
+          buf.d(idx + 1);
+        }
         rdhKeys.forEach((k) => {
           buf.d(this.toShortString(v.values[k.name], k.type));
         });
         buf.nl();
       });
-      buf.d('...');
+      if (withRowNo) {
+        buf.d('...');
+      }
       rdhKeys.forEach(() => {
         buf.d('...');
       });
@@ -885,7 +958,9 @@ export class ResultSetDataBuilder {
       this.rs.rows
         .slice(this.rs.rows.length - num_of_head, this.rs.rows.length)
         .forEach((v, idx) => {
-          buf.d(this.rs.rows.length - num_of_head + idx + 1);
+          if (withRowNo) {
+            buf.d(this.rs.rows.length - num_of_head + idx + 1);
+          }
           rdhKeys.forEach((k) => {
             buf.d(this.toShortString(v.values[k.name], k.type));
           });

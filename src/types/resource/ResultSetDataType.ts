@@ -18,6 +18,7 @@ export type ToStringParam = {
   maxPrintLines?: number;
   withType?: boolean;
   withComment?: boolean;
+  withRowNo?: boolean;
   keyNames?: string[];
 };
 

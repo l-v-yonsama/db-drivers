@@ -206,7 +206,11 @@ export const normalizePositionedParametersQuery = (
         } else if (g4) {
           const word = g6;
           checkBindParam(word);
-          if (!bindParams || bindParams[word].length === 0) {
+          if (
+            !bindParams ||
+            !bindParams[word] ||
+            bindParams[word].length === 0
+          ) {
             return `${g5}( null )`;
           }
           return `${g5}(${getOrCreateMultiplePosition(word)})`;
@@ -336,7 +340,11 @@ export const normalizeSimpleParametersQuery = (
         } else if (g4) {
           const word = g6;
           checkBindParam(word);
-          if (!bindParams || bindParams[word].length === 0) {
+          if (
+            !bindParams ||
+            !bindParams[word] ||
+            bindParams[word].length === 0
+          ) {
             return `${g5}( null )`;
           }
           const numOfBinds = bindParams[word].length;
