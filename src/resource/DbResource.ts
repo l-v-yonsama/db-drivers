@@ -313,6 +313,26 @@ export class DbSchema extends DbResource<DbTable> {
   constructor(name: string) {
     super(ResourceType.Schema, name);
   }
+
+  getUniqColumnNameWithComments(): { name: string; comment?: string }[] {
+    const ret: { name: string; comment?: string }[] = [];
+    this.children.forEach((table) => {
+      table.children.forEach((column) => {
+        const c = ret.find((it) => it.name === column.name);
+        if (c) {
+          if (c.comment === undefined) {
+            c.comment = column.comment;
+          }
+        } else {
+          ret.push({
+            name: column.name,
+            comment: column.comment,
+          });
+        }
+      });
+    });
+    return ret;
+  }
 }
 
 export class DbTable extends DbResource<DbColumn> {

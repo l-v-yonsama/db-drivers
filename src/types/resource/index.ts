@@ -3,6 +3,7 @@ export * from './AwsRegion';
 export * from './AwsSQSAttributes';
 export * from './AwsServiceType';
 export * from './AwsSupplyCredentialType';
+export * from './CodeResolverTypes';
 export * from './CompareKey';
 export * from './ConnectionSetting';
 export * from './DBType';

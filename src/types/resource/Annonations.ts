@@ -6,6 +6,7 @@ export const AnnotationTypeConst = {
   Lnt: 'Lnt',
   Stl: 'Stl',
   Rul: 'Rul',
+  Cod: 'Cod',
 } as const;
 
 export type AnnotationType =
@@ -17,7 +18,8 @@ export type CellAnnotation =
   | UpdateAnnotation
   | RuleAnnotation
   | LintAnnotation
-  | StyleAnnotation;
+  | StyleAnnotation
+  | CodeResolvedAnnotation;
 
 export type BaseCellAnnotation<T = AnnotationType, U = any> = {
   type: T;
@@ -41,6 +43,13 @@ export type RuleAnnotation = BaseCellAnnotation<
     name: string;
     message: string;
     conditionValues: { [key: string]: any };
+  }
+>;
+
+export type CodeResolvedAnnotation = BaseCellAnnotation<
+  'Cod',
+  {
+    label: string;
   }
 >;
 

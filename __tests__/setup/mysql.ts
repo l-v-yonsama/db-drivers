@@ -119,9 +119,10 @@ export async function init(): Promise<void> {
       const binds = [i, `DN${i}`, `LOC${i}`];
       await con.execute(`INSERT INTO oradb.DEPT VALUES (?, ?, ?)`, binds);
 
-      const binds2 = [i, `SMITH${i}`, `CLERK${i}`, i, now, i, null, i];
+      const binds2 = [i, `SMITH${i}`, i % 3, `CLERK${i}`, i, now, i, null, i];
       await con.execute(
-        `INSERT INTO oradb.EMP VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO oradb.EMP (EMPNO, ENAME, SEX, JOB, MGR, HIREDATE, SAL, COMM, DEPTNO) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         binds2,
       );
     }
@@ -199,6 +200,7 @@ const CREATE_TABLE_ORA_DEPT = `CREATE TABLE oradb.DEPT (
 const CREATE_TABLE_ORA_EMP = `CREATE TABLE oradb.EMP (
   EMPNO int(11) NOT NULL,
   ENAME varchar(10) default NULL,
+  SEX tinyint NOT NULL default 0,
   JOB varchar(9) default NULL,
   MGR int(11) default NULL,
   HIREDATE date default NULL,

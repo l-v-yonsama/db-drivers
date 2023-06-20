@@ -1,5 +1,6 @@
 import { QueryConditions } from '../drivers';
 import { CellAnnotation } from './Annonations';
+import { CodeItem } from './CodeResolverTypes';
 import { CompareKey } from './CompareKey';
 import { GeneralColumnType } from './GeneralColumnType';
 import { TableRule } from './Rules';
@@ -11,6 +12,7 @@ export type RdhMeta = {
   compareKeys?: CompareKey[];
   type?: string;
   tableRule?: TableRule;
+  codeItems?: CodeItem[];
   [key: string]: any;
 };
 
@@ -19,6 +21,7 @@ export type ToStringParam = {
   withType?: boolean;
   withComment?: boolean;
   withRowNo?: boolean;
+  withCodeLabel?: boolean;
   keyNames?: string[];
 };
 

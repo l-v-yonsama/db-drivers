@@ -5,6 +5,7 @@ import ShuffleArray from 'shuffle-array';
 import {
   AnnotationType,
   CellAnnotation,
+  CodeResolvedAnnotation,
   GeneralColumnType,
   RdhKey,
   RdhMeta,
@@ -692,12 +693,14 @@ export class ResultSetDataBuilder {
       withComment,
       keyNames,
       withRowNo,
+      withCodeLabel,
       maxPrintLines,
     }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
       withType: false,
       withComment: false,
       withRowNo: false,
+      withCodeLabel: false,
       keyNames: [],
       ...params,
     };
@@ -720,7 +723,7 @@ export class ResultSetDataBuilder {
     };
 
     pushLine(
-      withRowNo ? 'ROW' : undefined,
+      withRowNo ? '"ROW"' : undefined,
       rdhKeys.map((k) => this.toCsvString(k.name)).join(delimiter),
     );
     if (withComment) {
@@ -745,7 +748,15 @@ export class ResultSetDataBuilder {
           rowValues.push(`${idx + 1}`);
         }
         rdhKeys.forEach((key) => {
-          rowValues.push(this.toCsvString(row.values[key.name], key.type));
+          const label = withCodeLabel
+            ? this.resolveCodeLabel(row, key.name)
+            : undefined;
+          rowValues.push(
+            this.toCsvString(row.values[key.name], {
+              keyType: key.type,
+              label,
+            }),
+          );
         });
         retList.push(rowValues.join(delimiter));
       });
@@ -757,7 +768,15 @@ export class ResultSetDataBuilder {
           rowValues.push(`${idx + 1}`);
         }
         rdhKeys.forEach((key) => {
-          rowValues.push(this.toCsvString(row.values[key.name], key.type));
+          const label = withCodeLabel
+            ? this.resolveCodeLabel(row, key.name)
+            : undefined;
+          rowValues.push(
+            this.toCsvString(row.values[key.name], {
+              keyType: key.type,
+              label,
+            }),
+          );
         });
         retList.push(rowValues.join(delimiter));
       });
@@ -779,7 +798,15 @@ export class ResultSetDataBuilder {
             rowValues.push(`${this.rs.rows.length - num_of_head + idx + 1}`);
           }
           rdhKeys.forEach((key) => {
-            rowValues.push(this.toCsvString(row.values[key.name], key.type));
+            const label = withCodeLabel
+              ? this.resolveCodeLabel(row, key.name)
+              : undefined;
+            rowValues.push(
+              this.toCsvString(row.values[key.name], {
+                keyType: key.type,
+                label,
+              }),
+            );
           });
           retList.push(rowValues.join(delimiter));
         });
@@ -793,12 +820,14 @@ export class ResultSetDataBuilder {
       withComment,
       keyNames,
       withRowNo,
+      withCodeLabel,
       maxPrintLines,
     }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
       withType: false,
       withComment: false,
       withRowNo: false,
+      withCodeLabel: false,
       keyNames: [],
       ...params,
     };
@@ -847,7 +876,15 @@ export class ResultSetDataBuilder {
       this.rs.rows.forEach((row, idx) => {
         const retRow = new Array<any>();
         rdhKeys.forEach((key) => {
-          retRow.push(this.toMarkdownString(row.values[key.name], key.type));
+          const label = withCodeLabel
+            ? this.resolveCodeLabel(row, key.name)
+            : undefined;
+          retRow.push(
+            this.toMarkdownString(row.values[key.name], {
+              keyType: key.type,
+              label,
+            }),
+          );
         });
         pushLine(withRowNo ? `${idx + 1}` : undefined, retRow.join(' | '));
       });
@@ -856,7 +893,15 @@ export class ResultSetDataBuilder {
       this.rs.rows.slice(0, num_of_head).forEach((row, idx) => {
         const retRow = new Array<any>();
         rdhKeys.forEach((key) => {
-          retRow.push(this.toMarkdownString(row.values[key.name], key.type));
+          const label = withCodeLabel
+            ? this.resolveCodeLabel(row, key.name)
+            : undefined;
+          retRow.push(
+            this.toMarkdownString(row.values[key.name], {
+              keyType: key.type,
+              label,
+            }),
+          );
         });
         pushLine(withRowNo ? `${idx + 1}` : undefined, retRow.join(' | '));
       });
@@ -870,7 +915,15 @@ export class ResultSetDataBuilder {
         .forEach((row, idx) => {
           const retRow = new Array<any>();
           rdhKeys.forEach((key) => {
-            retRow.push(this.toMarkdownString(row.values[key.name], key.type));
+            const label = withCodeLabel
+              ? this.resolveCodeLabel(row, key.name)
+              : undefined;
+            retRow.push(
+              this.toMarkdownString(row.values[key.name], {
+                keyType: key.type,
+                label,
+              }),
+            );
           });
           pushLine(
             withRowNo
@@ -889,12 +942,14 @@ export class ResultSetDataBuilder {
       withType,
       withComment,
       withRowNo,
+      withCodeLabel,
       keyNames,
     }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
       withType: false,
       withComment: false,
       withRowNo: false,
+      withCodeLabel: false,
       keyNames: [],
       ...params,
     };
@@ -915,12 +970,16 @@ export class ResultSetDataBuilder {
     rdhKeys.forEach((k) => buf.d(this.toShortString(k.name)));
     buf.nl();
     if (withComment) {
-      buf.d('');
+      if (withRowNo) {
+        buf.d('');
+      }
       rdhKeys.forEach((k) => buf.d(this.toShortString(k.comment) ?? ''));
       buf.nl();
     }
     if (withType) {
-      buf.d(displayGeneralColumnType(GeneralColumnType.INTEGER));
+      if (withRowNo) {
+        buf.d(displayGeneralColumnType(GeneralColumnType.INTEGER));
+      }
       rdhKeys.forEach((k) => {
         buf.d(displayGeneralColumnType(k.type));
       });
@@ -933,7 +992,15 @@ export class ResultSetDataBuilder {
           buf.d(idx + 1);
         }
         rdhKeys.forEach((k) => {
-          buf.d(this.toShortString(v.values[k.name], k.type));
+          const label = withCodeLabel
+            ? this.resolveCodeLabel(v, k.name)
+            : undefined;
+          buf.d(
+            this.toShortString(v.values[k.name], {
+              keyType: k.type,
+              label,
+            }),
+          );
         });
         buf.nl();
       });
@@ -944,7 +1011,15 @@ export class ResultSetDataBuilder {
           buf.d(idx + 1);
         }
         rdhKeys.forEach((k) => {
-          buf.d(this.toShortString(v.values[k.name], k.type));
+          const label = withCodeLabel
+            ? this.resolveCodeLabel(v, k.name)
+            : undefined;
+          buf.d(
+            this.toShortString(v.values[k.name], {
+              keyType: k.type,
+              label,
+            }),
+          );
         });
         buf.nl();
       });
@@ -962,7 +1037,15 @@ export class ResultSetDataBuilder {
             buf.d(this.rs.rows.length - num_of_head + idx + 1);
           }
           rdhKeys.forEach((k) => {
-            buf.d(this.toShortString(v.values[k.name], k.type));
+            const label = withCodeLabel
+              ? this.resolveCodeLabel(v, k.name)
+              : undefined;
+            buf.d(
+              this.toShortString(v.values[k.name], {
+                keyType: k.type,
+                label,
+              }),
+            );
           });
           buf.nl();
         });
@@ -1057,43 +1140,74 @@ export class ResultSetDataBuilder {
     return this.rs.keys.map((k) => k.name);
   }
 
-  private toShortString(o: any, keyType?: GeneralColumnType): string {
+  private toShortString(
+    o: any,
+    opt?: { keyType?: GeneralColumnType; label?: string },
+  ): string {
     if (o === null || o === undefined) {
       return '';
     }
     let s = '' + o;
-    if (isDateTimeOrDate(keyType)) {
+    if (isDateTimeOrDate(opt?.keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
     }
     if (s.length > 48) {
-      return s.substring(0, 48) + '..';
-    } else {
-      return s;
+      s = s.substring(0, 48) + '..';
     }
+    if (opt?.label) {
+      s += ` <${opt.label}>`;
+    }
+    return s;
   }
 
-  private toCsvString(o: any, keyType?: GeneralColumnType): string {
+  private toCsvString(
+    o: any,
+    opt?: { keyType?: GeneralColumnType; label?: string },
+  ): string {
     if (o === null || o === undefined) {
       return '';
     }
     let s = '' + o;
-    if (isDateTimeOrDate(keyType)) {
+    if (isDateTimeOrDate(opt?.keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
     }
-    return `"${s.replace(/"/g, '""')}"`;
+    if (opt?.label) {
+      s += ` <${opt.label}>`;
+    }
+    s = `"${s.replace(/"/g, '""')}"`;
+    return s;
   }
 
-  private toMarkdownString(o: any, keyType?: GeneralColumnType): string {
+  private toMarkdownString(
+    o: any,
+    opt?: { keyType?: GeneralColumnType; label?: string },
+  ): string {
     if (o === null || o === undefined) {
       return '';
     }
     let s = '' + o;
-    if (isDateTimeOrDate(keyType)) {
+    if (isDateTimeOrDate(opt?.keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
     }
     if (s.length > 256) {
       s = s.substring(0, 256) + '..';
     }
-    return `${s.replace(/\|/g, '&#124;').replace(/(\r?\n)/g, '<br>')}`;
+    if (opt?.label) {
+      s += ` <${opt.label}>`;
+    }
+    s = `${s
+      .replace(/\|/g, '&#124;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(\r?\n)/g, '<br>')}`;
+    return s;
+  }
+
+  private resolveCodeLabel(row: RdhRow, keyName: string): string | undefined {
+    return RowHelper.getFirstAnnotationOf<CodeResolvedAnnotation>(
+      row,
+      keyName,
+      'Cod',
+    )?.values?.label;
   }
 }

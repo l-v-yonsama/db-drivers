@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.120",
+  "version": "0.1.127",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16"
@@ -47,6 +47,7 @@
     "test:helper:sql": "npm run clean && jest __tests__/helpers/SQLHelper.test.ts",
     "test:helper:resource": "npm run clean && jest __tests__/helpers/ResourceHelper.test.ts",
     "test:helper:engine": "npm run clean && jest __tests__/helpers/RuleEngine.test.ts",
+    "test:helper:resolver": "npm run clean && jest __tests__/helpers/CodeResolver.test.ts",
     "prettier": "prettier --config .prettierrc --write .",
     "test:watch": "jest --watch"
   },

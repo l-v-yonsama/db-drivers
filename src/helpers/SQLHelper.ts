@@ -611,8 +611,15 @@ const getAllProposals = (db: RdsDatabase): Proposal[] => {
   schema.children.forEach((table) => {
     retList.push(createTableProposal(schema, table));
 
-    table.children.forEach((column) => {
-      retList.push(createColumnProposal(table, column));
+    // table.children.forEach((column) => {
+    //   retList.push(createColumnProposal(table, column));
+    // });
+  });
+  schema.getUniqColumnNameWithComments().forEach((it) => {
+    retList.push({
+      label: it.name,
+      kind: ProposalKind.Column,
+      detail: it.comment ?? '',
     });
   });
   return retList;
