@@ -18,6 +18,7 @@ export type RdhMeta = {
 
 export type ToStringParam = {
   maxPrintLines?: number;
+  maxCellValueLength?: number;
   withType?: boolean;
   withComment?: boolean;
   withRowNo?: boolean;

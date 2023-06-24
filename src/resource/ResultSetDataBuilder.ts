@@ -27,9 +27,10 @@ import {
   isDateTimeOrDate,
   isNumericLike,
 } from './GeneralColumnUtil';
-import { toDate } from '../util';
+import { abbr, toDate } from '../util';
 import { conditionsToString } from '../helpers';
 
+const MAX_CELL_VALUE_LENGTH = 36;
 const MAX_PRINT_LINE = 10;
 
 export function createRdhKey({
@@ -695,8 +696,10 @@ export class ResultSetDataBuilder {
       withRowNo,
       withCodeLabel,
       maxPrintLines,
+      maxCellValueLength,
     }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
+      maxCellValueLength: MAX_CELL_VALUE_LENGTH,
       withType: false,
       withComment: false,
       withRowNo: false,
@@ -724,19 +727,28 @@ export class ResultSetDataBuilder {
 
     pushLine(
       withRowNo ? '"ROW"' : undefined,
-      rdhKeys.map((k) => this.toCsvString(k.name)).join(delimiter),
+      rdhKeys
+        .map((k) => this.toCsvString(k.name, maxCellValueLength))
+        .join(delimiter),
     );
     if (withComment) {
       pushLine(
         withRowNo ? '' : undefined,
-        rdhKeys.map((k) => this.toCsvString(k.comment ?? '')).join(delimiter),
+        rdhKeys
+          .map((k) => this.toCsvString(k.comment ?? '', maxCellValueLength))
+          .join(delimiter),
       );
     }
     if (withType) {
       pushLine(
         withRowNo ? '' : undefined,
         rdhKeys
-          .map((k) => this.toCsvString(displayGeneralColumnType(k.type)))
+          .map((k) =>
+            this.toCsvString(
+              displayGeneralColumnType(k.type),
+              maxCellValueLength,
+            ),
+          )
           .join(delimiter),
       );
     }
@@ -752,7 +764,7 @@ export class ResultSetDataBuilder {
             ? this.resolveCodeLabel(row, key.name)
             : undefined;
           rowValues.push(
-            this.toCsvString(row.values[key.name], {
+            this.toCsvString(row.values[key.name], maxCellValueLength, {
               keyType: key.type,
               label,
             }),
@@ -772,7 +784,7 @@ export class ResultSetDataBuilder {
             ? this.resolveCodeLabel(row, key.name)
             : undefined;
           rowValues.push(
-            this.toCsvString(row.values[key.name], {
+            this.toCsvString(row.values[key.name], maxCellValueLength, {
               keyType: key.type,
               label,
             }),
@@ -802,7 +814,7 @@ export class ResultSetDataBuilder {
               ? this.resolveCodeLabel(row, key.name)
               : undefined;
             rowValues.push(
-              this.toCsvString(row.values[key.name], {
+              this.toCsvString(row.values[key.name], maxCellValueLength, {
                 keyType: key.type,
                 label,
               }),
@@ -822,8 +834,10 @@ export class ResultSetDataBuilder {
       withRowNo,
       withCodeLabel,
       maxPrintLines,
+      maxCellValueLength,
     }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
+      maxCellValueLength: MAX_CELL_VALUE_LENGTH,
       withType: false,
       withComment: false,
       withRowNo: false,
@@ -851,7 +865,9 @@ export class ResultSetDataBuilder {
 
     pushLine(
       withRowNo ? 'ROW' : undefined,
-      rdhKeys.map((k) => this.toMarkdownString(k.name)).join(' | '),
+      rdhKeys
+        .map((k) => this.toMarkdownString(k.name, maxCellValueLength))
+        .join(' | '),
     );
     pushLine(
       withRowNo ? '---:' : undefined,
@@ -860,14 +876,23 @@ export class ResultSetDataBuilder {
     if (withComment) {
       pushLine(
         withRowNo ? '' : undefined,
-        rdhKeys.map((k) => this.toMarkdownString(k.comment ?? '')).join(' | '),
+        rdhKeys
+          .map((k) =>
+            this.toMarkdownString(k.comment ?? '', maxCellValueLength),
+          )
+          .join(' | '),
       );
     }
     if (withType) {
       pushLine(
         withRowNo ? '' : undefined,
         rdhKeys
-          .map((k) => this.toMarkdownString(displayGeneralColumnType(k.type)))
+          .map((k) =>
+            this.toMarkdownString(
+              displayGeneralColumnType(k.type),
+              maxCellValueLength,
+            ),
+          )
           .join(' | '),
       );
     }
@@ -880,7 +905,7 @@ export class ResultSetDataBuilder {
             ? this.resolveCodeLabel(row, key.name)
             : undefined;
           retRow.push(
-            this.toMarkdownString(row.values[key.name], {
+            this.toMarkdownString(row.values[key.name], maxCellValueLength, {
               keyType: key.type,
               label,
             }),
@@ -897,7 +922,7 @@ export class ResultSetDataBuilder {
             ? this.resolveCodeLabel(row, key.name)
             : undefined;
           retRow.push(
-            this.toMarkdownString(row.values[key.name], {
+            this.toMarkdownString(row.values[key.name], maxCellValueLength, {
               keyType: key.type,
               label,
             }),
@@ -919,7 +944,7 @@ export class ResultSetDataBuilder {
               ? this.resolveCodeLabel(row, key.name)
               : undefined;
             retRow.push(
-              this.toMarkdownString(row.values[key.name], {
+              this.toMarkdownString(row.values[key.name], maxCellValueLength, {
                 keyType: key.type,
                 label,
               }),
@@ -939,6 +964,7 @@ export class ResultSetDataBuilder {
   toString(params?: ToStringParam): string {
     const {
       maxPrintLines,
+      maxCellValueLength,
       withType,
       withComment,
       withRowNo,
@@ -946,6 +972,7 @@ export class ResultSetDataBuilder {
       keyNames,
     }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
+      maxCellValueLength: MAX_CELL_VALUE_LENGTH,
       withType: false,
       withComment: false,
       withRowNo: false,
@@ -967,13 +994,15 @@ export class ResultSetDataBuilder {
     if (withRowNo) {
       buf.d('ROW');
     }
-    rdhKeys.forEach((k) => buf.d(this.toShortString(k.name)));
+    rdhKeys.forEach((k) => buf.d(k.name));
     buf.nl();
     if (withComment) {
       if (withRowNo) {
         buf.d('');
       }
-      rdhKeys.forEach((k) => buf.d(this.toShortString(k.comment) ?? ''));
+      rdhKeys.forEach((k) =>
+        buf.d(this.toShortString(k.comment, maxCellValueLength) ?? ''),
+      );
       buf.nl();
     }
     if (withType) {
@@ -996,7 +1025,7 @@ export class ResultSetDataBuilder {
             ? this.resolveCodeLabel(v, k.name)
             : undefined;
           buf.d(
-            this.toShortString(v.values[k.name], {
+            this.toShortString(v.values[k.name], maxCellValueLength, {
               keyType: k.type,
               label,
             }),
@@ -1015,7 +1044,7 @@ export class ResultSetDataBuilder {
             ? this.resolveCodeLabel(v, k.name)
             : undefined;
           buf.d(
-            this.toShortString(v.values[k.name], {
+            this.toShortString(v.values[k.name], maxCellValueLength, {
               keyType: k.type,
               label,
             }),
@@ -1041,7 +1070,7 @@ export class ResultSetDataBuilder {
               ? this.resolveCodeLabel(v, k.name)
               : undefined;
             buf.d(
-              this.toShortString(v.values[k.name], {
+              this.toShortString(v.values[k.name], maxCellValueLength, {
                 keyType: k.type,
                 label,
               }),
@@ -1142,6 +1171,7 @@ export class ResultSetDataBuilder {
 
   private toShortString(
     o: any,
+    maxCellValueLength,
     opt?: { keyType?: GeneralColumnType; label?: string },
   ): string {
     if (o === null || o === undefined) {
@@ -1151,9 +1181,7 @@ export class ResultSetDataBuilder {
     if (isDateTimeOrDate(opt?.keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
     }
-    if (s.length > 48) {
-      s = s.substring(0, 48) + '..';
-    }
+    s = abbr(s, maxCellValueLength);
     if (opt?.label) {
       s += ` <${opt.label}>`;
     }
@@ -1162,6 +1190,7 @@ export class ResultSetDataBuilder {
 
   private toCsvString(
     o: any,
+    maxCellValueLength: number,
     opt?: { keyType?: GeneralColumnType; label?: string },
   ): string {
     if (o === null || o === undefined) {
@@ -1171,6 +1200,7 @@ export class ResultSetDataBuilder {
     if (isDateTimeOrDate(opt?.keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
     }
+    s = abbr(s, maxCellValueLength);
     if (opt?.label) {
       s += ` <${opt.label}>`;
     }
@@ -1180,6 +1210,7 @@ export class ResultSetDataBuilder {
 
   private toMarkdownString(
     o: any,
+    maxCellValueLength: number,
     opt?: { keyType?: GeneralColumnType; label?: string },
   ): string {
     if (o === null || o === undefined) {
@@ -1189,9 +1220,7 @@ export class ResultSetDataBuilder {
     if (isDateTimeOrDate(opt?.keyType)) {
       s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
     }
-    if (s.length > 256) {
-      s = s.substring(0, 256) + '..';
-    }
+    s = abbr(s, maxCellValueLength);
     if (opt?.label) {
       s += ` <${opt.label}>`;
     }

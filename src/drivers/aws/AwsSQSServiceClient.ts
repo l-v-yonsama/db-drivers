@@ -11,6 +11,9 @@ import {
   ReceiveMessageCommand,
   ReceiveMessageCommandInput,
   SQSClient,
+  SendMessageCommand,
+  SendMessageCommandInput,
+  SendMessageResult,
 } from '@aws-sdk/client-sqs';
 import * as url from 'url';
 import {
@@ -109,6 +112,10 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
       });
     });
     return rdb.build();
+  }
+
+  async send(input: SendMessageCommandInput): Promise<SendMessageResult> {
+    return await this.sqsClient.send(new SendMessageCommand(input));
   }
 
   async getInfomationSchemas(): Promise<AwsDatabase> {
