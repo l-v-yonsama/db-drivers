@@ -198,6 +198,7 @@ export class MySQLDriver extends RDSBaseDriver {
     }
     const defaultSchema = dbDatabase.getSchema({ isDefault: true });
     await this.setForinKeys(defaultSchema);
+    await this.setUniqueKeys(defaultSchema);
     return dbResources;
   }
 
@@ -272,6 +273,55 @@ export class MySQLDriver extends RDSBaseDriver {
         r.values.comment,
       );
       return res;
+    });
+  }
+
+  async setUniqueKeys(dbSchema: DbSchema): Promise<void> {
+    const binds = [dbSchema.name.toLowerCase()];
+
+    const rdh = await this.requestSql({
+      sql: `select stat.table_name as table_name, 
+      stat.index_name as index_name, 
+      group_concat(stat.column_name order by stat.seq_in_index separator ',') as columns
+  from information_schema.statistics stat
+  join information_schema.table_constraints tco on (stat.table_schema = tco.table_schema
+    and stat.table_name = tco.table_name
+    and stat.index_name = tco.constraint_name)
+  where stat.non_unique = 0
+     and LOWER(stat.table_schema) = ?
+     and tco.constraint_type='UNIQUE'
+  group by stat.table_schema,
+        stat.table_name,
+        stat.index_name,
+        tco.constraint_type
+  order by stat.table_name;`,
+      conditions: { binds },
+    });
+
+    rdh.rows.forEach((row) => {
+      const tableName: string = row.values['table_name'];
+      const indexName: string = row.values['index_name'];
+      const columnNames: string = row.values['columns'];
+
+      const tableRes = dbSchema.getChildByName(tableName);
+      if (tableRes) {
+        if (tableRes.uniqueKeys === undefined) {
+          tableRes.uniqueKeys = [];
+        }
+        const constraint = {
+          name: indexName,
+          columns: columnNames.split(','),
+        };
+        tableRes.uniqueKeys.push(constraint);
+        if (constraint.columns.length > 1) {
+          constraint.columns.forEach((columnName) => {
+            const colRes = tableRes.getChildByName(columnName);
+            if (colRes) {
+              (colRes as any)['uniqKey'] = true;
+            }
+          });
+        }
+      }
     });
   }
 

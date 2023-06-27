@@ -926,6 +926,8 @@ export const FUNCTIONS = [
   // フロー制御関数
   'IFNULL',
   'NULLIF',
+
+  'GROUP_CONCAT',
 ];
 
 const FUNCTION_MATCHER = new RegExp(

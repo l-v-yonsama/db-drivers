@@ -99,10 +99,7 @@ export const diff = (rdh1: ResultSetData, rdh2: ResultSetData): DiffResult => {
 };
 
 function createCompareKeysValue(compareKey: CompareKey, row1: RdhRow): string {
-  if (compareKey.kind === 'primary' || compareKey.kind === 'custom') {
-    return compareKey.names.map((k) => row1.values[k] ?? '').join('|:|');
-  }
-  return row1.values[compareKey.name] ?? '';
+  return compareKey.names.map((k) => row1.values[k] ?? '').join('|:|');
 }
 
 function getAvailableCompareKey(
@@ -110,14 +107,8 @@ function getAvailableCompareKey(
   compareKeys: CompareKey[],
 ): CompareKey | undefined {
   for (const ckey of compareKeys) {
-    if (ckey.kind === 'primary' || ckey.kind === 'custom') {
-      if (ckey.names.every((it) => keynames.includes(it))) {
-        return ckey;
-      }
-    } else if (ckey.kind === 'uniq') {
-      if (keynames.includes(ckey.name)) {
-        return ckey;
-      }
+    if (ckey.names.every((it) => keynames.includes(it))) {
+      return ckey;
     }
   }
   return undefined;

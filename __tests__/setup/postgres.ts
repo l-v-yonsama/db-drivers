@@ -71,6 +71,36 @@ export async function init(): Promise<void> {
       ];
       await pool.query(INSERT_STATEMENT2, binds);
     }
+    await pool.query('DROP TABLE IF EXISTS diff2');
+    await pool.query(CREATE_DIFF2_TABLE_STATEMENT);
+
+    await pool.query('DROP TABLE IF EXISTS order_detail');
+    await pool.query('DROP TABLE IF EXISTS order1');
+    await pool.query('DROP TABLE IF EXISTS customer');
+    await pool.query(CREATE_CUSTOMER_TABLE_STATEMENT);
+    await pool.query(CREATE_ORDER_TABLE_STATEMENT);
+    await pool.query(CREATE_ORDER_DETAIL_TABLE_STATEMENT);
+    for (let i = 1; i <= 10; i++) {
+      const binds = [i, `0120-11-121${i % 10}`];
+      await pool.query(
+        `INSERT INTO  customer (customer_no, tel) VALUES ($1, $2)`,
+        binds,
+      );
+
+      const binds2 = [i, i, now, i * 100];
+      await pool.query(
+        `INSERT INTO order1 (order_no, customer_no, order_date, amount) 
+          VALUES ($1, $2, $3, $4)`,
+        binds2,
+      );
+
+      const binds3 = [i, i, i * 10, i * 100];
+      await pool.query(
+        `INSERT INTO order_detail (order_no, detail_no, item_no, amount) 
+          VALUES ($1, $2, $3, $4)`,
+        binds3,
+      );
+    }
   } finally {
     if (pool) {
       await pool.end();
@@ -120,6 +150,19 @@ CREATE TABLE diff (
 )
 `;
 
+const CREATE_DIFF2_TABLE_STATEMENT = `
+CREATE TABLE diff2 (
+  id SERIAL NOT NULL PRIMARY KEY,
+  last_name VARCHAR(128),
+  first_name VARCHAR(128),
+  full_name VARCHAR(128) ,
+  note VARCHAR(128),
+  birthday DATE,
+  UNIQUE (last_name, first_name)
+
+)
+`;
+
 const INSERT_STATEMENT = `INSERT INTO testtable (
   n0, n1, n2, n3, n4,
   f1, f2, f3,
@@ -136,3 +179,30 @@ const INSERT_STATEMENT = `INSERT INTO testtable (
 const INSERT_STATEMENT2 = `INSERT INTO diff (
   last_name, first_name, full_name, note, birthday )
   VALUES($1, $2, $3, $4, $5)`;
+
+const CREATE_CUSTOMER_TABLE_STATEMENT = `CREATE TABLE customer (
+    customer_no SERIAL NOT NULL PRIMARY KEY,
+    tel VARCHAR(20)
+  )
+  `;
+
+const CREATE_ORDER_TABLE_STATEMENT = `CREATE TABLE  order1 (
+    order_no SERIAL NOT NULL PRIMARY KEY ,
+    customer_no int,
+    order_date DATE,
+    amount int,
+  
+    FOREIGN KEY (customer_no) REFERENCES  customer(customer_no)
+  )
+  `;
+
+const CREATE_ORDER_DETAIL_TABLE_STATEMENT = `CREATE TABLE order_detail (
+    order_no int,
+    detail_no int,
+    item_no int,
+    amount int,
+  
+    PRIMARY KEY(order_no, detail_no),
+    FOREIGN KEY (order_no) REFERENCES order1(order_no)
+  )
+  `;

@@ -1,13 +1,4 @@
-export type UniqKey = {
-  kind: 'uniq';
-  name: string;
-};
-export type PrimaryKey = {
-  kind: 'primary';
+export type CompareKey = {
+  kind: 'custom' | 'uniq' | 'primary';
   names: string[];
 };
-export type CustomKey = {
-  kind: 'custom';
-  names: string[];
-};
-export type CompareKey = UniqKey | PrimaryKey | CustomKey;

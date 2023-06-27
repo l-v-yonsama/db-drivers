@@ -11,7 +11,7 @@ import {
   RedisKeyType,
   ResourceType,
   SshSetting,
-  UniqKey,
+  UniqueKeyConstraint,
 } from '../types';
 import { format } from 'bytes';
 import { toDate } from '../util';
@@ -349,6 +349,7 @@ export class DbSchema extends DbResource<DbTable> {
 export class DbTable extends DbResource<DbColumn> {
   public tableType: any;
   public foreignKeys?: ForeignKeyConstraint = {};
+  public uniqueKeys?: UniqueKeyConstraint[];
 
   constructor(name: string, tableType: any, comment?: string) {
     super(ResourceType.Table, name);
@@ -366,15 +367,12 @@ export class DbTable extends DbResource<DbColumn> {
         names: pks,
       });
     }
-    ret.push(
-      ...this.getUniqColumnNames().map(
-        (it) =>
-          ({
-            kind: 'uniq',
-            name: it,
-          } as UniqKey),
-      ),
-    );
+    this.uniqueKeys?.forEach((it) => {
+      ret.push({
+        kind: 'uniq',
+        names: it.columns,
+      });
+    });
     return ret;
   }
 
@@ -470,7 +468,7 @@ export class DbColumn extends DbResource {
     if (params) {
       this.nullable = params.nullable || false;
       this.primaryKey = params.key === 'PRI';
-      this.uniqKey = params.key === 'UNI';
+      this.uniqKey = params.key === 'UNI' || params.key === 'MUL';
       this.default = params.default;
       this.extra = params.extra;
     } else {

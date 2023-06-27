@@ -193,6 +193,9 @@ export class PostgresDriver extends RDSBaseDriver {
         dbColumns.forEach((res) => dbTable.addChild(res));
       }
     }
+    const defaultSchema = dbDatabase.getSchema({ isDefault: true });
+    await this.setForinKeys(defaultSchema);
+    await this.setUniqueKeys(defaultSchema);
 
     return dbResources;
   }
@@ -340,6 +343,139 @@ export class PostgresDriver extends RDSBaseDriver {
         r.values.comment,
       );
       return res;
+    });
+  }
+
+  async setUniqueKeys(dbSchema: DbSchema): Promise<void> {
+    const binds = [dbSchema.name.toLowerCase()];
+
+    const rdh = await this.requestSql({
+      sql: `SELECT
+      t.relname AS table_name
+     ,i.relname AS index_name
+     ,array_to_string( array_agg( a.attname ), ',') AS columns
+ FROM
+      pg_class AS t
+     ,pg_class AS i
+     ,pg_index AS ix
+     ,pg_attribute AS a
+     ,pg_tables AS ta
+ WHERE
+         t.oid = ix.indrelid
+     AND i.oid = ix.indexrelid
+     AND ix.indisprimary = false
+     AND ix.indisunique = true
+     AND a.attrelid = t.oid
+     AND a.attnum = ANY( ix.indkey )
+     AND t.relkind = 'r'
+     AND t.relname = ta.tablename
+     AND LOWER(ta.schemaname) = $1
+ GROUP BY
+      t.relname
+     ,i.relname
+     ,ix.indisprimary
+     ,ix.indisunique
+ ORDER BY
+      t.relname
+     ,i.relname`,
+      conditions: { binds },
+    });
+
+    rdh.rows.forEach((row) => {
+      const tableName: string = row.values['table_name'];
+      const indexName: string = row.values['index_name'];
+      const columnNames: string = row.values['columns'];
+
+      const tableRes = dbSchema.getChildByName(tableName);
+      if (tableRes) {
+        if (tableRes.uniqueKeys === undefined) {
+          tableRes.uniqueKeys = [];
+        }
+        const constraint = {
+          name: indexName,
+          columns: columnNames.split(','),
+        };
+        tableRes.uniqueKeys.push(constraint);
+        if (constraint.columns.length > 1) {
+          constraint.columns.forEach((columnName) => {
+            const colRes = tableRes.getChildByName(columnName);
+            if (colRes) {
+              (colRes as any)['uniqKey'] = true;
+            }
+          });
+        }
+      }
+    });
+  }
+
+  async setForinKeys(dbSchema: DbSchema): Promise<void> {
+    const binds = [dbSchema.name.toLowerCase()];
+
+    const rdh = await this.requestSql({
+      sql: `select 
+      c.conname as constraint_name,
+      t.relname as table_name,
+      pg_get_constraintdef(c.oid) as add_constraint_ddl
+      from pg_constraint c
+      inner join pg_class t on c.conrelid = t.oid
+      inner join pg_namespace n on c.connamespace = n.oid
+      where c.contype = 'f'
+      and LOWER(n.nspname)=$1
+      order by conname`,
+      conditions: { binds },
+    });
+
+    rdh.rows.forEach((row) => {
+      const tableName = row.values['table_name']; // order_detail
+      const constraintName = row.values['constraint_name'];
+      // FOREIGN KEY (order_no) REFERENCES order1(order_no)
+      const constraintDDL = row.values['add_constraint_ddl'];
+
+      const regexp = /FOREIGN\s+KEY\s+\((\S+)\)\s+REFERENCES\s+(\S+)\((\S+)\)/i;
+      const r = regexp.exec(constraintDDL);
+      if (r) {
+        const columnName = r[1];
+        const referencedTableName = r[2];
+        const referencedColumnName = r[3];
+
+        // FROM order.customer_no -> TO customer.customer_no
+        // FROM order_detail.order_no -> TO order.order_no
+        const tableRes = dbSchema.getChildByName(tableName);
+        if (tableRes) {
+          if (tableRes.getChildByName(columnName)) {
+            if (tableRes.foreignKeys === undefined) {
+              tableRes.foreignKeys = {};
+            }
+            if (tableRes.foreignKeys.referenceTo === undefined) {
+              tableRes.foreignKeys.referenceTo = {};
+            }
+            tableRes.foreignKeys.referenceTo[columnName] = {
+              tableName: referencedTableName, // customer
+              columnName: referencedColumnName,
+              constraintName,
+            };
+          }
+        }
+
+        // TO customer.customer_no <- FROM order.customer_no
+        // TO order.order_no <- FROM order_detail.order_no
+        const tableRes2 = dbSchema.getChildByName(referencedTableName);
+        if (tableRes2) {
+          if (tableRes2.getChildByName(referencedColumnName)) {
+            if (tableRes2.foreignKeys === undefined) {
+              tableRes2.foreignKeys = {};
+            }
+            if (tableRes2.foreignKeys.referencedFrom === undefined) {
+              tableRes2.foreignKeys.referencedFrom = {};
+            }
+            tableRes2.foreignKeys.referencedFrom[referencedColumnName] = {
+              tableName: tableName, // order_detail
+              columnName: columnName,
+              constraintName,
+            };
+          }
+        }
+      }
     });
   }
 

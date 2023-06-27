@@ -153,6 +153,31 @@ describe('MySQLDriver', () => {
         constraintName: expect.any(String),
       });
     });
+
+    it('should have composite unique keys', async () => {
+      // DIFF2
+      const diff2Table = testSchemaRes.getChildByName('diff2');
+      expect(diff2Table).not.toBeUndefined();
+
+      expect(diff2Table.getChildByName('first_name').uniqKey).toBe(true);
+      expect(diff2Table.getChildByName('last_name').uniqKey).toBe(true);
+      expect(diff2Table.uniqueKeys).toEqual([
+        {
+          name: 'ukd',
+          columns: ['last_name', 'first_name'],
+        },
+      ]);
+      expect(diff2Table.getCompareKeys()).toEqual([
+        {
+          kind: 'primary',
+          names: ['id'],
+        },
+        {
+          kind: 'uniq',
+          names: ['last_name', 'first_name'],
+        },
+      ]);
+    });
   });
 
   describe('requestSql', () => {

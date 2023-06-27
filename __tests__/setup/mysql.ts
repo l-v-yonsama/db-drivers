@@ -95,6 +95,9 @@ export async function init(): Promise<void> {
       await con.execute(INSERT_STATEMENT2, binds);
     }
 
+    await con.execute('DROP TABLE IF EXISTS testdb.diff2');
+    await con.execute(CREATE_DIFF2_TABLE_STATEMENT);
+
     for (let i = 0; i < 20; i++) {
       await con.execute(`DROP TABLE IF EXISTS testdb.tmp${i}`);
       await con.execute(`CREATE TABLE testdb.tmp${i} (
@@ -133,6 +136,27 @@ export async function init(): Promise<void> {
     await con.execute(CREATE_CUSTOMER_TABLE_STATEMENT);
     await con.execute(CREATE_ORDER_TABLE_STATEMENT);
     await con.execute(CREATE_ORDER_DETAIL_TABLE_STATEMENT);
+    for (let i = 1; i <= 10; i++) {
+      const binds = [i, `0120-11-121${i % 10}`];
+      await con.execute(
+        `INSERT INTO testdb.customer (customer_no, tel) VALUES (?, ?)`,
+        binds,
+      );
+
+      const binds2 = [i, i, now, i * 100];
+      await con.execute(
+        `INSERT INTO testdb.order (order_no, customer_no, order_date, amount) 
+          VALUES (?, ?, ?, ?)`,
+        binds2,
+      );
+
+      const binds3 = [i, i, i * 10, i * 100];
+      await con.execute(
+        `INSERT INTO testdb.order_detail (order_no, detail_no, item_no, amount) 
+          VALUES (?, ?, ?, ?)`,
+        binds3,
+      );
+    }
   } finally {
     if (con) {
       await con.destroy();
@@ -188,6 +212,19 @@ CREATE TABLE testdb.diff (
   PRIMARY KEY(last_name, first_name)
 
 ) COMMENT='test diff'
+`;
+
+const CREATE_DIFF2_TABLE_STATEMENT = `
+CREATE TABLE testdb.diff2 (
+  id int auto_increment PRIMARY KEY,
+  last_name VARCHAR(128),
+  first_name VARCHAR(128),
+  full_name VARCHAR(128) ,
+  note VARCHAR(128),
+  birthday DATE,
+  UNIQUE KEY ukd (last_name, first_name)
+
+)
 `;
 
 const CREATE_TABLE_ORA_DEPT = `CREATE TABLE oradb.DEPT (

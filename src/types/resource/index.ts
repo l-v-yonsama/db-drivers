@@ -13,3 +13,4 @@ export * from './ResultSetDataType';
 export * from './RedisKeyType';
 export * from './ResourceType';
 export * from './Rules';
+export * from './UniqueKeyConstraint';

@@ -41,7 +41,7 @@ describe('ResourceHelper', () => {
             compareKeys: [
               {
                 kind: 'uniq',
-                name: 'full_name',
+                names: ['full_name'],
               },
             ],
           },
@@ -52,7 +52,7 @@ describe('ResourceHelper', () => {
         expect(compareKeys).toHaveLength(1);
         expect(compareKeys[0]).toEqual({
           kind: 'uniq',
-          name: 'full_name',
+          names: ['full_name'],
         });
 
         await driver.requestSql({
@@ -139,7 +139,7 @@ describe('ResourceHelper', () => {
         });
         expect(compareKeys[1]).toEqual({
           kind: 'uniq',
-          name: 'full_name',
+          names: ['full_name'],
         });
 
         await driver.requestSql({
