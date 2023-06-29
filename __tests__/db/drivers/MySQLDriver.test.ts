@@ -195,6 +195,13 @@ describe('MySQLDriver', () => {
     });
   });
 
+  describe('count', () => {
+    it('should return number of rows', async () => {
+      const count = await driver.count({ table: 'customer' });
+      expect(count).toEqual(10);
+    });
+  });
+
   function createDriver(): MySQLDriver {
     return new MySQLDriver(connectOption);
   }

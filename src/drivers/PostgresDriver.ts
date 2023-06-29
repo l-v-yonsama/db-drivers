@@ -9,6 +9,7 @@ import {
   RdsDatabase,
   ResultSetDataBuilder,
   SchemaAndTableHints,
+  SchemaAndTableName,
   TableRows,
   createRdhKey,
   parseColumnType,
@@ -140,6 +141,21 @@ export class PostgresDriver extends RDSBaseDriver {
     return rdb;
   }
 
+  async count(params: SchemaAndTableName): Promise<number> {
+    let prefix = '';
+    if (params.schema) {
+      prefix = params.schema + '.';
+    }
+
+    const sql = `SELECT COUNT(*) as count FROM ${prefix}${params.table}`;
+    const results = await this.pool.query(sql, []);
+    if (results && results.rows && results.rows.length > 0) {
+      const row = results.rows[0];
+      return Number(row.count);
+    }
+    throw new Error('No records');
+  }
+
   async countTables(
     tables: SchemaAndTableHints,
     options: any,
@@ -161,7 +177,10 @@ export class PostgresDriver extends RDSBaseDriver {
         const results = await this.pool.query(sql, []);
         if (results && results.rows && results.rows.length > 0) {
           const row = results.rows[0];
-          const obj: TableRows = Object.assign({ count: row.count }, st);
+          const obj: TableRows = Object.assign(
+            { count: Number(row.count) },
+            st,
+          );
           list.push(obj);
         }
         // eslint-disable-next-line no-empty

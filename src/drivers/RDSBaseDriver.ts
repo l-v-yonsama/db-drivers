@@ -4,6 +4,7 @@ import {
   RdsDatabase,
   ResultSetDataBuilder,
   SchemaAndTableHints,
+  SchemaAndTableName,
   TableRows,
 } from '../resource';
 import { Statement } from 'pgsql-ast-parser';
@@ -75,6 +76,8 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     tables: SchemaAndTableHints,
     options: any,
   ): Promise<TableRows[]>;
+
+  abstract count(params: SchemaAndTableName): Promise<number>;
 
   abstract isPositionedParameterAvailable(): boolean;
 

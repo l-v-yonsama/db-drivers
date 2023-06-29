@@ -8,6 +8,7 @@ import {
   RdsDatabase,
   ResultSetDataBuilder,
   SchemaAndTableHints,
+  SchemaAndTableName,
   TableRows,
   createRdhKey,
   parseColumnType,
@@ -141,6 +142,21 @@ export class MySQLDriver extends RDSBaseDriver {
     }
 
     return rdb;
+  }
+
+  async count(params: SchemaAndTableName): Promise<number> {
+    let prefix = '';
+    if (params.schema) {
+      prefix = params.schema + '.';
+    }
+
+    const sql = `SELECT COUNT(*) as count FROM ${prefix}${params.table}`;
+    const [results] = await this.client.query(sql, []);
+    if (results && (results as any).length > 0) {
+      const row = results[0];
+      return row.count;
+    }
+    throw new Error('No records');
   }
 
   async countTables(
