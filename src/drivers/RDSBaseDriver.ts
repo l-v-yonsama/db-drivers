@@ -9,7 +9,6 @@ import {
 } from '../resource';
 import { Statement } from 'pgsql-ast-parser';
 import {
-  CompareKey,
   ConnectionSetting,
   QueryParams,
   ResourceType,
@@ -40,36 +39,6 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       }
     }
     return errorReason;
-  }
-
-  async viewData(
-    tableName: string,
-    options?: {
-      schemaName?: string;
-      columnNames?: string[];
-      maxRows?: number;
-      compareKeys?: CompareKey[];
-    },
-  ): Promise<ResultSetData> {
-    let sp = '';
-    let cols = '';
-
-    if (options?.schemaName) {
-      sp = `${options.schemaName}.`;
-    }
-    if (options?.columnNames && options.columnNames?.length > 0) {
-      cols = options.columnNames.join(',');
-    } else {
-      cols = '*';
-    }
-    return await this.requestSql({
-      sql: `SELECT ${cols} FROM ${sp}${tableName} `,
-      meta: {
-        tableName,
-        maxRows: options?.maxRows,
-        compareKeys: options?.compareKeys,
-      },
-    });
   }
 
   abstract countTables(
@@ -171,6 +140,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       tableName,
       compareKeys,
       type,
+      editable: meta?.editable,
     });
     rdb.rs.queryConditions = conditions;
   }

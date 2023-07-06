@@ -195,7 +195,7 @@ CREATE TABLE testdb.testtable (
   s71 TINYBLOB,
   s8 SET('a','b','c'),
 
-  g1 geometry NOT NULL,
+  g1 geometry,
 
   j1 JSON COMMENT 'JSON data type'
 

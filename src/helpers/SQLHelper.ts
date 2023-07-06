@@ -1,47 +1,338 @@
-import { DbResource, DbSchema } from '../resource';
+import dayjs from 'dayjs';
+import {
+  DbResource,
+  DbSchema,
+  isBooleanLike,
+  isDateTimeOrDate,
+  isDateTimeOrDateOrTime,
+  isNumericLike,
+  isTextLike,
+  isTime,
+} from '../resource';
 import { DbTable, RdsDatabase } from '../resource/DbResource';
 import { parse, parseFirst, Statement } from 'pgsql-ast-parser';
-import { tolines } from '../util';
+import { toBoolean, toDate, toNum, tolines } from '../util';
+import {
+  BindParamPosition,
+  GeneralColumnType,
+  Proposal,
+  ProposalKind,
+  ProposalParams,
+  QueryWithBinds,
+  RdhKey,
+  ResourcePosition,
+  ResourcePositionParams,
+  ToViewDataQueryParams,
+  ViewConditionItemOperator,
+} from '../types';
 
-export enum ProposalKind {
-  Schema = 0,
-  Table = 1,
-  Column = 2,
-  ReservedWord = 3,
-}
-
-export type Proposal = {
-  label: string;
-  kind: ProposalKind;
-  detail?: string;
-  desc?: string;
+export const operatorToString = (
+  operator: ViewConditionItemOperator,
+): string => {
+  switch (operator) {
+    case 'equal':
+      return '=';
+    case 'notEqual':
+      return '<>';
+    case 'lessThan':
+      return '<';
+    case 'lessThanInclusive':
+      return '<=';
+    case 'greaterThan':
+      return '>';
+    case 'greaterThanInclusive':
+      return '>=';
+    case 'like':
+      return 'LIKE';
+    case 'notLike':
+      return 'NOT LIKE';
+    case 'in':
+      return 'IN';
+    case 'notIn':
+      return 'NOT IN';
+    case 'isNull':
+      return 'IS NULL';
+    case 'isNotNull':
+      return 'IS NOT NULL';
+  }
+  throw new Error(`Operator:${operator} is not defined`);
 };
 
-export type ProposalParams = {
-  sql: string;
-  lastChar: string;
-  keyword: string;
-  parentWord?: string;
-  db?: RdsDatabase;
+const toBindValue = (colType: GeneralColumnType, value: string | null): any => {
+  if (isTextLike(colType)) {
+    return value;
+  }
+
+  if (value === undefined || value === null || value.length === 0) {
+    return null;
+  }
+
+  if (
+    isNumericLike(colType) ||
+    isDateTimeOrDateOrTime(colType) ||
+    isBooleanLike(colType)
+  ) {
+    let v;
+    if (isNumericLike(colType)) {
+      v = toNum(value);
+    } else if (isDateTimeOrDate(colType)) {
+      const now = new Date();
+      if (/^(now|CURRENT_TIMESTAMP)$/i.test(value)) {
+        return now;
+      }
+      if (/^(today|CURRENT_DATE)$/i.test(value)) {
+        return new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          0,
+          0,
+          0,
+          0,
+        );
+      }
+      v = toDate(value);
+    } else if (isTime(colType)) {
+      v = value;
+      if ('now' === value.toLocaleUpperCase()) {
+        return dayjs().format('HH:mm:ss');
+      }
+    } else {
+      v = toBoolean(value);
+    }
+    return v === undefined ? null : v;
+  }
+
+  return value;
 };
 
-export type ResourcePosition = {
-  name: string;
-  kind: ProposalKind;
-  comment?: string;
-  offset: number;
-  length: number;
+export const toInsertStatementWithBinds = ({
+  schemaName,
+  tableName,
+  keys,
+  values,
+  toPositionedParameter,
+  quote,
+}: {
+  schemaName?: string;
+  tableName: string;
+  keys: RdhKey[];
+  values: { [key: string]: any };
+  toPositionedParameter?: boolean;
+  quote?: boolean;
+}): QueryWithBinds => {
+  const tableNameWithSchema = createTableNameWithSchema({
+    schema: schemaName,
+    table: tableName,
+    quote,
+  });
+  const binds: any[] = [];
+
+  const columnNames: string[] = [];
+  const placeHolders: string[] = [];
+
+  let index = 0;
+  Object.keys(values).forEach((key) => {
+    const colType =
+      keys.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+    const value = toBindValue(colType, values[key]);
+    if (value === null) {
+      return;
+    }
+    columnNames.push(`${wrapQuote(key, quote)}`);
+    binds.push(value);
+    placeHolders.push(toPositionedParameter === true ? `$${index + 1}` : '?');
+    index++;
+  });
+
+  const query = `INSERT INTO ${tableNameWithSchema} (${columnNames.join(
+    ',',
+  )}) VALUES (${placeHolders.join(',')})`;
+
+  return {
+    query,
+    binds,
+  };
 };
 
-export type ResourcePositionParams = {
-  sql: string;
-  db?: RdsDatabase;
+export const toUpdateStatementWithBinds = ({
+  schemaName,
+  tableName,
+  keys,
+  values,
+  conditions,
+  toPositionedParameter,
+  quote,
+}: {
+  schemaName?: string;
+  tableName: string;
+  keys: RdhKey[];
+  values: { [key: string]: any };
+  conditions: { [key: string]: any };
+  toPositionedParameter?: boolean;
+  quote?: boolean;
+}): QueryWithBinds => {
+  const tableNameWithSchema = createTableNameWithSchema({
+    schema: schemaName,
+    table: tableName,
+    quote,
+  });
+  const binds: any[] = [];
+
+  const setList: string[] = [];
+  const conditionList: string[] = [];
+
+  let index = 0;
+  Object.keys(values).forEach((key) => {
+    setList.push(
+      `${wrapQuote(key, quote)} = ${
+        toPositionedParameter === true ? `$${index + 1}` : '?'
+      }`,
+    );
+    const colType =
+      keys.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+    binds.push(toBindValue(colType, values[key]));
+    index++;
+  });
+  Object.keys(conditions).forEach((key) => {
+    conditionList.push(
+      `${wrapQuote(key, quote)} = ${
+        toPositionedParameter === true ? `$${index + 1}` : '?'
+      }`,
+    );
+    const colType =
+      keys.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+    binds.push(toBindValue(colType, conditions[key]));
+    index++;
+  });
+
+  const query = `UPDATE ${tableNameWithSchema} SET ${setList.join(
+    ',',
+  )} WHERE ${conditionList.join(' AND ')}`;
+
+  return {
+    query,
+    binds,
+  };
 };
 
-type BindParamPosition = {
-  firstPosition: number;
-  numOfBinds: number;
-  kind: 'single' | 'multiple';
+export const toDeleteStatementWithBinds = ({
+  schemaName,
+  tableName,
+  keys,
+  conditions,
+  toPositionedParameter,
+  quote,
+}: {
+  schemaName?: string;
+  tableName: string;
+  keys: RdhKey[];
+  conditions: { [key: string]: any };
+  toPositionedParameter?: boolean;
+  quote?: boolean;
+}): QueryWithBinds => {
+  const tableNameWithSchema = createTableNameWithSchema({
+    schema: schemaName,
+    table: tableName,
+    quote,
+  });
+  const binds: any[] = [];
+
+  const conditionList: string[] = [];
+
+  Object.keys(conditions).forEach((key, index) => {
+    conditionList.push(
+      `${wrapQuote(key, quote)}  = ${
+        toPositionedParameter === true ? `$${index + 1}` : '?'
+      }`,
+    );
+    const colType =
+      keys.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+    binds.push(toBindValue(colType, conditions[key]));
+  });
+
+  const query = `DELETE FROM ${tableNameWithSchema} WHERE ${conditionList.join(
+    ' AND ',
+  )}`;
+
+  return {
+    query,
+    binds,
+  };
+};
+
+export const toViewDataQuery = ({
+  tableRes,
+  schemaName,
+  toPositionedParameter,
+  conditions,
+  quote,
+}: ToViewDataQueryParams): QueryWithBinds => {
+  const tableNameWithSchema = createTableNameWithSchema({
+    schema: schemaName,
+    table: tableRes.name,
+    quote,
+  });
+  const binds: any[] = [];
+
+  let query = `SELECT * FROM ${tableNameWithSchema} `;
+  if (conditions && conditions.items.length) {
+    const { andOr, items } = conditions;
+    query += 'WHERE ';
+    let pos = 1;
+    items.forEach((it, idx) => {
+      if (idx > 0) {
+        query += andOr === 'and' ? 'AND ' : 'OR ';
+      }
+      query += `${wrapQuote(it.column, quote)} ${operatorToString(
+        it.operator,
+      )} `;
+      switch (it.operator) {
+        case 'isNotNull':
+        case 'isNull':
+          return;
+        case 'in':
+        case 'notIn':
+          {
+            query += ' (';
+            it.values.forEach((v, idx2) => {
+              if (idx2 > 0) {
+                query += ',';
+              }
+              if (toPositionedParameter === true) {
+                query += `$${pos} `;
+              } else {
+                query += `? `;
+              }
+              binds.push(
+                toBindValue(tableRes.getChildByName(it.column).colType, v),
+              );
+              pos++;
+            });
+            query += ') ';
+          }
+          break;
+        default:
+          {
+            if (toPositionedParameter === true) {
+              query += `$${pos} `;
+            } else {
+              query += `? `;
+            }
+            binds.push(
+              toBindValue(tableRes.getChildByName(it.column).colType, it.value),
+            );
+            pos++;
+          }
+          break;
+      }
+    });
+  }
+
+  return {
+    query: query.trim(),
+    binds,
+  };
 };
 
 /**
@@ -50,7 +341,7 @@ type BindParamPosition = {
  * set global general_log = on; => set general_log TO 1;
  */
 export const toSafeQueryForPgsqlAst = (query: string): string => {
-  let replacedSql = query.replace(/\?/g, '$1');
+  let replacedSql = stripComment(query).replace(/\?/g, '$1');
   replacedSql = replacedSql.replace(/^\s*(SHOW)\s+(\S+).*$/i, '$1 $2');
   replacedSql = replacedSql.replace(
     /\s*INTERVAL\s+([\d]+)\s+(\S+)/i,
@@ -109,10 +400,12 @@ export const normalizePositionedParametersQuery = (
   const nameWithPos: { [key: string]: BindParamPosition } = {};
   const missingParams = new Set<string>();
 
-  const checkBindParam = (s: string): void => {
+  const checkBindParam = (s: string): boolean => {
     if (bindParams && bindParams[s] === undefined) {
       missingParams.add(s);
+      return false;
     }
+    return true;
   };
 
   const getOrCreateSinglePosition = (word: string): string => {
@@ -153,83 +446,37 @@ export const normalizePositionedParametersQuery = (
     return list.join(',');
   };
 
-  const lines = tolines(query);
+  const lines = tolines(stripComment(query));
   const newLines: string[] = [];
 
   // /\w/	[A-Za-z0-9] すべての英数字
   // /\s/ ユニコード空白文字(スペース, 全角スペース, タブ, 改行 等)
   // /\S/ ユニコード空白文字以外のあらゆる文字
   lines.forEach((line) => {
-    const reg =
-      /(((?<!:):(\w+)\b)|(( *IN +)\/\* *(\w+) *\*\/ *\([^)]+?\))|(\/\* *(\w+) *\*\/\S*)|(\/\*\$ *(\w+) *\*\/)|(^\s*(#|--)\s+.*$))/gi;
-    const normalized = line.replace(
-      reg,
-      (substring, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11) => {
-        // g1: outer group.
-        //------------------
-        // g2: ((?<!:):(\w+)\b) ... simple named parameter
-        // g3: (\w+)
-        //------------------
-        // g4: (( *IN +)\/\* *(\w+) *\*\/ *\([^)]+\)) ... IN clauses. multiple parameters
-        // g5: ( *IN +)
-        // g6: (\w+)
-        //------------------
-        // g7: (\/\* *(\w+) *\*\/\S*) ... simple named parameter
-        // g8: (\w+)
-        //------------------
-        // g9:(\/\*\$ *(\w+) *\*\/) ... replace parameter
-        // g10: (\w+)
-        //------------------
-        // g11: (^(#|--)\s+.*$)
-        // g12: (#|--)
-        //------------------
-        // offset: position
+    const reg = /((?<!:):([a-zA-Z_$]\w*)\b)/gi;
+    const normalized = line.replace(reg, (substring, g1, g2, offset) => {
+      // g1: ((?<!:):(\w+)\b) ... simple named parameter
+      // g2: (\w+)
 
-        // console.log('substring', substring);
-        // console.log('g1', g1);
-        // console.log('g2', g2);
-        // console.log('g3', g3);
-        // console.log('g4', g4);
-        // console.log('g5', g5);
-        // console.log('g6', g6);
-        // console.log('g7', g7);
-        // console.log('g8', g8);
-        // console.log('g9', g9);
-        // console.log('g10', g10);
-        // console.log('offset', offset);
-        // return substring;
+      // console.log('substring', substring);
+      // console.log('g1', g1);
+      // console.log('g2', g2);
+      // console.log('offset', offset);
+      // return substring;
 
-        if (g2) {
-          const word = g3;
-          checkBindParam(word);
+      if (g1) {
+        const word = g2;
+        const ok = checkBindParam(word);
+
+        if (ok && Array.isArray(bindParams[word])) {
+          return getOrCreateMultiplePosition(word);
+        } else {
           return getOrCreateSinglePosition(word);
-        } else if (g4) {
-          const word = g6;
-          checkBindParam(word);
-          if (
-            !bindParams ||
-            !bindParams[word] ||
-            bindParams[word].length === 0
-          ) {
-            return `${g5}( null )`;
-          }
-          return `${g5}(${getOrCreateMultiplePosition(word)})`;
-        } else if (g7) {
-          const word = g8;
-          checkBindParam(word);
-          return getOrCreateSinglePosition(word);
-        } else if (g9) {
-          // replace only.
-          const word = g10;
-          checkBindParam(word);
-          return bindParams[word] ?? '';
-        } else if (g11) {
-          // comment line
-          return substring;
         }
-        return '';
-      },
-    );
+      }
+
+      return '';
+    });
     newLines.push(normalized);
   });
 
@@ -262,10 +509,10 @@ export const normalizePositionedParametersQuery = (
 };
 
 /**
- * Transform a named query to a standard positioned parameters query
+ * Transform a named query to a simple parameters query
  * named parameters like :name
  * to
- * positionals parameters (i.e. $1, $2, etc...)
+ * simple parameters (i.e. ?, ?, etc...)
  */
 export const normalizeSimpleParametersQuery = (
   query: string,
@@ -274,10 +521,12 @@ export const normalizeSimpleParametersQuery = (
   const binds: any[] = [];
   const missingParams = new Set<string>();
 
-  const checkBindParam = (s: string): void => {
+  const checkBindParam = (s: string): boolean => {
     if (bindParams && bindParams[s] === undefined) {
       missingParams.add(s);
+      return false;
     }
+    return true;
   };
 
   const pushBindParam = (s: string): void => {
@@ -286,88 +535,40 @@ export const normalizeSimpleParametersQuery = (
     }
   };
 
-  const lines = tolines(query);
+  const lines = tolines(stripComment(query));
   const newLines: string[] = [];
 
   // /\w/	[A-Za-z0-9] すべての英数字
   // /\s/ ユニコード空白文字(スペース, 全角スペース, タブ, 改行 等)
   // /\S/ ユニコード空白文字以外のあらゆる文字
   lines.forEach((line) => {
-    const reg =
-      /(((?<!:):(\w+)\b)|(( *IN +)\/\* *(\w+) *\*\/ *\([^)]+?\))|(\/\* *(\w+) *\*\/\S*)|(\/\*\$ *(\w+) *\*\/)|(^\s*(#|--)\s+.*$))/gi;
-    const normalized = line.replace(
-      reg,
-      (substring, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11) => {
-        // g1: outer group.
-        //------------------
-        // g2: ((?<!:):(\w+)\b) ... simple named parameter
-        // g3: (\w+)
-        //------------------
-        // g4: (( *IN +)\/\* *(\w+) *\*\/ *\([^)]+\)) ... IN clauses. multiple parameters
-        // g5: ( *IN +)
-        // g6: (\w+)
-        //------------------
-        // g7: (\/\* *(\w+) *\*\/\S*) ... simple named parameter
-        // g8: (\w+)
-        //------------------
-        // g9:(\/\*\$ *(\w+) *\*\/) ... replace parameter
-        // g10: (\w+)
-        //------------------
-        // g11: (^(#|--)\s+.*$)
-        // g12: (#|--)
-        //------------------
-        // offset: position
+    const reg = /((?<!:):([a-zA-Z_$]\w*)\b)/gi;
+    const normalized = line.replace(reg, (substring, g1, g2, offset) => {
+      // g1: ((?<!:):(\w+)\b) ... simple named parameter
+      // g2: (\w+)
+      // offset: position
 
-        // console.log('substring', substring);
-        // console.log('g1', g1);
-        // console.log('g2', g2);
-        // console.log('g3', g3);
-        // console.log('g4', g4);
-        // console.log('g5', g5);
-        // console.log('g6', g6);
-        // console.log('g7', g7);
-        // console.log('g8', g8);
-        // console.log('g9', g9);
-        // console.log('g10', g10);
-        // console.log('offset', offset);
-        // return substring;
+      // console.log('substring', substring);
+      // console.log('g1', g1);
+      // console.log('g2', g2);
+      // console.log('offset', offset);
+      // return substring;
 
-        if (g2) {
-          const word = g3;
-          pushBindParam(word);
-          checkBindParam(word);
-          return '?';
-        } else if (g4) {
-          const word = g6;
-          checkBindParam(word);
-          if (
-            !bindParams ||
-            !bindParams[word] ||
-            bindParams[word].length === 0
-          ) {
-            return `${g5}( null )`;
-          }
+      if (g1) {
+        const word = g2;
+        const ok = checkBindParam(word);
+        if (ok && Array.isArray(bindParams[word])) {
           const numOfBinds = bindParams[word].length;
           binds.push(...bindParams[word]);
           const bindStr = '?,'.repeat(numOfBinds);
-          return `${g5}(${bindStr.substring(0, bindStr.length - 1)})`;
-        } else if (g7) {
-          const word = g8;
+          return bindStr.substring(0, bindStr.length - 1);
+        } else {
           pushBindParam(word);
-          checkBindParam(word);
           return '?';
-        } else if (g9) {
-          // replace only.
-          const word = g10;
-          checkBindParam(word);
-          return bindParams[word] ?? '';
-        } else if (g11) {
-          // comment line
-          return substring;
         }
-        return '';
-      },
-    );
+      }
+      return '';
+    });
     newLines.push(normalized);
   });
 
@@ -651,11 +852,37 @@ const createColumnProposal = (
   };
 };
 
+const stripComment = (query: string): string => {
+  return query.replace(/(\s)?(#|--)\s+.*$/g, '$1'); // strip line comment.
+};
+
 const createReservedWordProposal = (word: string): Proposal => {
   return {
     label: word,
     kind: ProposalKind.ReservedWord,
   };
+};
+
+const wrapQuote = (s: string, withQuote?: boolean): string => {
+  if (withQuote === true) {
+    return `\`${s}\``;
+  }
+  return s;
+};
+
+const createTableNameWithSchema = ({
+  schema,
+  table,
+  quote,
+}: {
+  schema?: string;
+  table: string;
+  quote?: boolean;
+}): string => {
+  if (schema) {
+    return `${wrapQuote(schema, quote)}.${wrapQuote(table, quote)}`;
+  }
+  return `${wrapQuote(table, quote)}`;
 };
 
 export const RESERVED_WORDS = [

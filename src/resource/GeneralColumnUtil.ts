@@ -118,6 +118,15 @@ export function isDateTimeOrDateOrTime(type: GeneralColumnType): boolean {
   return false;
 }
 
+export function isTime(type: GeneralColumnType): boolean {
+  switch (type) {
+    case GeneralColumnType.TIME:
+    case GeneralColumnType.TIME_WITH_TIME_ZONE:
+      return true;
+  }
+  return false;
+}
+
 /**
  * Tests whether type is JSON or JSONB
  * @param type GeneralColumnType

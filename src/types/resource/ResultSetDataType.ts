@@ -13,6 +13,7 @@ export type RdhMeta = {
   type?: string;
   tableRule?: TableRule;
   codeItems?: CodeItem[];
+  editable?: boolean;
   [key: string]: any;
 };
 
@@ -50,6 +51,7 @@ export type RdhKey = {
   comment: string;
   type: GeneralColumnType;
   width?: number;
+  required?: boolean;
   meta?: {
     is_image?: boolean;
     is_hyperlink?: boolean;

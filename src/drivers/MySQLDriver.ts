@@ -30,21 +30,28 @@ export class MySQLDriver extends RDSBaseDriver {
     super(conRes);
   }
 
-  fieldInfo2Key(fieldInfo, table?: DbTable): RdhKey {
+  fieldInfo2Key(
+    fieldInfo,
+    useTableColumnType: boolean,
+    table?: DbTable,
+  ): RdhKey {
     const mysqlColumnTypename = EnumValues.getNameFromValue(
       MySQLColumnType,
       MySQLColumnType.parseByFieldInfo(fieldInfo),
     );
-    let comment = '';
-    if (table) {
-      comment =
-        table.children.find((it) => it.name === fieldInfo.name)?.comment ?? '';
-    }
+    const tableColumn = table?.children?.find(
+      (it) => it.name === fieldInfo.name,
+    );
     const key = createRdhKey({
       name: fieldInfo.name,
       type: parseColumnType(mysqlColumnTypename),
-      comment,
+      comment: tableColumn?.comment ?? '',
     });
+    // Correspondence to ENUM type returned as text type
+    if (useTableColumnType && tableColumn) {
+      key.type = tableColumn.colType;
+    }
+    key.required = tableColumn?.nullable === false;
     //  if (key.type === GeneralColumnType.UNKNOWN) {
     //   console.log('Unknownt=', fieldInfo);
     // }
@@ -79,7 +86,7 @@ export class MySQLDriver extends RDSBaseDriver {
   async requestSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
-    const { sql, conditions, dbTable } = params;
+    const { sql, conditions, dbTable, meta } = params;
     let rdb: ResultSetDataBuilder;
 
     if (sql.trim().match(/set\s+global\s+.+/i)) {
@@ -125,7 +132,9 @@ export class MySQLDriver extends RDSBaseDriver {
         rdb = new ResultSetDataBuilder(
           fields === undefined
             ? []
-            : fields.map((f) => this.fieldInfo2Key(f, dbTable)),
+            : fields.map((f) =>
+                this.fieldInfo2Key(f, meta?.editable === true, dbTable),
+              ),
         );
         (rows as any).forEach((result: any) => {
           rdb.rs.keys.forEach((key) => {

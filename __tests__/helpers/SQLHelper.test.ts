@@ -5,6 +5,7 @@ import {
   parseQuery,
   ProposalKind,
   RdsDatabase,
+  toViewDataQuery,
 } from '../../src';
 import { loadRes } from '../setup/mysql';
 
@@ -283,6 +284,20 @@ describe('SQLHelper', () => {
         expect(binds).toEqual(['myId', 42]);
       });
 
+      it('transform a named query to a standard positioned parameters query2', () => {
+        const { query, binds } = normalizeQuery({
+          query:
+            'select * from xxx where id IN (:ids) AND other IN ( :others )',
+          toPositionedParameter: true,
+          bindParams: { ids: ['myId1', 'myId2', 'myId3'], others: [42] },
+        });
+
+        expect(query).toBe(
+          'select * from xxx where id IN ($1,$2,$3) AND other IN ( $4 )',
+        );
+        expect(binds).toEqual(['myId1', 'myId2', 'myId3', 42]);
+      });
+
       it('should be ignored 3rd parameter', () => {
         const { query, binds } = normalizeQuery({
           query: 'select * from xxx where id = :id AND other=:other + :id',
@@ -311,9 +326,7 @@ describe('SQLHelper', () => {
           toPositionedParameter: true,
         });
 
-        expect(query).toBe(
-          'select ID, n0,n1,n2 from testtable \n-- where ID > :minId',
-        );
+        expect(query).toBe('select ID, n0,n1,n2 from testtable \n');
         expect(binds).toEqual([]);
       });
 
@@ -324,82 +337,8 @@ describe('SQLHelper', () => {
           toPositionedParameter: true,
         });
 
-        expect(query).toBe(
-          'select ID, n0,n1,n2 from testtable \n# where ID > :minId',
-        );
+        expect(query).toBe('select ID, n0,n1,n2 from testtable \n');
         expect(binds).toEqual([]);
-      });
-    });
-
-    describe('Simple 2Way-SQL', () => {
-      const sqlStatement =
-        'select * from xxx ' +
-        'where id = /*id*/120 AND other=/* other */50 + /* id */120 ' +
-        'ORDER BY /*$orderByColumn*/ ' +
-        'LIMIT /*$limit*/ OFFSET /*$offset*/';
-
-      it('transform a named query to a standard positioned parameters query', () => {
-        const { query, binds } = normalizeQuery({
-          query: sqlStatement,
-          toPositionedParameter: true,
-          bindParams: {
-            id: 'myId',
-            other: 42,
-            orderByColumn: 'id desc',
-            limit: 10,
-            offset: 20,
-          },
-        });
-
-        expect(query).toBe(
-          'select * from xxx ' +
-            'where id = $1 AND other=$2 + $1 ' +
-            'ORDER BY id desc ' +
-            'LIMIT 10 OFFSET 20',
-        );
-        expect(binds).toEqual(['myId', 42]);
-      });
-
-      it('IN clause', () => {
-        const { query, binds } = normalizeQuery({
-          query:
-            'select * from xxx where deleted = /* is_deleted */FALSE AND id in /*ids*/(1, 2)',
-          toPositionedParameter: true,
-          bindParams: { is_deleted: false, ids: [4, 5, 6] },
-        });
-
-        expect(query).toBe(
-          'select * from xxx where deleted = $1 AND id in ($2,$3,$4)',
-        );
-        expect(binds).toEqual([false, 4, 5, 6]);
-      });
-
-      it('IN null clause', () => {
-        const { query, binds } = normalizeQuery({
-          query:
-            'select * from xxx where deleted = /* isDeleted */FALSE AND id in /*ids*/(1, 2)',
-          toPositionedParameter: true,
-          bindParams: { isDeleted: false, ids: [] },
-        });
-
-        expect(query).toBe(
-          'select * from xxx where deleted = $1 AND id in ( null )',
-        );
-        expect(binds).toEqual([false]);
-      });
-
-      it('should throw error', () => {
-        expect(() =>
-          normalizeQuery({
-            query: sqlStatement,
-            toPositionedParameter: true,
-            bindParams: {
-              isDelete: false,
-              other: 43,
-              offset: 9,
-            },
-          }),
-        ).toThrow('Missing bind parameters [id,orderByColumn,limit]');
       });
     });
 
@@ -412,6 +351,19 @@ describe('SQLHelper', () => {
 
         expect(query).toBe('select * from xxx where id = ? AND other=? + ?');
         expect(binds).toEqual(['myId', 42, 'myId']);
+      });
+
+      it('transform a named query to a simple query2', () => {
+        const { query, binds } = normalizeQuery({
+          query:
+            'select * from xxx where id IN (:ids) AND other= IN ( :others )',
+          bindParams: { ids: ['myId1', 'myId2', 'myId3'], others: [42] },
+        });
+
+        expect(query).toBe(
+          'select * from xxx where id IN (?,?,?) AND other= IN ( ? )',
+        );
+        expect(binds).toEqual(['myId1', 'myId2', 'myId3', 42]);
       });
 
       it('should be ignored 3rd parameter', () => {
@@ -434,98 +386,47 @@ describe('SQLHelper', () => {
         ).toThrow('Missing bind parameter [other]');
       });
 
-      it('should not be error, in a comment line', () => {
+      it('should not be error, in a comment line1', () => {
         const { query, binds } = normalizeQuery({
           query:
             'select ID, n0,n1,n2 from testtable \n' + '-- where ID > :minId',
         });
 
+        expect(query).toBe('select ID, n0,n1,n2 from testtable \n');
+        expect(binds).toEqual([]);
+      });
+
+      it('should not be error, in a comment line2', () => {
+        const { query, binds } = normalizeQuery({
+          query:
+            'select ID, n0,n1,n2 from testtable \n' + 'where n1=3 -- n1 > :n1',
+        });
+
         expect(query).toBe(
-          'select ID, n0,n1,n2 from testtable \n-- where ID > :minId',
+          'select ID, n0,n1,n2 from testtable \n' + 'where n1=3 ',
         );
         expect(binds).toEqual([]);
       });
 
-      it('should not be error too, in a comment line', () => {
+      it('should not be error, in a comment line3', () => {
         const { query, binds } = normalizeQuery({
           query:
             'select ID, n0,n1,n2 from testtable \n' + '# where ID > :minId',
         });
 
-        expect(query).toBe(
-          'select ID, n0,n1,n2 from testtable \n# where ID > :minId',
-        );
+        expect(query).toBe('select ID, n0,n1,n2 from testtable \n');
         expect(binds).toEqual([]);
       });
-    });
 
-    describe('Simple 2Way-SQL to simple query', () => {
-      const sqlStatement =
-        'select * from xxx ' +
-        'where id = /*id*/120 AND other=/* other */50 + /* id */120 ' +
-        'ORDER BY /*$orderByColumn*/ ' +
-        'LIMIT /*$limit*/ OFFSET /*$offset*/';
-
-      it('transform a named query to a simple query', () => {
+      it(`should not be error, in a time format's colon`, () => {
         const { query, binds } = normalizeQuery({
-          query: sqlStatement,
-          bindParams: {
-            id: 'myId',
-            other: 42,
-            orderByColumn: 'id desc',
-            limit: 10,
-            offset: 20,
-          },
+          query: `select ID, n0,n1,n2 from testtable WHERE update_date >= ('2020-05-05 14:23:23' - interval 30 day)`,
         });
 
         expect(query).toBe(
-          'select * from xxx ' +
-            'where id = ? AND other=? + ? ' +
-            'ORDER BY id desc ' +
-            'LIMIT 10 OFFSET 20',
+          `select ID, n0,n1,n2 from testtable WHERE update_date >= ('2020-05-05 14:23:23' - interval 30 day)`,
         );
-        expect(binds).toEqual(['myId', 42, 'myId']);
-      });
-
-      it('IN clause', () => {
-        const { query, binds } = normalizeQuery({
-          query:
-            'select * from xxx where deleted = /* is_deleted */FALSE AND id in /*ids*/(1, 2)',
-          bindParams: { is_deleted: false, ids: [4, 5, 6] },
-        });
-
-        expect(query).toBe(
-          'select * from xxx where deleted = ? AND id in (?,?,?)',
-        );
-        expect(binds).toEqual([false, 4, 5, 6]);
-      });
-
-      it('IN null clause', () => {
-        const { query, binds } = normalizeQuery({
-          query:
-            'select * from xxx where deleted = /* isDeleted */FALSE AND id in /*ids*/(1, 2)',
-          toPositionedParameter: true,
-          bindParams: { isDeleted: false, ids: [] },
-        });
-
-        expect(query).toBe(
-          'select * from xxx where deleted = $1 AND id in ( null )',
-        );
-        expect(binds).toEqual([false]);
-      });
-
-      it('should throw error', () => {
-        expect(() =>
-          normalizeQuery({
-            query: sqlStatement,
-            toPositionedParameter: true,
-            bindParams: {
-              isDelete: false,
-              other: 43,
-              offset: 9,
-            },
-          }),
-        ).toThrow('Missing bind parameters [id,orderByColumn,limit]');
+        expect(binds).toEqual([]);
       });
     });
   });
@@ -571,6 +472,103 @@ describe('SQLHelper', () => {
         offset: 7,
         length: 2,
       });
+    });
+  });
+
+  describe('toViewDataQuery', () => {
+    it('Simple (no conitions)', () => {
+      const schemaRes = db.getSchema({ isDefault: true });
+      const { query, binds } = toViewDataQuery({
+        tableRes: schemaRes.getChildByName('testtable'),
+        schemaName: schemaRes.name,
+      });
+      expect(query).toBe('SELECT * FROM testdb.testtable');
+      expect(binds).toEqual([]);
+    });
+    it('With conitions', () => {
+      const schemaRes = db.getSchema({ isDefault: true });
+      const { query, binds } = toViewDataQuery({
+        tableRes: schemaRes.getChildByName('testtable'),
+        schemaName: schemaRes.name,
+        conditions: {
+          andOr: 'and',
+          items: [
+            {
+              column: 'ID',
+              operator: 'notEqual',
+              value: '100',
+            },
+            {
+              column: 'n0',
+              operator: 'equal',
+              value: '1',
+            },
+            {
+              column: 'n1',
+              operator: 'isNotNull',
+            },
+            {
+              column: 'n2',
+              operator: 'in',
+              values: ['1', '2', '3'],
+            },
+            {
+              column: 'd1',
+              operator: 'in',
+              values: ['2020-01-01', 'today'],
+            },
+            {
+              column: 'd3',
+              operator: 'lessThan',
+              value: 'now',
+            },
+          ],
+        },
+      });
+      expect(query).toBe(
+        'SELECT * FROM testdb.testtable WHERE ID <> ? AND n0 = ? AND n1 IS NOT NULL AND n2 IN  (? ,? ,? ) AND d1 IN  (? ,? ) AND d3 < ?',
+      );
+      expect(binds).toEqual([
+        100,
+        true,
+        1,
+        2,
+        3,
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+      ]);
+    });
+    it('With conitions2', () => {
+      const schemaRes = db.getSchema({ isDefault: true });
+      const { query, binds } = toViewDataQuery({
+        tableRes: schemaRes.getChildByName('testtable'),
+        schemaName: schemaRes.name,
+        toPositionedParameter: true,
+        conditions: {
+          andOr: 'or',
+          items: [
+            {
+              column: 'n0',
+              operator: 'isNull',
+            },
+            {
+              column: 'd2',
+              operator: 'greaterThan',
+              value: '13:24:56',
+            },
+            {
+              column: 's2',
+              operator: 'like',
+              value: 't%st',
+            },
+          ],
+        },
+      });
+      expect(query).toBe(
+        'SELECT * FROM testdb.testtable WHERE n0 IS NULL OR d2 > $1 OR s2 LIKE $2',
+      );
+      expect(binds).toEqual(['13:24:56', 't%st']);
     });
   });
 });

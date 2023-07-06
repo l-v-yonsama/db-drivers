@@ -4,8 +4,14 @@ import { DBType } from './types';
 export const sleep = (ms: number): Promise<void> =>
   new Promise((res) => setTimeout(res, ms));
 
-export const toNum = (s: string | undefined): number | undefined => {
-  if (s === null || s === undefined || s.trim().length === 0) {
+export const toNum = (s: string | number | undefined): number | undefined => {
+  if (s === null || s === undefined) {
+    return undefined;
+  }
+  if (typeof s === 'number') {
+    return s;
+  }
+  if (s.trim().length === 0) {
     return undefined;
   }
 
@@ -17,16 +23,26 @@ export const toNum = (s: string | undefined): number | undefined => {
 };
 
 export const toBoolean = (
-  s: Buffer | string | undefined,
+  s: Buffer | boolean | string | undefined,
 ): boolean | undefined => {
   if (s === null || s === undefined) {
     return undefined;
+  }
+  if (typeof s === 'boolean') {
+    return s;
   }
   if (s instanceof Buffer) {
     const buf = s as Buffer;
     return buf.at(0) === 1;
   }
-  return 'true' === s.toLowerCase();
+  if (s.trim().length === 0) {
+    return undefined;
+  }
+  return (
+    't' === s.toLowerCase() ||
+    'true' === s.toLowerCase() ||
+    '1' === s.toLowerCase()
+  );
 };
 
 export const toDate = (
@@ -44,6 +60,9 @@ export const toDate = (
 
   if (typeof s === 'number') {
     return new Date(s);
+  }
+  if (s.trim().length === 0) {
+    return undefined;
   }
 
   const r = dayjs(s).toDate();

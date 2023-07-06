@@ -32,7 +32,11 @@ export class PostgresDriver extends RDSBaseDriver {
   //      dataTypeSize: -1,
   //      dataTypeModifier: -1,
   //      format: 'text' }
-  fieldInfo2Key(fieldInfo: pg.FieldDef, table?: DbTable): RdhKey {
+  fieldInfo2Key(
+    fieldInfo: pg.FieldDef,
+    useTableColumnType: boolean,
+    table?: DbTable,
+  ): RdhKey {
     if (fieldInfo.name.startsWith('c_')) {
       console.log(
         `★ ${fieldInfo.name.substring(2).toUpperCase()} = ${
@@ -44,16 +48,21 @@ export class PostgresDriver extends RDSBaseDriver {
       PostgresColumnType,
       PostgresColumnType.parse(fieldInfo.dataTypeID),
     );
-    let comment = '';
-    if (table) {
-      comment =
-        table.children.find((it) => it.name === fieldInfo.name)?.comment ?? '';
-    }
+    const tableColumn = table?.children?.find(
+      (it) => it.name === fieldInfo.name,
+    );
+
     const key = createRdhKey({
       name: fieldInfo.name,
       type: parseColumnType(name),
-      comment,
+      comment: tableColumn?.comment ?? '',
     });
+    // Correspondence to ENUM type returned as text type
+    if (useTableColumnType && tableColumn) {
+      key.type = tableColumn.colType;
+    }
+    key.required = tableColumn?.nullable === false;
+
     return key;
   }
 
@@ -103,7 +112,7 @@ export class PostgresDriver extends RDSBaseDriver {
   async requestSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
-    const { sql, conditions, dbTable } = params;
+    const { sql, conditions, dbTable, meta } = params;
     // log.info("sql2=", sql);
     let rdb: ResultSetDataBuilder;
 
@@ -125,7 +134,9 @@ export class PostgresDriver extends RDSBaseDriver {
       const fields = results.fields;
       if (fields?.length) {
         rdb = new ResultSetDataBuilder(
-          fields.map((f) => this.fieldInfo2Key(f, dbTable)),
+          fields.map((f) =>
+            this.fieldInfo2Key(f, meta?.editable === true, dbTable),
+          ),
         );
         if (results.rows) {
           results.rows.forEach((result: any) => {
