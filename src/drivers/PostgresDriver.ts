@@ -20,6 +20,7 @@ import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 
 export class PostgresDriver extends RDSBaseDriver {
   private pool: pg.Pool;
+  private pid: number | undefined;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -69,39 +70,28 @@ export class PostgresDriver extends RDSBaseDriver {
   async connectSub(): Promise<string> {
     let errorReason = '';
 
-    const options = Object.assign(
-      {
-        port: 5432,
-        host: '127.0.0.1',
-        database: 'postgres',
-      },
-      {
-        max: 1,
-        idleTimeoutMillis: 3000,
-        connectionTimeoutMillis: 1000,
-        port: this.conRes.port,
-        host: this.conRes.host,
-        user: this.conRes.user,
-        password: this.conRes.password,
-        database: this.conRes.database,
-      },
-    );
-
-    this.pool = new pg.Pool(options);
-    // the pool with emit an error on behalf of any idle clients
-    // it contains if a backend error or network partition happens
-    // this.pool.on('error', (err, client) => {
-    //   // log.error('Unexpected error on idle client', err);
-    // });
-    // this.pool.on('acquire', function (client) {
-    //   // log.info('acquire', client);
-    // });
-    // this.pool.on('connect', function (client) {
-    //   // log.info('connect', client);
-    // });
+    this.pool = this.createPool();
     errorReason = await this.test();
 
     return errorReason;
+  }
+
+  async kill(): Promise<string> {
+    let extraPool: pg.Pool | undefined;
+    let message = '';
+    try {
+      if (this.pid === undefined) {
+        return message;
+      }
+      extraPool = this.createPool();
+      await extraPool.query('SELECT pg_cancel_backend($1)', [this.pid]);
+    } catch (e) {
+      message = e.message;
+    }
+    if (extraPool) {
+      await extraPool.end();
+    }
+    return message;
   }
 
   protected getTestSqlStatement(): string {
@@ -115,37 +105,47 @@ export class PostgresDriver extends RDSBaseDriver {
     const { sql, conditions, dbTable, meta } = params;
     // log.info("sql2=", sql);
     let rdb: ResultSetDataBuilder;
+    const client = await this.pool.connect();
+    const pidResult = await client.query('SELECT pg_backend_pid() AS pid');
+    this.pid = pidResult.rows[0].pid;
 
     const binds = conditions?.binds ?? [];
-    const results = await this.pool.query(sql, binds);
-    // console.log(results);
-    // command: 'SELECT',
-    // rowCount: 5,
-    // oid: null,
-    // rows:
-    //  [ anonymous { name: 'pg_catalog' },
-    //    anonymous { name: 'pg_temp_1' },
-    //    anonymous { name: 'pg_toast' },
-    //    anonymous { name: 'pg_toast_temp_1' },
-    //    anonymous { name: 'public' } ],
-    // fields: [  ],
-    // console.log('done.', results.fields)
-    if (results) {
-      const fields = results.fields;
-      if (fields?.length) {
-        rdb = new ResultSetDataBuilder(
-          fields.map((f) =>
-            this.fieldInfo2Key(f, meta?.editable === true, dbTable),
-          ),
-        );
-        if (results.rows) {
-          results.rows.forEach((result: any) => {
-            rdb.addRow(result);
-          });
+    try {
+      const results = await client.query(sql, binds);
+      // console.log(results);
+      // command: 'SELECT',
+      // rowCount: 5,
+      // oid: null,
+      // rows:
+      //  [ anonymous { name: 'pg_catalog' },
+      //    anonymous { name: 'pg_temp_1' },
+      //    anonymous { name: 'pg_toast' },
+      //    anonymous { name: 'pg_toast_temp_1' },
+      //    anonymous { name: 'public' } ],
+      // fields: [  ],
+      // console.log('done.', results.fields)
+      if (results) {
+        const fields = results.fields;
+        if (fields?.length) {
+          rdb = new ResultSetDataBuilder(
+            fields.map((f) =>
+              this.fieldInfo2Key(f, meta?.editable === true, dbTable),
+            ),
+          );
+          if (results.rows) {
+            results.rows.forEach((result: any) => {
+              rdb.addRow(result);
+            });
+          }
+        } else {
+          rdb = new ResultSetDataBuilder(['Result']);
+          rdb.addRow({ Result: 'OK' });
         }
-      } else {
-        rdb = new ResultSetDataBuilder(['Result']);
-        rdb.addRow({ Result: 'OK' });
+      }
+    } finally {
+      if (client) {
+        client.release();
+        this.pid = undefined;
       }
     }
 
@@ -522,5 +522,27 @@ export class PostgresDriver extends RDSBaseDriver {
     } catch (e) {
       return e.message;
     }
+  }
+
+  private createPool(): pg.Pool {
+    const options = Object.assign(
+      {
+        port: 5432,
+        host: '127.0.0.1',
+        database: 'postgres',
+      },
+      {
+        max: 1,
+        idleTimeoutMillis: 3000,
+        connectionTimeoutMillis: 1000,
+        port: this.conRes.port,
+        host: this.conRes.host,
+        user: this.conRes.user,
+        password: this.conRes.password,
+        database: this.conRes.database,
+      },
+    );
+
+    return new pg.Pool(options);
   }
 }

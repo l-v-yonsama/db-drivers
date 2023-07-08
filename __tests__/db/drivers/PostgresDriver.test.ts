@@ -7,6 +7,7 @@ import {
   GeneralColumnType,
   RdsDatabase,
   ConnectionSetting,
+  sleep,
 } from '../../../src';
 import { init } from '../../setup/postgres';
 
@@ -191,6 +192,26 @@ describe('PostgresDriver', () => {
     it('should return number of rows', async () => {
       const count = await driver.count({ table: 'customer' });
       expect(count).toEqual(10);
+    });
+  });
+
+  describe('kill', () => {
+    it('should success', async () => {
+      const result = await Promise.allSettled([
+        (async (): Promise<string> => {
+          const r = await driver.requestSql({
+            sql: 'SELECT pg_sleep(10000000000)',
+          });
+          return 'Got a pg_sleep result ' + r;
+        })(),
+        (async (): Promise<string> => {
+          await sleep(500);
+          return await driver.kill();
+        })(),
+      ]);
+      expect(result[0].status).toEqual('rejected');
+      const reason = (result[0] as PromiseRejectedResult).reason as Error;
+      expect(reason.message.includes('canceling')).toBe(true);
     });
   });
 

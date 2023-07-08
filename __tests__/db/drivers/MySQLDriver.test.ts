@@ -7,6 +7,8 @@ import {
   GeneralColumnType,
   RdsDatabase,
   ConnectionSetting,
+  ResultSetDataBuilder,
+  sleep,
 } from '../../../src';
 import { init, saveRes } from '../../setup/mysql';
 
@@ -199,6 +201,26 @@ describe('MySQLDriver', () => {
     it('should return number of rows', async () => {
       const count = await driver.count({ table: 'customer' });
       expect(count).toEqual(10);
+    });
+  });
+
+  describe('kill', () => {
+    it('should success', async () => {
+      const result = await Promise.allSettled([
+        (async (): Promise<string> => {
+          const r = await driver.requestSql({
+            sql: "select benchmark(20000000, md5('when will it end?'))",
+          });
+          return 'Got a benchmark result ' + r;
+        })(),
+        (async (): Promise<string> => {
+          await sleep(500);
+          return await driver.kill();
+        })(),
+      ]);
+      expect(result[0].status).toEqual('rejected');
+      const reason = (result[0] as PromiseRejectedResult).reason as Error;
+      expect(reason.message.includes('Connection lost')).toBe(true);
     });
   });
 

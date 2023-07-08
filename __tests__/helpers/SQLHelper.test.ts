@@ -275,7 +275,8 @@ describe('SQLHelper', () => {
     describe('Named query to positioned parameter query', () => {
       it('transform a named query to a standard positioned parameters query', () => {
         const { query, binds } = normalizeQuery({
-          query: 'select * from xxx where id = :id AND other=:other + :id',
+          query:
+            'select * from xxx /* \na\nbc */where id = :id AND other=:other + :id',
           toPositionedParameter: true,
           bindParams: { id: 'myId', other: 42 },
         });
@@ -472,6 +473,12 @@ describe('SQLHelper', () => {
         offset: 7,
         length: 2,
       });
+    });
+    it('should return empty array', () => {
+      const sql = 'select 1';
+      const positions = getResourcePositions({ sql, db });
+
+      expect(positions).toEqual([]);
     });
   });
 

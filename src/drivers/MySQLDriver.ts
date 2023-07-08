@@ -24,7 +24,7 @@ import { MySQLColumnType } from '../types/resource/MySQLColumnType';
 import { toBoolean } from '../util';
 
 export class MySQLDriver extends RDSBaseDriver {
-  private client: mysql.Pool | undefined;
+  private con: mysql.Connection | undefined;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -61,22 +61,32 @@ export class MySQLDriver extends RDSBaseDriver {
 
   async connectSub(): Promise<string> {
     let errorMessage = '';
-    const options = {
-      connectionLimit: 4,
-      multipleStatements: true,
-      port: this.conRes.port,
-      host: this.conRes.host,
-      user: this.conRes.user,
-      password: this.conRes.password,
-      database: this.conRes.database,
-    };
-    this.client = mysql.createPool(options);
+    this.con = await this.createConnection();
     try {
       errorMessage = await this.test();
     } catch (e) {
       errorMessage = e.message;
     }
     return errorMessage;
+  }
+
+  async kill(): Promise<string> {
+    let extraCon: mysql.Connection | undefined;
+    let message = '';
+    try {
+      if (!this.con) {
+        return message;
+      }
+      const { threadId } = this.con;
+      extraCon = await this.createConnection();
+      await extraCon.query(`KILL ${threadId}`);
+    } catch (e) {
+      message = e.message;
+    }
+    if (extraCon) {
+      await extraCon.end();
+    }
+    return message;
   }
 
   protected getTestSqlStatement(): string {
@@ -95,9 +105,9 @@ export class MySQLDriver extends RDSBaseDriver {
       throw new Error('Setting global system variables is not supported');
     }
 
-    if (this.client) {
+    if (this.con) {
       const binds = conditions?.binds ?? [];
-      const [rows, fields] = await this.client.execute(sql, binds);
+      const [rows, fields] = await this.con.execute(sql, binds);
 
       if (fields === undefined) {
         // execute...
@@ -160,7 +170,7 @@ export class MySQLDriver extends RDSBaseDriver {
     }
 
     const sql = `SELECT COUNT(*) as count FROM ${prefix}${params.table}`;
-    const [results] = await this.client.query(sql, []);
+    const [results] = await this.con.query(sql, []);
     if (results && (results as any).length > 0) {
       const row = results[0];
       return row.count;
@@ -186,7 +196,7 @@ export class MySQLDriver extends RDSBaseDriver {
       }
       const sql = `SELECT COUNT(*) as count FROM ${prefix}${st.table}`;
       try {
-        const [results] = await this.client.query(sql, []);
+        const [results] = await this.con.query(sql, []);
         if (results && (results as any).length > 0) {
           const row = results[0];
           const obj: TableRows = Object.assign({ count: row.count }, st);
@@ -425,12 +435,25 @@ export class MySQLDriver extends RDSBaseDriver {
 
   async closeSub(): Promise<string> {
     try {
-      if (this.client) {
-        await this.client.end();
+      if (this.con) {
+        await this.con.end();
+        this.con = undefined;
       }
       return '';
     } catch (e) {
       return e.message;
     }
+  }
+
+  private async createConnection(): Promise<mysql.Connection> {
+    const options: mysql.ConnectionOptions = {
+      multipleStatements: true,
+      port: this.conRes.port,
+      host: this.conRes.host,
+      user: this.conRes.user,
+      password: this.conRes.password,
+      database: this.conRes.database,
+    };
+    return await mysql.createConnection(options);
   }
 }

@@ -25,6 +25,7 @@ import {
   ToViewDataQueryParams,
   ViewConditionItemOperator,
 } from '../types';
+import { FUNCTIONS, RESERVED_WORDS } from './constant';
 
 export const operatorToString = (
   operator: ViewConditionItemOperator,
@@ -646,6 +647,7 @@ export const getResourcePositions = (
   let m: RegExpExecArray | null;
   const tableResList: DbTable[] = [];
   const columnNameSet = new Set<string>();
+
   while ((m = reg.exec(sqlLowerCase)) !== null) {
     const name = m[0];
     let comment: string | undefined = undefined;
@@ -668,28 +670,31 @@ export const getResourcePositions = (
     });
   }
 
-  const reg2 = new RegExp(
-    '\\b(' + Array.from(columnNameSet).join('|') + ')\\b',
-    'g',
-  );
+  if (columnNameSet.size > 0) {
+    const reg2 = new RegExp(
+      '\\b(' + Array.from(columnNameSet).join('|') + ')\\b',
+      'g',
+    );
 
-  let m2: RegExpExecArray | null;
-  while ((m2 = reg2.exec(sqlLowerCase)) !== null) {
-    const name = m2[0];
-    const columnRes = tableResList
-      .flatMap((table) => table.children)
-      .find((column) => column.name.toLocaleLowerCase() === name);
-    if (!columnRes) {
-      continue;
+    let m2: RegExpExecArray | null;
+
+    while ((m2 = reg2.exec(sqlLowerCase)) !== null) {
+      const name = m2[0];
+      const columnRes = tableResList
+        .flatMap((table) => table.children)
+        .find((column) => column.name.toLocaleLowerCase() === name);
+      if (!columnRes) {
+        continue;
+      }
+
+      retList.push({
+        kind: ProposalKind.Column,
+        name: columnRes.name,
+        comment: columnRes.comment,
+        offset: m2.index,
+        length: name.length,
+      });
     }
-
-    retList.push({
-      kind: ProposalKind.Column,
-      name: columnRes.name,
-      comment: columnRes.comment,
-      offset: m2.index,
-      length: name.length,
-    });
   }
 
   return retList;
@@ -853,7 +858,9 @@ const createColumnProposal = (
 };
 
 const stripComment = (query: string): string => {
-  return query.replace(/(\s)?(#|--)\s+.*$/g, '$1'); // strip line comment.
+  return query
+    .replace(/\/\*[^*]*\*\//gm, '') // strip multiple line comment.
+    .replace(/(\s)?(#|--)\s+.*$/g, '$1'); // strip single line comment.
 };
 
 const createReservedWordProposal = (word: string): Proposal => {
@@ -884,278 +891,6 @@ const createTableNameWithSchema = ({
   }
   return `${wrapQuote(table, quote)}`;
 };
-
-export const RESERVED_WORDS = [
-  'ACCESSIBLE',
-  'ADD',
-  'ALL',
-  'ALTER',
-  'ANALYZE',
-  'AND',
-  'AS',
-  'ASC',
-  'ASENSITIVE',
-  'BEFORE',
-  'BETWEEN',
-  'BIGINT',
-  'BINARY',
-  'BLOB',
-  'BOTH',
-  'BY',
-  'CALL',
-  'CASCADE',
-  'CASE',
-  'CHANGE',
-  'CHAR',
-  'CHARACTER',
-  'CHECK',
-  'COLLATE',
-  'COLUMN',
-  'CONDITION',
-  'CONSTRAINT',
-  'CONTINUE',
-  'CONVERT',
-  'CREATE',
-  'CROSS',
-  'CURRENT_DATE',
-  'CURRENT_TIME',
-  'CURRENT_TIMESTAMP',
-  'CURRENT_USER',
-  'CURSOR',
-  'DATABASE',
-  'DATABASES',
-  'DAY_HOUR',
-  'DAY_MICROSECOND',
-  'DAY_MINUTE',
-  'DAY_SECOND',
-  'DEC',
-  'DECIMAL',
-  'DECLARE',
-  'DEFAULT',
-  'DELAYED',
-  'DELETE',
-  'DESC',
-  'DESCRIBE',
-  'DETERMINISTIC',
-  'DISTINCT',
-  'DISTINCTROW',
-  'DIV',
-  'DOUBLE',
-  'DROP',
-  'DUAL',
-  'EACH',
-  'ELSE',
-  'ELSEIF',
-  'ENCLOSED',
-  'ESCAPED',
-  'EXISTS',
-  'EXIT',
-  'EXPLAIN',
-  'FALSE',
-  'FETCH',
-  'FLOAT',
-  'FLOAT4',
-  'FLOAT8',
-  'FOR',
-  'FORCE',
-  'FOREIGN',
-  'FROM',
-  'FULLTEXT',
-  'GRANT',
-  'GROUP',
-  'HAVING',
-  'HIGH_PRIORITY',
-  'HOUR_MICROSECOND',
-  'HOUR_MINUTE',
-  'HOUR_SECOND',
-  'IF',
-  'IGNORE',
-  'IN',
-  'INDEX',
-  'INFILE',
-  'INNER',
-  'INOUT',
-  'INSENSITIVE',
-  'INSERT',
-  'INT',
-  'INT1',
-  'INT2',
-  'INT3',
-  'INT4',
-  'INT8',
-  'INTEGER',
-  'INTERVAL',
-  'INTO',
-  'IS',
-  'ITERATE',
-  'JOIN',
-  'KEY',
-  'KEYS',
-  'KILL',
-  'LEADING',
-  'LEAVE',
-  'LEFT',
-  'LIKE',
-  'LIMIT',
-  'LINEAR',
-  'LINES',
-  'LOAD',
-  'LOCALTIME',
-  'LOCALTIMESTAMP',
-  'LOCK',
-  'LONG',
-  'LONGBLOB',
-  'LONGTEXT',
-  'LOOP',
-  'LOW_PRIORITY',
-  'MASTER_SSL_VERIFY_SERVER_CERT',
-  'MATCH',
-  'MEDIUMBLOB',
-  'MEDIUMINT',
-  'MEDIUMTEXT',
-  'MIDDLEINT',
-  'MINUTE_MICROSECOND',
-  'MINUTE_SECOND',
-  'MOD',
-  'MODIFIES',
-  'NATURAL',
-  'NOT',
-  'NO_WRITE_TO_BINLOG',
-  'NULL',
-  'NUMERIC',
-  'ON',
-  'OPTIMIZE',
-  'OPTION',
-  'OPTIONALLY',
-  'OR',
-  'ORDER',
-  'OUT',
-  'OUTER',
-  'OUTFILE',
-  'PRECISION',
-  'PRIMARY',
-  'PROCEDURE',
-  'PURGE',
-  'RANGE',
-  'READ',
-  'READS',
-  'READ_ONLY',
-  'READ_WRITE',
-  'REAL',
-  'REFERENCES',
-  'REGEXP',
-  'RELEASE',
-  'RENAME',
-  'REPEAT',
-  'REPLACE',
-  'REQUIRE',
-  'RESTRICT',
-  'RETURN',
-  'REVOKE',
-  'RIGHT',
-  'RLIKE',
-  'SCHEMA',
-  'SCHEMAS',
-  'SECOND_MICROSECOND',
-  'SELECT',
-  'SENSITIVE',
-  'SEPARATOR',
-  'SET',
-  'SHOW',
-  'SMALLINT',
-  'SPATIAL',
-  'SPECIFIC',
-  'SQL',
-  'SQLEXCEPTION',
-  'SQLSTATE',
-  'SQLWARNING',
-  'SQL_BIG_RESULT',
-  'SQL_CALC_FOUND_ROWS',
-  'SQL_SMALL_RESULT',
-  'SSL',
-  'STARTING',
-  'STRAIGHT_JOIN',
-  'TABLE',
-  'TERMINATED',
-  'THEN',
-  'TINYBLOB',
-  'TINYINT',
-  'TINYTEXT',
-  'TO',
-  'TRAILING',
-  'TRIGGER',
-  'TRUE',
-  'UNDO',
-  'UNION',
-  'UNIQUE',
-  'UNLOCK',
-  'UNSIGNED',
-  'UPDATE',
-  'USAGE',
-  'USE',
-  'USING',
-  'UTC_DATE',
-  'UTC_TIME',
-  'UTC_TIMESTAMP',
-  'VALUES',
-  'VARBINARY',
-  'VARCHAR',
-  'VARCHARACTER',
-  'VARYING',
-  'WHEN',
-  'WHERE',
-  'WHILE',
-  'WITH',
-  'WRITE',
-  'XOR',
-  'YEAR_MONTH',
-  'ZEROFILL',
-];
-
-export const FUNCTIONS = [
-  // 日付および時間関数
-  'ADDDATE',
-  'ADDTIME',
-  'CONVERT_TZ',
-  'CURDATE',
-  'CURRENT_DATE',
-  'CURRENT_TIME',
-  'CURRENT_TIMESTAMP',
-  'CURTIME',
-  'DATE',
-  'DATE_ADD',
-  'DATE_FORMAT',
-  'DATE_SUB',
-  'DATEDIFF',
-  'DAY',
-  'DAYNAME',
-  'DAYOFMONTH',
-  'DAYOFWEEK',
-  'DAYOFYEAR',
-  'EXTRACT',
-  'FROM_DAYS',
-  'FROM_UNIXTIME',
-  'GET_FORMAT',
-  'HOUR',
-  'LAST_DAY',
-  'LOCALTIME',
-  'LOCALTIMESTAMP',
-  'MAKEDATE',
-  'MAKETIME',
-  'MICROSECOND',
-  'MINUTE',
-  'MONTH',
-  'MONTHNAME',
-  'NOW',
-  'SYSDATE',
-  'TIMESTAMP',
-
-  // フロー制御関数
-  'IFNULL',
-  'NULLIF',
-
-  'GROUP_CONCAT',
-];
 
 const FUNCTION_MATCHER = new RegExp(
   `(${FUNCTIONS.join('|')})\\([^)]+?\\)`,

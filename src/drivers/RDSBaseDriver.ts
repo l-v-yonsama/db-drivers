@@ -23,6 +23,8 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
 
   protected abstract getTestSqlStatement(): string;
 
+  abstract kill(): Promise<string>;
+
   async test(with_connect = false): Promise<string> {
     let errorReason = '';
     if (with_connect) {
