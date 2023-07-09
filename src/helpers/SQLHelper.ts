@@ -359,6 +359,12 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
   return replacedSql.replace(FUNCTION_MATCHER, '1');
 };
 
+/**
+ * Parse query
+ * All parse results are in lowercase.
+ * @param sql
+ * @returns parse result
+ */
 export const parseQuery = (sql: string): Statement | undefined => {
   const replacedSql = toSafeQueryForPgsqlAst(sql);
   try {

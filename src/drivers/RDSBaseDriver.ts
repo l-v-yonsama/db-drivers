@@ -63,14 +63,17 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   async requestSql(params: QueryParams): Promise<ResultSetData> {
     const { sql } = params;
     const ast = parseQuery(sql);
-    const astTableName = this.getTableName(ast);
-    const dbTable = this.getDbTable(astTableName);
+    let tableName = this.getTableNameInLowercase(ast);
+    const dbTable = this.getDbTable(tableName);
+    if (dbTable) {
+      tableName = dbTable.name;
+    }
 
     const rdb = await this.requestSqlSub({
       ...params,
       dbTable,
     });
-    this.setRdhMetaAndStatement(params, rdb, ast?.type, astTableName, dbTable);
+    this.setRdhMetaAndStatement(params, rdb, ast?.type, tableName, dbTable);
 
     return rdb.build();
   }
@@ -79,7 +82,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder>;
 
-  private getTableName(ast: Statement): string | undefined {
+  private getTableNameInLowercase(ast: Statement): string | undefined {
     if (ast) {
       // console.log(JSON.stringify(ast, null, 2));
       switch (ast.type) {
