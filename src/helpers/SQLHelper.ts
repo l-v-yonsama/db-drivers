@@ -95,7 +95,7 @@ const toBindValue = (colType: GeneralColumnType, value: string | null): any => {
       v = toDate(value);
     } else if (isTime(colType)) {
       v = value;
-      if ('now' === value.toLocaleUpperCase()) {
+      if ('now' === value.toLowerCase()) {
         return dayjs().format('HH:mm:ss');
       }
     } else {
