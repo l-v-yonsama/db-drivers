@@ -191,7 +191,7 @@ describe('PostgresDriver', () => {
   describe('count', () => {
     it('should return number of rows', async () => {
       const count = await driver.count({ table: 'customer' });
-      expect(count).toEqual(10);
+      expect(count).toEqual(5);
     });
   });
 

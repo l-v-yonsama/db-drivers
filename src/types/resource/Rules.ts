@@ -15,7 +15,6 @@ export type TableRuleDetail = {
 };
 
 export type ConditionPropertyParam = {
-  comment: string;
   valType: 'static' | 'column';
   valColumn: string;
   [key: string]: any;

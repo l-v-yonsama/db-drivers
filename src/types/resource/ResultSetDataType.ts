@@ -12,6 +12,9 @@ export type RdhMeta = {
   compareKeys?: CompareKey[];
   type?: string;
   tableRule?: TableRule;
+  ruleViolationSummary?: {
+    [ruleName: string]: number;
+  };
   codeItems?: CodeItem[];
   editable?: boolean;
   [key: string]: any;
@@ -24,6 +27,7 @@ export type ToStringParam = {
   withComment?: boolean;
   withRowNo?: boolean;
   withCodeLabel?: boolean;
+  withRuleViolation?: boolean;
   keyNames?: string[];
 };
 

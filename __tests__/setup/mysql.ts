@@ -111,6 +111,34 @@ export async function init(): Promise<void> {
     await con.execute('DROP TABLE IF EXISTS testdb.EMP');
     await con.execute(CREATE_TABLE_ORA_EMP.replace('oradb', 'testdb'));
 
+    await con.execute(
+      `INSERT INTO testdb.DEPT VALUES(10, 'ACCOUNTING', 'NEW YORK')`,
+    );
+    await con.execute(
+      `INSERT INTO testdb.DEPT VALUES(20, 'RESEARCH', 'DALLAS')`,
+    );
+    await con.execute(`INSERT INTO testdb.DEPT VALUES(30, 'SALES', 'CHICAGO')`);
+    await con.execute(
+      `INSERT INTO testdb.DEPT VALUES(40, 'OPERATIONS', 'BOSTON')`,
+    );
+
+    const empValues = [
+      [7839, 'KING', 0, 'PRESIDENT', null, 5000, 10],
+      [7698, 'TARO', 1, 'MANAGER', 7839, 2850, 30],
+      [7782, 'POCHI', 9, '', 7839, 2450, 10],
+      [7566, 'HANAKO', 2, 'MANAGER', 7839, 2975, 20],
+      [7788, 'SCOTT', 1, 'ANALYST', null, 3000, 30],
+    ];
+
+    for (const ev of empValues) {
+      await con.execute(
+        `INSERT INTO testdb.EMP 
+      (EMPNO,ENAME,SEX,JOB,MGR,SAL, DEPTNO) 
+      VALUES(?,?,?,?,?,?,?)`,
+        ev,
+      );
+    }
+
     await con.execute('DROP DATABASE IF EXISTS oradb');
     await con.execute(`CREATE DATABASE oradb`);
     await con.execute(

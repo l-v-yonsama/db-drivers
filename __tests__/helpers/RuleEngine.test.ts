@@ -3,6 +3,7 @@ import {
   DBType,
   MySQLDriver,
   RdhHelper,
+  ResultSetDataBuilder,
   RowHelper,
   RuleAnnotation,
   runRuleEngine,
@@ -136,7 +137,9 @@ describe('ResourceHelper', () => {
         'Rul',
       );
       expect(ruleAnnotation8.values.name).toBe('N1, N2 combination');
-      expect(ruleAnnotation8.values.message).toBe('Error: N1, N2 combination');
+      expect(ruleAnnotation8.values.message).toBe(
+        '"N1, N2 combination" Violation',
+      );
 
       const id9Row = rdh.rows.find((it) => it.values.id === 9);
       expect(id9Row).not.toBeUndefined();
@@ -159,6 +162,13 @@ describe('ResourceHelper', () => {
       });
       expect(n1n2Result.errorRows[0].rowNo).toBe(8);
       console.log(n1n2Result.conditionText);
+
+      const rdb = ResultSetDataBuilder.from(rdh);
+      console.log(
+        rdb.toMarkdown({
+          withRuleViolation: true,
+        }),
+      );
     });
   });
 });

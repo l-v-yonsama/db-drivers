@@ -130,6 +130,18 @@ export class RowHelper {
       }, {});
   }
 
+  static filterAnnotationByKeyOf<T extends CellAnnotation = CellAnnotation>(
+    row: RdhRow,
+    key: string,
+    type: T['type'],
+  ): T[] {
+    if (row.meta[key]) {
+      const annotations = row.meta[key];
+      return (annotations?.filter((a) => a.type === type) ?? []) as T[];
+    }
+    return [];
+  }
+
   static clearAllAnnotations(row: RdhRow): void {
     Object.keys(row.meta).forEach((key) => {
       delete row.meta[key];
@@ -695,6 +707,7 @@ export class ResultSetDataBuilder {
       keyNames,
       withRowNo,
       withCodeLabel,
+      withRuleViolation,
       maxPrintLines,
       maxCellValueLength,
     }: ToStringParam = {
@@ -704,6 +717,7 @@ export class ResultSetDataBuilder {
       withComment: false,
       withRowNo: false,
       withCodeLabel: false,
+      withRuleViolation: false,
       keyNames: [],
       ...params,
     };
@@ -763,10 +777,14 @@ export class ResultSetDataBuilder {
           const label = withCodeLabel
             ? this.resolveCodeLabel(row, key.name)
             : undefined;
+          const ruleMarker = withRuleViolation
+            ? this.resolveRuleMarkers(row, key.name)
+            : undefined;
           rowValues.push(
             this.toCsvString(row.values[key.name], maxCellValueLength, {
               keyType: key.type,
               label,
+              ruleMarker,
             }),
           );
         });
@@ -783,10 +801,14 @@ export class ResultSetDataBuilder {
           const label = withCodeLabel
             ? this.resolveCodeLabel(row, key.name)
             : undefined;
+          const ruleMarker = withRuleViolation
+            ? this.resolveRuleMarkers(row, key.name)
+            : undefined;
           rowValues.push(
             this.toCsvString(row.values[key.name], maxCellValueLength, {
               keyType: key.type,
               label,
+              ruleMarker,
             }),
           );
         });
@@ -813,10 +835,14 @@ export class ResultSetDataBuilder {
             const label = withCodeLabel
               ? this.resolveCodeLabel(row, key.name)
               : undefined;
+            const ruleMarker = withRuleViolation
+              ? this.resolveRuleMarkers(row, key.name)
+              : undefined;
             rowValues.push(
               this.toCsvString(row.values[key.name], maxCellValueLength, {
                 keyType: key.type,
                 label,
+                ruleMarker,
               }),
             );
           });
@@ -833,6 +859,7 @@ export class ResultSetDataBuilder {
       keyNames,
       withRowNo,
       withCodeLabel,
+      withRuleViolation,
       maxPrintLines,
       maxCellValueLength,
     }: ToStringParam = {
@@ -840,6 +867,7 @@ export class ResultSetDataBuilder {
       maxCellValueLength: MAX_CELL_VALUE_LENGTH,
       withType: false,
       withComment: false,
+      withRuleViolation: false,
       withRowNo: false,
       withCodeLabel: false,
       keyNames: [],
@@ -904,10 +932,15 @@ export class ResultSetDataBuilder {
           const label = withCodeLabel
             ? this.resolveCodeLabel(row, key.name)
             : undefined;
+          const ruleMarker = withRuleViolation
+            ? this.resolveRuleMarkers(row, key.name)
+            : undefined;
+
           retRow.push(
             this.toMarkdownString(row.values[key.name], maxCellValueLength, {
               keyType: key.type,
               label,
+              ruleMarker,
             }),
           );
         });
@@ -921,10 +954,14 @@ export class ResultSetDataBuilder {
           const label = withCodeLabel
             ? this.resolveCodeLabel(row, key.name)
             : undefined;
+          const ruleMarker = withRuleViolation
+            ? this.resolveRuleMarkers(row, key.name)
+            : undefined;
           retRow.push(
             this.toMarkdownString(row.values[key.name], maxCellValueLength, {
               keyType: key.type,
               label,
+              ruleMarker,
             }),
           );
         });
@@ -943,10 +980,14 @@ export class ResultSetDataBuilder {
             const label = withCodeLabel
               ? this.resolveCodeLabel(row, key.name)
               : undefined;
+            const ruleMarker = withRuleViolation
+              ? this.resolveRuleMarkers(row, key.name)
+              : undefined;
             retRow.push(
               this.toMarkdownString(row.values[key.name], maxCellValueLength, {
                 keyType: key.type,
                 label,
+                ruleMarker,
               }),
             );
           });
@@ -958,7 +999,25 @@ export class ResultSetDataBuilder {
           );
         });
     }
-    return retList.join(os.EOL) + os.EOL;
+    const s = retList.join(os.EOL);
+    if (withRuleViolation) {
+      const legend = this.createRuleMarkerLegend();
+      if (legend) {
+        return (
+          s +
+          os.EOL +
+          os.EOL +
+          '```' +
+          os.EOL +
+          legend +
+          os.EOL +
+          '```' +
+          os.EOL
+        );
+      }
+    }
+
+    return s + os.EOL;
   }
 
   toString(params?: ToStringParam): string {
@@ -969,6 +1028,7 @@ export class ResultSetDataBuilder {
       withComment,
       withRowNo,
       withCodeLabel,
+      withRuleViolation,
       keyNames,
     }: ToStringParam = {
       maxPrintLines: MAX_PRINT_LINE,
@@ -977,6 +1037,7 @@ export class ResultSetDataBuilder {
       withComment: false,
       withRowNo: false,
       withCodeLabel: false,
+      withRuleViolation: false,
       keyNames: [],
       ...params,
     };
@@ -1024,10 +1085,14 @@ export class ResultSetDataBuilder {
           const label = withCodeLabel
             ? this.resolveCodeLabel(v, k.name)
             : undefined;
+          const ruleMarker = withRuleViolation
+            ? this.resolveRuleMarkers(v, k.name)
+            : undefined;
           buf.d(
             this.toShortString(v.values[k.name], maxCellValueLength, {
               keyType: k.type,
               label,
+              ruleMarker,
             }),
           );
         });
@@ -1043,10 +1108,14 @@ export class ResultSetDataBuilder {
           const label = withCodeLabel
             ? this.resolveCodeLabel(v, k.name)
             : undefined;
+          const ruleMarker = withRuleViolation
+            ? this.resolveRuleMarkers(v, k.name)
+            : undefined;
           buf.d(
             this.toShortString(v.values[k.name], maxCellValueLength, {
               keyType: k.type,
               label,
+              ruleMarker,
             }),
           );
         });
@@ -1069,20 +1138,31 @@ export class ResultSetDataBuilder {
             const label = withCodeLabel
               ? this.resolveCodeLabel(v, k.name)
               : undefined;
+            const ruleMarker = withRuleViolation
+              ? this.resolveRuleMarkers(v, k.name)
+              : undefined;
             buf.d(
               this.toShortString(v.values[k.name], maxCellValueLength, {
                 keyType: k.type,
                 label,
+                ruleMarker,
               }),
             );
           });
           buf.nl();
         });
     }
+    let s = buf.toString();
     if (this.rs.rows.length === 0) {
-      return buf.toString() + os.EOL + 'No records.';
+      s += os.EOL + 'No records.';
     }
-    return buf.toString();
+    if (withRuleViolation) {
+      const legend = this.createRuleMarkerLegend();
+      if (legend) {
+        s += os.EOL + os.EOL + legend;
+      }
+    }
+    return s + os.EOL;
   }
 
   addRow(recordData: any, default_meta?: any): void {
@@ -1172,18 +1252,23 @@ export class ResultSetDataBuilder {
   private toShortString(
     o: any,
     maxCellValueLength,
-    opt?: { keyType?: GeneralColumnType; label?: string },
+    opt?: { keyType?: GeneralColumnType; label?: string; ruleMarker?: string },
   ): string {
+    let s;
     if (o === null || o === undefined) {
-      return '';
+      s = '';
+    } else {
+      s = '' + o;
+      if (isDateTimeOrDate(opt?.keyType)) {
+        s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
+      }
+      s = abbr(s, maxCellValueLength);
+      if (opt?.label) {
+        s += ` <${opt.label}>`;
+      }
     }
-    let s = '' + o;
-    if (isDateTimeOrDate(opt?.keyType)) {
-      s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
-    }
-    s = abbr(s, maxCellValueLength);
-    if (opt?.label) {
-      s += ` <${opt.label}>`;
+    if (opt?.ruleMarker) {
+      s = `${opt.ruleMarker} ${s}`;
     }
     return s;
   }
@@ -1191,18 +1276,23 @@ export class ResultSetDataBuilder {
   private toCsvString(
     o: any,
     maxCellValueLength: number,
-    opt?: { keyType?: GeneralColumnType; label?: string },
+    opt?: { keyType?: GeneralColumnType; label?: string; ruleMarker?: string },
   ): string {
+    let s;
     if (o === null || o === undefined) {
-      return '';
+      s = '';
+    } else {
+      s = '' + o;
+      if (isDateTimeOrDate(opt?.keyType)) {
+        s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
+      }
+      s = abbr(s, maxCellValueLength);
+      if (opt?.label) {
+        s += ` <${opt.label}>`;
+      }
     }
-    let s = '' + o;
-    if (isDateTimeOrDate(opt?.keyType)) {
-      s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
-    }
-    s = abbr(s, maxCellValueLength);
-    if (opt?.label) {
-      s += ` <${opt.label}>`;
+    if (opt?.ruleMarker) {
+      s = `${opt.ruleMarker} ${s}`;
     }
     s = `"${s.replace(/"/g, '""')}"`;
     return s;
@@ -1211,18 +1301,23 @@ export class ResultSetDataBuilder {
   private toMarkdownString(
     o: any,
     maxCellValueLength: number,
-    opt?: { keyType?: GeneralColumnType; label?: string },
+    opt?: { keyType?: GeneralColumnType; label?: string; ruleMarker?: string },
   ): string {
+    let s;
     if (o === null || o === undefined) {
-      return '';
+      s = '';
+    } else {
+      s = '' + o;
+      if (isDateTimeOrDate(opt?.keyType)) {
+        s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
+      }
+      s = abbr(s, maxCellValueLength);
+      if (opt?.label) {
+        s += ` <${opt.label}>`;
+      }
     }
-    let s = '' + o;
-    if (isDateTimeOrDate(opt?.keyType)) {
-      s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
-    }
-    s = abbr(s, maxCellValueLength);
-    if (opt?.label) {
-      s += ` <${opt.label}>`;
+    if (opt?.ruleMarker) {
+      s = `\`${opt.ruleMarker}\` ${s}`;
     }
     s = `${s
       .replace(/\|/g, '&#124;')
@@ -1238,5 +1333,38 @@ export class ResultSetDataBuilder {
       keyName,
       'Cod',
     )?.values?.label;
+  }
+
+  private resolveRuleMarkers(row: RdhRow, keyName: string): string | undefined {
+    const { ruleViolationSummary } = this.rs.meta;
+    if (ruleViolationSummary === undefined) {
+      return undefined;
+    }
+    const rules = RowHelper.filterAnnotationByKeyOf<RuleAnnotation>(
+      row,
+      keyName,
+      'Rul',
+    );
+    const marks: number[] = [];
+    const names = Object.keys(ruleViolationSummary);
+    names.forEach((it, idx) => {
+      if (rules.some((rule) => rule.values.name === it)) {
+        marks.push(idx + 1);
+      }
+    });
+    return marks.length > 0 ? `*${marks.join(',')}` : undefined;
+  }
+
+  private createRuleMarkerLegend(): string | undefined {
+    const { ruleViolationSummary } = this.rs.meta;
+    if (ruleViolationSummary === undefined) {
+      return undefined;
+    }
+    return Object.keys(ruleViolationSummary)
+      .map(
+        (ruleName, idx) =>
+          `*${idx + 1}: ${ruleName}: ${ruleViolationSummary[ruleName]}`,
+      )
+      .join(os.EOL);
   }
 }

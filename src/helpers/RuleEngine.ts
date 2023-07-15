@@ -1,5 +1,5 @@
 import { RowHelper } from '../resource';
-import { RdhKey, ResultSetData, TableRule, TableRuleDetail } from '../types';
+import { RdhKey, ResultSetData, TableRuleDetail } from '../types';
 import {
   AllConditions,
   AnyConditions,
@@ -47,6 +47,8 @@ export const runRuleEngine = async (rdh: ResultSetData): Promise<boolean> => {
   if (!tableRule) {
     return false;
   }
+  rdh.meta.ruleViolationSummary = {};
+  const { ruleViolationSummary } = rdh.meta;
 
   // ADD CUSTOM OPERATORS
   engine.addOperator('isNull', (factValue) => {
@@ -107,8 +109,13 @@ export const runRuleEngine = async (rdh: ResultSetData): Promise<boolean> => {
       for (const result of failureResults) {
         const { event, name, conditions } = result;
         const error = event.params as TableRuleDetail['error'];
-        const message = `Error: ${name}`;
+        const message = `"${name}" Violation`;
         const conditionValues = getConditionalValues(conditions, facts);
+
+        if (ruleViolationSummary[name] === undefined) {
+          ruleViolationSummary[name] = 0;
+        }
+        ruleViolationSummary[name]++;
 
         if (limitCounters[name].count < limitCounters[name].limit) {
           RowHelper.pushAnnotation(row, error.column, {

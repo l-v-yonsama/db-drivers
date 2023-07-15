@@ -77,24 +77,42 @@ export async function init(): Promise<void> {
     await pool.query('DROP TABLE IF EXISTS order_detail');
     await pool.query('DROP TABLE IF EXISTS order1');
     await pool.query('DROP TABLE IF EXISTS customer');
+
+    await pool.query('DROP TYPE IF EXISTS clothesSize');
+    await pool.query(
+      `CREATE TYPE clothesSize AS ENUM ('S', 'M', 'L', 'KID''s')`,
+    );
+
     await pool.query(CREATE_CUSTOMER_TABLE_STATEMENT);
+
+    const customerValues = [
+      [7839, '0120-99-7000', 40, 172, 55, 'L'],
+      [7698, '0120-88-6000', 30, 152, 60, 'L'],
+      [7782, '0120-00-1234', 20, 145, 100, 'S'],
+      [7566, '0120-88-3321', 10, 100, 20, "KID's"],
+      [7788, null, 5, 72, 10, 'S'],
+    ];
+
     await pool.query(CREATE_ORDER_TABLE_STATEMENT);
     await pool.query(CREATE_ORDER_DETAIL_TABLE_STATEMENT);
-    for (let i = 1; i <= 10; i++) {
-      const binds = [i, `0120-11-121${i % 10}`];
-      await pool.query(
-        `INSERT INTO  customer (customer_no, tel) VALUES ($1, $2)`,
-        binds,
-      );
 
-      const binds2 = [i, i, now, i * 100];
+    for (let i = 0; i < customerValues.length; i++) {
+      const no = i + 1;
+      await pool.query(
+        `INSERT INTO  customer (customer_no, tel, age, height,weight, clothes_size)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        customerValues[i],
+      );
+      const customerNo = customerValues[i][0];
+
+      const binds2 = [no, customerNo, now, no * 100];
       await pool.query(
         `INSERT INTO order1 (order_no, customer_no, order_date, amount) 
           VALUES ($1, $2, $3, $4)`,
         binds2,
       );
 
-      const binds3 = [i, i, i * 10, i * 100];
+      const binds3 = [no, no, no * 10, no * 100];
       await pool.query(
         `INSERT INTO order_detail (order_no, detail_no, item_no, amount) 
           VALUES ($1, $2, $3, $4)`,
@@ -182,7 +200,11 @@ const INSERT_STATEMENT2 = `INSERT INTO diff (
 
 const CREATE_CUSTOMER_TABLE_STATEMENT = `CREATE TABLE customer (
     customer_no SERIAL NOT NULL PRIMARY KEY,
-    tel VARCHAR(20)
+    tel VARCHAR(20),
+    age integer,
+    height NUMERIC,
+    weight NUMERIC,
+    clothes_size clothesSize
   )
   `;
 
