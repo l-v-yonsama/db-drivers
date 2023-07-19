@@ -80,7 +80,7 @@ export class RowHelper {
         if (v === null || v === undefined) {
           ret[key.name] = v;
         } else {
-          ret[key.name] = dayjs(v).format('YYYY-MM-DD HH:mm:ss');
+          ret[key.name] = dayjs(v).valueOf();
         }
       } else {
         ret[key.name] = v;

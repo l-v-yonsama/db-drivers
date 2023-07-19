@@ -352,6 +352,7 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
     /\bLIMIT\s+([\d]+)\s*,\s*([\d]+)/i,
     'LIMIT $2 OFFSET $1',
   );
+  replacedSql = replacedSql.replace(/\bLOCK\s+IN\s+(S+)\s+MODE/i, ' ');
   replacedSql = replacedSql.replace(
     /^\s*(SET)(\s+global)?\s+(\S+)\s+=\s+\S+$/i,
     '$1 $3 TO dummy',

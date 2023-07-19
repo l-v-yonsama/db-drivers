@@ -1,11 +1,22 @@
-import { RowHelper } from '../resource';
-import { RdhKey, ResultSetData, TableRuleDetail } from '../types';
+import {
+  RowHelper,
+  isBinaryLike,
+  isDateTimeOrDate,
+  isNumericLike,
+} from '../resource';
+import {
+  GeneralColumnType,
+  RdhKey,
+  ResultSetData,
+  TableRuleDetail,
+} from '../types';
 import {
   AllConditions,
   AnyConditions,
   Engine,
   TopLevelCondition,
 } from 'json-rules-engine';
+import { toBoolean, toDate, toNum } from '../util';
 
 function isAllConditions(item: any): item is AllConditions {
   return item.all && item.all.length !== undefined;
@@ -30,6 +41,7 @@ const OPERATORS = [
   { label: '>', value: 'greaterThan' },
   { label: '≧', value: 'greaterThanInclusive' },
   { label: 'STARTS WITH', value: 'startsWith' },
+  { label: 'BETWEEN', value: 'between' },
   { label: 'ENDS WITH', value: 'endsWith' },
   { label: '∈ (IN)', value: 'in' },
   { label: '∉ (NOT IN)', value: 'notIn' },
@@ -64,6 +76,9 @@ export const runRuleEngine = async (rdh: ResultSetData): Promise<boolean> => {
     return factValue !== null && factValue !== undefined;
   });
   engine.addOperator('startsWith', (factValue, jsonValue) => {
+    if (jsonValue === null || jsonValue === undefined) {
+      return true;
+    }
     const v = (factValue ?? '').toString();
     if (v.length === 0) {
       return false;
@@ -71,11 +86,26 @@ export const runRuleEngine = async (rdh: ResultSetData): Promise<boolean> => {
     return v.startsWith(jsonValue.toString());
   });
   engine.addOperator('endsWith', (factValue, jsonValue) => {
+    if (jsonValue === null || jsonValue === undefined) {
+      return true;
+    }
     const v = (factValue ?? '').toString();
     if (v.length === 0) {
       return false;
     }
     return v.endsWith(jsonValue.toString());
+  });
+  engine.addOperator('between', (factValue, jsonValue) => {
+    if (
+      jsonValue === null ||
+      jsonValue === undefined ||
+      (jsonValue as any[]).length < 2
+    ) {
+      return true;
+    }
+    const from = jsonValue[0];
+    const to = jsonValue[1];
+    return from <= factValue && factValue <= to;
   });
 
   const limitCounters: {
@@ -104,6 +134,7 @@ export const runRuleEngine = async (rdh: ResultSetData): Promise<boolean> => {
   for (const row of rdh.rows) {
     const facts = RowHelper.getRuleEngineValues(row, rdh.keys);
     const { failureResults } = await engine.run(facts);
+
     if (failureResults.length) {
       ok = false;
       for (const result of failureResults) {
@@ -136,6 +167,62 @@ export const runRuleEngine = async (rdh: ResultSetData): Promise<boolean> => {
   }
   return ok;
 };
+
+// editor's string text value to rule-engine's json value
+export function stringConditionToJsonCondition(
+  condition: TopLevelCondition,
+  keys: RdhKey[],
+): void {
+  const nestedList = [];
+  if (isAllConditions(condition)) {
+    nestedList.push(...condition.all);
+  } else {
+    nestedList.push(...condition.any);
+  }
+
+  for (const nest of nestedList) {
+    if (isTopLevelCondition(nest)) {
+      stringConditionToJsonCondition(nest, keys);
+    } else {
+      // condition
+      const { fact, value, operator } = nest;
+      const colType =
+        keys.find((it) => it.name === fact)?.type ?? GeneralColumnType.TEXT;
+
+      if (operator === 'between' || operator === 'in' || operator === 'notIn') {
+        if (value === undefined || value === null) {
+          nest.value = null;
+        } else {
+          let arr: any[] = [];
+          if (Array.isArray(value)) {
+            arr = value;
+          } else if (value.startsWith('[') && value.endsWith(']')) {
+            arr = JSON.parse(value) as any[];
+          } else {
+            arr = ('' + value).split(/,/).map((it) => it.trim());
+          }
+          if (isNumericLike(colType)) {
+            nest.value = arr.map((it) => toNum(it) ?? null);
+          } else if (isBinaryLike(colType)) {
+            nest.value = arr.map((it) => toBoolean(it) ?? null);
+          } else if (isDateTimeOrDate(colType)) {
+            nest.value = arr.map((it) => toDate(it)?.getTime() ?? null);
+          } else {
+            nest.value = arr.map((it) => it + '');
+          }
+        }
+      } else {
+        if (isNumericLike(colType)) {
+          nest.value = toNum(value) ?? null;
+        } else if (isBinaryLike(colType)) {
+          nest.value = toBoolean(value) ?? null;
+        } else if (isDateTimeOrDate(colType)) {
+          nest.value = toDate(value)?.getTime() ?? null;
+        }
+      }
+    }
+  }
+}
 
 export function conditionsToString(
   condition: TopLevelCondition,
