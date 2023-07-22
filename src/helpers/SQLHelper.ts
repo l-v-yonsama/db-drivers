@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import * as os from 'os';
 import {
   DbResource,
   DbSchema,
@@ -9,55 +9,28 @@ import {
   isTextLike,
   isTime,
 } from '../resource';
-import { DbTable, RdsDatabase } from '../resource/DbResource';
+import { DbColumn, DbTable, RdsDatabase } from '../resource/DbResource';
 import { parse, parseFirst, Statement } from 'pgsql-ast-parser';
-import { toBoolean, toDate, toNum, tolines } from '../util';
+import { toBoolean, toDate, toNum, toTime, tolines } from '../util';
 import {
   BindParamPosition,
   GeneralColumnType,
   Proposal,
   ProposalKind,
   ProposalParams,
-  QueryWithBinds,
+  QueryWithBindsResult,
   RdhKey,
   ResourcePosition,
   ResourcePositionParams,
   ToViewDataQueryParams,
-  ViewConditionItemOperator,
 } from '../types';
 import { FUNCTIONS, RESERVED_WORDS } from './constant';
-
-export const operatorToString = (
-  operator: ViewConditionItemOperator,
-): string => {
-  switch (operator) {
-    case 'equal':
-      return '=';
-    case 'notEqual':
-      return '<>';
-    case 'lessThan':
-      return '<';
-    case 'lessThanInclusive':
-      return '<=';
-    case 'greaterThan':
-      return '>';
-    case 'greaterThanInclusive':
-      return '>=';
-    case 'like':
-      return 'LIKE';
-    case 'notLike':
-      return 'NOT LIKE';
-    case 'in':
-      return 'IN';
-    case 'notIn':
-      return 'NOT IN';
-    case 'isNull':
-      return 'IS NULL';
-    case 'isNotNull':
-      return 'IS NOT NULL';
-  }
-  throw new Error(`Operator:${operator} is not defined`);
-};
+import { TopLevelCondition } from 'json-rules-engine';
+import {
+  isAllConditions,
+  isTopLevelCondition,
+  operatorToSQLString,
+} from './RuleEngine';
 
 const toBindValue = (colType: GeneralColumnType, value: string | null): any => {
   if (isTextLike(colType)) {
@@ -77,27 +50,9 @@ const toBindValue = (colType: GeneralColumnType, value: string | null): any => {
     if (isNumericLike(colType)) {
       v = toNum(value);
     } else if (isDateTimeOrDate(colType)) {
-      const now = new Date();
-      if (/^(now|CURRENT_TIMESTAMP)$/i.test(value)) {
-        return now;
-      }
-      if (/^(today|CURRENT_DATE)$/i.test(value)) {
-        return new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          0,
-          0,
-          0,
-          0,
-        );
-      }
       v = toDate(value);
     } else if (isTime(colType)) {
-      v = value;
-      if ('now' === value.toLowerCase()) {
-        return dayjs().format('HH:mm:ss');
-      }
+      v = toTime(value);
     } else {
       v = toBoolean(value);
     }
@@ -121,7 +76,7 @@ export const toInsertStatementWithBinds = ({
   values: { [key: string]: any };
   toPositionedParameter?: boolean;
   quote?: boolean;
-}): QueryWithBinds => {
+}): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableName,
@@ -172,7 +127,7 @@ export const toUpdateStatementWithBinds = ({
   conditions: { [key: string]: any };
   toPositionedParameter?: boolean;
   quote?: boolean;
-}): QueryWithBinds => {
+}): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableName,
@@ -231,7 +186,7 @@ export const toDeleteStatementWithBinds = ({
   conditions: { [key: string]: any };
   toPositionedParameter?: boolean;
   quote?: boolean;
-}): QueryWithBinds => {
+}): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableName,
@@ -265,75 +220,161 @@ export const toDeleteStatementWithBinds = ({
 export const toViewDataQuery = ({
   tableRes,
   schemaName,
-  toPositionedParameter,
   conditions,
   quote,
-}: ToViewDataQueryParams): QueryWithBinds => {
+  toPositionedParameter,
+}: ToViewDataQueryParams): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableRes.name,
     quote,
   });
-  const binds: any[] = [];
+  const params = {
+    pos: 1,
+    bindParams: [],
+  };
 
-  let query = `SELECT * FROM ${tableNameWithSchema} `;
-  if (conditions && conditions.items.length) {
-    const { andOr, items } = conditions;
-    query += 'WHERE ';
-    let pos = 1;
-    items.forEach((it, idx) => {
-      if (idx > 0) {
-        query += andOr === 'and' ? 'AND ' : 'OR ';
-      }
-      query += `${wrapQuote(it.column, quote)} ${operatorToString(
-        it.operator,
-      )} `;
-      switch (it.operator) {
-        case 'isNotNull':
-        case 'isNull':
-          return;
-        case 'in':
-        case 'notIn':
-          {
-            query += ' (';
-            it.values.forEach((v, idx2) => {
-              if (idx2 > 0) {
-                query += ',';
-              }
-              if (toPositionedParameter === true) {
-                query += `$${pos} `;
-              } else {
-                query += `? `;
-              }
-              binds.push(
-                toBindValue(tableRes.getChildByName(it.column).colType, v),
-              );
-              pos++;
-            });
-            query += ') ';
-          }
-          break;
-        default:
-          {
-            if (toPositionedParameter === true) {
-              query += `$${pos} `;
-            } else {
-              query += `? `;
-            }
-            binds.push(
-              toBindValue(tableRes.getChildByName(it.column).colType, it.value),
-            );
-            pos++;
-          }
-          break;
-      }
+  let query = `SELECT * ${os.EOL}FROM ${tableNameWithSchema} `;
+  if (conditions && conditions) {
+    const q = createConditionalClause({
+      conditions,
+      columns: tableRes.children,
+      params,
+      indent: '  ',
+      quote,
     });
+    if (q) {
+      query += os.EOL + 'WHERE' + os.EOL + q;
+    }
   }
 
-  return {
+  return normalizeQuery({
     query: query.trim(),
-    binds,
+    bindParams: params.bindParams,
+    toPositionedParameter,
+  });
+};
+
+const createConditionalClause = ({
+  conditions,
+  columns,
+  params,
+  indent,
+  quote,
+}: {
+  conditions?: TopLevelCondition;
+  columns: DbColumn[];
+  params: {
+    bindParams: any[];
+    pos: number;
   };
+  indent: string;
+  quote?: boolean;
+}): string => {
+  const queries: string[] = [];
+  let andOr = 'AND';
+  const nestedList = [];
+  if (isAllConditions(conditions)) {
+    nestedList.push(...conditions.all);
+  } else {
+    nestedList.push(...conditions.any);
+    andOr = 'OR';
+  }
+
+  for (const nest of nestedList) {
+    if (isTopLevelCondition(nest)) {
+      const q = createConditionalClause({
+        conditions: nest,
+        columns,
+        params,
+        indent: indent + '  ',
+        quote,
+      });
+      queries.push(`(${os.EOL}${q}${os.EOL}${indent})`);
+    } else {
+      // condition
+      const { fact, value, operator } = nest;
+      const colType =
+        columns.find((it) => it.name === fact)?.colType ??
+        GeneralColumnType.TEXT;
+
+      let q = `${wrapQuote(fact, quote)} ${operatorToSQLString(operator)} `;
+
+      if (operator === 'isNull' || operator === 'isNotNull') {
+        // do nothing.
+      } else if (
+        operator === 'between' ||
+        operator === 'in' ||
+        operator === 'notIn'
+      ) {
+        let val: any = null;
+        if (value === undefined || value === null) {
+          val = null;
+        } else {
+          let arr: any[] = [];
+          if (Array.isArray(value)) {
+            arr = value;
+          } else if (value.startsWith('[') && value.endsWith(']')) {
+            arr = JSON.parse(value) as any[];
+          } else {
+            arr = ('' + value).split(/,/).map((it) => it.trim());
+          }
+          if (isNumericLike(colType)) {
+            val = arr.map((it) => toNum(it) ?? null);
+          } else if (isBooleanLike(colType)) {
+            val = arr.map((it) => toBoolean(it) ?? null);
+          } else if (isDateTimeOrDate(colType)) {
+            val = arr.map((it) => toDate(it) ?? null);
+          } else if (isTime(colType)) {
+            val = arr.map((it) => toTime(it) ?? null);
+          } else {
+            val = arr.map((it) => it + '');
+          }
+        }
+        if (operator === 'between') {
+          const bindName1 = `val${params.pos}`;
+          params.pos++;
+          const bindName2 = `val${params.pos}`;
+          params.pos++;
+          q += `:${bindName1} AND :${bindName2}`;
+          if (val === null) {
+            params.bindParams[bindName1] = null;
+            params.bindParams[bindName2] = null;
+          } else {
+            params.bindParams[bindName1] = val[0];
+            params.bindParams[bindName2] = val[1];
+          }
+        } else {
+          const bindName = `val${params.pos}`;
+          params.pos++;
+          q += `(:${bindName})`;
+          params.bindParams[bindName] = val;
+        }
+      } else {
+        let val: any = null;
+        if (isNumericLike(colType)) {
+          val = toNum(value) ?? null;
+        } else if (isBooleanLike(colType)) {
+          val = toBoolean(value) ?? null;
+        } else if (isDateTimeOrDate(colType)) {
+          val = toDate(value) ?? null;
+        } else if (isTime(colType)) {
+          val = toTime(value) ?? null;
+        } else {
+          val = value;
+        }
+        const bindName = `val${params.pos}`;
+        q += `:${bindName}`;
+        params.bindParams[bindName] = val;
+        params.pos++;
+      }
+      queries.push(q);
+    }
+  }
+  if (queries.length > 0) {
+    return indent + queries.join(`${os.EOL}${indent}${andOr} `);
+  }
+  return '';
 };
 
 /**
@@ -387,7 +428,7 @@ export const normalizeQuery = ({
   query: string;
   toPositionedParameter?: boolean;
   bindParams?: { [key: string]: any };
-}): { query: string; binds: any[] } => {
+}): QueryWithBindsResult => {
   if (toPositionedParameter) {
     return normalizePositionedParametersQuery(query, bindParams);
   }
@@ -403,7 +444,7 @@ export const normalizeQuery = ({
 export const normalizePositionedParametersQuery = (
   query: string,
   bindParams?: { [key: string]: any },
-): { query: string; binds: any[] } => {
+): QueryWithBindsResult => {
   let i = 0;
   const nameWithPos: { [key: string]: BindParamPosition } = {};
   const missingParams = new Set<string>();
@@ -525,7 +566,7 @@ export const normalizePositionedParametersQuery = (
 export const normalizeSimpleParametersQuery = (
   query: string,
   bindParams?: { [key: string]: any },
-): { query: string; binds: any[] } => {
+): QueryWithBindsResult => {
   const binds: any[] = [];
   const missingParams = new Set<string>();
 

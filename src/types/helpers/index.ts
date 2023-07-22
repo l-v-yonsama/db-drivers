@@ -1,6 +1,7 @@
+import { TopLevelCondition } from 'json-rules-engine';
 import { DbTable, RdsDatabase } from '../../resource';
 
-export type QueryWithBinds = {
+export type QueryWithBindsResult = {
   query: string;
   binds: any[];
 };
@@ -9,52 +10,8 @@ export type ToViewDataQueryParams = {
   tableRes: DbTable;
   schemaName?: string;
   toPositionedParameter?: boolean;
-  conditions?: {
-    andOr: 'and' | 'or';
-    items: ViewConditionItem[];
-  };
+  conditions?: TopLevelCondition;
   quote?: boolean;
-};
-
-export type ViewConditionItemOperator =
-  | MultipleValueConditionItemOperator
-  | SingleValueConditionItemOperator
-  | NoValueConditionItemOperator;
-
-export type MultipleValueConditionItemOperator = 'in' | 'notIn';
-
-export type SingleValueConditionItemOperator =
-  | 'equal'
-  | 'notEqual'
-  | 'lessThan'
-  | 'lessThanInclusive'
-  | 'greaterThan'
-  | 'greaterThanInclusive'
-  | 'like'
-  | 'notLike';
-
-export type NoValueConditionItemOperator = 'isNull' | 'isNotNull';
-
-export type ViewConditionItem =
-  | MultipleValueViewConditionItem
-  | SingleValueViewConditionItem
-  | NoValueViewConditionItem;
-
-export type MultipleValueViewConditionItem = {
-  column: string;
-  operator: MultipleValueConditionItemOperator;
-  values: string[];
-};
-
-export type SingleValueViewConditionItem = {
-  column: string;
-  operator: SingleValueConditionItemOperator;
-  value: string;
-};
-
-export type NoValueViewConditionItem = {
-  column: string;
-  operator: NoValueConditionItemOperator;
 };
 
 export enum ProposalKind {

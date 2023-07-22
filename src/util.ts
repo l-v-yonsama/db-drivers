@@ -64,13 +64,52 @@ export const toDate = (
   if (s.trim().length === 0) {
     return undefined;
   }
+  if (/^(now|CURRENT_TIMESTAMP)$/i.test(s)) {
+    return new Date();
+  }
+  if (/^(today|CURRENT_DATE)$/i.test(s)) {
+    const now = new Date();
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0,
+    );
+  }
 
   const r = dayjs(s).toDate();
   return r;
 };
 
+export const toTime = (s: string | undefined): string | undefined => {
+  if (s === null || s === undefined) {
+    return undefined;
+  }
+
+  if (s.trim().length === 0) {
+    return undefined;
+  }
+
+  if ('now' === s.toLowerCase()) {
+    return dayjs().format('HH:mm:ss');
+  }
+
+  return s;
+};
+
 export const tolines = (s: string): string[] => {
-  return s.replace(/\r\n/, '\n').replace(/\r/, '\n').split(/\n/);
+  return s.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split(/\n/);
+};
+
+export const eolToSpace = (s: string): string => {
+  return s
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\n/g, ' ')
+    .replace(/ +/g, ' ');
 };
 
 export const abbr = (s: string | undefined, len = 10): string | undefined => {

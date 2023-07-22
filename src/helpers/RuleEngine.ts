@@ -1,6 +1,6 @@
 import {
   RowHelper,
-  isBinaryLike,
+  isBooleanLike,
   isDateTimeOrDate,
   isNumericLike,
 } from '../resource';
@@ -18,33 +18,36 @@ import {
 } from 'json-rules-engine';
 import { toBoolean, toDate, toNum } from '../util';
 
-function isAllConditions(item: any): item is AllConditions {
+export function isAllConditions(item: any): item is AllConditions {
   return item.all && item.all.length !== undefined;
 }
-function isAnyConditions(item: any): item is AnyConditions {
+
+export function isAnyConditions(item: any): item is AnyConditions {
   return item.any && item.any.length !== undefined;
 }
-function isTopLevelCondition(item: any): item is TopLevelCondition {
+export function isTopLevelCondition(item: any): item is TopLevelCondition {
   return isAllConditions(item) || isAnyConditions(item);
 }
 
 const OPERATORS = [
   { label: '-', value: '' },
-  { label: 'IS NULL', value: 'isNull' },
-  { label: 'IS NOT NULL', value: 'isNotNull' },
+  { label: 'IS NULL', value: 'isNull', sql: 'IS NULL' },
+  { label: 'IS NOT NULL', value: 'isNotNull', sql: 'IS NOT NULL' },
   { label: 'IS NIL', value: 'isNil' },
   { label: 'IS NOT NIL', value: 'isNotNil' },
-  { label: '=', value: 'equal' },
-  { label: '≠', value: 'notEqual' },
-  { label: '<', value: 'lessThan' },
-  { label: '≦', value: 'lessThanInclusive' },
-  { label: '>', value: 'greaterThan' },
-  { label: '≧', value: 'greaterThanInclusive' },
-  { label: 'STARTS WITH', value: 'startsWith' },
-  { label: 'BETWEEN', value: 'between' },
-  { label: 'ENDS WITH', value: 'endsWith' },
-  { label: '∈ (IN)', value: 'in' },
-  { label: '∉ (NOT IN)', value: 'notIn' },
+  { label: '=', value: 'equal', sql: '=' },
+  { label: '≠', value: 'notEqual', sql: '<>' },
+  { label: '<', value: 'lessThan', sql: '<' },
+  { label: '≦', value: 'lessThanInclusive', sql: '<=' },
+  { label: '>', value: 'greaterThan', sql: '>' },
+  { label: '≧', value: 'greaterThanInclusive', sql: '>=' },
+  { label: 'BETWEEN', value: 'between', sql: 'BETWEEN' },
+  { label: 'STARTS WITH', value: 'startsWith', sql: 'LIKE' },
+  { label: 'ENDS WITH', value: 'endsWith', sql: 'LIKE' },
+  { label: '∈ (IN)', value: 'in', sql: 'IN' },
+  { label: '∉ (NOT IN)', value: 'notIn', sql: 'NOT IN' },
+  // only view condition
+  { label: 'LIKE', value: 'like', sql: 'LIKE' },
 ];
 
 /**
@@ -203,7 +206,7 @@ export function stringConditionToJsonCondition(
           }
           if (isNumericLike(colType)) {
             nest.value = arr.map((it) => toNum(it) ?? null);
-          } else if (isBinaryLike(colType)) {
+          } else if (isBooleanLike(colType)) {
             nest.value = arr.map((it) => toBoolean(it) ?? null);
           } else if (isDateTimeOrDate(colType)) {
             nest.value = arr.map((it) => toDate(it)?.getTime() ?? null);
@@ -214,7 +217,7 @@ export function stringConditionToJsonCondition(
       } else {
         if (isNumericLike(colType)) {
           nest.value = toNum(value) ?? null;
-        } else if (isBinaryLike(colType)) {
+        } else if (isBooleanLike(colType)) {
           nest.value = toBoolean(value) ?? null;
         } else if (isDateTimeOrDate(colType)) {
           nest.value = toDate(value)?.getTime() ?? null;
@@ -222,6 +225,14 @@ export function stringConditionToJsonCondition(
       }
     }
   }
+}
+
+export function operatorToLabelString(operator: string): string {
+  return OPERATORS.find((it) => it.value === operator)?.label ?? '';
+}
+
+export function operatorToSQLString(operator: string): string {
+  return OPERATORS.find((it) => it.value === operator)?.sql ?? '';
 }
 
 export function conditionsToString(
@@ -254,7 +265,7 @@ export function conditionsToString(
     } else {
       // condition
       const { fact, value } = nest;
-      const operator = OPERATORS.find((it) => it.value === nest.operator).label;
+      const operator = operatorToLabelString(nest.operator);
 
       if (
         typeof value === 'object' &&

@@ -1,4 +1,5 @@
 import {
+  eolToSpace,
   getProposals,
   getResourcePositions,
   normalizeQuery,
@@ -489,51 +490,52 @@ describe('SQLHelper', () => {
         tableRes: schemaRes.getChildByName('testtable'),
         schemaName: schemaRes.name,
       });
-      expect(query).toBe('SELECT * FROM testdb.testtable');
+      expect(eolToSpace(query)).toBe('SELECT * FROM testdb.testtable');
       expect(binds).toEqual([]);
     });
     it('With conitions', () => {
       const schemaRes = db.getSchema({ isDefault: true });
+
       const { query, binds } = toViewDataQuery({
         tableRes: schemaRes.getChildByName('testtable'),
         schemaName: schemaRes.name,
         conditions: {
-          andOr: 'and',
-          items: [
+          all: [
             {
-              column: 'ID',
+              fact: 'ID',
               operator: 'notEqual',
               value: '100',
             },
             {
-              column: 'n0',
+              fact: 'n0',
               operator: 'equal',
               value: '1',
             },
             {
-              column: 'n1',
+              fact: 'n1',
               operator: 'isNotNull',
+              value: null,
             },
             {
-              column: 'n2',
+              fact: 'n2',
               operator: 'in',
-              values: ['1', '2', '3'],
+              value: '1, 2, 3',
             },
             {
-              column: 'd1',
+              fact: 'd1',
               operator: 'in',
-              values: ['2020-01-01', 'today'],
+              value: '2020-01-01, today',
             },
             {
-              column: 'd3',
+              fact: 'd3',
               operator: 'lessThan',
               value: 'now',
             },
           ],
         },
       });
-      expect(query).toBe(
-        'SELECT * FROM testdb.testtable WHERE ID <> ? AND n0 = ? AND n1 IS NOT NULL AND n2 IN  (? ,? ,? ) AND d1 IN  (? ,? ) AND d3 < ?',
+      expect(eolToSpace(query)).toBe(
+        'SELECT * FROM testdb.testtable WHERE ID <> ? AND n0 = ? AND n1 IS NOT NULL AND n2 IN (?,?,?) AND d1 IN (?,?) AND d3 < ?',
       );
       expect(binds).toEqual([
         100,
@@ -553,29 +555,51 @@ describe('SQLHelper', () => {
         schemaName: schemaRes.name,
         toPositionedParameter: true,
         conditions: {
-          andOr: 'or',
-          items: [
+          any: [
             {
-              column: 'n0',
+              fact: 'n0',
               operator: 'isNull',
+              value: null,
             },
             {
-              column: 'd2',
+              fact: 'd2',
               operator: 'greaterThan',
               value: '13:24:56',
             },
             {
-              column: 's2',
+              all: [
+                {
+                  fact: 'n2',
+                  operator: 'between',
+                  value: '20, 30',
+                },
+                {
+                  fact: 'd1',
+                  operator: 'between',
+                  value: '2020-01-01, 2022-12-31',
+                },
+              ],
+            },
+            {
+              fact: 's2',
               operator: 'like',
               value: 't%st',
             },
           ],
         },
       });
-      expect(query).toBe(
-        'SELECT * FROM testdb.testtable WHERE n0 IS NULL OR d2 > $1 OR s2 LIKE $2',
+
+      expect(eolToSpace(query)).toBe(
+        'SELECT * FROM testdb.testtable WHERE n0 IS NULL OR d2 > $1 OR ( n2 BETWEEN $2 AND $3 AND d1 BETWEEN $4 AND $5 ) OR s2 LIKE $6',
       );
-      expect(binds).toEqual(['13:24:56', 't%st']);
+      expect(binds).toEqual([
+        '13:24:56',
+        20,
+        30,
+        expect.anything(),
+        expect.anything(),
+        't%st',
+      ]);
     });
   });
 });
