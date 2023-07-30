@@ -1252,7 +1252,11 @@ export class ResultSetDataBuilder {
   private toShortString(
     o: any,
     maxCellValueLength,
-    opt?: { keyType?: GeneralColumnType; label?: string; ruleMarker?: string },
+    opt?: {
+      keyType?: GeneralColumnType;
+      label?: CodeResolvedAnnotation['values'];
+      ruleMarker?: string;
+    },
   ): string {
     let s;
     if (o === null || o === undefined) {
@@ -1264,7 +1268,7 @@ export class ResultSetDataBuilder {
       }
       s = abbr(s, maxCellValueLength);
       if (opt?.label) {
-        s += ` <${opt.label}>`;
+        s += ` <${opt.label.label}>`;
       }
     }
     if (opt?.ruleMarker) {
@@ -1276,7 +1280,11 @@ export class ResultSetDataBuilder {
   private toCsvString(
     o: any,
     maxCellValueLength: number,
-    opt?: { keyType?: GeneralColumnType; label?: string; ruleMarker?: string },
+    opt?: {
+      keyType?: GeneralColumnType;
+      label?: CodeResolvedAnnotation['values'];
+      ruleMarker?: string;
+    },
   ): string {
     let s;
     if (o === null || o === undefined) {
@@ -1288,7 +1296,7 @@ export class ResultSetDataBuilder {
       }
       s = abbr(s, maxCellValueLength);
       if (opt?.label) {
-        s += ` <${opt.label}>`;
+        s += ` <${opt.label.label}>`;
       }
     }
     if (opt?.ruleMarker) {
@@ -1301,7 +1309,11 @@ export class ResultSetDataBuilder {
   private toMarkdownString(
     o: any,
     maxCellValueLength: number,
-    opt?: { keyType?: GeneralColumnType; label?: string; ruleMarker?: string },
+    opt?: {
+      keyType?: GeneralColumnType;
+      label?: CodeResolvedAnnotation['values'];
+      ruleMarker?: string;
+    },
   ): string {
     let s;
     if (o === null || o === undefined) {
@@ -1313,7 +1325,11 @@ export class ResultSetDataBuilder {
       }
       s = abbr(s, maxCellValueLength);
       if (opt?.label) {
-        s += ` <${opt.label}>`;
+        if (opt.label.isUndefined) {
+          s += ` <\`${opt.label.label}\`>`;
+        } else {
+          s += ` <${opt.label.label}>`;
+        }
       }
     }
     if (opt?.ruleMarker) {
@@ -1327,12 +1343,15 @@ export class ResultSetDataBuilder {
     return s;
   }
 
-  private resolveCodeLabel(row: RdhRow, keyName: string): string | undefined {
+  private resolveCodeLabel(
+    row: RdhRow,
+    keyName: string,
+  ): CodeResolvedAnnotation['values'] {
     return RowHelper.getFirstAnnotationOf<CodeResolvedAnnotation>(
       row,
       keyName,
       'Cod',
-    )?.values?.label;
+    )?.values;
   }
 
   private resolveRuleMarkers(row: RdhRow, keyName: string): string | undefined {

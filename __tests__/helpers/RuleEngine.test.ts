@@ -271,7 +271,7 @@ describe('ResourceHelper', () => {
         );
       });
     });
-    describe.skip('stringConditionToJsonCondition', () => {
+    describe('stringConditionToJsonCondition', () => {
       const keys: RdhKey[] = [
         { name: 'n1', type: GeneralColumnType.INTEGER, comment: '' },
         { name: 's1', type: GeneralColumnType.TEXT, comment: '' },

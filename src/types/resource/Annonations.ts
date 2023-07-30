@@ -50,6 +50,7 @@ export type CodeResolvedAnnotation = BaseCellAnnotation<
   'Cod',
   {
     label: string;
+    isUndefined: boolean;
   }
 >;
 

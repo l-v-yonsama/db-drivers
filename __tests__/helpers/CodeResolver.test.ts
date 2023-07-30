@@ -75,13 +75,13 @@ describe('ResourceHelper', () => {
       // 2     SMITH2  2:<Female>  CLERK2  2   2023-06-20 00:00:00 2        2
       // ...   ...     ...         ...     ... ...                 ... ...  ...
       // 9     SMITH9  0:<Unknown> CLERK9  9   2023-06-20 00:00:00 9        9
-      // 10    SMITH10 1:<Male>    CLERK10 10  2023-06-20 00:00:00 10       10
-      console.log(
-        ResultSetDataBuilder.from(rdh).toString({
-          withCodeLabel: true,
-          maxPrintLines: 4,
-        }),
-      );
+      // 10    SMITH10 1:<Undefined> CLERK10 10  2023-06-20 00:00:00 10       10
+      // console.log(
+      //   ResultSetDataBuilder.from(rdh).toString({
+      //     withCodeLabel: true,
+      //     maxPrintLines: 4,
+      //   }),
+      // );
 
       expect(r).toBe(true);
       const ann0 = RowHelper.getFirstAnnotationOf<CodeResolvedAnnotation>(
@@ -97,6 +97,7 @@ describe('ResourceHelper', () => {
         'Cod',
       );
       expect(ann1.values.label).toBe('Female');
+      expect(ann1.values.isUndefined).toBe(false);
       expect(rdh.rows[1].values['SEX']).toBe(2);
       const ann2 = RowHelper.getFirstAnnotationOf<CodeResolvedAnnotation>(
         rdh.rows[2],
@@ -104,7 +105,17 @@ describe('ResourceHelper', () => {
         'Cod',
       );
       expect(ann2.values.label).toBe('Unknown');
+      expect(ann2.values.isUndefined).toBe(false);
       expect(rdh.rows[2].values['SEX']).toBe(0);
+      // 10
+      const ann10 = RowHelper.getFirstAnnotationOf<CodeResolvedAnnotation>(
+        rdh.rows[9],
+        'SEX',
+        'Cod',
+      );
+      expect(ann10.values.label).toBe('Undefined');
+      expect(ann10.values.isUndefined).toBe(true);
+      expect(rdh.rows[9].values['SEX']).toBe(6);
     });
   });
 });

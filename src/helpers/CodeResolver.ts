@@ -39,6 +39,7 @@ export const resolveCodeLabel = async (
 
   for (const row of rdh.rows) {
     columnNames.forEach((columnName) => {
+      const columnValue = row.values[columnName];
       const items =
         filteredCodeItems.filter((it) =>
           matchResource(
@@ -49,13 +50,22 @@ export const resolveCodeLabel = async (
         ) ?? [];
       items.forEach((item) => {
         const codeLabel = item.details.find(
-          (detail) => detail.code == row.values[columnName],
+          (detail) => detail.code == columnValue,
         );
         if (codeLabel) {
           RowHelper.pushAnnotation(row, columnName, {
             type: 'Cod',
             values: {
               label: codeLabel.label,
+              isUndefined: false,
+            },
+          });
+        } else if (columnValue) {
+          RowHelper.pushAnnotation(row, columnName, {
+            type: 'Cod',
+            values: {
+              label: 'Undefined',
+              isUndefined: true,
             },
           });
         }

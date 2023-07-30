@@ -128,6 +128,7 @@ export async function init(): Promise<void> {
       [7782, 'POCHI', 9, '', 7839, 2450, 10],
       [7566, 'HANAKO', 2, 'MANAGER', 7839, 2975, 20],
       [7788, 'SCOTT', 1, 'ANALYST', null, 3000, 30],
+      [8000, 'TANUKICHI', 6, 'MANAGER', null, 2975, 20],
     ];
 
     for (const ev of empValues) {
@@ -150,7 +151,17 @@ export async function init(): Promise<void> {
       const binds = [i, `DN${i}`, `LOC${i}`];
       await con.execute(`INSERT INTO oradb.DEPT VALUES (?, ?, ?)`, binds);
 
-      const binds2 = [i, `SMITH${i}`, i % 3, `CLERK${i}`, i, now, i, null, i];
+      const binds2 = [
+        i,
+        `SMITH${i}`,
+        i === 10 ? 6 : i % 3, // sex
+        `CLERK${i}`,
+        i,
+        now,
+        i,
+        null,
+        i,
+      ];
       await con.execute(
         `INSERT INTO oradb.EMP (EMPNO, ENAME, SEX, JOB, MGR, HIREDATE, SAL, COMM, DEPTNO) 
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -256,11 +267,11 @@ CREATE TABLE testdb.diff2 (
 `;
 
 const CREATE_TABLE_ORA_DEPT = `CREATE TABLE oradb.DEPT (
-  DEPTNO integer NOT NULL,
-  DNAME varchar(14) default NULL,
-  LOC varchar(13) default NULL,
+  DEPTNO integer NOT NULL COMMENT '部門番号',
+  DNAME varchar(14) default NULL COMMENT '部門名',
+  LOC varchar(13) default NULL COMMENT 'ロケーション',
   PRIMARY KEY  (DEPTNO)
-) `;
+) COMMENT='部門' `;
 
 const CREATE_TABLE_ORA_EMP = `CREATE TABLE oradb.EMP (
   EMPNO int(11) NOT NULL,
