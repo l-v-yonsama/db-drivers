@@ -111,7 +111,9 @@ export class PostgresDriver extends RDSBaseDriver {
 
     const binds = conditions?.binds ?? [];
     try {
+      const startTime = new Date().getTime();
       const results = await client.query(sql, binds);
+      const elapsedTime = new Date().getTime() - startTime;
       // console.log(results);
       // command: 'SELECT',
       // rowCount: 5,
@@ -142,11 +144,37 @@ export class PostgresDriver extends RDSBaseDriver {
           rdb.addRow({ Result: 'OK' });
         }
       }
+      rdb.updateMeta({ elapsedTime });
     } finally {
       if (client) {
         client.release();
         this.pid = undefined;
       }
+    }
+
+    return rdb;
+  }
+
+  async explainSqlSub(
+    params: QueryParams & { dbTable: DbTable },
+  ): Promise<ResultSetDataBuilder> {
+    const explainParams = {
+      ...params,
+      sql: `EXPLAIN ${params.sql}`,
+    };
+
+    const rdb = await this.requestSqlSub(explainParams);
+
+    const explainAnalyzeParams = {
+      ...params,
+      sql: `EXPLAIN ANALYZE ${params.sql}`,
+    };
+    const explainAnalyzeResult = await this.requestSqlSub(explainAnalyzeParams);
+
+    if (explainAnalyzeResult.rs.rows.length) {
+      rdb.updateMeta({
+        analyzedPlan: explainAnalyzeResult.rs.rows[0].values['QUERY PLAN'],
+      });
     }
 
     return rdb;

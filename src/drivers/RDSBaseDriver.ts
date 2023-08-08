@@ -82,6 +82,34 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder>;
 
+  async explainSql(params: QueryParams): Promise<ResultSetData> {
+    const { sql } = params;
+    const ast = parseQuery(sql);
+    let tableName = this.getTableNameInLowercase(ast);
+    const dbTable = this.getDbTable(tableName);
+    if (dbTable) {
+      tableName = dbTable.name;
+    }
+
+    const rdb = await this.explainSqlSub({
+      ...params,
+      dbTable,
+    });
+    this.setRdhMetaAndStatement(
+      params,
+      rdb,
+      'explain' as any,
+      tableName,
+      dbTable,
+    );
+
+    return rdb.build();
+  }
+
+  abstract explainSqlSub(
+    params: QueryParams & { dbTable: DbTable },
+  ): Promise<ResultSetDataBuilder>;
+
   private getTableNameInLowercase(ast: Statement): string | undefined {
     if (ast) {
       // console.log(JSON.stringify(ast, null, 2));

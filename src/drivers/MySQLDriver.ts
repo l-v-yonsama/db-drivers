@@ -105,59 +105,101 @@ export class MySQLDriver extends RDSBaseDriver {
       throw new Error('Setting global system variables is not supported');
     }
 
-    if (this.con) {
-      const binds = conditions?.binds ?? [];
-      const [rows, fields] = await this.con.execute(sql, binds);
+    if (!this.con) {
+      throw new Error('No connection');
+    }
 
-      if (fields === undefined) {
-        // execute...
-        // Ok Packet {
-        //   fieldCount: 0,
-        //   affectedRows: 1,
-        //   insertId: 0,
-        //   serverStatus: 2,
-        //   warningCount: 0,
-        //   message: '',
-        //   protocol41: true,
-        //   changedRows: 0 }
-        const results = rows as ResultSetHeader;
+    const binds = conditions?.binds ?? [];
+    const startTime = new Date().getTime();
+    const [rows, fields] = await this.con.execute(sql, binds);
+    const elapsedTime = new Date().getTime() - startTime;
 
-        rdb = new ResultSetDataBuilder([
-          'fieldCount',
-          'affectedRows',
-          'insertId',
-          'serverStatus',
-          'warningStatus',
-          'changedRows',
-        ]);
-        rdb.addRow({
-          fieldCount: results.fieldCount,
-          affectedRows: results.affectedRows,
-          insertId: results.insertId,
-          serverStatus: results.serverStatus,
-          warningStatus: results.warningStatus,
-          changedRows: results.changedRows,
-        });
-      } else {
-        rdb = new ResultSetDataBuilder(
-          fields === undefined
-            ? []
-            : fields.map((f) =>
-                this.fieldInfo2Key(f, meta?.editable === true, dbTable),
-              ),
-        );
-        (rows as any).forEach((result: any) => {
-          rdb.rs.keys.forEach((key) => {
-            const v = result[key.name];
-            if (key.type === GeneralColumnType.BIT) {
-              result[key.name] = toBoolean(v);
-            }
-          });
-          rdb.addRow(result);
-        });
-      }
+    if (fields === undefined) {
+      // execute...
+      // Ok Packet {
+      //   fieldCount: 0,
+      //   affectedRows: 1,
+      //   insertId: 0,
+      //   serverStatus: 2,
+      //   warningCount: 0,
+      //   message: '',
+      //   protocol41: true,
+      //   changedRows: 0 }
+      const results = rows as ResultSetHeader;
+
+      rdb = new ResultSetDataBuilder([
+        'fieldCount',
+        'affectedRows',
+        'insertId',
+        'serverStatus',
+        'warningStatus',
+        'changedRows',
+      ]);
+      rdb.addRow({
+        fieldCount: results.fieldCount,
+        affectedRows: results.affectedRows,
+        insertId: results.insertId,
+        serverStatus: results.serverStatus,
+        warningStatus: results.warningStatus,
+        changedRows: results.changedRows,
+      });
     } else {
-      new Error('No connection');
+      rdb = new ResultSetDataBuilder(
+        fields === undefined
+          ? []
+          : fields.map((f) =>
+              this.fieldInfo2Key(f, meta?.editable === true, dbTable),
+            ),
+      );
+      (rows as any).forEach((result: any) => {
+        rdb.rs.keys.forEach((key) => {
+          const v = result[key.name];
+          if (key.type === GeneralColumnType.BIT) {
+            result[key.name] = toBoolean(v);
+          }
+        });
+        rdb.addRow(result);
+      });
+    }
+    rdb.updateMeta({ elapsedTime });
+
+    return rdb;
+  }
+
+  async explainSqlSub(
+    params: QueryParams & { dbTable: DbTable },
+  ): Promise<ResultSetDataBuilder> {
+    const explainParams = {
+      ...params,
+      sql: `EXPLAIN ${params.sql}`,
+    };
+
+    const rdb = await this.requestSqlSub(explainParams);
+    rdb.updateKeyComment('id', 'SELECT identifier');
+    rdb.updateKeyComment('select_type', 'SELECT type');
+    rdb.updateKeyComment('table', 'table for the output row');
+    rdb.updateKeyComment('partitions', 'matching partitions');
+    rdb.updateKeyComment('type', 'join type');
+    rdb.updateKeyComment('possible_keys', 'possible indexes to choose');
+    rdb.updateKeyComment('key', 'index actually chosen');
+    rdb.updateKeyComment('key_len', 'length of the chosen key');
+    rdb.updateKeyComment('ref', 'columns compared to the index');
+    rdb.updateKeyComment('rows', 'Estimate of rows to be examined');
+    rdb.updateKeyComment(
+      'filtered',
+      'Percentage of rows filtered by table condition',
+    );
+    rdb.updateKeyComment('Extra', 'Additional information');
+
+    const explainAnalyzeParams = {
+      ...params,
+      sql: `EXPLAIN ANALYZE ${params.sql}`,
+    };
+    const explainAnalyzeResult = await this.requestSqlSub(explainAnalyzeParams);
+    if (explainAnalyzeResult.rs.rows.length) {
+      rdb.updateMeta({
+        analyzedPlan: explainAnalyzeResult.rs.rows[0].values['EXPLAIN'],
+      });
     }
 
     return rdb;

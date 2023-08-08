@@ -17,6 +17,8 @@ export type RdhMeta = {
   };
   codeItems?: CodeItem[];
   editable?: boolean;
+  elapsedTime?: number;
+  analyzedPlan?: string;
   [key: string]: any;
 };
 

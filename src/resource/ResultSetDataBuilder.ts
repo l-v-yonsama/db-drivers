@@ -271,6 +271,13 @@ export class ResultSetDataBuilder {
     return this.rs;
   }
 
+  updateKeyComment(keyName: string, comment: string): void {
+    const key = this.rs.keys.find((it) => it.name === keyName);
+    if (key) {
+      key.comment = comment;
+    }
+  }
+
   updateMeta(params: RdhMeta): void {
     Object.entries(params).forEach(([k, v]) => {
       this.rs.meta[k] = v;
