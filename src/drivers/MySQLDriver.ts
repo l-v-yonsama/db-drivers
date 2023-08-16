@@ -30,6 +30,18 @@ export class MySQLDriver extends RDSBaseDriver {
     super(conRes);
   }
 
+  async begin(): Promise<void> {
+    await this.con?.beginTransaction();
+  }
+
+  async commit(): Promise<void> {
+    await this.con?.commit();
+  }
+
+  async rollback(): Promise<void> {
+    await this.con?.rollback();
+  }
+
   fieldInfo2Key(
     fieldInfo,
     useTableColumnType: boolean,

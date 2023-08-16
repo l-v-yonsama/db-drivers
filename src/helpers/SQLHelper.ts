@@ -398,6 +398,10 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
     /^\s*(SET)(\s+global)?\s+(\S+)\s+=\s+\S+$/i,
     '$1 $3 TO dummy',
   );
+
+  // Unexpected kw_authorization token: "authorization".
+  replacedSql = replacedSql.replace(/\b(authorization)/i, '$1_1');
+
   return replacedSql.replace(FUNCTION_MATCHER, '1');
 };
 

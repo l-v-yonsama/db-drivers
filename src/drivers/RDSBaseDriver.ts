@@ -10,11 +10,14 @@ import {
 import { Statement } from 'pgsql-ast-parser';
 import {
   ConnectionSetting,
+  GeneralResult,
   QueryParams,
   ResourceType,
   ResultSetData,
+  TransactionControlType,
 } from '../types';
 import { parseQuery } from '../helpers';
+import { toNum } from '../util';
 
 export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   constructor(conRes: ConnectionSetting) {
@@ -76,6 +79,15 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     this.setRdhMetaAndStatement(params, rdb, ast?.type, tableName, dbTable);
 
     return rdb.build();
+  }
+
+  async countSql(params: QueryParams): Promise<number | undefined> {
+    const rdb = await this.requestSql(params);
+    if (rdb.rows.length > 0) {
+      const v = rdb.rows[0].values[rdb.keys[0].name];
+      return toNum(v);
+    }
+    return undefined;
   }
 
   abstract requestSqlSub(
@@ -201,5 +213,66 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     if (database.children.length) {
       database.children[0].isDefault = true;
     }
+  }
+
+  abstract begin(): Promise<void>;
+  abstract commit(): Promise<void>;
+  abstract rollback(): Promise<void>;
+
+  async flowTransaction<T = any>(
+    f: (driver: this) => Promise<T>,
+    options?: {
+      transactionControlType: TransactionControlType;
+    },
+  ): Promise<GeneralResult<T>> {
+    let ok = true;
+    let message = '';
+    let result: T;
+    let transactionControlType = 'rollbackOnError';
+    if (options) {
+      transactionControlType = options.transactionControlType;
+    }
+
+    if (!this.isConnected) {
+      message = await this.connect();
+      if (message) {
+        return {
+          ok: false,
+          message,
+        };
+      }
+    }
+
+    try {
+      await this.begin();
+      result = await f(this);
+
+      if (
+        transactionControlType === 'alwaysCommit' ||
+        transactionControlType === 'rollbackOnError'
+      ) {
+        await this.commit();
+      } else if (transactionControlType === 'alwaysRollback') {
+        await this.rollback();
+      }
+    } catch (e) {
+      ok = false;
+      message = e.message;
+      if (transactionControlType === 'alwaysCommit') {
+        await this.commit();
+      } else if (
+        transactionControlType === 'alwaysRollback' ||
+        transactionControlType === 'rollbackOnError'
+      ) {
+        await this.rollback();
+      }
+    } finally {
+      await this.disconnect();
+    }
+    return {
+      ok,
+      message,
+      result,
+    };
   }
 }

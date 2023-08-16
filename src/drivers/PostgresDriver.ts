@@ -20,10 +20,23 @@ import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 
 export class PostgresDriver extends RDSBaseDriver {
   private pool: pg.Pool;
+  private client: pg.PoolClient;
   private pid: number | undefined;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
+  }
+
+  async begin(): Promise<void> {
+    await this.client.query('BEGIN');
+  }
+
+  async commit(): Promise<void> {
+    await this.client.query('COMMIT');
+  }
+
+  async rollback(): Promise<void> {
+    await this.client.query('ROLLBACK');
   }
 
   //      name: 'name',
@@ -38,13 +51,13 @@ export class PostgresDriver extends RDSBaseDriver {
     useTableColumnType: boolean,
     table?: DbTable,
   ): RdhKey {
-    if (fieldInfo.name.startsWith('c_')) {
-      console.log(
-        `★ ${fieldInfo.name.substring(2).toUpperCase()} = ${
-          fieldInfo.dataTypeID
-        }`,
-      );
-    }
+    // if (fieldInfo.name.startsWith('c_')) {
+    //   console.log(
+    //     `★ ${fieldInfo.name.substring(2).toUpperCase()} = ${
+    //       fieldInfo.dataTypeID
+    //     }`,
+    //   );
+    // }
     const name = EnumValues.getNameFromValue(
       PostgresColumnType,
       PostgresColumnType.parse(fieldInfo.dataTypeID),
@@ -71,6 +84,10 @@ export class PostgresDriver extends RDSBaseDriver {
     let errorReason = '';
 
     this.pool = this.createPool();
+    this.client = await this.pool.connect();
+    const pidResult = await this.client.query('SELECT pg_backend_pid() AS pid');
+    this.pid = pidResult.rows[0].pid;
+
     errorReason = await this.test();
 
     return errorReason;
@@ -105,52 +122,42 @@ export class PostgresDriver extends RDSBaseDriver {
     const { sql, conditions, dbTable, meta } = params;
     // log.info("sql2=", sql);
     let rdb: ResultSetDataBuilder;
-    const client = await this.pool.connect();
-    const pidResult = await client.query('SELECT pg_backend_pid() AS pid');
-    this.pid = pidResult.rows[0].pid;
 
     const binds = conditions?.binds ?? [];
-    try {
-      const startTime = new Date().getTime();
-      const results = await client.query(sql, binds);
-      const elapsedTime = new Date().getTime() - startTime;
-      // console.log(results);
-      // command: 'SELECT',
-      // rowCount: 5,
-      // oid: null,
-      // rows:
-      //  [ anonymous { name: 'pg_catalog' },
-      //    anonymous { name: 'pg_temp_1' },
-      //    anonymous { name: 'pg_toast' },
-      //    anonymous { name: 'pg_toast_temp_1' },
-      //    anonymous { name: 'public' } ],
-      // fields: [  ],
-      // console.log('done.', results.fields)
-      if (results) {
-        const fields = results.fields;
-        if (fields?.length) {
-          rdb = new ResultSetDataBuilder(
-            fields.map((f) =>
-              this.fieldInfo2Key(f, meta?.editable === true, dbTable),
-            ),
-          );
-          if (results.rows) {
-            results.rows.forEach((result: any) => {
-              rdb.addRow(result);
-            });
-          }
-        } else {
-          rdb = new ResultSetDataBuilder(['Result']);
-          rdb.addRow({ Result: 'OK' });
+    const startTime = new Date().getTime();
+    const results = await this.client.query(sql, binds);
+    const elapsedTime = new Date().getTime() - startTime;
+    // console.log(results);
+    // command: 'SELECT',
+    // rowCount: 5,
+    // oid: null,
+    // rows:
+    //  [ anonymous { name: 'pg_catalog' },
+    //    anonymous { name: 'pg_temp_1' },
+    //    anonymous { name: 'pg_toast' },
+    //    anonymous { name: 'pg_toast_temp_1' },
+    //    anonymous { name: 'public' } ],
+    // fields: [  ],
+    // console.log('done.', results.fields)
+    if (results) {
+      const fields = results.fields;
+      if (fields?.length) {
+        rdb = new ResultSetDataBuilder(
+          fields.map((f) =>
+            this.fieldInfo2Key(f, meta?.editable === true, dbTable),
+          ),
+        );
+        if (results.rows) {
+          results.rows.forEach((result: any) => {
+            rdb.addRow(result);
+          });
         }
-      }
-      rdb.updateMeta({ elapsedTime });
-    } finally {
-      if (client) {
-        client.release();
-        this.pid = undefined;
+      } else {
+        rdb = new ResultSetDataBuilder(['Result']);
+        rdb.addRow({ Result: 'OK' });
       }
     }
+    rdb.updateMeta({ elapsedTime });
 
     return rdb;
   }
@@ -187,7 +194,7 @@ export class PostgresDriver extends RDSBaseDriver {
     }
 
     const sql = `SELECT COUNT(*) as count FROM ${prefix}${params.table}`;
-    const results = await this.pool.query(sql, []);
+    const results = await this.client.query(sql, []);
     if (results && results.rows && results.rows.length > 0) {
       const row = results.rows[0];
       return Number(row.count);
@@ -213,7 +220,7 @@ export class PostgresDriver extends RDSBaseDriver {
       }
       const sql = `SELECT COUNT(*) as count FROM ${prefix}${st.table}`;
       try {
-        const results = await this.pool.query(sql, []);
+        const results = await this.client.query(sql, []);
         if (results && results.rows && results.rows.length > 0) {
           const row = results.rows[0];
           const obj: TableRows = Object.assign(
@@ -543,8 +550,15 @@ export class PostgresDriver extends RDSBaseDriver {
 
   async closeSub(): Promise<string> {
     try {
+      if (this.client) {
+        this.client.release();
+        this.pid = undefined;
+        this.client = undefined;
+      }
+
       if (this.pool) {
         await this.pool.end();
+        this.pool = undefined;
       }
       return '';
     } catch (e) {

@@ -445,6 +445,13 @@ describe('SQLHelper', () => {
       const ast = parseQuery(sql);
       expect(ast).not.toBeUndefined();
     });
+    describe('Unexpected keyword tokens for pgsqlAST', () => {
+      it('authorization', () => {
+        const sql = 'select authorization from hoge';
+        const ast = parseQuery(sql);
+        expect(ast).not.toBeUndefined();
+      });
+    });
   });
 
   describe('getResourcePositions', () => {

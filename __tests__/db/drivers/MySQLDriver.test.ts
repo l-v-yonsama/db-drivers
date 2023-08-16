@@ -9,6 +9,7 @@ import {
   ConnectionSetting,
   ResultSetDataBuilder,
   sleep,
+  RDSBaseDriver,
 } from '../../../src';
 import { init, saveRes } from '../../setup/mysql';
 
@@ -194,6 +195,225 @@ describe('MySQLDriver', () => {
     it('should not throw error', async () => {
       const query = 'SET group_concat_max_len = 10000000';
       await expect(driver.requestSql({ sql: query })).resolves.not.toThrow();
+    });
+  });
+
+  describe('explainSql', () => {
+    it('should return explain and analyze result', async () => {
+      const query = 'SELECT * FROM EMP WHERE EMPNO = 7839 ';
+      const rdh = await driver.explainSql({ sql: query });
+      expect(rdh.rows[0].values).toEqual({
+        id: 1,
+        select_type: 'SIMPLE',
+        table: 'EMP',
+        partitions: null,
+        type: 'const',
+        possible_keys: 'PRIMARY',
+        key: 'PRIMARY',
+        key_len: expect.anything(),
+        ref: expect.any(String),
+        rows: 1,
+        filtered: expect.any(Number),
+        Extra: null,
+      });
+
+      expect(rdh.meta.analyzedPlan).not.toBeUndefined();
+      expect(rdh.meta.analyzedPlan.includes('rows=1')).toBe(true);
+    });
+
+    it('should return explain and analyze result2', async () => {
+      const query = 'SELECT * FROM EMP WHERE SAL > 1000 ';
+      const rdh = await driver.explainSql({ sql: query });
+
+      expect(rdh.rows[0].values).toEqual({
+        id: 1,
+        select_type: 'SIMPLE',
+        table: 'EMP',
+        partitions: null,
+        type: 'ALL',
+        possible_keys: null,
+        key: null,
+        key_len: null,
+        ref: null,
+        rows: 6,
+        filtered: expect.any(Number),
+        Extra: expect.anything(),
+      });
+
+      expect(rdh.meta.analyzedPlan).not.toBeUndefined();
+      expect(rdh.meta.analyzedPlan.includes('Table scan on EMP')).toBe(true);
+    });
+
+    it('should return explain analyze error result', async () => {
+      const query = 'DELETE FROM EMP WHERE SAL > 1000 ';
+      await driver.begin();
+      const rdh = await driver.explainSql({ sql: query });
+      await driver.rollback();
+
+      expect(rdh.rows[0].values).toEqual({
+        id: 1,
+        select_type: 'DELETE',
+        table: 'EMP',
+        partitions: null,
+        type: 'ALL',
+        possible_keys: null,
+        key: null,
+        key_len: null,
+        ref: null,
+        rows: 6,
+        filtered: expect.any(Number),
+        Extra: expect.anything(),
+      });
+
+      expect(rdh.meta.analyzedPlan).not.toBeUndefined();
+      expect(
+        rdh.meta.analyzedPlan.includes('not executable by iterator executor'),
+      ).toBe(true);
+    });
+  });
+
+  describe('flowTransaction', () => {
+    const kingRowQuery = "SELECT * FROM EMP WHERE ENAME='KING'";
+
+    const getSal = async (rdsDriver: RDSBaseDriver): Promise<number> => {
+      await rdsDriver.connect();
+
+      const rdh = await rdsDriver.requestSql({
+        sql: kingRowQuery,
+      });
+      const sal = rdh.rows[0].values['SAL'];
+      await rdsDriver.disconnect();
+      return sal;
+    };
+
+    it('should rollback', async () => {
+      const driverForFlow = createDriver();
+
+      const kingsSalBeforeUpdate = await getSal(driverForFlow);
+
+      const transactionResult = await driverForFlow.flowTransaction(
+        async (): Promise<number> => {
+          await driverForFlow.requestSql({
+            sql: "UPDATE EMP SET SAL=SAL+100 WHERE ENAME='KING'",
+          });
+          const salInTransaction = (
+            await driverForFlow.requestSql({
+              sql: kingRowQuery,
+            })
+          ).rows[0].values['SAL'];
+          expect(salInTransaction).toBe(kingsSalBeforeUpdate + 100);
+          return salInTransaction;
+        },
+        { transactionControlType: 'alwaysRollback' },
+      );
+
+      const kingsSalAfterTransaction = await getSal(driverForFlow);
+
+      expect(kingsSalBeforeUpdate).toBe(kingsSalAfterTransaction);
+      expect(transactionResult).toEqual({
+        ok: true,
+        message: '',
+        result: kingsSalAfterTransaction + 100,
+      });
+    });
+
+    it('should commit on success', async () => {
+      const driverForFlow = createDriver();
+
+      const kingsSalBeforeUpdate = await getSal(driverForFlow);
+
+      const transactionResult = await driverForFlow.flowTransaction(
+        async (): Promise<number> => {
+          await driverForFlow.requestSql({
+            sql: "UPDATE EMP SET SAL=SAL+100 WHERE ENAME='KING'",
+          });
+          const salInTransaction = (
+            await driverForFlow.requestSql({
+              sql: kingRowQuery,
+            })
+          ).rows[0].values['SAL'];
+          expect(salInTransaction).toBe(kingsSalBeforeUpdate + 100);
+          return salInTransaction;
+        },
+        { transactionControlType: 'rollbackOnError' },
+      );
+
+      const kingsSalAfterTransaction = await getSal(driverForFlow);
+
+      expect(kingsSalBeforeUpdate + 100).toBe(kingsSalAfterTransaction);
+      expect(transactionResult).toEqual({
+        ok: true,
+        message: '',
+        result: kingsSalAfterTransaction,
+      });
+    });
+
+    it('should rollback on error', async () => {
+      const driverForFlow = createDriver();
+
+      const kingsSalBeforeUpdate = await getSal(driverForFlow);
+
+      const transactionResult = await driverForFlow.flowTransaction(
+        async (): Promise<number> => {
+          await driverForFlow.requestSql({
+            sql: "UPDATE EMP SET SAL=SAL+100 WHERE ENAME='KING'",
+          });
+          const salInTransaction = (
+            await driverForFlow.requestSql({
+              sql: kingRowQuery,
+            })
+          ).rows[0].values['SAL'];
+          expect(salInTransaction).toBe(kingsSalBeforeUpdate + 100);
+          if (salInTransaction >= 0) {
+            throw new Error('Something error!');
+          }
+          return salInTransaction;
+        },
+        { transactionControlType: 'rollbackOnError' },
+      );
+
+      const kingsSalAfterTransaction = await getSal(driverForFlow);
+
+      expect(kingsSalBeforeUpdate).toBe(kingsSalAfterTransaction);
+      expect(transactionResult).toEqual({
+        ok: false,
+        message: 'Something error!',
+        result: undefined,
+      });
+    });
+
+    it('should commit on error', async () => {
+      const driverForFlow = createDriver();
+
+      const kingsSalBeforeUpdate = await getSal(driverForFlow);
+
+      const transactionResult = await driverForFlow.flowTransaction(
+        async (): Promise<number> => {
+          await driverForFlow.requestSql({
+            sql: "UPDATE EMP SET SAL=SAL+100 WHERE ENAME='KING'",
+          });
+          const salInTransaction = (
+            await driverForFlow.requestSql({
+              sql: kingRowQuery,
+            })
+          ).rows[0].values['SAL'];
+          expect(salInTransaction).toBe(kingsSalBeforeUpdate + 100);
+          if (salInTransaction >= 0) {
+            throw new Error('Something error!');
+          }
+          return salInTransaction;
+        },
+        { transactionControlType: 'alwaysCommit' },
+      );
+
+      const kingsSalAfterTransaction = await getSal(driverForFlow);
+
+      expect(kingsSalBeforeUpdate + 100).toBe(kingsSalAfterTransaction);
+      expect(transactionResult).toEqual({
+        ok: false,
+        message: 'Something error!',
+        result: undefined,
+      });
     });
   });
 

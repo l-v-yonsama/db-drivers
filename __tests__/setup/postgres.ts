@@ -74,6 +74,35 @@ export async function init(): Promise<void> {
     await pool.query('DROP TABLE IF EXISTS diff2');
     await pool.query(CREATE_DIFF2_TABLE_STATEMENT);
 
+    await pool.query('DROP TABLE IF EXISTS EMP CASCADE');
+    await pool.query(CREATE_TABLE_EMP);
+
+    await pool.query('DROP TABLE IF EXISTS DEPT CASCADE');
+    await pool.query(CREATE_TABLE_DEPT);
+
+    await pool.query(`INSERT INTO DEPT VALUES(10, 'ACCOUNTING', 'NEW YORK')`);
+    await pool.query(`INSERT INTO DEPT VALUES(20, 'RESEARCH', 'DALLAS')`);
+    await pool.query(`INSERT INTO DEPT VALUES(30, 'SALES', 'CHICAGO')`);
+    await pool.query(`INSERT INTO DEPT VALUES(40, 'OPERATIONS', 'BOSTON')`);
+
+    const empValues = [
+      [7839, 'KING', 0, 'PRESIDENT', null, 5000, 10],
+      [7698, 'TARO', 1, 'MANAGER', 7839, 2850, 30],
+      [7782, 'POCHI', 9, '', 7839, 2450, 10],
+      [7566, 'HANAKO', 2, 'MANAGER', 7839, 2975, 20],
+      [7788, 'SCOTT', 1, 'ANALYST', null, 3000, 30],
+      [8000, 'TANUKICHI', 6, 'MANAGER', null, 2975, 20],
+    ];
+
+    for (const ev of empValues) {
+      await pool.query(
+        `INSERT INTO EMP 
+      (EMPNO,ENAME,SEX,JOB,MGR,SAL, DEPTNO) 
+      VALUES($1,$2,$3,$4,$5,$6,$7)`,
+        ev,
+      );
+    }
+
     await pool.query('DROP TABLE IF EXISTS order_detail');
     await pool.query('DROP TABLE IF EXISTS order1');
     await pool.query('DROP TABLE IF EXISTS customer');
@@ -228,3 +257,25 @@ const CREATE_ORDER_DETAIL_TABLE_STATEMENT = `CREATE TABLE order_detail (
     FOREIGN KEY (order_no) REFERENCES order1(order_no)
   )
   `;
+
+const CREATE_TABLE_DEPT = `CREATE TABLE DEPT (
+    DEPTNO integer NOT NULL,
+    DNAME varchar(14) default NULL,
+    LOC varchar(13) default NULL,
+    PRIMARY KEY  (DEPTNO)
+  )`;
+
+const CREATE_TABLE_EMP = `CREATE TABLE EMP (
+    EMPNO int NOT NULL,
+    ENAME varchar(10) default NULL,
+    SEX int NOT NULL default 0,
+    JOB varchar(9) default NULL,
+    MGR int default NULL,
+    HIREDATE date default NULL,
+    SAL int default NULL,
+    COMM NUMERIC(7,2) default NULL,
+    DEPTNO int default NULL,
+
+    PRIMARY KEY  (EMPNO),
+    FOREIGN KEY (DEPTNO) REFERENCES DEPT(DEPTNO)
+  ) `;
