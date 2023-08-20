@@ -196,8 +196,8 @@ describe('PostgresDriver', () => {
       const queryPlan = rdh.rows[0].values['QUERY PLAN'];
       expect(queryPlan).toMatch(/^Index Scan using.+ rows=1.+/);
 
-      expect(rdh.meta.analyzedPlan).not.toBeUndefined();
-      expect(rdh.meta.analyzedPlan).toMatch(
+      const analyzedRdh = await driver.explainAnalyzeSql({ sql: query });
+      expect(analyzedRdh.rows[0].values['EXPLAIN']).toMatch(
         /^Index Scan using.+actual time=[0-9.]+ .+/,
       );
     });
@@ -209,8 +209,8 @@ describe('PostgresDriver', () => {
 
       expect(queryPlan).toMatch(/^Seq Scan on emp .+ rows=.+/);
 
-      expect(rdh.meta.analyzedPlan).not.toBeUndefined();
-      expect(rdh.meta.analyzedPlan).toMatch(
+      const analyzedRdh = await driver.explainAnalyzeSql({ sql: query });
+      expect(analyzedRdh.rows[0].values['EXPLAIN']).toMatch(
         /^Seq Scan on emp .+actual time=[0-9.]+ rows=6 .+/,
       );
     });
@@ -220,13 +220,13 @@ describe('PostgresDriver', () => {
       await driver.begin();
       const rdh = await driver.explainSql({ sql: query });
       const queryPlan = rdh.rows[0].values['QUERY PLAN'];
+      const analyzedRdh = await driver.explainAnalyzeSql({ sql: query });
 
       await driver.rollback();
 
       expect(queryPlan).toMatch(/^Delete on emp .+/);
 
-      expect(rdh.meta.analyzedPlan).not.toBeUndefined();
-      expect(rdh.meta.analyzedPlan).toMatch(
+      expect(analyzedRdh.rows[0].values['EXPLAIN']).toMatch(
         /^Delete on emp .+actual time=[0-9.]+ rows=0 .+/,
       );
     });

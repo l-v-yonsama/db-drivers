@@ -170,19 +170,20 @@ export class PostgresDriver extends RDSBaseDriver {
       sql: `EXPLAIN ${params.sql}`,
     };
 
-    const rdb = await this.requestSqlSub(explainParams);
+    return await this.requestSqlSub(explainParams);
+  }
 
-    const explainAnalyzeParams = {
+  async explainAnalyzeSqlSub(
+    params: QueryParams & { dbTable: DbTable },
+  ): Promise<ResultSetDataBuilder> {
+    const explainParams = {
       ...params,
       sql: `EXPLAIN ANALYZE ${params.sql}`,
     };
-    const explainAnalyzeResult = await this.requestSqlSub(explainAnalyzeParams);
 
-    if (explainAnalyzeResult.rs.rows.length) {
-      rdb.updateMeta({
-        analyzedPlan: explainAnalyzeResult.rs.rows[0].values['QUERY PLAN'],
-      });
-    }
+    const rdb = await this.requestSqlSub(explainParams);
+    rdb.updateKeyName('QUERY PLAN', 'EXPLAIN');
+    rdb.updateKeyWidth('EXPLAIN', 300);
 
     return rdb;
   }

@@ -278,6 +278,31 @@ export class ResultSetDataBuilder {
     }
   }
 
+  updateKeyName(keyName: string, newKeyName: string): void {
+    const key = this.rs.keys.find((it) => it.name === keyName);
+    if (key) {
+      key.name = newKeyName;
+    } else {
+      return;
+    }
+    this.rs.rows.forEach((row) => {
+      const oldMeta = row.meta[keyName];
+      row.meta[newKeyName] = oldMeta;
+      delete row.meta[keyName];
+
+      const oldValue = row.values[keyName];
+      row.values[newKeyName] = oldValue;
+      delete row.values[keyName];
+    });
+  }
+
+  updateKeyWidth(keyName: string, width: number): void {
+    const key = this.rs.keys.find((it) => it.name === keyName);
+    if (key) {
+      key.width = width;
+    }
+  }
+
   updateMeta(params: RdhMeta): void {
     Object.entries(params).forEach(([k, v]) => {
       this.rs.meta[k] = v;

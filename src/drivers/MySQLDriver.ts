@@ -203,16 +203,19 @@ export class MySQLDriver extends RDSBaseDriver {
     );
     rdb.updateKeyComment('Extra', 'Additional information');
 
-    const explainAnalyzeParams = {
+    return rdb;
+  }
+
+  async explainAnalyzeSqlSub(
+    params: QueryParams & { dbTable: DbTable },
+  ): Promise<ResultSetDataBuilder> {
+    const explainParams = {
       ...params,
       sql: `EXPLAIN ANALYZE ${params.sql}`,
     };
-    const explainAnalyzeResult = await this.requestSqlSub(explainAnalyzeParams);
-    if (explainAnalyzeResult.rs.rows.length) {
-      rdb.updateMeta({
-        analyzedPlan: explainAnalyzeResult.rs.rows[0].values['EXPLAIN'],
-      });
-    }
+
+    const rdb = await this.requestSqlSub(explainParams);
+    rdb.updateKeyWidth('EXPLAIN', 300);
 
     return rdb;
   }

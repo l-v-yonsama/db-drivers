@@ -114,11 +114,41 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       tableName,
       dbTable,
     );
+    rdb.rs.meta.compareKeys = undefined; // update
 
     return rdb.build();
   }
 
   abstract explainSqlSub(
+    params: QueryParams & { dbTable: DbTable },
+  ): Promise<ResultSetDataBuilder>;
+
+  async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
+    const { sql } = params;
+    const ast = parseQuery(sql);
+    let tableName = this.getTableNameInLowercase(ast);
+    const dbTable = this.getDbTable(tableName);
+    if (dbTable) {
+      tableName = dbTable.name;
+    }
+
+    const rdb = await this.explainAnalyzeSqlSub({
+      ...params,
+      dbTable,
+    });
+    this.setRdhMetaAndStatement(
+      params,
+      rdb,
+      'analyze' as any,
+      tableName,
+      dbTable,
+    );
+    rdb.rs.meta.compareKeys = undefined; // update
+
+    return rdb.build();
+  }
+
+  abstract explainAnalyzeSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder>;
 

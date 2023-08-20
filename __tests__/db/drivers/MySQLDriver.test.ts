@@ -217,8 +217,10 @@ describe('MySQLDriver', () => {
         Extra: null,
       });
 
-      expect(rdh.meta.analyzedPlan).not.toBeUndefined();
-      expect(rdh.meta.analyzedPlan.includes('rows=1')).toBe(true);
+      const analyzedRdh = await driver.explainAnalyzeSql({ sql: query });
+      expect(analyzedRdh.rows[0].values['EXPLAIN'].includes('rows=1')).toBe(
+        true,
+      );
     });
 
     it('should return explain and analyze result2', async () => {
@@ -240,14 +242,17 @@ describe('MySQLDriver', () => {
         Extra: expect.anything(),
       });
 
-      expect(rdh.meta.analyzedPlan).not.toBeUndefined();
-      expect(rdh.meta.analyzedPlan.includes('Table scan on EMP')).toBe(true);
+      const analyzedRdh = await driver.explainAnalyzeSql({ sql: query });
+      expect(
+        analyzedRdh.rows[0].values['EXPLAIN'].includes('Table scan on EMP'),
+      ).toBe(true);
     });
 
     it('should return explain analyze error result', async () => {
       const query = 'DELETE FROM EMP WHERE SAL > 1000 ';
       await driver.begin();
       const rdh = await driver.explainSql({ sql: query });
+      const analyzedRdh = await driver.explainAnalyzeSql({ sql: query });
       await driver.rollback();
 
       expect(rdh.rows[0].values).toEqual({
@@ -265,9 +270,10 @@ describe('MySQLDriver', () => {
         Extra: expect.anything(),
       });
 
-      expect(rdh.meta.analyzedPlan).not.toBeUndefined();
       expect(
-        rdh.meta.analyzedPlan.includes('not executable by iterator executor'),
+        analyzedRdh.rows[0].values['EXPLAIN'].includes(
+          'not executable by iterator executor',
+        ),
       ).toBe(true);
     });
   });

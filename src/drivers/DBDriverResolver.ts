@@ -1,10 +1,16 @@
 import ShortUniqueId from 'short-unique-id';
 import { BaseDriver } from './BaseDriver';
-import { ConnectionSetting, DBType, GeneralResult } from '../types';
+import {
+  ConnectionSetting,
+  DBType,
+  GeneralResult,
+  TransactionControlType,
+} from '../types';
 import { MySQLDriver } from './MySQLDriver';
 import { PostgresDriver } from './PostgresDriver';
 import { RedisDriver } from './RedisDriver';
 import { AwsDriver } from './AwsDriver';
+import { RDSBaseDriver } from './RDSBaseDriver';
 
 const uid = new ShortUniqueId();
 
@@ -79,6 +85,19 @@ export class DBDriverResolver {
   ): Promise<GeneralResult<U>> {
     const driver = this.createDriver<T>(setting);
     const r = await driver.flow(f);
+    this.removeDriver(driver);
+    return r;
+  }
+
+  async flowTransaction<T extends RDSBaseDriver, U = any>(
+    setting: ConnectionSetting,
+    f: (driver: T) => Promise<U>,
+    options?: {
+      transactionControlType: TransactionControlType;
+    },
+  ): Promise<GeneralResult<U>> {
+    const driver = this.createDriver<T>(setting);
+    const r = await driver.flowTransaction(f, options);
     this.removeDriver(driver);
     return r;
   }
