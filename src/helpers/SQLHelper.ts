@@ -384,7 +384,9 @@ const createConditionalClause = ({
  */
 export const toSafeQueryForPgsqlAst = (query: string): string => {
   let replacedSql = stripComment(query).replace(/\?/g, '$1');
-  replacedSql = replacedSql.replace(/^\s*(SHOW)\s+(\S+).*$/i, '$1 $2');
+  replacedSql = replacedSql
+    .replace(/^\s*(SHOW)\s+FULL\s+(.*)$/i, '$1 $2')
+    .replace(/^\s*(SHOW)\s+(\S+).*$/i, '$1 $2');
   replacedSql = replacedSql.replace(
     /\s*INTERVAL\s+([\d]+)\s+(\S+)/i,
     " cast('$1 $2' as INTERVAL)",

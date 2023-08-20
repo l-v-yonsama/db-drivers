@@ -184,6 +184,7 @@ export class PostgresDriver extends RDSBaseDriver {
     const rdb = await this.requestSqlSub(explainParams);
     rdb.updateKeyName('QUERY PLAN', 'EXPLAIN');
     rdb.updateKeyWidth('EXPLAIN', 300);
+    rdb.updateKeyAlign('EXPLAIN', 'left');
 
     return rdb;
   }

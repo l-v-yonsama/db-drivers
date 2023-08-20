@@ -216,6 +216,7 @@ export class MySQLDriver extends RDSBaseDriver {
 
     const rdb = await this.requestSqlSub(explainParams);
     rdb.updateKeyWidth('EXPLAIN', 300);
+    rdb.updateKeyAlign('EXPLAIN', 'left');
 
     return rdb;
   }

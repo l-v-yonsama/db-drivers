@@ -451,6 +451,11 @@ describe('SQLHelper', () => {
         const ast = parseQuery(sql);
         expect(ast).not.toBeUndefined();
       });
+      it('show full xxx', () => {
+        const sql = 'show full processlist';
+        const ast = parseQuery(sql);
+        expect(ast).not.toBeUndefined();
+      });
     });
   });
 

@@ -303,6 +303,13 @@ export class ResultSetDataBuilder {
     }
   }
 
+  updateKeyAlign(keyName: string, align: RdhKey['align']): void {
+    const key = this.rs.keys.find((it) => it.name === keyName);
+    if (key) {
+      key.align = align;
+    }
+  }
+
   updateMeta(params: RdhMeta): void {
     Object.entries(params).forEach(([k, v]) => {
       this.rs.meta[k] = v;
@@ -931,7 +938,19 @@ export class ResultSetDataBuilder {
     );
     pushLine(
       withRowNo ? '---:' : undefined,
-      rdhKeys.map((_) => ':---:').join(' | '),
+      rdhKeys
+        .map((key) => {
+          const align = key.align ?? 'center';
+          switch (align) {
+            case 'left':
+              return ':---';
+            case 'center':
+              return ':---:';
+            case 'right':
+              return '---:';
+          }
+        })
+        .join(' | '),
     );
     if (withComment) {
       pushLine(

@@ -57,6 +57,7 @@ export type RdhKey = {
   type: GeneralColumnType;
   width?: number;
   required?: boolean;
+  align?: 'left' | 'center' | 'right';
   meta?: {
     is_image?: boolean;
     is_hyperlink?: boolean;
