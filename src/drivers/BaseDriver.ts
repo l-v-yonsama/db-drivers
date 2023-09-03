@@ -110,6 +110,11 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
     f: (driver: this) => Promise<T>,
   ): Promise<GeneralResult<T>> {
     let ok = true;
+
+    if (this.isConnected) {
+      await this.disconnect();
+    }
+
     let message = await this.connect();
     let result: T;
     if (message) {

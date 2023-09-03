@@ -42,6 +42,15 @@ export class MySQLDriver extends RDSBaseDriver {
     await this.con?.rollback();
   }
 
+  async setAutoCommit(value: boolean): Promise<void> {
+    await this.con?.execute(`SET AUTOCOMMIT = ${value ? 1 : 0}`);
+    // const [rows, _] = await this.con.execute('select @@session.autocommit');
+    // if (rows && (rows as any[]).length) {
+    //   const result = (rows as any[])[0]['@@session.autocommit'];
+    //   console.log('@@session.autocommit = ', result);
+    // }
+  }
+
   fieldInfo2Key(
     fieldInfo,
     useTableColumnType: boolean,
@@ -71,7 +80,7 @@ export class MySQLDriver extends RDSBaseDriver {
     return key;
   }
 
-  async connectSub(): Promise<string> {
+  async connectWithTest(): Promise<string> {
     let errorMessage = '';
     this.con = await this.createConnection();
     try {
@@ -124,7 +133,7 @@ export class MySQLDriver extends RDSBaseDriver {
     const binds = conditions?.binds ?? [];
     const startTime = new Date().getTime();
     const [rows, fields] = await this.con.execute(sql, binds);
-    const elapsedTime = new Date().getTime() - startTime;
+    const elapsedTimeMilli = new Date().getTime() - startTime;
 
     if (fields === undefined) {
       // execute...
@@ -147,12 +156,20 @@ export class MySQLDriver extends RDSBaseDriver {
         'warningStatus',
         'changedRows',
       ]);
+
       rdb.addRow({
         fieldCount: results.fieldCount,
         affectedRows: results.affectedRows,
         insertId: results.insertId,
         serverStatus: results.serverStatus,
         warningStatus: results.warningStatus,
+        changedRows: results.changedRows,
+      });
+
+      rdb.setSummary({
+        elapsedTimeMilli,
+        affectedRows: results.affectedRows,
+        insertId: results.insertId,
         changedRows: results.changedRows,
       });
     } else {
@@ -172,8 +189,12 @@ export class MySQLDriver extends RDSBaseDriver {
         });
         rdb.addRow(result);
       });
+
+      rdb.setSummary({
+        elapsedTimeMilli,
+        selectedRows: rdb.rs.rows.length,
+      });
     }
-    rdb.updateMeta({ elapsedTime });
 
     return rdb;
   }

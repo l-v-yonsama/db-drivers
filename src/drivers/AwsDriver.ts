@@ -10,6 +10,7 @@ import {
 
 import { fromEnv, fromIni } from '@aws-sdk/credential-providers';
 
+import { AwsSESServiceClient } from './aws/AwsSESServiceClient';
 import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
 import { AwsCloudwatchServiceClient } from './aws/AwsCloudwatchServiceClient';
 import { AwsS3ServiceClient } from './aws/AwsS3ServiceClient';
@@ -28,6 +29,7 @@ export type ClientConfigType = {
 };
 
 export class AwsDriver extends BaseDriver<AwsDatabase> {
+  public sesClient: AwsSESServiceClient;
   public sqsClient: AwsSQSServiceClient;
   public cloudwatchClient: AwsCloudwatchServiceClient;
   public s3Client: AwsS3ServiceClient;
@@ -61,6 +63,9 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
         break;
       case 'S3':
         client = this.s3Client;
+        break;
+      case 'SES':
+        client = this.sesClient;
         break;
       case 'SQS':
         client = this.sqsClient;
@@ -113,6 +118,7 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
     const cw = new AwsCloudwatchServiceClient(this.conRes, config);
     const sqs = new AwsSQSServiceClient(this.conRes, config);
     const s3 = new AwsS3ServiceClient(this.conRes, config);
+    const ses = new AwsSESServiceClient(this.conRes, config);
     const { services } = this.conRes.awsSetting;
 
     let message = '';
@@ -134,6 +140,15 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
         this.sqsClient = sqs;
       }
     }
+    if (services.includes(AwsServiceType.SES)) {
+      message = await ses.connect();
+      if (message) {
+        messageList.push(message);
+        this.sesClient = null;
+      } else {
+        this.sesClient = ses;
+      }
+    }
     if (services.includes(AwsServiceType.S3)) {
       message = await s3.connect();
       if (message) {
@@ -150,6 +165,7 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
     const list = [];
     for (const client of [
       this.s3Client,
+      this.sesClient,
       this.sqsClient,
       this.cloudwatchClient,
     ]) {
@@ -175,6 +191,13 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
         messageList.push(message);
       }
     }
+    if (services.includes(AwsServiceType.SES)) {
+      const client = new AwsSESServiceClient(this.conRes, config);
+      const message = await client.test(with_connect);
+      if (message) {
+        messageList.push(message);
+      }
+    }
     if (services.includes(AwsServiceType.SQS)) {
       const client = new AwsSQSServiceClient(this.conRes, config);
       const message = await client.test(with_connect);
@@ -195,6 +218,7 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
   async closeSub(): Promise<string> {
     const messageList = [];
     for (const client of [
+      this.sesClient,
       this.sqsClient,
       this.cloudwatchClient,
       this.s3Client,

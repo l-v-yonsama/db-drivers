@@ -39,6 +39,12 @@ export class PostgresDriver extends RDSBaseDriver {
     await this.client.query('ROLLBACK');
   }
 
+  async setAutoCommit(value: boolean): Promise<void> {
+    // set autocommit = ON;  -->> do nothing.
+    // set autocommit = OFF;  -->> use flowTransaction.
+    // see. https://node-postgres.com/features/transactions
+  }
+
   //      name: 'name',
   //      tableID: 12822,
   //      columnID: 2,
@@ -80,16 +86,18 @@ export class PostgresDriver extends RDSBaseDriver {
     return key;
   }
 
-  async connectSub(): Promise<string> {
+  async connectWithTest(): Promise<string> {
     let errorReason = '';
 
     this.pool = this.createPool();
     this.client = await this.pool.connect();
     const pidResult = await this.client.query('SELECT pg_backend_pid() AS pid');
     this.pid = pidResult.rows[0].pid;
-
-    errorReason = await this.test();
-
+    try {
+      errorReason = await this.test();
+    } catch (e) {
+      errorReason = e.message;
+    }
     return errorReason;
   }
 
@@ -126,7 +134,7 @@ export class PostgresDriver extends RDSBaseDriver {
     const binds = conditions?.binds ?? [];
     const startTime = new Date().getTime();
     const results = await this.client.query(sql, binds);
-    const elapsedTime = new Date().getTime() - startTime;
+    const elapsedTimeMilli = new Date().getTime() - startTime;
     // console.log(results);
     // command: 'SELECT',
     // rowCount: 5,
@@ -152,12 +160,21 @@ export class PostgresDriver extends RDSBaseDriver {
             rdb.addRow(result);
           });
         }
+
+        rdb.setSummary({
+          elapsedTimeMilli,
+          selectedRows: rdb.rs.rows.length,
+        });
       } else {
-        rdb = new ResultSetDataBuilder(['Result']);
-        rdb.addRow({ Result: 'OK' });
+        rdb = new ResultSetDataBuilder(['affectedRows']);
+        rdb.addRow({ affectedRows: results.rowCount });
+
+        rdb.setSummary({
+          elapsedTimeMilli,
+          affectedRows: results.rowCount,
+        });
       }
     }
-    rdb.updateMeta({ elapsedTime });
 
     return rdb;
   }

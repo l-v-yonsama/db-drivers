@@ -10,7 +10,7 @@ services:
 
   mysql:
     image: mysql:8.0
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_ja_0900_as_cs
     container_name: mysql_container
     ports:
       - 6001:3306
@@ -20,6 +20,7 @@ services:
       MYSQL_DATABASE: testdb
       MYSQL_USER: testuser
       MYSQL_PASSWORD: testpass
+
   postgres:
     image: postgres:14
     container_name: postgres_container

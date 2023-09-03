@@ -17,7 +17,6 @@ export type RdhMeta = {
   };
   codeItems?: CodeItem[];
   editable?: boolean;
-  elapsedTime?: number;
   [key: string]: any;
 };
 
@@ -69,11 +68,21 @@ export type RdhRow = {
   readonly values: { [key: string]: any };
 };
 
+export type RdhSummary = {
+  info: string;
+  elapsedTimeMilli: number;
+  selectedRows?: number;
+  affectedRows?: number;
+  insertId?: number;
+  changedRows?: number;
+};
+
 export type ResultSetData = {
   readonly created: Date;
   readonly keys: RdhKey[];
   readonly rows: RdhRow[];
   readonly meta: RdhMeta;
+  summary?: RdhSummary;
   queryConditions?: QueryConditions;
   sqlStatement?: string | undefined;
   shuffledIndexes?: number[];

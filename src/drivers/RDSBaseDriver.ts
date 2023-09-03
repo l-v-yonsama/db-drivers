@@ -248,6 +248,21 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   abstract begin(): Promise<void>;
   abstract commit(): Promise<void>;
   abstract rollback(): Promise<void>;
+  abstract setAutoCommit(value: boolean): Promise<void>;
+  abstract connectWithTest(): Promise<string>;
+
+  async connectSub(autoCommit = true): Promise<string> {
+    let errorMessage = await this.connectWithTest();
+
+    try {
+      if (!errorMessage) {
+        await this.setAutoCommit(autoCommit);
+      }
+    } catch (e) {
+      errorMessage = e.message;
+    }
+    return errorMessage;
+  }
 
   async flowTransaction<T = any>(
     f: (driver: this) => Promise<T>,
@@ -263,14 +278,16 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       transactionControlType = options.transactionControlType;
     }
 
-    if (!this.isConnected) {
-      message = await this.connect();
-      if (message) {
-        return {
-          ok: false,
-          message,
-        };
-      }
+    if (this.isConnected) {
+      await this.disconnect();
+    }
+
+    message = await this.connect();
+    if (message) {
+      return {
+        ok: false,
+        message,
+      };
     }
 
     try {

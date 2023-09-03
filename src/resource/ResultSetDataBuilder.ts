@@ -1300,6 +1300,44 @@ export class ResultSetDataBuilder {
     return this.rs.keys.map((k) => k.name);
   }
 
+  setSummary({
+    elapsedTimeMilli,
+    selectedRows,
+    affectedRows,
+    insertId,
+    changedRows,
+  }: {
+    elapsedTimeMilli: number;
+    selectedRows?: number;
+    affectedRows?: number;
+    insertId?: number;
+    changedRows?: number;
+  }): void {
+    const elapsedTime = (elapsedTimeMilli / 1000).toFixed(2);
+
+    if (selectedRows === undefined) {
+      // insert, update, delete
+      this.rs.summary = {
+        info: `${affectedRows} row${
+          affectedRows === 1 ? '' : 's'
+        } affected (${elapsedTime} sec)`,
+        elapsedTimeMilli,
+        insertId: insertId,
+        affectedRows: affectedRows,
+        changedRows: changedRows,
+      };
+    } else {
+      // select
+      this.rs.summary = {
+        info: `${selectedRows} row${
+          selectedRows === 1 ? '' : 's'
+        } in set (${elapsedTime} sec)`,
+        elapsedTimeMilli,
+        selectedRows,
+      };
+    }
+  }
+
   private toShortString(
     o: any,
     maxCellValueLength,

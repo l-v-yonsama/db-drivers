@@ -232,7 +232,44 @@ describe('PostgresDriver', () => {
     });
   });
 
-  describe('flowTransaction', () => {
+  describe('flow(autoCommit=1)', () => {
+    const kingRowQuery = "SELECT * FROM EMP WHERE ENAME='KING'";
+
+    const getSal = async (rdsDriver: RDSBaseDriver): Promise<number> => {
+      await rdsDriver.connect();
+
+      const rdh = await rdsDriver.requestSql({
+        sql: kingRowQuery,
+      });
+      const sal = rdh.rows[0].values['sal'];
+      await rdsDriver.disconnect();
+      return sal;
+    };
+
+    it('should be commited', async () => {
+      const driver2 = createDriver();
+
+      const kingsSalBeforeUpdate = await getSal(driver2);
+
+      await driver2.flow(async (): Promise<void> => {
+        await driver2.requestSql({
+          sql: "UPDATE EMP SET SAL=SAL+100 WHERE ENAME='KING'",
+        });
+        const salInFlow = (
+          await driver2.requestSql({
+            sql: kingRowQuery,
+          })
+        ).rows[0].values['SAL'];
+        expect(salInFlow).toBe(kingsSalBeforeUpdate + 100);
+      });
+
+      const kingsSalAfterTransaction = await getSal(driver2);
+
+      expect(kingsSalBeforeUpdate + 100).toBe(kingsSalAfterTransaction);
+    });
+  });
+
+  describe('flowTransaction(autoCommit=0)', () => {
     const kingRowQuery = "SELECT * FROM EMP WHERE ENAME='KING'";
 
     const getSal = async (rdsDriver: RDSBaseDriver): Promise<number> => {

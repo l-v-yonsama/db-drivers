@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.177",
+  "version": "0.1.178",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16"
@@ -37,6 +37,7 @@
     "examples:mysql": "npm run build && node built/src/examples/mysql.js",
     "examples:postgres": "npm run build && node built/src/examples/postgres.js",
     "examples:rules": "npm run build && node built/src/examples/rules.js",
+    "examples:aws": "npm run build && node built/src/examples/aws.js",
     "test0": "jest --coverage",
     "test": "npm run clean && jest --runInBand",
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
@@ -57,7 +58,8 @@
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.306.0",
     "@aws-sdk/client-s3": "^3.279.0",
-    "@aws-sdk/client-sqs": "^3.303.0",
+    "@aws-sdk/client-ses": "^3.398.0",
+    "@aws-sdk/client-sqs": "^3.398.0",
     "@aws-sdk/credential-providers": "^3.279.0",
     "bytes": "^3.1.2",
     "dayjs": "^1.11.7",

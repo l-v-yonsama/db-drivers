@@ -74,9 +74,6 @@ export async function init(): Promise<void> {
     await pool.query('DROP TABLE IF EXISTS diff2');
     await pool.query(CREATE_DIFF2_TABLE_STATEMENT);
 
-    await pool.query('DROP TABLE IF EXISTS EMP CASCADE');
-    await pool.query(CREATE_TABLE_EMP);
-
     await pool.query('DROP TABLE IF EXISTS DEPT CASCADE');
     await pool.query(CREATE_TABLE_DEPT);
 
@@ -84,6 +81,9 @@ export async function init(): Promise<void> {
     await pool.query(`INSERT INTO DEPT VALUES(20, 'RESEARCH', 'DALLAS')`);
     await pool.query(`INSERT INTO DEPT VALUES(30, 'SALES', 'CHICAGO')`);
     await pool.query(`INSERT INTO DEPT VALUES(40, 'OPERATIONS', 'BOSTON')`);
+
+    await pool.query('DROP TABLE IF EXISTS EMP CASCADE');
+    await pool.query(CREATE_TABLE_EMP);
 
     const empValues = [
       [7839, 'KING', 0, 'PRESIDENT', null, 5000, 10],
