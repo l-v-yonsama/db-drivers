@@ -358,6 +358,7 @@ export class ResultSetDataBuilder {
       }
       (rdb.rs as any)['created'] = toDate(plainObj.created);
       rdb.rs.sqlStatement = plainObj.sqlStatement;
+      rdb.rs.summary = plainObj.summary;
       rdb.rs.shuffledIndexes = plainObj.shuffledIndexes;
       rdb.rs.shuffledNextCounter = plainObj.shuffledNextCounter;
       rdb.rs.mergeCells = plainObj.mergeCells;
