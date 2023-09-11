@@ -81,7 +81,28 @@ export function isBinaryLike(type: GeneralColumnType): boolean {
     case GeneralColumnType.LONGBLOB:
     case GeneralColumnType.TINYBLOB:
     case GeneralColumnType.BINARY:
+    case GeneralColumnType.VARBINARY:
       return true;
+  }
+  return false;
+}
+
+export function isGeometryLike(type: GeneralColumnType): boolean {
+  switch (type) {
+    case GeneralColumnType.GEOMETRY:
+    case GeneralColumnType.POINT:
+    case GeneralColumnType.POLYGON:
+      return true;
+  }
+  return false;
+}
+
+export function isNotSupportDiffType(type: GeneralColumnType): boolean {
+  if (isBinaryLike(type) || isGeometryLike(type)) {
+    return true;
+  }
+  if (type === GeneralColumnType.UNKNOWN) {
+    return true;
   }
   return false;
 }
@@ -125,6 +146,10 @@ export function isTime(type: GeneralColumnType): boolean {
       return true;
   }
   return false;
+}
+
+export function isUUIDType(type: GeneralColumnType): boolean {
+  return type === GeneralColumnType.UUID;
 }
 
 /**

@@ -5,15 +5,20 @@ import {
   isBooleanLike,
   isDateTimeOrDate,
   isDateTimeOrDateOrTime,
+  isEnumOrSet,
+  isJsonLike,
   isNumericLike,
   isTextLike,
   isTime,
+  isUUIDType,
 } from '../resource';
 import { DbColumn, DbTable, RdsDatabase } from '../resource/DbResource';
 import { parse, parseFirst, Statement } from 'pgsql-ast-parser';
 import { toBoolean, toDate, toNum, toTime, tolines } from '../util';
 import {
+  BindOptions,
   BindParamPosition,
+  DiffToUndoChangesResult,
   GeneralColumnType,
   Proposal,
   ProposalKind,
@@ -31,50 +36,88 @@ import {
   isTopLevelCondition,
   operatorToSQLString,
 } from './RuleEngine';
+import dayjs from 'dayjs';
 
-const toBindValue = (colType: GeneralColumnType, value: string | null): any => {
-  if (isTextLike(colType)) {
-    return value;
-  }
-
-  if (value === undefined || value === null || value.length === 0) {
-    return null;
-  }
-
-  if (
-    isNumericLike(colType) ||
-    isDateTimeOrDateOrTime(colType) ||
-    isBooleanLike(colType)
-  ) {
-    let v;
-    if (isNumericLike(colType)) {
-      v = toNum(value);
-    } else if (isDateTimeOrDate(colType)) {
-      v = toDate(value);
-    } else if (isTime(colType)) {
-      v = toTime(value);
-    } else {
-      v = toBoolean(value);
-    }
-    return v === undefined ? null : v;
-  }
-
-  return value;
-};
-
-export const toInsertStatementWithBinds = ({
+export const createUndoChangeSQL = ({
   schemaName,
   tableName,
-  keys,
-  values,
-  toPositionedParameter,
+  columns,
+  diffResult,
+  bindOption,
   quote,
 }: {
   schemaName?: string;
   tableName: string;
-  keys: RdhKey[];
+  columns: RdhKey[];
+  diffResult: DiffToUndoChangesResult;
+  bindOption: BindOptions;
+  quote?: boolean;
+}): QueryWithBindsResult[] => {
+  const { ok, toBeInserted, toBeUpdated, toBeDeleted } = diffResult;
+  if (!ok) {
+    return [];
+  }
+  const list: QueryWithBindsResult[] = [];
+
+  // toBeInserted
+  list.push(
+    ...toBeInserted.map((it) =>
+      toInsertStatement({
+        schemaName,
+        tableName,
+        columns,
+        values: it.values,
+        bindOption,
+        quote,
+      }),
+    ),
+  );
+
+  // toBeUpdated
+  list.push(
+    ...toBeUpdated.map((it) =>
+      toUpdateStatement({
+        schemaName,
+        tableName,
+        columns,
+        values: it.values,
+        conditions: it.conditions,
+        bindOption,
+        quote,
+      }),
+    ),
+  );
+
+  // toBeDeleted
+  list.push(
+    ...toBeDeleted.map((it) =>
+      toDeleteStatement({
+        schemaName,
+        tableName,
+        columns,
+        conditions: it.conditions,
+        bindOption,
+        quote,
+      }),
+    ),
+  );
+
+  return list;
+};
+
+export const toInsertStatement = ({
+  schemaName,
+  tableName,
+  columns,
+  values,
+  bindOption,
+  quote,
+}: {
+  schemaName?: string;
+  tableName: string;
+  columns: RdhKey[];
   values: { [key: string]: any };
-  toPositionedParameter?: boolean;
+  bindOption: BindOptions;
   quote?: boolean;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
@@ -82,7 +125,9 @@ export const toInsertStatementWithBinds = ({
     table: tableName,
     quote,
   });
+  const { specifyValuesWithBindParameters, toPositionedParameter } = bindOption;
   const binds: any[] = [];
+  const embdeddedValues: string[] = [];
 
   const columnNames: string[] = [];
   const placeHolders: string[] = [];
@@ -90,20 +135,30 @@ export const toInsertStatementWithBinds = ({
   let index = 0;
   Object.keys(values).forEach((key) => {
     const colType =
-      keys.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
-    const value = toBindValue(colType, values[key]);
-    if (value === null) {
-      return;
-    }
+      columns.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+
     columnNames.push(`${wrapQuote(key, quote)}`);
-    binds.push(value);
-    placeHolders.push(toPositionedParameter === true ? `$${index + 1}` : '?');
-    index++;
+
+    if (specifyValuesWithBindParameters) {
+      const value = toBindValue(colType, values[key]);
+      if (value === null) {
+        return;
+      }
+      binds.push(value);
+      placeHolders.push(toPositionedParameter === true ? `$${index + 1}` : '?');
+      index++;
+    } else {
+      embdeddedValues.push(toEmbeddedStringValue(colType, values[key]));
+    }
   });
 
   const query = `INSERT INTO ${tableNameWithSchema} (${columnNames.join(
     ',',
-  )}) VALUES (${placeHolders.join(',')})`;
+  )}) VALUES (${
+    specifyValuesWithBindParameters
+      ? placeHolders.join(',')
+      : embdeddedValues.join(',')
+  })`;
 
   return {
     query,
@@ -111,21 +166,21 @@ export const toInsertStatementWithBinds = ({
   };
 };
 
-export const toUpdateStatementWithBinds = ({
+export const toUpdateStatement = ({
   schemaName,
   tableName,
-  keys,
+  columns,
   values,
   conditions,
-  toPositionedParameter,
+  bindOption,
   quote,
 }: {
   schemaName?: string;
   tableName: string;
-  keys: RdhKey[];
+  columns: RdhKey[];
   values: { [key: string]: any };
   conditions: { [key: string]: any };
-  toPositionedParameter?: boolean;
+  bindOption: BindOptions;
   quote?: boolean;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
@@ -133,6 +188,7 @@ export const toUpdateStatementWithBinds = ({
     table: tableName,
     quote,
   });
+  const { specifyValuesWithBindParameters, toPositionedParameter } = bindOption;
   const binds: any[] = [];
 
   const setList: string[] = [];
@@ -140,26 +196,46 @@ export const toUpdateStatementWithBinds = ({
 
   let index = 0;
   Object.keys(values).forEach((key) => {
-    setList.push(
-      `${wrapQuote(key, quote)} = ${
-        toPositionedParameter === true ? `$${index + 1}` : '?'
-      }`,
-    );
     const colType =
-      keys.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
-    binds.push(toBindValue(colType, values[key]));
-    index++;
+      columns.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+
+    if (specifyValuesWithBindParameters) {
+      setList.push(
+        `${wrapQuote(key, quote)} = ${
+          toPositionedParameter === true ? `$${index + 1}` : '?'
+        }`,
+      );
+      binds.push(toBindValue(colType, values[key]));
+      index++;
+    } else {
+      setList.push(
+        `${wrapQuote(key, quote)} = ${toEmbeddedStringValue(
+          colType,
+          values[key],
+        )}`,
+      );
+    }
   });
   Object.keys(conditions).forEach((key) => {
-    conditionList.push(
-      `${wrapQuote(key, quote)} = ${
-        toPositionedParameter === true ? `$${index + 1}` : '?'
-      }`,
-    );
     const colType =
-      keys.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
-    binds.push(toBindValue(colType, conditions[key]));
-    index++;
+      columns.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+
+    if (specifyValuesWithBindParameters) {
+      conditionList.push(
+        `${wrapQuote(key, quote)} = ${
+          toPositionedParameter === true ? `$${index + 1}` : '?'
+        }`,
+      );
+      binds.push(toBindValue(colType, conditions[key]));
+      index++;
+    } else {
+      conditionList.push(
+        `${wrapQuote(key, quote)} = ${toEmbeddedStringValue(
+          colType,
+          conditions[key],
+        )}`,
+      );
+    }
   });
 
   const query = `UPDATE ${tableNameWithSchema} SET ${setList.join(
@@ -172,19 +248,19 @@ export const toUpdateStatementWithBinds = ({
   };
 };
 
-export const toDeleteStatementWithBinds = ({
+export const toDeleteStatement = ({
   schemaName,
   tableName,
-  keys,
+  columns,
   conditions,
-  toPositionedParameter,
+  bindOption,
   quote,
 }: {
   schemaName?: string;
   tableName: string;
-  keys: RdhKey[];
+  columns: RdhKey[];
   conditions: { [key: string]: any };
-  toPositionedParameter?: boolean;
+  bindOption: BindOptions;
   quote?: boolean;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
@@ -192,19 +268,30 @@ export const toDeleteStatementWithBinds = ({
     table: tableName,
     quote,
   });
+  const { specifyValuesWithBindParameters, toPositionedParameter } = bindOption;
   const binds: any[] = [];
 
   const conditionList: string[] = [];
 
   Object.keys(conditions).forEach((key, index) => {
-    conditionList.push(
-      `${wrapQuote(key, quote)}  = ${
-        toPositionedParameter === true ? `$${index + 1}` : '?'
-      }`,
-    );
     const colType =
-      keys.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
-    binds.push(toBindValue(colType, conditions[key]));
+      columns.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+
+    if (specifyValuesWithBindParameters) {
+      conditionList.push(
+        `${wrapQuote(key, quote)}  = ${
+          toPositionedParameter === true ? `$${index + 1}` : '?'
+        }`,
+      );
+      binds.push(toBindValue(colType, conditions[key]));
+    } else {
+      conditionList.push(
+        `${wrapQuote(key, quote)}  = ${toEmbeddedStringValue(
+          colType,
+          conditions[key],
+        )}`,
+      );
+    }
   });
 
   const query = `DELETE FROM ${tableNameWithSchema} WHERE ${conditionList.join(
@@ -589,7 +676,6 @@ export const normalizeSimpleParametersQuery = (
       binds.push(bindParams[s]);
     }
   };
-
   const lines = tolines(stripComment(query));
   const newLines: string[] = [];
 
@@ -914,7 +1000,7 @@ const createColumnProposal = (
 const stripComment = (query: string): string => {
   return query
     .replace(/\/\*[^*]*\*\//gm, '') // strip multiple line comment.
-    .replace(/(\s)?(#|--)\s+.*$/g, '$1'); // strip single line comment.
+    .replace(/(\s)?(#|--)\s+.*$/gm, '$1'); // strip single line comment.
 };
 
 const createReservedWordProposal = (word: string): Proposal => {
@@ -950,3 +1036,77 @@ const FUNCTION_MATCHER = new RegExp(
   `(${FUNCTIONS.join('|')})\\([^)]+?\\)`,
   'gi',
 );
+
+const toBindValue = (colType: GeneralColumnType, value: string | null): any => {
+  if (isTextLike(colType)) {
+    return value;
+  }
+
+  if (value === undefined || value === null || value.length === 0) {
+    return null;
+  }
+
+  if (
+    isNumericLike(colType) ||
+    isDateTimeOrDateOrTime(colType) ||
+    isBooleanLike(colType)
+  ) {
+    let v;
+    if (isNumericLike(colType)) {
+      v = toNum(value);
+    } else if (isDateTimeOrDate(colType)) {
+      v = toDate(value);
+    } else if (isTime(colType)) {
+      v = toTime(value);
+    } else {
+      v = toBoolean(value);
+    }
+    return v === undefined ? null : v;
+  }
+
+  return value;
+};
+
+const toEmbeddedStringValue = (
+  colType: GeneralColumnType,
+  value: string | null,
+): string => {
+  if (value === undefined || value === null) {
+    return 'NULL';
+  }
+
+  if (isTextLike(colType) || isEnumOrSet(colType)) {
+    return `'${value.replace(/'/, "''")}'`;
+  }
+
+  if (isJsonLike(colType)) {
+    return `'${JSON.stringify(value)}'`;
+  }
+
+  if (value.length === 0) {
+    return 'NULL';
+  }
+
+  if (isUUIDType(colType)) {
+    return `'${value}'`;
+  }
+
+  if (colType == GeneralColumnType.BIT) {
+    const v = toBoolean(value);
+    return `B'${v ? 1 : 0}'`;
+  }
+
+  if (isNumericLike(colType)) {
+    const v = toNum(value);
+    return v === undefined ? 'NULL' : v.toString();
+  } else if (isTime(colType)) {
+    return value === undefined ? 'NULL' : `'${value}'`;
+  } else if (isDateTimeOrDate(colType)) {
+    const v = toDate(value);
+    return v === undefined
+      ? 'NULL'
+      : `'${dayjs(v).format('YYYY-MM-DD HH:mm:ss')}'`;
+  }
+
+  return value.toString();
+};

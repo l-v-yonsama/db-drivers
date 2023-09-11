@@ -43,7 +43,7 @@ export async function init(): Promise<void> {
     await con.execute('DROP TABLE IF EXISTS testdb.testtable');
     await con.execute<ResultSetHeader>(CREATE_TABLE_STATEMENT);
 
-    const now = new Date();
+    const dt = new Date(2023, 10, 11, 12, 13, 14, 0);
     for (let i = 1; i <= 10; i++) {
       const integers = [
         0,
@@ -52,8 +52,8 @@ export async function init(): Promise<void> {
         3 + i + i * 100,
         4 + i + i * 1000,
       ];
-      const decimals = [12.3456 + i, 0.1 + i, 0.05 + i];
-      const datetimes = [now, now, now, now, now];
+      const decimals = [12.3456, 0.5, 0.05];
+      const datetimes = [dt, dt, dt, dt, dt];
       const strings = [
         'No' + i,
         's2-' + i,
@@ -67,7 +67,7 @@ export async function init(): Promise<void> {
         's7',
         'b',
       ];
-      const others = [{ k1: 'v1' }];
+      const others = [{ k1: 'v' + i }];
       const binds = [
         ...integers,
         ...decimals,
@@ -157,7 +157,7 @@ export async function init(): Promise<void> {
         i === 10 ? 6 : i % 3, // sex
         `CLERK${i}`,
         i,
-        now,
+        dt,
         i,
         null,
         i,
@@ -182,7 +182,7 @@ export async function init(): Promise<void> {
         binds,
       );
 
-      const binds2 = [i, i, now, i * 100];
+      const binds2 = [i, i, dt, i * 100];
       await con.execute(
         `INSERT INTO testdb.order (order_no, customer_no, order_date, amount) 
           VALUES (?, ?, ?, ?)`,
@@ -297,7 +297,7 @@ const INSERT_STATEMENT = `INSERT INTO testdb.testtable (
     ?, ?, ?, ?, ?, 
     ?, ?, ?,
     ?, ?, ?, ?, ?,
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, HEX(?), ?,
     ST_GeomFromText('POINT(35.702727 100)'), ? )`;
 
 const INSERT_STATEMENT2 = `INSERT INTO testdb.diff (

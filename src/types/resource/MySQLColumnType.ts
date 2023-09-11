@@ -27,7 +27,7 @@ export enum MySQLColumnType {
   SET = 0xf8, // SET
   TINYBLOB = 0xf9, // TINYBLOB, TINYTEXT
   VARCHAR = 0xfd, // (253)VARCHAR, VARBINARY
-  POINT = 0xff, // (255)GEOMETRY,
+  GEOMETRY = 0xff, // (255)GEOMETRY,
   TINYTEXT = 1001, // (252)BLOB, TINYTEXT(length: 765, flags: 16,)
   TEXT = 1002, // (252)TEXt(length: 196605, flags: 16)
   BLOB = 1012, // (252)BLOB(length: 65535, flags: 144)
@@ -37,6 +37,7 @@ export enum MySQLColumnType {
   LONGBLOB = 1014, // (252)LONGBLOB,(length: 4294967295,flags: 144)
   CHAR = 2001, // (254)CHAR(flags: 20483,)
   BINARY = 2002, // (254)BINARY(flags: 128,)
+  VARBINARY = 2003,
   UNKNOWN,
 }
 
@@ -81,6 +82,11 @@ export namespace MySQLColumnType {
           return MySQLColumnType.TEXT;
         }
         return MySQLColumnType.UNKNOWN;
+      case 253:
+        if (fieldInfo['encoding'] == 'binary') {
+          return MySQLColumnType.VARBINARY;
+        }
+        return MySQLColumnType.VARCHAR;
       case 254:
         if (flags === 128) {
           return MySQLColumnType.BINARY;
@@ -95,6 +101,7 @@ export namespace MySQLColumnType {
     if (e) {
       return e.value as number;
     }
+
     // console.error(`can't parse from `, fieldInfo);
     return MySQLColumnType.UNKNOWN;
   }
@@ -110,12 +117,13 @@ export namespace MySQLColumnType {
       return s;
     }
     s = s.toUpperCase();
+
     if ('CHAR' === s || 'CHARACTER' === s) {
       return MySQLColumnType.CHAR;
     } else if ('INT' === s) {
       return MySQLColumnType.INTEGER;
     } else if ('POLYGON' === s) {
-      return MySQLColumnType.POINT;
+      return MySQLColumnType.GEOMETRY;
     } else if ('DOUBLE' === s) {
       return MySQLColumnType.REAL;
     } else if ('LONGLONG' === s) {
@@ -127,7 +135,7 @@ export namespace MySQLColumnType {
     if (e) {
       return e.value as MySQLColumnType;
     }
-    // console.error(`can't parse from `, s, typeof s);
+    console.error(`can't parse from `, s, typeof s);
     return MySQLColumnType.UNKNOWN;
   }
 }

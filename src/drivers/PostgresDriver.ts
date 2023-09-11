@@ -14,7 +14,12 @@ import {
   createRdhKey,
   parseColumnType,
 } from '../resource';
-import { ConnectionSetting, QueryParams, RdhKey } from '../types';
+import {
+  ConnectionSetting,
+  GeneralColumnType,
+  QueryParams,
+  RdhKey,
+} from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 
@@ -77,8 +82,12 @@ export class PostgresDriver extends RDSBaseDriver {
       type: parseColumnType(name),
       comment: tableColumn?.comment ?? '',
     });
+
     // Correspondence to ENUM type returned as text type
-    if (useTableColumnType && tableColumn) {
+    if (
+      (useTableColumnType || key.type === GeneralColumnType.UNKNOWN) &&
+      tableColumn
+    ) {
       key.type = tableColumn.colType;
     }
     key.required = tableColumn?.nullable === false;

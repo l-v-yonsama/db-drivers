@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.179",
+  "version": "0.1.180",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16"
@@ -9,6 +9,7 @@
     "@types/bytes": "^3.1.1",
     "@types/jest": "~29.2",
     "@types/json-rules-engine": "^4.1.0",
+    "@types/lodash.isequal": "^4.5.6",
     "@types/node": "~18",
     "@types/pg": "^8.6.6",
     "@types/pluralize": "^0.0.29",
@@ -47,7 +48,8 @@
     "test:driver:cw": "npm run clean && jest __tests__/db/drivers/AwsCloudwatchDriver.test.ts",
     "test:driver:minio": "npm run clean && jest __tests__/db/drivers/AwsS3Driver.test.ts",
     "test:helper:sql": "npm run clean && jest __tests__/helpers/SQLHelper.test.ts",
-    "test:helper:resource": "npm run clean && jest __tests__/helpers/ResourceHelper.test.ts",
+    "test:helper:res:mysql": "npm run clean && jest __tests__/helpers/ResourceHelper.mysql.test.ts",
+    "test:helper:res:postgres": "npm run clean && jest __tests__/helpers/ResourceHelper.postgres.test.ts",
     "test:helper:engine": "npm run clean && jest __tests__/helpers/RuleEngine.test.ts",
     "test:helper:resolver": "npm run clean && jest __tests__/helpers/CodeResolver.test.ts",
     "prettier": "prettier --config .prettierrc --write .",
@@ -69,6 +71,7 @@
     "jconv": "^0.1.5",
     "json-rules-engine": "^6.1.2",
     "list-it": "^1.3.10",
+    "lodash.isequal": "^4.5.0",
     "mysql2": "^3.1.2",
     "pg": "^8.9.0",
     "pgsql-ast-parser": "^11.0.1",

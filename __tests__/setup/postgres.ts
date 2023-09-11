@@ -34,20 +34,21 @@ export async function init(): Promise<void> {
     await pool.query(
       "COMMENT ON TABLE testtable IS 'table with various data types'",
     );
-    const now = new Date();
+
+    const dt = new Date(2023, 10, 11, 12, 13, 14, 0);
     for (let i = 1; i <= 200; i++) {
       const integers = [0, 1 + i, 2 + i + i, i % 10, 4 + i + i * 100];
-      const decimals = [12.3456 + (i % 50), 0.1 + i, 0.05 + i];
-      const datetimes = [now, '10:00:12', now, now, 2000];
+      const decimals = [12.3456, 0.5, 0.05];
+      const datetimes = [dt, '12:13:14', dt, dt, 2000];
       const strings = [
         'No' + i,
         's2-' + i,
         's3a-' + i,
         'happy',
         Buffer.from('\x00\x01\x02'),
-        crypto.randomUUID(),
+        `6050103d-e0cd-4134-adaa-fe1a9dbd344${i % 10}`,
       ];
-      const others = [{ k1: 'v1' }];
+      const others = [{ k1: 'v' + i }];
       const binds = [
         ...integers,
         ...decimals,
@@ -134,7 +135,7 @@ export async function init(): Promise<void> {
       );
       const customerNo = customerValues[i][0];
 
-      const binds2 = [no, customerNo, now, no * 100];
+      const binds2 = [no, customerNo, dt, no * 100];
       await pool.query(
         `INSERT INTO order1 (order_no, customer_no, order_date, amount) 
           VALUES ($1, $2, $3, $4)`,

@@ -22,6 +22,7 @@ import {
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
 import { toBoolean } from '../util';
+import { table } from 'console';
 
 export class MySQLDriver extends RDSBaseDriver {
   private con: mysql.Connection | undefined;
@@ -60,14 +61,17 @@ export class MySQLDriver extends RDSBaseDriver {
       MySQLColumnType,
       MySQLColumnType.parseByFieldInfo(fieldInfo),
     );
+
     const tableColumn = table?.children?.find(
       (it) => it.name === fieldInfo.name,
     );
+
     const key = createRdhKey({
       name: fieldInfo.name,
       type: parseColumnType(mysqlColumnTypename),
       comment: tableColumn?.comment ?? '',
     });
+
     // Correspondence to ENUM type returned as text type
     if (useTableColumnType && tableColumn) {
       key.type = tableColumn.colType;

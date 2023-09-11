@@ -430,6 +430,17 @@ describe('SQLHelper', () => {
         );
         expect(binds).toEqual([]);
       });
+
+      it(`should not be error, like bind comment`, () => {
+        const { query, binds } = normalizeQuery({
+          query: `select ID FROM EMP where schema IN (20) -- (<10:Z1, 15:Z2>) \r\nORDER BY ID`,
+        });
+
+        expect(query).toBe(
+          `select ID FROM EMP where schema IN (20) \nORDER BY ID`,
+        );
+        expect(binds).toEqual([]);
+      });
     });
   });
 
