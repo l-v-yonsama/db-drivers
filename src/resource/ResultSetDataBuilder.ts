@@ -347,7 +347,8 @@ export class ResultSetDataBuilder {
       plainObj.rows?.forEach((row) => {
         const { values, meta } = row;
         for (const dateKey of dateKeys) {
-          values[dateKey] = toDate(values[dateKey]);
+          const v = values[dateKey];
+          values[dateKey] = v === null ? null : toDate(v);
         }
         rdb.addRow(values, meta);
       });
