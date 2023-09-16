@@ -1,10 +1,9 @@
-import { EnumValues } from 'enum-values';
 import { GeneralColumnType } from '../types';
 
 export function displayGeneralColumnType(
   columnType: GeneralColumnType,
 ): string {
-  return EnumValues.getNameFromValue(GeneralColumnType, columnType);
+  return columnType.toUpperCase();
 }
 
 export function parseColumnType(
@@ -13,22 +12,22 @@ export function parseColumnType(
   if (s === undefined || s === null) {
     return GeneralColumnType.UNKNOWN;
   }
-  s = s.toUpperCase();
-  if ('VAR_STRING' === s) {
+  s = s.toLowerCase();
+  if ('var_string' === s) {
     return GeneralColumnType.VARCHAR;
-  } else if ('TINY' === s) {
+  } else if ('tiny' === s) {
     return GeneralColumnType.TINYINT;
-  } else if ('DATETIME' === s || 'TIMESTAMP(6)' === s) {
+  } else if ('datetime' === s || 'timestamp(6)' === s) {
     return GeneralColumnType.TIMESTAMP;
-  } else if ('VARCHAR2' === s) {
+  } else if ('varchar2' === s) {
     return GeneralColumnType.VARCHAR;
-  } else if ('NUMBER' === s) {
+  } else if ('number' === s) {
     return GeneralColumnType.NUMERIC;
   }
-  const list = EnumValues.getNamesAndValues(GeneralColumnType);
-  const m = list.find((a) => a.name === s);
+  const list = Object.values(GeneralColumnType);
+  const m = list.find((it) => it == s);
   if (m) {
-    return <number>m.value;
+    return m;
   }
   return GeneralColumnType.UNKNOWN;
 }

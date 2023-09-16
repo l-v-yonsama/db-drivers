@@ -95,7 +95,10 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
     const rdb = new ResultSetDataBuilder([
       createRdhKey({ name: 'messageId', type: GeneralColumnType.TEXT }),
       createRdhKey({ name: 'body', type: GeneralColumnType.TEXT }),
-      createRdhKey({ name: 'receiptHandle', type: GeneralColumnType.TEXT }),
+      createRdhKey({
+        name: 'receiptHandle',
+        type: GeneralColumnType.TEXT,
+      }),
       createRdhKey({
         name: 'sentTimestamp',
         type: GeneralColumnType.TIMESTAMP,

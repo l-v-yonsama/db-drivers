@@ -191,9 +191,21 @@ export class RedisDriver
     const dbKeys = await this.scanStream(params);
 
     const rdb = new ResultSetDataBuilder([
-      createRdhKey({ name: 'key', type: GeneralColumnType.TEXT, width: 150 }),
-      createRdhKey({ name: 'type', type: GeneralColumnType.ENUM, width: 70 }),
-      createRdhKey({ name: 'ttl', type: GeneralColumnType.INTEGER, width: 50 }),
+      createRdhKey({
+        name: 'key',
+        type: GeneralColumnType.TEXT,
+        width: 150,
+      }),
+      createRdhKey({
+        name: 'type',
+        type: GeneralColumnType.ENUM,
+        width: 70,
+      }),
+      createRdhKey({
+        name: 'ttl',
+        type: GeneralColumnType.INTEGER,
+        width: 50,
+      }),
       createRdhKey({
         name: 'val',
         type: GeneralColumnType.UNKNOWN,

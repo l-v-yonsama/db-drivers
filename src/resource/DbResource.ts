@@ -456,12 +456,7 @@ export class DbColumn extends DbResource {
   public readonly uniqKey: boolean;
   public readonly default: any;
   public readonly extra: any;
-  constructor(
-    name: string,
-    colType = GeneralColumnType.UNKNOWN,
-    params: any,
-    comment?: string,
-  ) {
+  constructor(name: string, colType, params: any, comment?: string) {
     super(ResourceType.Column, name);
     this.colType = colType;
     this.comment = comment;

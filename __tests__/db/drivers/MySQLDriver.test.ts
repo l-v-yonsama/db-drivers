@@ -4,12 +4,12 @@ import {
   DbTable,
   DbColumn,
   DBType,
-  GeneralColumnType,
   RdsDatabase,
   ConnectionSetting,
   ResultSetDataBuilder,
   sleep,
   RDSBaseDriver,
+  GeneralColumnType,
 } from '../../../src';
 import { init, saveRes } from '../../setup/mysql';
 

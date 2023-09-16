@@ -153,7 +153,10 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       createRdhKey({ name: 'size', type: GeneralColumnType.INTEGER }),
       createRdhKey({ name: 'etag', type: GeneralColumnType.TEXT }),
       createRdhKey({ name: 'storageClass', type: GeneralColumnType.TEXT }),
-      createRdhKey({ name: 'lastModified', type: GeneralColumnType.TIMESTAMP }),
+      createRdhKey({
+        name: 'lastModified',
+        type: GeneralColumnType.TIMESTAMP,
+      }),
       createRdhKey({ name: 'value', type: GeneralColumnType.UNKNOWN }),
     ]);
     list.forEach((dbKey) => {

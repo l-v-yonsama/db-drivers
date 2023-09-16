@@ -5,7 +5,6 @@ import {
   DbLogGroup,
   ResultSetDataBuilder,
   createRdhKey,
-  isResultSetDataBuilder,
 } from '../../resource';
 import {
   AwsServiceType,

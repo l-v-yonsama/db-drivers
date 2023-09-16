@@ -12,6 +12,7 @@ import {
   RDSBaseDriver,
 } from '../../../src';
 import { init } from '../../setup/postgres';
+import { saveRes } from '../../setup/resourceIO';
 
 const baseConnectOption = {
   host: '127.0.0.1',
@@ -87,6 +88,7 @@ describe('PostgresDriver', () => {
       const dbRootRes = await driver.getInfomationSchemas();
       testDbRes = dbRootRes.find((it) => it.name === 'testdb');
       expect(testDbRes.name).toBe(driver.getConnectionRes().database);
+      // await saveRes('postgresDbRes.json', testDbRes);
     });
 
     it('should have Schema resource', async () => {

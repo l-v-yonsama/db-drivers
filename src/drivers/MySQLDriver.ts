@@ -22,7 +22,6 @@ import {
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
 import { toBoolean } from '../util';
-import { table } from 'console';
 
 export class MySQLDriver extends RDSBaseDriver {
   private con: mysql.Connection | undefined;
@@ -378,7 +377,7 @@ export class MySQLDriver extends RDSBaseDriver {
       const type_name = EnumValues.getNameFromValue(
         MySQLColumnType,
         MySQLColumnType.parse(r.values.col_type),
-      );
+      ) as any;
       const res = new DbColumn(
         r.values.name,
         parseColumnType(type_name),
@@ -390,6 +389,7 @@ export class MySQLDriver extends RDSBaseDriver {
         },
         r.values.comment,
       );
+
       return res;
     });
   }
