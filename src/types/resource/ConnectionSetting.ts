@@ -51,4 +51,8 @@ export type ConnectionSetting = {
   ssh?: SshSetting;
   awsSetting?: AwsSetting;
   firebase?: FirebaseSetting;
+  /**
+   * The timezone used to store local dates.
+   */
+  timezone?: string;
 };

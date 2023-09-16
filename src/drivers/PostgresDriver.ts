@@ -107,6 +107,17 @@ export class PostgresDriver extends RDSBaseDriver {
     } catch (e) {
       errorReason = e.message;
     }
+
+    try {
+      if (this.conRes.timezone) {
+        // e.g. SET TIME ZONE 'UTC'
+        await this.client.query(`SET TIME ZONE '${this.conRes.timezone}'`);
+      }
+    } catch (e) {
+      console.error(e);
+      errorReason = e.message;
+    }
+
     return errorReason;
   }
 

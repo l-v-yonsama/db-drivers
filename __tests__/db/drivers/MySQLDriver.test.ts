@@ -19,6 +19,7 @@ const baseConnectOption = {
   user: 'testuser',
   password: 'testpass',
   database: 'testdb',
+  timezone: '+00:00',
 };
 const connectOption: ConnectionSetting = {
   ...baseConnectOption,

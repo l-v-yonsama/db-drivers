@@ -91,6 +91,15 @@ export class MySQLDriver extends RDSBaseDriver {
     } catch (e) {
       errorMessage = e.message;
     }
+    try {
+      if (this.conRes.timezone) {
+        // e.g. SET TIME ZONE '+00:00'
+        await this.con.query(`SET time_zone = ?`, [this.conRes.timezone]);
+      }
+    } catch (e) {
+      console.error(e);
+      errorMessage = e.message;
+    }
     return errorMessage;
   }
 
@@ -537,6 +546,7 @@ export class MySQLDriver extends RDSBaseDriver {
       password: this.conRes.password,
       database: this.conRes.database,
     };
+
     return await mysql.createConnection(options);
   }
 }
