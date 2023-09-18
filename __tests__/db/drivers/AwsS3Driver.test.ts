@@ -122,7 +122,6 @@ describe('AwsS3Driver', () => {
       });
       expect(rdh.rows.length).toBe(3);
 
-      console.log(rdh.toString());
       const row2 = rdh.rows[1];
       expect(Buffer.from(row2.values['value']).toString()).toBe('');
       const row3 = rdh.rows[2];

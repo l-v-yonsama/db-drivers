@@ -13,7 +13,7 @@ import {
   isUUIDType,
 } from '../resource';
 import { DbColumn, DbTable, RdsDatabase } from '../resource/DbResource';
-import { parse, parseFirst, Statement } from 'pgsql-ast-parser';
+import { NodeLocation, parse, parseFirst, Statement } from 'pgsql-ast-parser';
 import { toBoolean, toDate, toNum, toTime, tolines } from '../util';
 import {
   BindOptions,
@@ -23,6 +23,8 @@ import {
   Proposal,
   ProposalKind,
   ProposalParams,
+  QNames,
+  QStatement,
   QueryWithBindsResult,
   RdhKey,
   ResourcePosition,
@@ -501,10 +503,17 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
  * @param sql
  * @returns parse result
  */
-export const parseQuery = (sql: string): Statement | undefined => {
+export const parseQuery = (sql: string): QStatement | undefined => {
   const replacedSql = toSafeQueryForPgsqlAst(sql);
   try {
-    return parseFirst(replacedSql);
+    const result = parse(replacedSql, { locationTracking: true });
+    if (result && result.length) {
+      const names = getQNames(result[0], replacedSql);
+      return {
+        ast: result[0],
+        names,
+      };
+    }
   } catch (_) {
     console.log('sql=', sql);
     console.log('replacedSql=', replacedSql);
@@ -1110,4 +1119,78 @@ const toEmbeddedStringValue = (
   }
 
   return value.toString();
+};
+
+const getQNames = (ast: Statement, sql: string): QNames | undefined => {
+  if (ast) {
+    switch (ast.type) {
+      case 'select':
+        if (ast.from && ast.from[0].type === 'table') {
+          return createQNamesUsingLocation({
+            schemaName: ast.from[0].name.schema,
+            tableName: ast.from[0].name.name,
+            location: ast.from[0]._location,
+            sql,
+          });
+        }
+        break;
+      case 'insert':
+        return createQNamesUsingLocation({
+          schemaName: ast.into.schema,
+          tableName: ast.into.name,
+          location: ast.into._location,
+          sql,
+        });
+      case 'update':
+        return createQNamesUsingLocation({
+          schemaName: ast.table.schema,
+          tableName: ast.table.name,
+          location: ast.table._location,
+          sql,
+        });
+      case 'delete':
+        return createQNamesUsingLocation({
+          schemaName: ast.from.schema,
+          tableName: ast.from.name,
+          location: ast.from._location,
+          sql,
+        });
+    }
+  }
+  return undefined;
+};
+
+const createQNamesUsingLocation = ({
+  tableName,
+  schemaName,
+  location,
+  sql,
+}: {
+  tableName: string;
+  schemaName?: string;
+  location?: NodeLocation;
+  sql: string;
+}): QNames => {
+  if (location) {
+    const qname = sql.substring(location.start, location.end);
+    if (schemaName) {
+      const names = qname.split('.');
+      if (names.length >= 2) {
+        return {
+          schemaName: names[0],
+          tableName: names[1],
+        };
+      }
+    } else {
+      return {
+        schemaName: undefined,
+        tableName: qname,
+      };
+    }
+  }
+
+  return {
+    tableName,
+    schemaName,
+  };
 };

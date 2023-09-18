@@ -11,6 +11,7 @@ import { Statement } from 'pgsql-ast-parser';
 import {
   ConnectionSetting,
   GeneralResult,
+  QStatement,
   QueryParams,
   ResourceType,
   ResultSetData,
@@ -66,17 +67,13 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   async requestSql(params: QueryParams): Promise<ResultSetData> {
     const { sql } = params;
     const ast = parseQuery(sql);
-    let tableName = this.getTableNameInLowercase(ast);
-    const dbTable = this.getDbTable(tableName);
-    if (dbTable) {
-      tableName = dbTable.name;
-    }
+    const dbTable = this.getDbTable(ast);
 
     const rdb = await this.requestSqlSub({
       ...params,
       dbTable,
     });
-    this.setRdhMetaAndStatement(params, rdb, ast?.type, tableName, dbTable);
+    this.setRdhMetaAndStatement(params, rdb, ast?.ast?.type, ast, dbTable);
 
     return rdb.build();
   }
@@ -97,23 +94,13 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   async explainSql(params: QueryParams): Promise<ResultSetData> {
     const { sql } = params;
     const ast = parseQuery(sql);
-    let tableName = this.getTableNameInLowercase(ast);
-    const dbTable = this.getDbTable(tableName);
-    if (dbTable) {
-      tableName = dbTable.name;
-    }
+    const dbTable = this.getDbTable(ast);
 
     const rdb = await this.explainSqlSub({
       ...params,
       dbTable,
     });
-    this.setRdhMetaAndStatement(
-      params,
-      rdb,
-      'explain' as any,
-      tableName,
-      dbTable,
-    );
+    this.setRdhMetaAndStatement(params, rdb, 'explain' as any, ast, dbTable);
     rdb.rs.meta.compareKeys = undefined; // update
 
     return rdb.build();
@@ -126,23 +113,13 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
     const { sql } = params;
     const ast = parseQuery(sql);
-    let tableName = this.getTableNameInLowercase(ast);
-    const dbTable = this.getDbTable(tableName);
-    if (dbTable) {
-      tableName = dbTable.name;
-    }
+    const dbTable = this.getDbTable(ast);
 
     const rdb = await this.explainAnalyzeSqlSub({
       ...params,
       dbTable,
     });
-    this.setRdhMetaAndStatement(
-      params,
-      rdb,
-      'analyze' as any,
-      tableName,
-      dbTable,
-    );
+    this.setRdhMetaAndStatement(params, rdb, 'analyze' as any, ast, dbTable);
     rdb.rs.meta.compareKeys = undefined; // update
 
     return rdb.build();
@@ -152,38 +129,32 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder>;
 
-  private getTableNameInLowercase(ast: Statement): string | undefined {
-    if (ast) {
-      // console.log(JSON.stringify(ast, null, 2));
-      switch (ast.type) {
-        case 'select':
-          if (ast.from && ast.from[0].type === 'table') {
-            return ast.from[0].name.name;
-          }
-          break;
-        case 'insert':
-          return ast.into.name;
-        case 'update':
-          return ast.table.name;
-        case 'delete':
-          return ast.from.name;
-      }
-    }
-    return undefined;
-  }
-
-  private getDbTable(name: string): DbTable | undefined {
-    if (!name) {
+  private getDbTable(qst?: QStatement): DbTable | undefined {
+    const db = this.getRdsDatabase();
+    if (qst === undefined || qst.names === undefined || db === undefined) {
       return undefined;
     }
-    const list = this.getRdsDatabase()?.findChildren<DbTable>({
-      keyword: name,
-      resourceType: ResourceType.Table,
-      recursively: true,
-    });
-    if (list) {
-      return list[0];
+
+    if (qst.names.schemaName) {
+      const schema = db.children.find(
+        (it) => it.name.toLocaleLowerCase() === qst.names.schemaName,
+      );
+      if (schema) {
+        return schema.children.find(
+          (it) => it.name.toLocaleLowerCase() === qst.names.tableName,
+        );
+      }
     }
+
+    for (const schema of db.children) {
+      const table = schema.children.find(
+        (it) => it.name.toLocaleLowerCase() === qst.names.tableName,
+      );
+      if (table) {
+        return table;
+      }
+    }
+
     return undefined;
   }
 
@@ -191,17 +162,22 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     params: QueryParams,
     rdb: ResultSetDataBuilder,
     type: Statement['type'],
-    astTableName?: string,
+    qst: QStatement,
     dbTable?: DbTable,
   ): void {
     const { sql, conditions, meta } = params;
     rdb.setSqlStatement(sql);
     const connectionName = this.conRes.name;
+    let schemaName = meta?.schemaName;
     let tableName = meta?.tableName;
     const comment = meta?.comment ?? dbTable?.comment;
     let compareKeys = meta?.compareKeys;
-    if (!rdb.rs.meta.tableName) {
-      tableName = astTableName;
+
+    if (!schemaName) {
+      schemaName = qst?.names?.schemaName;
+    }
+    if (!tableName) {
+      tableName = qst?.names?.tableName;
     }
 
     if (!rdb.rs.meta.compareKeys && !compareKeys) {
@@ -212,6 +188,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     rdb.updateMeta({
       connectionName,
       comment,
+      schemaName,
       tableName,
       compareKeys,
       type,

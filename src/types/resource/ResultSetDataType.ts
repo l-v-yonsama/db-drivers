@@ -7,6 +7,7 @@ import { TableRule } from './Rules';
 
 export type RdhMeta = {
   connectionName?: string;
+  schemaName?: string;
   tableName?: string;
   comment?: string;
   compareKeys?: CompareKey[];

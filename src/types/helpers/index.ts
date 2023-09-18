@@ -1,5 +1,16 @@
 import { TopLevelCondition } from 'json-rules-engine';
 import { DbTable, RdsDatabase } from '../../resource';
+import { Statement } from 'pgsql-ast-parser';
+
+export type QNames = {
+  tableName: string;
+  schemaName?: string;
+};
+
+export type QStatement = {
+  ast: Statement;
+  names: QNames;
+};
 
 export type QueryWithBindsResult = {
   query: string;
