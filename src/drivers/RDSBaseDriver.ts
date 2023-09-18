@@ -137,18 +137,24 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
 
     if (qst.names.schemaName) {
       const schema = db.children.find(
-        (it) => it.name.toLocaleLowerCase() === qst.names.schemaName,
+        (it) =>
+          it.name.toLocaleLowerCase() ===
+          qst.names.schemaName.toLocaleLowerCase(),
       );
       if (schema) {
         return schema.children.find(
-          (it) => it.name.toLocaleLowerCase() === qst.names.tableName,
+          (it) =>
+            it.name.toLocaleLowerCase() ===
+            qst.names.tableName.toLocaleLowerCase(),
         );
       }
     }
 
     for (const schema of db.children) {
       const table = schema.children.find(
-        (it) => it.name.toLocaleLowerCase() === qst.names.tableName,
+        (it) =>
+          it.name.toLocaleLowerCase() ===
+          qst.names.tableName.toLocaleLowerCase(),
       );
       if (table) {
         return table;
