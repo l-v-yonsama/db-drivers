@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.186",
+  "version": "0.1.187",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16"
@@ -24,13 +24,14 @@
     "ts-jest": "~29.0",
     "tsutils": "~3.21",
     "typedoc": "^0.25.1",
+    "typedoc-plugin-markdown": "^3.16.0",
     "typescript": "~4.9"
   },
   "scripts": {
     "start": "node built/src/index.js",
     "clean": "rimraf coverage built tmp",
     "prebuild": "npm run lint",
-    "doc": "typedoc --out doc src",
+    "doc": "typedoc --cleanOutputDir --excludePrivate --plugin typedoc-plugin-markdown --out doc src",
     "build": "npm run clean && tsc -p tsconfig.json",
     "build:watch": "npm run clean && tsc -w -p tsconfig.json",
     "build:release": "npm run clean && tsc -p tsconfig.release.json && npm run doc",
