@@ -19,7 +19,7 @@
 
 #### Defined in
 
-[types/helpers/index.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/20aaf5c/src/types/helpers/index.ts#L36)
+[src/types/helpers/index.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/643b779/src/types/helpers/index.ts#L36)
 
 ___
 
@@ -29,7 +29,7 @@ ___
 
 #### Defined in
 
-[types/helpers/index.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/20aaf5c/src/types/helpers/index.ts#L37)
+[src/types/helpers/index.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/643b779/src/types/helpers/index.ts#L37)
 
 ___
 
@@ -39,7 +39,7 @@ ___
 
 #### Defined in
 
-[types/helpers/index.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/20aaf5c/src/types/helpers/index.ts#L34)
+[src/types/helpers/index.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/643b779/src/types/helpers/index.ts#L34)
 
 ___
 
@@ -49,4 +49,4 @@ ___
 
 #### Defined in
 
-[types/helpers/index.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/20aaf5c/src/types/helpers/index.ts#L35)
+[src/types/helpers/index.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/643b779/src/types/helpers/index.ts#L35)

@@ -6,3 +6,4 @@ export * from './RedisDriver';
 export * from './DBDriverResolver';
 export * from './RDSBaseDriver';
 export * from './aws/index';
+export * from './DBError';

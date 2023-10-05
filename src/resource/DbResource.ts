@@ -14,7 +14,7 @@ import {
   UniqueKeyConstraint,
 } from '../types';
 import { format } from 'bytes';
-import { toDate } from '../util';
+import { equalsIgnoreCase, toDate } from '../util';
 import { displayGeneralColumnType } from './GeneralColumnUtil';
 
 const uid = new ShortUniqueId();
@@ -90,7 +90,7 @@ export function fromJson<T extends DbResource>(json: any): T {
 
 export type DbDatabase = RdsDatabase | AwsDatabase | RedisDatabase;
 
-type AllSubDbResource =
+export type AllSubDbResource =
   | RdsDatabase
   | AwsDatabase
   | RedisDatabase
@@ -358,20 +358,50 @@ export class DbTable extends DbResource<DbColumn> {
     this.isInProgress = false;
   }
 
-  getCompareKeys(): CompareKey[] {
+  getCompareKeys(availableColumnNames?: string[]): CompareKey[] {
     const ret: CompareKey[] = [];
     const pks = this.getPrimaryColumnNames();
     if (pks.length) {
-      ret.push({
-        kind: 'primary',
-        names: pks,
-      });
+      if (availableColumnNames) {
+        if (
+          pks.every((pk) =>
+            availableColumnNames.some((ac) => equalsIgnoreCase(ac, pk)),
+          )
+        ) {
+          ret.push({
+            kind: 'primary',
+            names: pks.map((pk) =>
+              availableColumnNames.find((ac) => equalsIgnoreCase(ac, pk)),
+            ),
+          });
+        }
+      } else {
+        ret.push({
+          kind: 'primary',
+          names: pks,
+        });
+      }
     }
     this.uniqueKeys?.forEach((it) => {
-      ret.push({
-        kind: 'uniq',
-        names: it.columns,
-      });
+      if (availableColumnNames) {
+        if (
+          it.columns.every((uk) =>
+            availableColumnNames.some((ac) => equalsIgnoreCase(ac, uk)),
+          )
+        ) {
+          ret.push({
+            kind: 'uniq',
+            names: it.columns.map((uk) =>
+              availableColumnNames.find((ac) => equalsIgnoreCase(ac, uk)),
+            ),
+          });
+        }
+      } else {
+        ret.push({
+          kind: 'uniq',
+          names: it.columns,
+        });
+      }
     });
     return ret;
   }

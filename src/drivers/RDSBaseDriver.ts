@@ -18,7 +18,7 @@ import {
   TransactionControlType,
 } from '../types';
 import { parseQuery } from '../helpers';
-import { toNum } from '../util';
+import { equalsIgnoreCase, toNum } from '../util';
 
 export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   constructor(conRes: ConnectionSetting) {
@@ -136,25 +136,19 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     }
 
     if (qst.names.schemaName) {
-      const schema = db.children.find(
-        (it) =>
-          it.name.toLocaleLowerCase() ===
-          qst.names.schemaName.toLocaleLowerCase(),
+      const schema = db.children.find((it) =>
+        equalsIgnoreCase(it.name, qst.names.schemaName),
       );
       if (schema) {
-        return schema.children.find(
-          (it) =>
-            it.name.toLocaleLowerCase() ===
-            qst.names.tableName.toLocaleLowerCase(),
+        return schema.children.find((it) =>
+          equalsIgnoreCase(it.name, qst.names.tableName),
         );
       }
     }
 
     for (const schema of db.children) {
-      const table = schema.children.find(
-        (it) =>
-          it.name.toLocaleLowerCase() ===
-          qst.names.tableName.toLocaleLowerCase(),
+      const table = schema.children.find((it) =>
+        equalsIgnoreCase(it.name, qst.names.tableName),
       );
       if (table) {
         return table;
@@ -188,7 +182,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
 
     if (!rdb.rs.meta.compareKeys && !compareKeys) {
       if (dbTable) {
-        compareKeys = dbTable.getCompareKeys();
+        compareKeys = dbTable.getCompareKeys(rdb.keynames());
       }
     }
     rdb.updateMeta({

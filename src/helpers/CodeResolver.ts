@@ -1,5 +1,6 @@
 import { RowHelper } from '../resource';
 import { ResultSetData } from '../types';
+import { equalsIgnoreCase } from '../util';
 
 export const resolveCodeLabel = async (
   rdh: ResultSetData,
@@ -17,7 +18,7 @@ export const resolveCodeLabel = async (
     if (regex) {
       return new RegExp(pattern, 'i').test(target);
     }
-    return target.toLocaleLowerCase() == pattern.toLocaleLowerCase();
+    return equalsIgnoreCase(target, pattern);
   };
 
   const columnNames = rdh.keys.map((it) => it.name);

@@ -42,12 +42,12 @@ describe('ResourceHelper', () => {
     describe('Compare key specified', () => {
       it('should has uniq compareKey', async () => {
         const rdh1 = await driver.requestSql({
-          sql: 'SELECT * FROM diff order by birthday asc',
+          sql: 'SELECT LAST_NAME, FIRST_NAME, FULL_NAME,NOTE,BIRTHDAY FROM diff order by birthday asc',
           meta: {
             compareKeys: [
               {
                 kind: 'uniq',
-                names: ['full_name'],
+                names: ['FULL_NAME'],
               },
             ],
           },
@@ -58,7 +58,7 @@ describe('ResourceHelper', () => {
         expect(compareKeys).toHaveLength(1);
         expect(compareKeys[0]).toEqual({
           kind: 'uniq',
-          names: ['full_name'],
+          names: ['FULL_NAME'],
         });
 
         await driver.requestSql({
@@ -95,14 +95,14 @@ describe('ResourceHelper', () => {
 
       it('should has pk compareKey in meta', async () => {
         const rdh1 = await driver.requestSql({
-          sql: 'SELECT * FROM testtable order by n2 asc',
+          sql: 'SELECT id,s1,s2,n1,d1,s1,g1 FROM testtable order by n2 asc',
         });
         const { tableName, compareKeys } = rdh1.meta;
         expect(tableName).toBe('testtable');
         expect(compareKeys).toHaveLength(1);
         expect(compareKeys[0]).toEqual({
           kind: 'primary',
-          names: ['ID'],
+          names: ['id'],
         });
 
         await driver.requestSql({
@@ -133,7 +133,7 @@ describe('ResourceHelper', () => {
 
       it('should has uniq compareKey in meta', async () => {
         const rdh1 = await driver.requestSql({
-          sql: 'SELECT * FROM diff order by birthday asc',
+          sql: 'SELECT LAST_NAME, FIRST_NAME, FULL_NAME,NOTE,BIRTHDAY FROM diff order by birthday asc',
         });
 
         const { tableName, compareKeys } = rdh1.meta;
@@ -141,11 +141,11 @@ describe('ResourceHelper', () => {
         expect(compareKeys).toHaveLength(2);
         expect(compareKeys[0]).toEqual({
           kind: 'primary',
-          names: expect.arrayContaining(['last_name', 'first_name']),
+          names: expect.arrayContaining(['LAST_NAME', 'FIRST_NAME']),
         });
         expect(compareKeys[1]).toEqual({
           kind: 'uniq',
-          names: ['full_name'],
+          names: ['FULL_NAME'],
         });
 
         await driver.requestSql({
@@ -180,12 +180,12 @@ describe('ResourceHelper', () => {
     describe('Primary key specified', () => {
       it('should create sql success (Number, Date types)', async () => {
         const rdh1 = await driver.requestSql({
-          sql: 'SELECT ID,n0,n1,n2,n3,n4,f1,f2,f3,d1,d2,d3,d4,d5 FROM testtable order by ID',
+          sql: 'SELECT id,N0,n1,n2,n3,n4,f1,f2,f3,d1,d2,d3,d4,d5 FROM testtable order by ID',
           meta: {
             compareKeys: [
               {
                 kind: 'primary',
-                names: ['ID'],
+                names: ['id'],
               },
             ],
           },
@@ -196,7 +196,7 @@ describe('ResourceHelper', () => {
         expect(compareKeys).toHaveLength(1);
         expect(compareKeys[0]).toEqual({
           kind: 'primary',
-          names: ['ID'],
+          names: ['id'],
         });
 
         await driver.requestSql({
@@ -218,18 +218,18 @@ describe('ResourceHelper', () => {
           toBeDeleted: [
             {
               conditions: {
-                ID: 11,
+                id: 11,
               },
             },
           ],
           toBeInserted: [
             {
               values: {
-                ID: 1,
+                id: 1,
                 f1: '12.3456',
                 f2: 0.5,
                 f3: 0.05,
-                n0: false,
+                N0: false,
                 n1: 2,
                 n2: 13,
                 n3: 104,
@@ -245,7 +245,7 @@ describe('ResourceHelper', () => {
           toBeUpdated: [
             {
               conditions: {
-                ID: 2,
+                id: 2,
               },
               values: {
                 d2: '12:13:14',
@@ -278,18 +278,18 @@ describe('ResourceHelper', () => {
 
         expect(undoStatements[0]).toEqual({
           query:
-            "INSERT INTO testdb.testtable (ID,n0,n1,n2,n3,n4,f1,f2,f3,d1,d2,d3,d4,d5) VALUES (1,B'0',2,13,104,1005,12.3456,0.5,0.05,'2023-11-11 00:00:00','12:13:14','2023-11-11 12:13:14','2023-11-11 12:13:14',2023)",
+            "INSERT INTO testdb.testtable (id,N0,n1,n2,n3,n4,f1,f2,f3,d1,d2,d3,d4,d5) VALUES (1,B'0',2,13,104,1005,12.3456,0.5,0.05,'2023-11-11 00:00:00','12:13:14','2023-11-11 12:13:14','2023-11-11 12:13:14',2023)",
           binds: [],
         });
 
         expect(undoStatements[1]).toEqual({
           query:
-            "UPDATE testdb.testtable SET n2 = 24,f2 = 0.5,d2 = '12:13:14' WHERE ID = 2",
+            "UPDATE testdb.testtable SET n2 = 24,f2 = 0.5,d2 = '12:13:14' WHERE id = 2",
           binds: [],
         });
 
         expect(undoStatements[2]).toEqual({
-          query: 'DELETE FROM testdb.testtable WHERE ID  = 11',
+          query: 'DELETE FROM testdb.testtable WHERE id  = 11',
           binds: [],
         });
 
@@ -301,12 +301,12 @@ describe('ResourceHelper', () => {
 
         // check
         const rdh3 = await driver.requestSql({
-          sql: 'SELECT ID,n0,n1,n2,n3,n4,f1,f2,f3,d1,d2,d3,d4,d5 FROM testtable order by ID',
+          sql: 'SELECT id,N0,n1,n2,n3,n4,f1,f2,f3,d1,d2,d3,d4,d5 FROM testtable order by ID',
           meta: {
             compareKeys: [
               {
                 kind: 'primary',
-                names: ['ID'],
+                names: ['id'],
               },
             ],
           },

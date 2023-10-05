@@ -13,8 +13,15 @@ import {
   isUUIDType,
 } from '../resource';
 import { DbColumn, DbTable, RdsDatabase } from '../resource/DbResource';
-import { NodeLocation, parse, parseFirst, Statement } from 'pgsql-ast-parser';
-import { toBoolean, toDate, toNum, toTime, tolines } from '../util';
+import { NodeLocation, parse, Statement } from 'pgsql-ast-parser';
+import {
+  equalsIgnoreCase,
+  toBoolean,
+  toDate,
+  toNum,
+  toTime,
+  tolines,
+} from '../util';
 import {
   BindOptions,
   BindParamPosition,
@@ -137,7 +144,8 @@ export const toInsertStatement = ({
   let index = 0;
   Object.keys(values).forEach((key) => {
     const colType =
-      columns.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+      columns.find((it) => equalsIgnoreCase(it.name, key))?.type ??
+      GeneralColumnType.UNKNOWN;
 
     columnNames.push(`${wrapQuote(key, quote)}`);
 
@@ -199,7 +207,8 @@ export const toUpdateStatement = ({
   let index = 0;
   Object.keys(values).forEach((key) => {
     const colType =
-      columns.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+      columns.find((it) => equalsIgnoreCase(it.name, key))?.type ??
+      GeneralColumnType.UNKNOWN;
 
     if (specifyValuesWithBindParameters) {
       setList.push(
@@ -220,7 +229,8 @@ export const toUpdateStatement = ({
   });
   Object.keys(conditions).forEach((key) => {
     const colType =
-      columns.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+      columns.find((it) => equalsIgnoreCase(it.name, key))?.type ??
+      GeneralColumnType.UNKNOWN;
 
     if (specifyValuesWithBindParameters) {
       conditionList.push(
@@ -277,7 +287,8 @@ export const toDeleteStatement = ({
 
   Object.keys(conditions).forEach((key, index) => {
     const colType =
-      columns.find((it) => it.name === key)?.type ?? GeneralColumnType.UNKNOWN;
+      columns.find((it) => equalsIgnoreCase(it.name, key))?.type ??
+      GeneralColumnType.UNKNOWN;
 
     if (specifyValuesWithBindParameters) {
       conditionList.push(
@@ -384,7 +395,7 @@ const createConditionalClause = ({
       // condition
       const { fact, value, operator } = nest;
       const colType =
-        columns.find((it) => it.name === fact)?.colType ??
+        columns.find((it) => equalsIgnoreCase(it.name, fact))?.colType ??
         GeneralColumnType.TEXT;
 
       let q = `${wrapQuote(fact, quote)} ${operatorToSQLString(operator)} `;

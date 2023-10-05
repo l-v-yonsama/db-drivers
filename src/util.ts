@@ -135,6 +135,10 @@ export const isRDSType = (dbType: DBType): boolean => {
   return false;
 };
 
+export const equalsIgnoreCase = (s1: string, s2: string): boolean => {
+  return s1.toLocaleLowerCase() === s2.toLocaleLowerCase();
+};
+
 export default function isDate(value: unknown): value is Date {
   if (value == null) {
     return false;
