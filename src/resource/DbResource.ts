@@ -459,12 +459,41 @@ export type RedisKeyParams = {
 };
 
 export type S3KeyParams = {
+  downloadUrl?: string;
   outputFilePath?: string;
   lastModified: Date;
   etag: string;
   size: number;
   storageClass: string;
-  base64?: string;
+  stringValue?: string;
+  encodedBase64?: boolean;
+  /**
+   * <p>Specifies whether the object retrieved was (true) or was not (false) a Delete Marker. If
+   *          false, this response header does not appear in the response.</p>
+   */
+  deleteMarker?: boolean;
+  /**
+   * <p>Version of the object.</p>
+   */
+  versionId?: string;
+  /**
+   * <p>Specifies caching behavior along the request/reply chain.</p>
+   */
+  cacheControl?: string;
+  /**
+   * <p>Specifies presentational information for the object.</p>
+   */
+  contentDisposition?: string;
+  /**
+   * <p>Specifies what content encodings have been applied to the object and thus what decoding
+   *          mechanisms must be applied to obtain the media-type referenced by the Content-Type header
+   *          field.</p>
+   */
+  contentEncoding?: string;
+  /**
+   * <p>A standard MIME type describing the format of the object data.</p>
+   */
+  contentType?: string;
 };
 
 export type SQSMessageParams = {

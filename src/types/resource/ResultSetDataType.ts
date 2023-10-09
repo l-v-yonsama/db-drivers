@@ -64,8 +64,10 @@ export type RdhKey = {
   };
 };
 
+export type RdhRowMeta = { [key: string]: CellAnnotation[] };
+
 export type RdhRow = {
-  readonly meta: { [key: string]: CellAnnotation[] };
+  readonly meta: RdhRowMeta;
   readonly values: { [key: string]: any };
 };
 

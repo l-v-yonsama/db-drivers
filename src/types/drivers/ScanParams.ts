@@ -10,7 +10,9 @@ export type ScanParams = {
   target: string;
   parentTarget?: string;
   limit: number;
-  withValue?: boolean | 'auto';
+  withValue?: {
+    limitSize: number;
+  };
   keyword?: string;
   startTime?: number;
   endTime?: number;

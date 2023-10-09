@@ -103,7 +103,9 @@ describe('RedisDriver', () => {
         target: '0',
         limit: 1000,
         keyword: '*',
-        withValue: true,
+        withValue: {
+          limitSize: 100_000,
+        },
       });
 
       let key = keys.find((it) => it.name === 'n1');

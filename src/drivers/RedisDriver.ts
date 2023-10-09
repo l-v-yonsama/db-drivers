@@ -97,52 +97,6 @@ export class RedisDriver
     await this.client.del(key);
   }
 
-  // async executeCommand(req: RedisRequest): Promise<DbKey | string | number> {
-  //   let ret: DbKey | string | number = '';
-  //   if (!this.client) {
-  //     return ret;
-  //   }
-  //   await this.client.select(req.index);
-  //   let r: any = '';
-  //   switch (req.command) {
-  //     case RedisCommandType.GetValue:
-  //       {
-  //         r = await this.getValueByKey(this.client, req.key, req.type);
-  //         const ttl = await this.client.ttl(req.key);
-  //         ret = new DbKey(req.key, req.type, ttl);
-  //         if (ret.ttl > 0) {
-  //           ret.ttlConfirmationDatetime = new Date().getTime();
-  //         }
-  //         ret.val = r;
-  //       }
-  //       break;
-  //     case RedisCommandType.SetValue:
-  //       if (req.options) {
-  //         await this.client.set(req.key, req.options.val);
-  //       }
-  //       break;
-  //     case RedisCommandType.Flushall:
-  //       ret = await this.client.flushall();
-  //       break;
-  //     case RedisCommandType.Flushdb:
-  //       ret = await this.client.flushdb();
-  //       break;
-  //     case RedisCommandType.Dbsize:
-  //       ret = await this.client.dbsize();
-  //       break;
-  //     case RedisCommandType.Info:
-  //       ret = await this.client.info(<string>req.options.section);
-  //       break;
-  //     case RedisCommandType.Del:
-  //       ret = await this.client.del(<string>req.key);
-  //       break;
-  //     default:
-  //       console.error('undefined.', req.command);
-  //       break;
-  //   }
-  //   return ret;
-  // }
-
   async scanStream(params: ScanParams): Promise<DbKey<RedisKeyParams>[]> {
     const { target, limit, withValue, keyword } = params;
 

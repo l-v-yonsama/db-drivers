@@ -10,6 +10,7 @@ import {
   RdhKey,
   RdhMeta,
   RdhRow,
+  RdhRowMeta,
   RecordRuleValidationResult,
   RecordRuleValidationResultDetail,
   ResultSetData,
@@ -1218,10 +1219,10 @@ export class ResultSetDataBuilder {
     return s + os.EOL;
   }
 
-  addRow(recordData: any, default_meta?: any): void {
+  addRow(recordData: any, defaultMeta?: RdhRowMeta): void {
     let meta = {};
-    if (default_meta) {
-      meta = default_meta;
+    if (defaultMeta) {
+      meta = defaultMeta;
     }
     const values = <any>{};
     this.rs.keys.forEach((key) => {

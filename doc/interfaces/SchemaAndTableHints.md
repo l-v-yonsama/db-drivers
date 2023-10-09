@@ -16,4 +16,4 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/d6195e8/src/resource/DbResource.ts#L32)
+[src/resource/DbResource.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/a223cf2/src/resource/DbResource.ts#L32)

@@ -1,11 +1,14 @@
 /* eslint-disable no-async-promise-executor */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   CreateBucketCommand,
   DeleteBucketCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  GetObjectCommandOutput,
+  HeadObjectCommand,
+  HeadObjectCommandOutput,
   ListBucketsCommand,
   ListObjectsCommand,
   ListObjectsCommandInput,
@@ -26,7 +29,9 @@ import {
 import {
   AwsServiceType,
   ConnectionSetting,
+  FileAnnotation,
   GeneralColumnType,
+  RdhRowMeta,
   ResultSetData,
   ScanParams,
 } from '../../types';
@@ -34,6 +39,7 @@ import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { plural } from 'pluralize';
+import { isImageContentType, isTextContentType } from '../../util';
 
 export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   s3Client: S3Client;
@@ -60,26 +66,45 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
     }
   }
 
-  // getSignedUrl(bucket: string, key: string, expire_minutes: number): string {
-  //   const signedUrlExpireSeconds = 60 * expire_minutes;
-  //   const url = this.s3.getSignedUrl('getObject', {
-  //     Bucket: bucket,
-  //     Key: key,
-  //     Expires: signedUrlExpireSeconds,
-  //   });
-  //   return url;
-  // }
+  async getSignedUrl({
+    bucket,
+    key,
+    expireMinutes,
+  }: {
+    bucket: string;
+    key: string;
+    expireMinutes: number;
+  }): Promise<string> {
+    const expiresIn = 60 * expireMinutes;
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    // await the signed URL and return it
+    return await getSignedUrl(this.s3Client as any, command as any, {
+      expiresIn,
+    });
+  }
 
   async listObjects({
     bucket,
     prefix,
     limit,
+    startTime,
+    endTime,
+    withHeader,
     withValue,
   }: {
     bucket: string;
     prefix: string;
     limit: number;
-    withValue: boolean | 'auto';
+    startTime?: number;
+    endTime?: number;
+    withHeader: boolean;
+    withValue?: {
+      limitSize: number;
+    };
   }): Promise<DbKey<S3KeyParams>[]> {
     // Declare truncated as a flag that the while loop is based on.
     let truncated = true;
@@ -99,15 +124,21 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
           new ListObjectsCommand(bucketParams),
         );
 
-        response.Contents?.forEach((item) => {
+        for (const item of response.Contents) {
+          if (startTime && item.LastModified.valueOf() < startTime) {
+            continue;
+          }
+          if (endTime && item.LastModified.valueOf() > endTime) {
+            continue;
+          }
           const key = new DbKey<S3KeyParams>(item.Key, {
-            etag: item.ETag,
+            etag: item.ETag?.replace(/"/g, ''),
             size: item.Size,
             storageClass: item.StorageClass,
             lastModified: item.LastModified,
           });
           list.push(key);
-        });
+        }
 
         truncated = response.IsTruncated;
 
@@ -122,18 +153,54 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       }
     }
 
-    if (withValue === true || withValue === 'auto') {
-      const promises = list
-        .filter(
-          (it) =>
-            withValue === true ||
-            (withValue === 'auto' && it.params.size <= 10_000),
-        )
+    await Promise.all(
+      list
+        .filter((it) => it.params.size > 0)
         .map(async (it) => {
-          it.params.base64 = await this.getValueByKey({
+          const url = await this.getSignedUrl({
+            bucket,
+            key: it.name, // name as S3 Key
+            expireMinutes: 30,
+          });
+          it.params.downloadUrl = url;
+        }),
+    );
+
+    if (withHeader) {
+      const promises = list.map(async (it) => {
+        const header = await this.getHeadObject({
+          bucket,
+          key: it.name, // name as S3 Key
+        });
+        it.params.deleteMarker = header.DeleteMarker;
+        it.params.versionId = header.VersionId;
+        it.params.cacheControl = header.CacheControl;
+        it.params.contentDisposition = header.ContentDisposition;
+        it.params.contentEncoding = header.ContentEncoding;
+        it.params.contentType = header.ContentType;
+      });
+      await Promise.all(promises);
+    }
+    if (withValue) {
+      const promises = list
+        .filter((it) => it.params.size <= withValue.limitSize)
+        .map(async (it) => {
+          const res = await this.getValueByKey({
             bucket,
             key: it.name,
           });
+          if (
+            isTextContentType({
+              fileName: it.name,
+              contentType: it.params.contentType,
+            })
+          ) {
+            it.params.stringValue = await res.Body?.transformToString();
+            it.params.encodedBase64 = false;
+          } else {
+            it.params.stringValue = await res.Body?.transformToString('base64');
+            it.params.encodedBase64 = true;
+          }
         });
       await Promise.all(promises);
     }
@@ -141,15 +208,18 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   }
 
   async scan(params: ScanParams): Promise<ResultSetData> {
-    const { target, limit, keyword, withValue } = params;
+    const { target, limit, keyword, startTime, endTime, withValue } = params;
     const list = await this.listObjects({
       bucket: target,
       prefix: keyword,
       limit,
+      startTime,
+      endTime,
+      withHeader: true,
       withValue,
     });
     const rdb = new ResultSetDataBuilder([
-      createRdhKey({ name: 'key', type: GeneralColumnType.TEXT }),
+      createRdhKey({ name: 'key', type: GeneralColumnType.TEXT, width: 200 }),
       createRdhKey({ name: 'size', type: GeneralColumnType.INTEGER }),
       createRdhKey({ name: 'etag', type: GeneralColumnType.TEXT }),
       createRdhKey({ name: 'storageClass', type: GeneralColumnType.TEXT }),
@@ -157,14 +227,50 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
         name: 'lastModified',
         type: GeneralColumnType.TIMESTAMP,
       }),
-      createRdhKey({ name: 'value', type: GeneralColumnType.UNKNOWN }),
+      createRdhKey({ name: 'contentType', type: GeneralColumnType.TEXT }),
+      createRdhKey({ name: 'contentEncoding', type: GeneralColumnType.TEXT }),
+      createRdhKey({
+        name: 'contentDisposition',
+        type: GeneralColumnType.TEXT,
+      }),
+      createRdhKey({ name: 'cacheControl', type: GeneralColumnType.TEXT }),
+      createRdhKey({ name: 'versionId', type: GeneralColumnType.TEXT }),
+      createRdhKey({ name: 'deleteMarker', type: GeneralColumnType.BOOLEAN }),
+      createRdhKey({
+        name: 'value',
+        type: GeneralColumnType.UNKNOWN,
+        width: 210,
+      }),
     ]);
     list.forEach((dbKey) => {
-      rdb.addRow({
-        ...dbKey.params,
-        key: dbKey.name,
-        value: dbKey.params?.base64,
-      });
+      const value = dbKey.params?.stringValue;
+      let rowMeta: RdhRowMeta | undefined = undefined;
+      if (dbKey.params.size > 0) {
+        const fileAnnonation: FileAnnotation = {
+          type: 'Fil',
+          values: {
+            name: dbKey.name,
+            size: dbKey.params.size,
+            lastModified: dbKey.params.lastModified,
+            contentType: dbKey.params.contentType,
+            image: isImageContentType(dbKey.params.contentType),
+            encoding: dbKey.params.contentEncoding,
+            downloadUrl: dbKey.params.downloadUrl,
+          },
+        };
+        rowMeta = {
+          value: [fileAnnonation],
+        };
+      }
+
+      rdb.addRow(
+        {
+          ...dbKey.params,
+          key: dbKey.name,
+          value,
+        },
+        rowMeta,
+      );
     });
     return rdb.build();
   }
@@ -219,44 +325,19 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
     return dbDatabase;
   }
 
-  // async asyncGetSignedUrl(
-  //   bucket: string,
-  //   key: string,
-  //   ex: number,
-  // ): Promise<string> {
-  //   const LOG_PREFIX = `【S3:署名付きURL取得】<Bucket:${bucket}> [Key:${key}]`;
-  //   const signedUrlExpireSeconds = ex;
-
-  //   const url = this.s3.getSignedUrl('getObject', {
-  //     Bucket: bucket,
-  //     Key: key,
-  //     Expires: signedUrlExpireSeconds,
-  //   });
-  //   return url;
-  // }
-  // async asyncGet(bucket: string, key: string): Promise<string> {
-  //   const LOG_PREFIX = `【S3:取得】<Bucket:${bucket}> [Key:${key}]`;
-  //   const output_dir_path = await FileUtil.createKeyFolder(bucket, key);
-
-  //   return new Promise<string>((resolve, reject) => {
-  //     const params = {
-  //       Bucket: bucket,
-  //       Key: key,
-  //     };
-  //     const output_file_path = path.join(output_dir_path, path.basename(key));
-  //     const file = fs.createWriteStream(output_file_path);
-  //     this.s3
-  //       .getObject(params)
-  //       .createReadStream()
-  //       .on('end', () => {
-  //         return resolve(output_file_path);
-  //       })
-  //       .on('error', (error) => {
-  //         return reject(error);
-  //       })
-  //       .pipe(file);
-  //   });
-  // }
+  async getHeadObject({
+    bucket,
+    key,
+  }: {
+    bucket: string;
+    key: string;
+  }): Promise<HeadObjectCommandOutput> {
+    const inParams = new HeadObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+    return await this.s3Client.send(inParams);
+  }
 
   async createBucket({ bucket }: { bucket: string }): Promise<void> {
     await this.s3Client.send(new CreateBucketCommand({ Bucket: bucket }));
@@ -268,7 +349,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   }: {
     bucket: string;
     key: string;
-  }): Promise<any> {
+  }): Promise<GetObjectCommandOutput> {
     // Get the object from the Amazon S3 bucket. It is returned as a ReadableStream.
     const data = await this.s3Client.send(
       new GetObjectCommand({
@@ -276,7 +357,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
         Key: key,
       }),
     );
-    return data.Body.transformToString();
+    return data;
   }
 
   async putObject({

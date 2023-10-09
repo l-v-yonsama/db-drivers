@@ -8,6 +8,7 @@ import {
   AwsDatabase,
   SupplyCredentialType,
   AwsServiceType,
+  ResultSetDataBuilder,
 } from '../../../src';
 
 const connectOption = {
@@ -95,37 +96,40 @@ describe('AwsS3Driver', () => {
     });
 
     it('should have values', async () => {
-      const textValue = await driver.s3Client.getValueByKey({
+      const res = await driver.s3Client.getValueByKey({
         bucket,
         key: 'text/abc.txt',
       });
-      expect(textValue).toBe('abc');
+      const text = await res.Body.transformToString();
+      expect(text).toBe('abc');
 
-      const textValue2 = await driver.s3Client.getValueByKey({
+      const res2 = await driver.s3Client.getValueByKey({
         bucket,
         key: 'text/folder/abc.txt',
       });
-      expect(textValue2).toBe('abc');
+      const text2 = await res2.Body.transformToString();
+      expect(text2).toBe('abc');
 
-      const textValue3 = await driver.s3Client.getValueByKey({
+      const res3 = await driver.s3Client.getValueByKey({
         bucket,
         key: 'text/empty.txt',
       });
-      expect(textValue3).toBe('');
+      const text3 = await res3.Body.transformToString();
+      expect(text3).toBe('');
     });
 
     it('should have values2', async () => {
       const rdh = await driver.s3Client.scan({
         target: bucket,
         limit: 2000,
-        withValue: true,
+        withValue: { limitSize: 100_000 },
       });
       expect(rdh.rows.length).toBe(3);
 
       const row2 = rdh.rows[1];
-      expect(Buffer.from(row2.values['value']).toString()).toBe('');
+      expect(row2.values['value']).toBe('');
       const row3 = rdh.rows[2];
-      expect(Buffer.from(row3.values['value']).toString()).toBe('abc');
+      expect(row3.values['value']).toBe('abc');
     });
   });
 });

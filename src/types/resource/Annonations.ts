@@ -3,10 +3,11 @@ export const AnnotationTypeConst = {
   Upd: 'Upd',
   Add: 'Add',
   Err: 'Err',
-  Lnt: 'Lnt',
-  Stl: 'Stl',
-  Rul: 'Rul',
-  Cod: 'Cod',
+  Lnt: 'Lnt', // LintAnnotation
+  Stl: 'Stl', // StyleAnnotation
+  Rul: 'Rul', // RuleAnnotation
+  Cod: 'Cod', // CodeResolvedAnnotation
+  Fil: 'Fil', // FileAnnotation
 } as const;
 
 export type AnnotationType =
@@ -19,7 +20,8 @@ export type CellAnnotation =
   | RuleAnnotation
   | LintAnnotation
   | StyleAnnotation
-  | CodeResolvedAnnotation;
+  | CodeResolvedAnnotation
+  | FileAnnotation;
 
 export type BaseCellAnnotation<T = AnnotationType, U = any> = {
   type: T;
@@ -70,5 +72,18 @@ export type StyleAnnotation = BaseCellAnnotation<
     a?: { h?: string; v?: string };
     b?: string;
     fmt?: string;
+  }
+>;
+
+export type FileAnnotation = BaseCellAnnotation<
+  'Fil',
+  {
+    name: string;
+    size: number;
+    lastModified: Date;
+    contentType?: string;
+    image?: boolean;
+    encoding?: string;
+    downloadUrl?: string;
   }
 >;

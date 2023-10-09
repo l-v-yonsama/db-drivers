@@ -150,3 +150,49 @@ export default function isDate(value: unknown): value is Date {
       Object.prototype.toString.call(value) === '[object Date]')
   );
 }
+
+export const isTextContentType = ({
+  fileName,
+  contentType,
+}: {
+  fileName?: string;
+  contentType?: string;
+}): boolean => {
+  if (contentType === undefined || contentType === '') {
+    if (fileName === undefined || fileName === '') {
+      return false;
+    }
+    if (
+      fileName.match(
+        /.+\.(txt|js|java|py|c|cs|yml|yaml|properties|property|ts|json|md|sh|csh)$/i,
+      )
+    ) {
+      return true;
+    }
+    return false;
+  } else {
+    const text = contentType.toLocaleLowerCase();
+    if (
+      text.startsWith('text/') ||
+      text === 'application/json' ||
+      text === 'image/svg+xml'
+    ) {
+      return true;
+    }
+    if (
+      fileName?.match(
+        /.+\.(txt|js|java|py|c|cs|yml|yaml|properties|property|ts|json|md|sh|csh)$/i,
+      )
+    ) {
+      return true;
+    }
+    return false;
+  }
+};
+
+export const isImageContentType = (contentType?: string): boolean => {
+  if (contentType === undefined || contentType === '') {
+    return false;
+  }
+  return contentType.toLocaleLowerCase().startsWith('image/');
+};
