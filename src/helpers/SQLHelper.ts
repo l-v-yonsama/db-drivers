@@ -347,9 +347,9 @@ export const toViewDataQuery = ({
     if (q) {
       query += os.EOL + 'WHERE' + os.EOL + q;
     }
-    if (limit !== undefined) {
-      query += os.EOL + 'LIMIT ' + limit;
-    }
+  }
+  if (limit !== undefined) {
+    query += os.EOL + 'LIMIT ' + limit;
   }
 
   return normalizeQuery({

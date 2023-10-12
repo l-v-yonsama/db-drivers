@@ -64,7 +64,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L47)
+[src/drivers/aws/AwsS3ServiceClient.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L47)
 
 ## Properties
 
@@ -78,7 +78,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -92,7 +92,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsServiceClient.ts#L11)
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L45)
+[src/drivers/aws/AwsS3ServiceClient.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L45)
 
 ## Methods
 
@@ -134,7 +134,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:417](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L417)
+[src/drivers/aws/AwsS3ServiceClient.ts:417](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L417)
 
 ___
 
@@ -152,7 +152,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsServiceClient.ts#L17)
 
 ___
 
@@ -170,7 +170,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L51)
+[src/drivers/aws/AwsS3ServiceClient.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L51)
 
 ___
 
@@ -191,7 +191,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:342](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L342)
+[src/drivers/aws/AwsS3ServiceClient.ts:342](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L342)
 
 ___
 
@@ -209,7 +209,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsServiceClient.ts#L58)
+[src/drivers/aws/AwsServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsServiceClient.ts#L58)
 
 ___
 
@@ -231,7 +231,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:328](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L328)
+[src/drivers/aws/AwsS3ServiceClient.ts:328](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L328)
 
 ___
 
@@ -245,7 +245,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:296](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L296)
+[src/drivers/aws/AwsS3ServiceClient.ts:296](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L296)
 
 ___
 
@@ -268,7 +268,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L69)
+[src/drivers/aws/AwsS3ServiceClient.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L69)
 
 ___
 
@@ -290,7 +290,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:346](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L346)
+[src/drivers/aws/AwsS3ServiceClient.ts:346](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L346)
 
 ___
 
@@ -308,7 +308,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsServiceClient.ts#L54)
+[src/drivers/aws/AwsServiceClient.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsServiceClient.ts#L54)
 
 ___
 
@@ -336,7 +336,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:90](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L90)
+[src/drivers/aws/AwsS3ServiceClient.ts:90](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L90)
 
 ___
 
@@ -359,7 +359,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:363](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L363)
+[src/drivers/aws/AwsS3ServiceClient.ts:363](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L363)
 
 ___
 
@@ -380,7 +380,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:386](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L386)
+[src/drivers/aws/AwsS3ServiceClient.ts:386](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L386)
 
 ___
 
@@ -401,7 +401,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:381](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L381)
+[src/drivers/aws/AwsS3ServiceClient.ts:381](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L381)
 
 ___
 
@@ -425,7 +425,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L210)
+[src/drivers/aws/AwsS3ServiceClient.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L210)
 
 ___
 
@@ -449,7 +449,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsServiceClient.ts#L36)
 
 ___
 
@@ -467,4 +467,4 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/de48766/src/drivers/aws/AwsS3ServiceClient.ts#L63)
+[src/drivers/aws/AwsS3ServiceClient.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/e30c6b3/src/drivers/aws/AwsS3ServiceClient.ts#L63)
