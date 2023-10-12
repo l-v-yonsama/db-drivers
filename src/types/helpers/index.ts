@@ -28,6 +28,7 @@ export type ToViewDataQueryParams = {
   toPositionedParameter?: boolean;
   conditions?: TopLevelCondition;
   quote?: boolean;
+  limit?: number;
 };
 
 export enum ProposalKind {

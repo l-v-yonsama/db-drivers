@@ -322,6 +322,7 @@ export const toViewDataQuery = ({
   schemaName,
   conditions,
   quote,
+  limit,
   toPositionedParameter,
 }: ToViewDataQueryParams): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
@@ -345,6 +346,9 @@ export const toViewDataQuery = ({
     });
     if (q) {
       query += os.EOL + 'WHERE' + os.EOL + q;
+    }
+    if (limit !== undefined) {
+      query += os.EOL + 'LIMIT ' + limit;
     }
   }
 
