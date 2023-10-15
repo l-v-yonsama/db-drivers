@@ -47,16 +47,19 @@ describe('AwsS3Driver', () => {
       bucket,
       key: 'text/abc.txt',
       body: 'abc',
+      contentType: 'text/plain',
     });
     await driver.s3Client.putObject({
       bucket,
       key: 'text/folder/abc.txt',
       body: 'abc',
+      contentType: 'text/plain',
     });
     await driver.s3Client.putObject({
       bucket,
       key: 'text/empty.txt',
       body: '',
+      contentType: 'text/plain',
     });
   });
 
@@ -124,6 +127,7 @@ describe('AwsS3Driver', () => {
         limit: 2000,
         withValue: { limitSize: 100_000 },
       });
+
       expect(rdh.rows.length).toBe(3);
 
       const row2 = rdh.rows[1];

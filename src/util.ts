@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
-import { DBType } from './types';
+import { getType } from 'mime-lite';
+import { ContentTypeInfo, DBType } from './types';
 
 export const sleep = (ms: number): Promise<void> =>
   new Promise((res) => setTimeout(res, ms));
@@ -117,7 +118,7 @@ export const abbr = (s: string | undefined, len = 10): string | undefined => {
     return s;
   }
   if (s.length > len) {
-    const half = s.length / 2 - 1;
+    const half = Math.floor(Math.min(s.length, len) / 2 - 1);
     return s.substring(0, half) + '..' + s.substring(s.length - half);
   } else {
     return s;
@@ -151,48 +152,47 @@ export default function isDate(value: unknown): value is Date {
   );
 }
 
-export const isTextContentType = ({
-  fileName,
-  contentType,
-}: {
+export const parseContentType = (params: {
   fileName?: string;
   contentType?: string;
-}): boolean => {
-  if (contentType === undefined || contentType === '') {
-    if (fileName === undefined || fileName === '') {
-      return false;
-    }
-    if (
-      fileName.match(
-        /.+\.(txt|js|java|py|c|cs|yml|yaml|properties|property|ts|json|md|sh|csh)$/i,
-      )
-    ) {
-      return true;
-    }
-    return false;
-  } else {
-    const text = contentType.toLocaleLowerCase();
-    if (
-      text.startsWith('text/') ||
-      text === 'application/json' ||
-      text === 'image/svg+xml'
-    ) {
-      return true;
-    }
-    if (
-      fileName?.match(
-        /.+\.(txt|js|java|py|c|cs|yml|yaml|properties|property|ts|json|md|sh|csh)$/i,
-      )
-    ) {
-      return true;
-    }
-    return false;
-  }
-};
+}): ContentTypeInfo => {
+  const info: ContentTypeInfo = {
+    contentType: params.contentType ?? '',
+    isTextValue: true,
+    renderType: 'Unknown',
+  };
 
-export const isImageContentType = (contentType?: string): boolean => {
-  if (contentType === undefined || contentType === '') {
-    return false;
+  const fileName = (params.fileName ?? '').toLocaleLowerCase();
+  let contentType = (params.contentType ?? '').toLocaleLowerCase();
+
+  if (fileName.length === 0 && contentType.length === 0) {
+    return info;
   }
-  return contentType.toLocaleLowerCase().startsWith('image/');
+
+  if (contentType.length === 0 && fileName && fileName.indexOf('.') >= 0) {
+    const ext = fileName.split('.').pop();
+    info.contentType = getType(ext);
+    contentType = info.contentType.toLocaleLowerCase();
+  }
+
+  if (contentType.startsWith('text/')) {
+    info.renderType = 'Text';
+    info.isTextValue = true;
+  } else if (contentType.startsWith('image/')) {
+    info.renderType = 'Image';
+    info.isTextValue = contentType === 'image/svg+xml';
+  } else if (contentType.startsWith('audio/')) {
+    info.renderType = 'Audio';
+    info.isTextValue = false;
+  } else if (contentType.startsWith('video/')) {
+    info.renderType = 'Video';
+    info.isTextValue = false;
+  } else {
+    if (contentType === 'application/json') {
+      info.renderType = 'Text';
+      info.isTextValue = true;
+    }
+  }
+
+  return info;
 };

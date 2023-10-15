@@ -39,7 +39,7 @@ import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { plural } from 'pluralize';
-import { isImageContentType, isTextContentType } from '../../util';
+import { parseContentType } from '../../util';
 
 export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   s3Client: S3Client;
@@ -190,10 +190,10 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
             key: it.name,
           });
           if (
-            isTextContentType({
+            parseContentType({
               fileName: it.name,
               contentType: it.params.contentType,
-            })
+            }).isTextValue
           ) {
             it.params.stringValue = await res.Body?.transformToString();
             it.params.encodedBase64 = false;
@@ -253,7 +253,11 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
             size: dbKey.params.size,
             lastModified: dbKey.params.lastModified,
             contentType: dbKey.params.contentType,
-            image: isImageContentType(dbKey.params.contentType),
+            image:
+              parseContentType({
+                fileName: dbKey.name,
+                contentType: dbKey.params.contentType,
+              }).renderType === 'Image',
             encoding: dbKey.params.contentEncoding,
             downloadUrl: dbKey.params.downloadUrl,
           },
@@ -364,16 +368,19 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
     bucket,
     key,
     body,
+    contentType,
   }: {
     bucket: string;
     key: string;
     body: PutObjectCommandInput['Body'];
+    contentType?: PutObjectCommandInput['ContentType'];
   }): Promise<void> {
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: bucket,
         Key: key,
         Body: body,
+        ContentType: contentType,
       }),
     );
   }
