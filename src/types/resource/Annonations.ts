@@ -82,7 +82,9 @@ export type FileAnnotation = BaseCellAnnotation<
     size: number;
     lastModified: Date;
     contentType?: string;
-    image?: boolean;
+    isImage?: boolean;
+    isVideo?: boolean;
+    isAudio?: boolean;
     encoding?: string;
     downloadUrl?: string;
   }

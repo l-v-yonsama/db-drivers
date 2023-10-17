@@ -114,7 +114,7 @@ export const eolToSpace = (s: string): string => {
 };
 
 export const abbr = (s: string | undefined, len = 10): string | undefined => {
-  if (!s) {
+  if (!s || len <= 0) {
     return s;
   }
   if (s.length > len) {

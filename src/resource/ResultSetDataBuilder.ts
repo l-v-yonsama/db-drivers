@@ -31,7 +31,7 @@ import {
 import { abbr, toDate } from '../util';
 import { conditionsToString } from '../helpers';
 
-const MAX_CELL_VALUE_LENGTH = 36;
+const MAX_CELL_VALUE_LENGTH = 50;
 const MAX_PRINT_LINE = 10;
 
 export function createRdhKey({
