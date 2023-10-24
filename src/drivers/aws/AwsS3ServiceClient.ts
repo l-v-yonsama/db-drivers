@@ -246,7 +246,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       const value = dbKey.params?.stringValue;
       let rowMeta: RdhRowMeta | undefined = undefined;
       if (dbKey.params.size > 0) {
-        const { renderType } = parseContentType({
+        const contentTypeInfo = parseContentType({
           fileName: dbKey.name,
           contentType: dbKey.params.contentType,
         });
@@ -256,10 +256,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
             name: dbKey.name,
             size: dbKey.params.size,
             lastModified: dbKey.params.lastModified,
-            contentType: dbKey.params.contentType,
-            isImage: renderType === 'Image',
-            isVideo: renderType === 'Video',
-            isAudio: renderType === 'Audio',
+            contentTypeInfo,
             encoding: dbKey.params.contentEncoding,
             downloadUrl: dbKey.params.downloadUrl,
           },

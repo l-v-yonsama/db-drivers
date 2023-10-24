@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.202",
+  "version": "0.1.204",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16"
@@ -44,6 +44,7 @@
     "examples:aws": "npm run build && node built/src/examples/aws.js",
     "test0": "jest --coverage",
     "test": "npm run clean && jest --runInBand",
+    "test:util": "npm run clean && jest __tests__/util/util.test.ts",
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
     "test:driver:postgres": "npm run clean && jest __tests__/db/drivers/PostgresDriver.test.ts",
     "test:driver:redis": "npm run clean && jest __tests__/db/drivers/RedisDriver.test.ts",

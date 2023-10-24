@@ -1,3 +1,5 @@
+import { ContentTypeInfo } from './ContentTypeInfo';
+
 export const AnnotationTypeConst = {
   Del: 'Del',
   Upd: 'Upd',
@@ -81,10 +83,7 @@ export type FileAnnotation = BaseCellAnnotation<
     name: string;
     size: number;
     lastModified: Date;
-    contentType?: string;
-    isImage?: boolean;
-    isVideo?: boolean;
-    isAudio?: boolean;
+    contentTypeInfo: ContentTypeInfo;
     encoding?: string;
     downloadUrl?: string;
   }

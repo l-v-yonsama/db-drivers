@@ -169,18 +169,39 @@ export const parseContentType = (params: {
     return info;
   }
 
-  if (contentType.length === 0 && fileName && fileName.indexOf('.') >= 0) {
-    const ext = fileName.split('.').pop();
-    info.contentType = getType(ext);
+  let extension: string | undefined = undefined;
+  if (fileName && fileName.indexOf('.') >= 0) {
+    extension = fileName.split('.').pop();
+  }
+  if (contentType.length === 0 && extension) {
+    info.contentType = getType(extension);
     contentType = info.contentType.toLocaleLowerCase();
   }
 
   if (contentType.startsWith('text/')) {
     info.renderType = 'Text';
     info.isTextValue = true;
+    if (contentType.startsWith('text/html')) {
+      info.shortLang = 'html';
+    } else if (contentType.startsWith('text/css')) {
+      info.shortLang = 'css';
+    } else if (contentType.startsWith('text/csv')) {
+      info.shortLang = 'csv';
+    } else if (contentType.startsWith('text/javascript')) {
+      info.shortLang = 'js';
+    } else if (contentType.startsWith('text/vbscript')) {
+      info.shortLang = 'vb';
+    } else if (contentType.startsWith('text/xml')) {
+      info.shortLang = 'xml';
+    } else {
+      info.shortLang = 'text';
+    }
   } else if (contentType.startsWith('image/')) {
     info.renderType = 'Image';
-    info.isTextValue = contentType === 'image/svg+xml';
+    if (contentType === 'image/svg+xml') {
+      info.isTextValue = true;
+      info.shortLang = 'xml';
+    }
   } else if (contentType.startsWith('audio/')) {
     info.renderType = 'Audio';
     info.isTextValue = false;
@@ -188,9 +209,20 @@ export const parseContentType = (params: {
     info.renderType = 'Video';
     info.isTextValue = false;
   } else {
-    if (contentType === 'application/json') {
+    if (contentType.startsWith('application/json')) {
       info.renderType = 'Text';
       info.isTextValue = true;
+      info.shortLang = 'json';
+    }
+  }
+
+  if (info.isTextValue && info.shortLang === 'text' && extension) {
+    if (
+      extension.match(
+        /(bat|c|cmake|cobol|coffee|cpp|csharp|cs|css|d|diff|docker|fsharp|go|gql|html|http|ini|properties|java|js|json|json5|jsx|less|lua|make|makefile|md|matlab|mermaid|nginx|perl|php|plsql|postcss|ps|ps1|prisma|pug|py|r|rb|rs|sas|sass|scala|scheme|scss|bash|sh|zsh|spl|sql|ssh-config|svelte|tex|tsx|ts|vb|vue|wasm|xml|yaml|yml)/,
+      )
+    ) {
+      info.shortLang = extension;
     }
   }
 
