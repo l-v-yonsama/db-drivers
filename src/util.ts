@@ -213,6 +213,20 @@ export const parseContentType = (params: {
       info.renderType = 'Text';
       info.isTextValue = true;
       info.shortLang = 'json';
+    } else if (
+      contentType.startsWith('application/javascript') ||
+      contentType.startsWith('application/x-javascript')
+    ) {
+      info.renderType = 'Text';
+      info.isTextValue = true;
+      info.shortLang = 'js';
+    } else if (contentType.startsWith('application/octet')) {
+      if (extension === 'ico') {
+        info.renderType = 'Image';
+        if (contentType === 'image/ico') {
+          info.isTextValue = false;
+        }
+      }
     }
   }
 
