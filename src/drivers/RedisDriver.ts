@@ -150,6 +150,7 @@ export class RedisDriver
         name: 'key',
         type: GeneralColumnType.TEXT,
         width: 150,
+        align: 'left',
       }),
       createRdhKey({
         name: 'type',
@@ -160,17 +161,21 @@ export class RedisDriver
         name: 'ttl',
         type: GeneralColumnType.TEXT,
         width: 60,
+        align: 'right',
       }),
       createRdhKey({
         name: 'val',
         type: GeneralColumnType.UNKNOWN,
         width: 300,
+        align: 'left',
       }),
     ]);
     dbKeys.forEach((dbKey) => {
+      const ttl =
+        dbKey.params.ttl < 0 ? '' : prettyTime(dbKey.params.ttl * 1000); // sec to ms
       rdb.addRow({
         ...dbKey.params,
-        ttl: prettyTime(dbKey.params.ttl),
+        ttl,
         key: dbKey.name,
       });
     });

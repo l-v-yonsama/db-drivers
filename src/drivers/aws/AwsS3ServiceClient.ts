@@ -219,8 +219,18 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       withValue,
     });
     const rdb = new ResultSetDataBuilder([
-      createRdhKey({ name: 'key', type: GeneralColumnType.TEXT, width: 200 }),
-      createRdhKey({ name: 'size', type: GeneralColumnType.TEXT, width: 60 }),
+      createRdhKey({
+        name: 'key',
+        type: GeneralColumnType.TEXT,
+        width: 200,
+        align: 'left',
+      }),
+      createRdhKey({
+        name: 'size',
+        type: GeneralColumnType.TEXT,
+        width: 60,
+        align: 'right',
+      }),
       createRdhKey({ name: 'etag', type: GeneralColumnType.TEXT }),
       createRdhKey({ name: 'storageClass', type: GeneralColumnType.TEXT }),
       createRdhKey({

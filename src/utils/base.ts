@@ -214,6 +214,7 @@ export const parseContentType = (params: {
 export const prettyFileSize = (size: number): string => {
   return format(size, {
     decimalPlaces: 0,
+    unitSeparator: ' ',
   });
 };
 
