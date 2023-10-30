@@ -28,7 +28,7 @@ import {
   isDateTimeOrDate,
   isNumericLike,
 } from './GeneralColumnUtil';
-import { abbr, toDate } from '../util';
+import { abbr, toDate } from '../utils';
 import { conditionsToString } from '../helpers';
 
 const MAX_CELL_VALUE_LENGTH = 50;
@@ -39,17 +39,20 @@ export function createRdhKey({
   type,
   width,
   comment,
+  align,
 }: {
   name: string;
   type?: GeneralColumnType;
   width?: number;
   comment?: string;
+  align?: RdhKey['align'];
 }): RdhKey {
   return {
     name,
     type: type ?? GeneralColumnType.UNKNOWN,
     comment,
     width,
+    align,
   };
 }
 

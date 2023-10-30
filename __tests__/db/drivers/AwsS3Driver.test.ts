@@ -48,18 +48,21 @@ describe('AwsS3Driver', () => {
       key: 'text/abc.txt',
       body: 'abc',
       contentType: 'text/plain',
+      contentLength: 3,
     });
     await driver.s3Client.putObject({
       bucket,
       key: 'text/folder/abc.txt',
       body: 'abc',
       contentType: 'text/plain',
+      contentLength: 3,
     });
     await driver.s3Client.putObject({
       bucket,
       key: 'text/empty.txt',
       body: '',
       contentType: 'text/plain',
+      contentLength: 0,
     });
   });
 

@@ -39,7 +39,7 @@ import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { plural } from 'pluralize';
-import { parseContentType } from '../../util';
+import { parseContentType, prettyFileSize } from '../../utils';
 
 export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   s3Client: S3Client;
@@ -220,7 +220,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
     });
     const rdb = new ResultSetDataBuilder([
       createRdhKey({ name: 'key', type: GeneralColumnType.TEXT, width: 200 }),
-      createRdhKey({ name: 'size', type: GeneralColumnType.INTEGER }),
+      createRdhKey({ name: 'size', type: GeneralColumnType.TEXT, width: 60 }),
       createRdhKey({ name: 'etag', type: GeneralColumnType.TEXT }),
       createRdhKey({ name: 'storageClass', type: GeneralColumnType.TEXT }),
       createRdhKey({
@@ -270,6 +270,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
         {
           ...dbKey.params,
           key: dbKey.name,
+          size: prettyFileSize(dbKey.params.size),
           value,
         },
         rowMeta,
@@ -368,11 +369,13 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
     key,
     body,
     contentType,
+    contentLength,
   }: {
     bucket: string;
     key: string;
     body: PutObjectCommandInput['Body'];
     contentType?: PutObjectCommandInput['ContentType'];
+    contentLength?: PutObjectCommandInput['ContentLength'];
   }): Promise<void> {
     await this.s3Client.send(
       new PutObjectCommand({
@@ -380,6 +383,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
         Key: key,
         Body: body,
         ContentType: contentType,
+        ContentLength: contentLength,
       }),
     );
   }

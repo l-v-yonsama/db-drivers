@@ -34,7 +34,7 @@ import {
 } from '../../types';
 import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
-import { toBoolean, toDate, toNum } from '../../util';
+import { toBoolean, toDate, toNum } from '../../utils';
 import { Scannable } from '../BaseDriver';
 import { plural } from 'pluralize';
 

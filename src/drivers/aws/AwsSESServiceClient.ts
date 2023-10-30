@@ -3,43 +3,21 @@
 
 import {
   GetSendQuotaCommand,
-  GetSendQuotaCommandInput,
   GetSendQuotaCommandOutput,
   GetSendStatisticsCommand,
   GetSendStatisticsCommandOutput,
   IdentityType,
   ListIdentitiesCommand,
   SESClient,
-  VerifyDomainDkimCommandOutput,
   VerifyDomainIdentityCommand,
-  VerifyDomainIdentityCommandInput,
   VerifyDomainIdentityCommandOutput,
   VerifyEmailAddressCommand,
-  VerifyEmailAddressCommandInput,
   VerifyEmailAddressCommandOutput,
 } from '@aws-sdk/client-ses';
-import * as url from 'url';
-import {
-  AwsDatabase,
-  DbKey,
-  DbSQSQueue,
-  ResultSetDataBuilder,
-  SQSMessageParams,
-  createRdhKey,
-} from '../../resource';
-import {
-  AwsSQSAttributes,
-  AwsServiceType,
-  ConnectionSetting,
-  GeneralColumnType,
-  ResultSetData,
-  ScanParams,
-} from '../../types';
+import { AwsDatabase } from '../../resource';
+import { AwsServiceType, ConnectionSetting } from '../../types';
 import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
-import { toBoolean, toDate, toNum } from '../../util';
-import { Scannable } from '../BaseDriver';
-import { plural } from 'pluralize';
 
 export class AwsSESServiceClient extends AwsServiceClient {
   sesClient: SESClient;

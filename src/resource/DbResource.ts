@@ -14,7 +14,7 @@ import {
   UniqueKeyConstraint,
 } from '../types';
 import { format } from 'bytes';
-import { equalsIgnoreCase, toDate } from '../util';
+import { equalsIgnoreCase, toDate } from '../utils';
 import { displayGeneralColumnType } from './GeneralColumnUtil';
 
 const uid = new ShortUniqueId();

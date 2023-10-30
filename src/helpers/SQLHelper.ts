@@ -20,8 +20,8 @@ import {
   toDate,
   toNum,
   toTime,
-  tolines,
-} from '../util';
+  toLines,
+} from '../utils';
 import {
   BindOptions,
   BindParamPosition,
@@ -613,7 +613,7 @@ export const normalizePositionedParametersQuery = (
     return list.join(',');
   };
 
-  const lines = tolines(stripComment(query));
+  const lines = toLines(stripComment(query));
   const newLines: string[] = [];
 
   // /\w/	[A-Za-z0-9] すべての英数字
@@ -701,7 +701,7 @@ export const normalizeSimpleParametersQuery = (
       binds.push(bindParams[s]);
     }
   };
-  const lines = tolines(stripComment(query));
+  const lines = toLines(stripComment(query));
   const newLines: string[] = [];
 
   // /\w/	[A-Za-z0-9] すべての英数字

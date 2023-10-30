@@ -1,6 +1,6 @@
 import { RowHelper } from '../resource';
 import { ResultSetData } from '../types';
-import { equalsIgnoreCase } from '../util';
+import { equalsIgnoreCase } from '../utils';
 
 export const resolveCodeLabel = async (
   rdh: ResultSetData,

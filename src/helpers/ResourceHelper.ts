@@ -10,11 +10,10 @@ import {
   CompareKey,
   DiffResult,
   DiffToUndoChangesResult,
-  RdhKey,
   RdhRow,
   ResultSetData,
 } from '../types';
-import isDate from '../util';
+import isDate from '../utils';
 
 export const diff = (rdh1: ResultSetData, rdh2: ResultSetData): DiffResult => {
   const result: DiffResult = {

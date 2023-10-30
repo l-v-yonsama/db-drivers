@@ -1,12 +1,13 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.205",
+  "version": "0.1.208",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16"
   },
   "devDependencies": {
     "@types/bytes": "^3.1.1",
+    "@types/humanize-duration": "^3.27.2",
     "@types/jest": "~29.2",
     "@types/json-rules-engine": "^4.1.0",
     "@types/lodash.isequal": "^4.5.6",
@@ -73,6 +74,7 @@
     "dayjs": "^1.11.7",
     "enum-values": "^1.2.1",
     "get-port-please": "^3.0.1",
+    "humanize-duration": "^3.30.0",
     "ioredis": "^5.3.1",
     "jconv": "^0.1.5",
     "json-rules-engine": "^6.1.2",
@@ -83,7 +85,6 @@
     "pg": "^8.9.0",
     "pgsql-ast-parser": "^11.0.1",
     "pluralize": "^8.0.0",
-    "pretty-bytes": "^6.1.0",
     "short-unique-id": "^4.4.4",
     "shuffle-array": "^1.0.1",
     "simple-statistics": "^7.8.3",

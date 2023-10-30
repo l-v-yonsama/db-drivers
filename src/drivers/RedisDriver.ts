@@ -16,6 +16,7 @@ import {
   ResultSetData,
   ScanParams,
 } from '../types';
+import { prettyTime } from '../utils';
 
 export class RedisDriver
   extends BaseDriver<RedisDatabase>
@@ -157,8 +158,8 @@ export class RedisDriver
       }),
       createRdhKey({
         name: 'ttl',
-        type: GeneralColumnType.INTEGER,
-        width: 50,
+        type: GeneralColumnType.TEXT,
+        width: 60,
       }),
       createRdhKey({
         name: 'val',
@@ -169,6 +170,7 @@ export class RedisDriver
     dbKeys.forEach((dbKey) => {
       rdb.addRow({
         ...dbKey.params,
+        ttl: prettyTime(dbKey.params.ttl),
         key: dbKey.name,
       });
     });

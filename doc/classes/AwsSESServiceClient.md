@@ -56,7 +56,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L47)
+[src/drivers/aws/AwsSESServiceClient.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L25)
 
 ## Properties
 
@@ -70,7 +70,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -84,7 +84,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsServiceClient.ts#L11)
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ___
 
@@ -108,7 +108,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L45)
+[src/drivers/aws/AwsSESServiceClient.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L23)
 
 ## Methods
 
@@ -126,7 +126,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L118)
+[src/drivers/aws/AwsSESServiceClient.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L96)
 
 ___
 
@@ -144,7 +144,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsServiceClient.ts#L17)
 
 ___
 
@@ -162,7 +162,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L51)
+[src/drivers/aws/AwsSESServiceClient.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L29)
 
 ___
 
@@ -180,7 +180,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsServiceClient.ts#L58)
+[src/drivers/aws/AwsServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsServiceClient.ts#L58)
 
 ___
 
@@ -194,7 +194,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:107](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L107)
+[src/drivers/aws/AwsSESServiceClient.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L85)
 
 ___
 
@@ -208,7 +208,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:99](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L99)
+[src/drivers/aws/AwsSESServiceClient.ts:77](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L77)
 
 ___
 
@@ -222,7 +222,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:103](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L103)
+[src/drivers/aws/AwsSESServiceClient.ts:81](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L81)
 
 ___
 
@@ -240,7 +240,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsServiceClient.ts#L54)
+[src/drivers/aws/AwsServiceClient.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsServiceClient.ts#L54)
 
 ___
 
@@ -260,7 +260,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L62)
+[src/drivers/aws/AwsSESServiceClient.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L40)
 
 ___
 
@@ -284,7 +284,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsServiceClient.ts#L36)
 
 ___
 
@@ -302,7 +302,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L56)
+[src/drivers/aws/AwsSESServiceClient.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L34)
 
 ___
 
@@ -322,7 +322,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L89)
+[src/drivers/aws/AwsSESServiceClient.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L67)
 
 ___
 
@@ -342,4 +342,4 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/d4a4262/src/drivers/aws/AwsSESServiceClient.ts#L79)
+[src/drivers/aws/AwsSESServiceClient.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/432a8bc/src/drivers/aws/AwsSESServiceClient.ts#L57)

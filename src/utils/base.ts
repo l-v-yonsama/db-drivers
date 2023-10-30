@@ -1,6 +1,24 @@
 import dayjs from 'dayjs';
 import { getType } from 'mime-lite';
-import { ContentTypeInfo, DBType } from './types';
+import { ContentTypeInfo } from '../types';
+import { format } from 'bytes';
+import * as humanizeDuration from 'humanize-duration';
+
+const shortEnglishHumanizer = humanizeDuration.humanizer({
+  language: 'shortEn',
+  languages: {
+    shortEn: {
+      y: () => 'y',
+      mo: () => 'mo',
+      w: () => 'w',
+      d: () => 'd',
+      h: () => 'h',
+      m: () => 'm',
+      s: () => 's',
+      ms: () => 'ms',
+    },
+  },
+});
 
 export const sleep = (ms: number): Promise<void> =>
   new Promise((res) => setTimeout(res, ms));
@@ -101,64 +119,13 @@ export const toTime = (s: string | undefined): string | undefined => {
   return s;
 };
 
-export const tolines = (s: string): string[] => {
-  return s.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split(/\n/);
-};
-
-export const eolToSpace = (s: string): string => {
-  return s
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .replace(/\n/g, ' ')
-    .replace(/ +/g, ' ');
-};
-
-export const abbr = (s: string | undefined, len = 10): string | undefined => {
-  if (!s || len <= 0) {
-    return s;
-  }
-  if (s.length > len) {
-    const half = Math.floor(Math.min(s.length, len) / 2 - 1);
-    return s.substring(0, half) + '..' + s.substring(s.length - half);
-  } else {
-    return s;
-  }
-};
-
-export const isAws = (dbType: DBType): boolean => DBType.Aws === dbType;
-
-export const isRDSType = (dbType: DBType): boolean => {
-  switch (dbType) {
-    case DBType.MySQL:
-    case DBType.Postgres:
-      return true;
-  }
-  return false;
-};
-
-export const equalsIgnoreCase = (s1: string, s2: string): boolean => {
-  return s1.toLocaleLowerCase() === s2.toLocaleLowerCase();
-};
-
-export default function isDate(value: unknown): value is Date {
-  if (value == null) {
-    return false;
-  }
-
-  return (
-    value instanceof Date ||
-    (typeof value === 'object' &&
-      Object.prototype.toString.call(value) === '[object Date]')
-  );
-}
-
 export const parseContentType = (params: {
   fileName?: string;
   contentType?: string;
 }): ContentTypeInfo => {
   const info: ContentTypeInfo = {
     contentType: params.contentType ?? '',
-    isTextValue: true,
+    isTextValue: false,
     renderType: 'Unknown',
   };
 
@@ -173,6 +140,7 @@ export const parseContentType = (params: {
   if (fileName && fileName.indexOf('.') >= 0) {
     extension = fileName.split('.').pop();
   }
+
   if (contentType.length === 0 && extension) {
     info.contentType = getType(extension);
     contentType = info.contentType.toLocaleLowerCase();
@@ -241,4 +209,16 @@ export const parseContentType = (params: {
   }
 
   return info;
+};
+
+export const prettyFileSize = (size: number): string => {
+  return format(size, {
+    decimalPlaces: 0,
+  });
+};
+
+export const prettyTime = (time: number): string => {
+  return shortEnglishHumanizer(Math.round(time), {
+    units: ['d', 'h', 'm', 's', 'ms'],
+  });
 };

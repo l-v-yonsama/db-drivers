@@ -16,7 +16,7 @@ import {
   Engine,
   TopLevelCondition,
 } from 'json-rules-engine';
-import { toBoolean, toDate, toNum } from '../util';
+import { toBoolean, toDate, toNum } from '../utils';
 
 export function isAllConditions(item: any): item is AllConditions {
   return item.all && item.all.length !== undefined;

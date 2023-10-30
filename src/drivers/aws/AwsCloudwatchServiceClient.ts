@@ -31,7 +31,7 @@ import {
 } from '@aws-sdk/client-cloudwatch-logs';
 import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
-import { sleep, toDate } from '../../util';
+import { sleep, toDate } from '../../utils';
 import { Scannable } from '../BaseDriver';
 import { plural } from 'pluralize';
 

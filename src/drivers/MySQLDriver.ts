@@ -21,7 +21,7 @@ import {
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
-import { toBoolean } from '../util';
+import { toBoolean } from '../utils';
 
 export class MySQLDriver extends RDSBaseDriver {
   private con: mysql.Connection | undefined;

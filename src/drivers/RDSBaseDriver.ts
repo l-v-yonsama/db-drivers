@@ -13,12 +13,11 @@ import {
   GeneralResult,
   QStatement,
   QueryParams,
-  ResourceType,
   ResultSetData,
   TransactionControlType,
 } from '../types';
 import { parseQuery } from '../helpers';
-import { equalsIgnoreCase, toNum } from '../util';
+import { equalsIgnoreCase, toNum } from '../utils';
 
 export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   constructor(conRes: ConnectionSetting) {
