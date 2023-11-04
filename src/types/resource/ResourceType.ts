@@ -3,6 +3,7 @@ export const ResourceType = {
   RdsDatabase: 'RdsDatabase',
   AwsDatabase: 'AwsDatabase',
   RedisDatabase: 'RedisDatabase',
+
   Schema: 'Schema',
   Table: 'Table',
   Column: 'Column',
@@ -12,6 +13,12 @@ export const ResourceType = {
   Owner: 'Owner',
   LogGroup: 'LogGroup',
   LogStream: 'LogStream',
+  // IAM
+  KeycloakDatabase: 'KeycloakDatabase',
+  IamRealm: 'IamRealm',
+  IamUser: 'IamUser',
+  IamGroup: 'IamGroup',
+  IamRole: 'IamRole',
 } as const;
 
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];

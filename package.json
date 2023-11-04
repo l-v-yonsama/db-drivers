@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.209",
+  "version": "0.1.210",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16"
@@ -49,6 +49,7 @@
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
     "test:driver:postgres": "npm run clean && jest __tests__/db/drivers/PostgresDriver.test.ts",
     "test:driver:redis": "npm run clean && jest __tests__/db/drivers/RedisDriver.test.ts",
+    "test:driver:keycloak": "npm run clean && jest __tests__/db/drivers/KeycloakDriver.test.ts",
     "test:driver:s3": "npm run clean && jest __tests__/db/drivers/AwsS3Driver.test.ts",
     "test:driver:sqs": "npm run clean && jest __tests__/db/drivers/AwsSQSDriver.test.ts",
     "test:driver:cw": "npm run clean && jest __tests__/db/drivers/AwsCloudwatchDriver.test.ts",
@@ -70,6 +71,7 @@
     "@aws-sdk/client-sqs": "^3.398.0",
     "@aws-sdk/credential-providers": "^3.279.0",
     "@aws-sdk/s3-request-presigner": "^3.427.0",
+    "@keycloak/keycloak-admin-client": "^20.0.5",
     "bytes": "^3.1.2",
     "dayjs": "^1.11.7",
     "enum-values": "^1.2.1",

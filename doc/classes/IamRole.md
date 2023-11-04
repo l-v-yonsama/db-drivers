@@ -1,47 +1,45 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / RdsDatabase
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / IamRole
 
-# Class: RdsDatabase
+# Class: IamRole
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)<[`DbSchema`](DbSchema.md)\>
+- [`DbResource`](DbResource.md)
 
-  ↳ **`RdsDatabase`**
+  ↳ **`IamRole`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](RdsDatabase.md#constructor)
+- [constructor](IamRole.md#constructor)
 
 ### Properties
 
-- [children](RdsDatabase.md#children)
-- [comment](RdsDatabase.md#comment)
-- [id](RdsDatabase.md#id)
-- [isInProgress](RdsDatabase.md#isinprogress)
-- [meta](RdsDatabase.md#meta)
-- [name](RdsDatabase.md#name)
-- [resourceType](RdsDatabase.md#resourcetype)
-- [version](RdsDatabase.md#version)
+- [children](IamRole.md#children)
+- [comment](IamRole.md#comment)
+- [id](IamRole.md#id)
+- [isInProgress](IamRole.md#isinprogress)
+- [meta](IamRole.md#meta)
+- [name](IamRole.md#name)
+- [resourceType](IamRole.md#resourcetype)
 
 ### Methods
 
-- [addChild](RdsDatabase.md#addchild)
-- [clearChildren](RdsDatabase.md#clearchildren)
-- [findChildren](RdsDatabase.md#findchildren)
-- [getChildByName](RdsDatabase.md#getchildbyname)
-- [getProperties](RdsDatabase.md#getproperties)
-- [getSchema](RdsDatabase.md#getschema)
-- [hasChildren](RdsDatabase.md#haschildren)
-- [toJsonStringify](RdsDatabase.md#tojsonstringify)
-- [toString](RdsDatabase.md#tostring)
+- [addChild](IamRole.md#addchild)
+- [clearChildren](IamRole.md#clearchildren)
+- [findChildren](IamRole.md#findchildren)
+- [getChildByName](IamRole.md#getchildbyname)
+- [getProperties](IamRole.md#getproperties)
+- [hasChildren](IamRole.md#haschildren)
+- [toJsonStringify](IamRole.md#tojsonstringify)
+- [toString](IamRole.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new RdsDatabase**(`name`)
+• **new IamRole**(`name`)
 
 #### Parameters
 
@@ -55,13 +53,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:268](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L268)
+[src/resource/DbResource.ts:407](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L407)
 
 ## Properties
 
 ### children
 
-• `Readonly` **children**: [`DbSchema`](DbSchema.md)[]
+• `Readonly` **children**: [`AllSubDbResource`](../modules.md#allsubdbresource)[]
 
 #### Inherited from
 
@@ -159,31 +157,21 @@ ___
 
 [src/resource/DbResource.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L120)
 
-___
-
-### version
-
-• `Optional` **version**: `number`
-
-#### Defined in
-
-[src/resource/DbResource.ts:267](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L267)
-
 ## Methods
 
 ### addChild
 
-▸ **addChild**(`res`): [`DbSchema`](DbSchema.md)
+▸ **addChild**(`res`): [`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`DbSchema`](DbSchema.md) |
+| `res` | [`AllSubDbResource`](../modules.md#allsubdbresource) |
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Inherited from
 
@@ -248,7 +236,7 @@ ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`DbSchema`](DbSchema.md)
+▸ **getChildByName**(`name`, `insensitive?`): [`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Parameters
 
@@ -259,7 +247,7 @@ ___
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Inherited from
 
@@ -279,35 +267,13 @@ ___
 
 `Object`
 
-#### Overrides
+#### Inherited from
 
 [DbResource](DbResource.md).[getProperties](DbResource.md#getproperties)
 
 #### Defined in
 
-[src/resource/DbResource.ts:272](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L272)
-
-___
-
-### getSchema
-
-▸ **getSchema**(`option`): [`DbSchema`](DbSchema.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `option` | `Object` |
-| `option.isDefault?` | `boolean` |
-| `option.name?` | `string` |
-
-#### Returns
-
-[`DbSchema`](DbSchema.md)
-
-#### Defined in
-
-[src/resource/DbResource.ts:279](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L279)
+[src/resource/DbResource.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L133)
 
 ___
 

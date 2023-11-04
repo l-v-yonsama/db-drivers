@@ -26,7 +26,7 @@
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:109](https://github.com/l-v-yonsama/db-drivers/blob/ee81d91/src/drivers/DBDriverResolver.ts#L109)
+[src/drivers/DBDriverResolver.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/DBDriverResolver.ts#L113)
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/ee81d91/src/drivers/DBDriverResolver.ts#L43)
+[src/drivers/DBDriverResolver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/DBDriverResolver.ts#L44)
 
 ___
 
@@ -82,7 +82,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:92](https://github.com/l-v-yonsama/db-drivers/blob/ee81d91/src/drivers/DBDriverResolver.ts#L92)
+[src/drivers/DBDriverResolver.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/DBDriverResolver.ts#L96)
 
 ___
 
@@ -102,7 +102,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/ee81d91/src/drivers/DBDriverResolver.ts#L34)
+[src/drivers/DBDriverResolver.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/DBDriverResolver.ts#L35)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:105](https://github.com/l-v-yonsama/db-drivers/blob/ee81d91/src/drivers/DBDriverResolver.ts#L105)
+[src/drivers/DBDriverResolver.ts:109](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/DBDriverResolver.ts#L109)
 
 ___
 
@@ -150,7 +150,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/ee81d91/src/drivers/DBDriverResolver.ts#L82)
+[src/drivers/DBDriverResolver.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/DBDriverResolver.ts#L86)
 
 ___
 
@@ -164,4 +164,4 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:22](https://github.com/l-v-yonsama/db-drivers/blob/ee81d91/src/drivers/DBDriverResolver.ts#L22)
+[src/drivers/DBDriverResolver.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/DBDriverResolver.ts#L23)

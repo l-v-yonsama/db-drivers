@@ -7,6 +7,7 @@
 - [`AwsCloudwatchServiceClient`](../classes/AwsCloudwatchServiceClient.md)
 - [`AwsS3ServiceClient`](../classes/AwsS3ServiceClient.md)
 - [`AwsSQSServiceClient`](../classes/AwsSQSServiceClient.md)
+- [`KeycloakDriver`](../classes/KeycloakDriver.md)
 - [`RedisDriver`](../classes/RedisDriver.md)
 
 ## Table of contents
@@ -33,4 +34,4 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/ee81d91/src/drivers/BaseDriver.ts#L14)
+[src/drivers/BaseDriver.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/BaseDriver.ts#L14)

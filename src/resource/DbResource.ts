@@ -88,7 +88,11 @@ export function fromJson<T extends DbResource>(json: any): T {
   return res;
 }
 
-export type DbDatabase = RdsDatabase | AwsDatabase | RedisDatabase;
+export type DbDatabase =
+  | RdsDatabase
+  | AwsDatabase
+  | RedisDatabase
+  | KeycloakDatabase;
 
 export type AllSubDbResource =
   | RdsDatabase
@@ -102,8 +106,15 @@ export type AllSubDbResource =
   | DbSQSQueue
   | DbLogGroup
   | DbLogStream
-  | DbS3Owner;
+  | DbS3Owner
+  // IAM
+  | KeycloakDatabase
+  | IamRealm
+  | IamUser
+  | IamGroup
+  | IamRole;
 
+export type IamResourceType = 'users' | 'groups' | 'roles';
 export abstract class DbResource<T extends DbResource = AllSubDbResource> {
   public readonly id = uid.randomUUID(8);
   public readonly resourceType: ResourceType;
@@ -305,6 +316,96 @@ export class RedisDatabase extends DbResource<DbKey> {
       ...super.getProperties(),
       'number of keys': this.numOfKeys,
     };
+  }
+}
+
+export class KeycloakDatabase extends DbResource<IamRealm> {
+  constructor(name: string) {
+    super(ResourceType.KeycloakDatabase, name);
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+    };
+  }
+
+  public getRealm(option: { name?: string; isDefault?: boolean }): IamRealm {
+    const { name, isDefault } = option;
+    for (const child of this.children) {
+      if (child.resourceType !== ResourceType.IamRealm) {
+        continue;
+      }
+      const currentRealm = child;
+      if (name && name === child.name) {
+        return currentRealm;
+      }
+      if (isDefault && currentRealm.isDefault) {
+        return currentRealm;
+      }
+    }
+    return null;
+  }
+}
+
+export class IamRealm extends DbResource<IamUser | IamGroup | IamRole> {
+  public isDefault = false;
+  public numOfUsers = 0;
+  public numOfGroups = 0;
+
+  constructor(name: string) {
+    super(ResourceType.IamRealm, name);
+  }
+
+  getUserByName(name: string): IamUser | undefined {
+    return this.findChildren<IamUser>({
+      keyword: name,
+      resourceType: ResourceType.IamUser,
+      recursively: false,
+    })?.[0];
+  }
+
+  getGroupByName(name: string): IamGroup | undefined {
+    return this.findChildren<IamGroup>({
+      keyword: name,
+      resourceType: ResourceType.IamUser,
+      recursively: false,
+    })?.[0];
+  }
+
+  getRoleByName(name: string): IamRole | undefined {
+    return this.findChildren<IamRole>({
+      keyword: name,
+      resourceType: ResourceType.IamUser,
+      recursively: false,
+    })?.[0];
+  }
+
+  getProperties(): { [key: string]: any } {
+    const { numOfGroups, numOfUsers } = this;
+    return {
+      ...super.getProperties(),
+      numOfUsers,
+      numOfGroups,
+    };
+  }
+}
+
+export class IamUser extends DbResource {
+  constructor(name: string) {
+    super(ResourceType.IamUser, name);
+  }
+}
+
+export class IamGroup extends DbResource {
+  constructor(name: string) {
+    super(ResourceType.IamGroup, name);
+  }
+}
+
+export class IamRole extends DbResource {
+  constructor(name: string) {
+    super(ResourceType.IamRole, name);
   }
 }
 

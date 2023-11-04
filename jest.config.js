@@ -5,7 +5,9 @@ module.exports = {
   transform: {
     '^.+\\.m?[tj]s?$': ['ts-jest', { useESM: true }],
   },
-  transformIgnorePatterns: ['/node_modules/(?!get-port/)'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!get-port|@keycloak|lodash-es|url-join|url-template|camelize-ts)',
+  ],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.(m)?js$': '$1',
   },

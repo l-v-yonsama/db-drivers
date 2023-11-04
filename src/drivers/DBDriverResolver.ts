@@ -11,6 +11,7 @@ import { PostgresDriver } from './PostgresDriver';
 import { RedisDriver } from './RedisDriver';
 import { AwsDriver } from './AwsDriver';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { KeycloakDriver } from './KeycloakDriver';
 
 const uid = new ShortUniqueId();
 
@@ -59,6 +60,9 @@ export class DBDriverResolver {
         break;
       case DBType.Redis:
         driver = new RedisDriver(conRes);
+        break;
+      case DBType.Keycloak:
+        driver = new KeycloakDriver(conRes);
         break;
       // case DBType.Firestore:
       //   // driver = new FirestoreDriver(conRes);

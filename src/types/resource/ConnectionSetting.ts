@@ -27,6 +27,11 @@ export type AwsSetting = {
   s3ForcePathStyle?: boolean;
 };
 
+export type IamSolutionSetting = {
+  grantType: 'client_credentials' | 'password' | 'refresh_token';
+  clientId: string;
+};
+
 export type FirebaseSetting = {
   authMethod: string;
   projectid?: string;
@@ -51,6 +56,7 @@ export type ConnectionSetting = {
   ssh?: SshSetting;
   awsSetting?: AwsSetting;
   firebase?: FirebaseSetting;
+  iamSolution?: IamSolutionSetting;
   /**
    * The timezone used to store local dates.
    */

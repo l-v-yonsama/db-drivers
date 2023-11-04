@@ -1,47 +1,51 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / RdsDatabase
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / IamRealm
 
-# Class: RdsDatabase
+# Class: IamRealm
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)<[`DbSchema`](DbSchema.md)\>
+- [`DbResource`](DbResource.md)<[`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)\>
 
-  ↳ **`RdsDatabase`**
+  ↳ **`IamRealm`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](RdsDatabase.md#constructor)
+- [constructor](IamRealm.md#constructor)
 
 ### Properties
 
-- [children](RdsDatabase.md#children)
-- [comment](RdsDatabase.md#comment)
-- [id](RdsDatabase.md#id)
-- [isInProgress](RdsDatabase.md#isinprogress)
-- [meta](RdsDatabase.md#meta)
-- [name](RdsDatabase.md#name)
-- [resourceType](RdsDatabase.md#resourcetype)
-- [version](RdsDatabase.md#version)
+- [children](IamRealm.md#children)
+- [comment](IamRealm.md#comment)
+- [id](IamRealm.md#id)
+- [isDefault](IamRealm.md#isdefault)
+- [isInProgress](IamRealm.md#isinprogress)
+- [meta](IamRealm.md#meta)
+- [name](IamRealm.md#name)
+- [numOfGroups](IamRealm.md#numofgroups)
+- [numOfUsers](IamRealm.md#numofusers)
+- [resourceType](IamRealm.md#resourcetype)
 
 ### Methods
 
-- [addChild](RdsDatabase.md#addchild)
-- [clearChildren](RdsDatabase.md#clearchildren)
-- [findChildren](RdsDatabase.md#findchildren)
-- [getChildByName](RdsDatabase.md#getchildbyname)
-- [getProperties](RdsDatabase.md#getproperties)
-- [getSchema](RdsDatabase.md#getschema)
-- [hasChildren](RdsDatabase.md#haschildren)
-- [toJsonStringify](RdsDatabase.md#tojsonstringify)
-- [toString](RdsDatabase.md#tostring)
+- [addChild](IamRealm.md#addchild)
+- [clearChildren](IamRealm.md#clearchildren)
+- [findChildren](IamRealm.md#findchildren)
+- [getChildByName](IamRealm.md#getchildbyname)
+- [getGroupByName](IamRealm.md#getgroupbyname)
+- [getProperties](IamRealm.md#getproperties)
+- [getRoleByName](IamRealm.md#getrolebyname)
+- [getUserByName](IamRealm.md#getuserbyname)
+- [hasChildren](IamRealm.md#haschildren)
+- [toJsonStringify](IamRealm.md#tojsonstringify)
+- [toString](IamRealm.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new RdsDatabase**(`name`)
+• **new IamRealm**(`name`)
 
 #### Parameters
 
@@ -55,13 +59,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:268](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L268)
+[src/resource/DbResource.ts:356](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L356)
 
 ## Properties
 
 ### children
 
-• `Readonly` **children**: [`DbSchema`](DbSchema.md)[]
+• `Readonly` **children**: ([`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md))[]
 
 #### Inherited from
 
@@ -98,6 +102,16 @@ ___
 #### Defined in
 
 [src/resource/DbResource.ts:119](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L119)
+
+___
+
+### isDefault
+
+• **isDefault**: `boolean` = `false`
+
+#### Defined in
+
+[src/resource/DbResource.ts:352](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L352)
 
 ___
 
@@ -147,6 +161,26 @@ ___
 
 ___
 
+### numOfGroups
+
+• **numOfGroups**: `number` = `0`
+
+#### Defined in
+
+[src/resource/DbResource.ts:354](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L354)
+
+___
+
+### numOfUsers
+
+• **numOfUsers**: `number` = `0`
+
+#### Defined in
+
+[src/resource/DbResource.ts:353](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L353)
+
+___
+
 ### resourceType
 
 • `Readonly` **resourceType**: [`ResourceType`](../modules.md#resourcetype-1)
@@ -159,31 +193,21 @@ ___
 
 [src/resource/DbResource.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L120)
 
-___
-
-### version
-
-• `Optional` **version**: `number`
-
-#### Defined in
-
-[src/resource/DbResource.ts:267](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L267)
-
 ## Methods
 
 ### addChild
 
-▸ **addChild**(`res`): [`DbSchema`](DbSchema.md)
+▸ **addChild**(`res`): [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`DbSchema`](DbSchema.md) |
+| `res` | [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md) |
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Inherited from
 
@@ -248,7 +272,7 @@ ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`DbSchema`](DbSchema.md)
+▸ **getChildByName**(`name`, `insensitive?`): [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Parameters
 
@@ -259,7 +283,7 @@ ___
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Inherited from
 
@@ -268,6 +292,26 @@ ___
 #### Defined in
 
 [src/resource/DbResource.ts:153](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L153)
+
+___
+
+### getGroupByName
+
+▸ **getGroupByName**(`name`): [`IamGroup`](IamGroup.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+
+#### Returns
+
+[`IamGroup`](IamGroup.md)
+
+#### Defined in
+
+[src/resource/DbResource.ts:368](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L368)
 
 ___
 
@@ -285,29 +329,47 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:272](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L272)
+[src/resource/DbResource.ts:384](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L384)
 
 ___
 
-### getSchema
+### getRoleByName
 
-▸ **getSchema**(`option`): [`DbSchema`](DbSchema.md)
+▸ **getRoleByName**(`name`): [`IamRole`](IamRole.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `option` | `Object` |
-| `option.isDefault?` | `boolean` |
-| `option.name?` | `string` |
+| `name` | `string` |
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`IamRole`](IamRole.md)
 
 #### Defined in
 
-[src/resource/DbResource.ts:279](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L279)
+[src/resource/DbResource.ts:376](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L376)
+
+___
+
+### getUserByName
+
+▸ **getUserByName**(`name`): [`IamUser`](IamUser.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+
+#### Returns
+
+[`IamUser`](IamUser.md)
+
+#### Defined in
+
+[src/resource/DbResource.ts:360](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L360)
 
 ___
 

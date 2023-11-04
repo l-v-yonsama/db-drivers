@@ -1,59 +1,67 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / AwsDriver
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / KeycloakDriver
 
-# Class: AwsDriver
+# Class: KeycloakDriver
 
 ## Hierarchy
 
-- [`BaseDriver`](BaseDriver.md)<[`AwsDatabase`](AwsDatabase.md)\>
+- [`BaseDriver`](BaseDriver.md)<[`KeycloakDatabase`](KeycloakDatabase.md)\>
 
-  ↳ **`AwsDriver`**
+  ↳ **`KeycloakDriver`**
+
+## Implements
+
+- [`Scannable`](../interfaces/Scannable.md)
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](AwsDriver.md#constructor)
+- [constructor](KeycloakDriver.md#constructor)
 
 ### Properties
 
-- [cloudwatchClient](AwsDriver.md#cloudwatchclient)
-- [conRes](AwsDriver.md#conres)
-- [isConnected](AwsDriver.md#isconnected)
-- [s3Client](AwsDriver.md#s3client)
-- [sesClient](AwsDriver.md#sesclient)
-- [sqsClient](AwsDriver.md#sqsclient)
-- [sshLocalPort](AwsDriver.md#sshlocalport)
-- [sshServer](AwsDriver.md#sshserver)
+- [client](KeycloakDriver.md#client)
+- [conRes](KeycloakDriver.md#conres)
+- [isConnected](KeycloakDriver.md#isconnected)
+- [sshLocalPort](KeycloakDriver.md#sshlocalport)
+- [sshServer](KeycloakDriver.md#sshserver)
 
 ### Methods
 
-- [closeSub](AwsDriver.md#closesub)
-- [connect](AwsDriver.md#connect)
-- [connectSub](AwsDriver.md#connectsub)
-- [connectToSshServer](AwsDriver.md#connecttosshserver)
-- [createClientConfig](AwsDriver.md#createclientconfig)
-- [createColumnResolver](AwsDriver.md#createcolumnresolver)
-- [createDBError](AwsDriver.md#createdberror)
-- [disconnect](AwsDriver.md#disconnect)
-- [flow](AwsDriver.md#flow)
-- [getClientByResourceType](AwsDriver.md#getclientbyresourcetype)
-- [getClientByServiceType](AwsDriver.md#getclientbyservicetype)
-- [getConnectionRes](AwsDriver.md#getconnectionres)
-- [getDbDatabase](AwsDriver.md#getdbdatabase)
-- [getInfomationSchemas](AwsDriver.md#getinfomationschemas)
-- [getInfomationSchemasSub](AwsDriver.md#getinfomationschemassub)
-- [getName](AwsDriver.md#getname)
-- [initBaseStatus](AwsDriver.md#initbasestatus)
-- [isNeedsSsh](AwsDriver.md#isneedsssh)
-- [isQuery](AwsDriver.md#isquery)
-- [parseSchemaAndTableHints](AwsDriver.md#parseschemaandtablehints)
-- [test](AwsDriver.md#test)
+- [closeSub](KeycloakDriver.md#closesub)
+- [connect](KeycloakDriver.md#connect)
+- [connectSub](KeycloakDriver.md#connectsub)
+- [connectToSshServer](KeycloakDriver.md#connecttosshserver)
+- [countGroups](KeycloakDriver.md#countgroups)
+- [countUsers](KeycloakDriver.md#countusers)
+- [createColumnResolver](KeycloakDriver.md#createcolumnresolver)
+- [createDBError](KeycloakDriver.md#createdberror)
+- [createRole](KeycloakDriver.md#createrole)
+- [createUser](KeycloakDriver.md#createuser)
+- [disconnect](KeycloakDriver.md#disconnect)
+- [flow](KeycloakDriver.md#flow)
+- [getConnectionRes](KeycloakDriver.md#getconnectionres)
+- [getDbDatabase](KeycloakDriver.md#getdbdatabase)
+- [getGroups](KeycloakDriver.md#getgroups)
+- [getInfomationSchemas](KeycloakDriver.md#getinfomationschemas)
+- [getInfomationSchemasSub](KeycloakDriver.md#getinfomationschemassub)
+- [getName](KeycloakDriver.md#getname)
+- [getRealms](KeycloakDriver.md#getrealms)
+- [getRoles](KeycloakDriver.md#getroles)
+- [getUsers](KeycloakDriver.md#getusers)
+- [initBaseStatus](KeycloakDriver.md#initbasestatus)
+- [isNeedsSsh](KeycloakDriver.md#isneedsssh)
+- [isQuery](KeycloakDriver.md#isquery)
+- [listMembers](KeycloakDriver.md#listmembers)
+- [parseSchemaAndTableHints](KeycloakDriver.md#parseschemaandtablehints)
+- [scan](KeycloakDriver.md#scan)
+- [test](KeycloakDriver.md#test)
 
 ## Constructors
 
 ### constructor
 
-• **new AwsDriver**(`conRes`)
+• **new KeycloakDriver**(`conRes`)
 
 #### Parameters
 
@@ -67,17 +75,17 @@
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L37)
+src/drivers/KeycloakDriver.ts:35
 
 ## Properties
 
-### cloudwatchClient
+### client
 
-• **cloudwatchClient**: [`AwsCloudwatchServiceClient`](AwsCloudwatchServiceClient.md)
+• **client**: `KeycloakAdminClient`
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L34)
+src/drivers/KeycloakDriver.ts:33
 
 ___
 
@@ -106,36 +114,6 @@ ___
 #### Defined in
 
 [src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/BaseDriver.ts#L50)
-
-___
-
-### s3Client
-
-• **s3Client**: [`AwsS3ServiceClient`](AwsS3ServiceClient.md)
-
-#### Defined in
-
-[src/drivers/AwsDriver.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L35)
-
-___
-
-### sesClient
-
-• **sesClient**: [`AwsSESServiceClient`](AwsSESServiceClient.md)
-
-#### Defined in
-
-[src/drivers/AwsDriver.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L32)
-
-___
-
-### sqsClient
-
-• **sqsClient**: [`AwsSQSServiceClient`](AwsSQSServiceClient.md)
-
-#### Defined in
-
-[src/drivers/AwsDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L33)
 
 ___
 
@@ -181,7 +159,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L218)
+src/drivers/KeycloakDriver.ts:341
 
 ___
 
@@ -217,7 +195,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:115](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L115)
+src/drivers/KeycloakDriver.ts:39
 
 ___
 
@@ -239,17 +217,43 @@ ___
 
 ___
 
-### createClientConfig
+### countGroups
 
-▸ `Protected` **createClientConfig**(): [`ClientConfigType`](../modules.md#clientconfigtype)
+▸ **countGroups**(`payload?`): `Promise`<`number`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `payload?` | `GroupCountQuery` & { `realm?`: `string`  } |
 
 #### Returns
 
-[`ClientConfigType`](../modules.md#clientconfigtype)
+`Promise`<`number`\>
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L41)
+src/drivers/KeycloakDriver.ts:166
+
+___
+
+### countUsers
+
+▸ **countUsers**(`payload?`): `Promise`<`number`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `payload?` | `UserQuery` & { `realm?`: `string`  } |
+
+#### Returns
+
+`Promise`<`number`\>
+
+#### Defined in
+
+src/drivers/KeycloakDriver.ts:114
 
 ___
 
@@ -302,6 +306,46 @@ ___
 
 ___
 
+### createRole
+
+▸ **createRole**(`options?`): `Promise`<{ `roleName`: `string`  }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options?` | `default` & { `realm?`: `string`  } |
+
+#### Returns
+
+`Promise`<{ `roleName`: `string`  }\>
+
+#### Defined in
+
+src/drivers/KeycloakDriver.ts:124
+
+___
+
+### createUser
+
+▸ **createUser**(`options?`): `Promise`<{ `id`: `string`  }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options?` | `default` & { `realm?`: `string`  } |
+
+#### Returns
+
+`Promise`<{ `id`: `string`  }\>
+
+#### Defined in
+
+src/drivers/KeycloakDriver.ts:87
+
+___
+
 ### disconnect
 
 ▸ **disconnect**(): `Promise`<`string`\>
@@ -334,7 +378,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `f` | (`driver`: [`AwsDriver`](AwsDriver.md)) => `Promise`<`T`\> |
+| `f` | (`driver`: [`KeycloakDriver`](KeycloakDriver.md)) => `Promise`<`T`\> |
 
 #### Returns
 
@@ -347,58 +391,6 @@ ___
 #### Defined in
 
 [src/drivers/BaseDriver.ts:109](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/BaseDriver.ts#L109)
-
-___
-
-### getClientByResourceType
-
-▸ **getClientByResourceType**<`T`\>(`resourceType`): `T`
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends [`AwsServiceClient`](AwsServiceClient.md)<`T`\> = [`AwsServiceClient`](AwsServiceClient.md) |
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `resourceType` | [`ResourceType`](../modules.md#resourcetype-1) |
-
-#### Returns
-
-`T`
-
-#### Defined in
-
-[src/drivers/AwsDriver.ts:77](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L77)
-
-___
-
-### getClientByServiceType
-
-▸ **getClientByServiceType**<`T`\>(`serviceType`): `T`
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends [`AwsServiceClient`](AwsServiceClient.md)<`T`\> = [`AwsServiceClient`](AwsServiceClient.md) |
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `serviceType` | [`AwsServiceType`](../modules.md#awsservicetype-1) |
-
-#### Returns
-
-`T`
-
-#### Defined in
-
-[src/drivers/AwsDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L56)
 
 ___
 
@@ -438,13 +430,33 @@ ___
 
 ___
 
-### getInfomationSchemas
+### getGroups
 
-▸ **getInfomationSchemas**(): `Promise`<[`AwsDatabase`](AwsDatabase.md)[]\>
+▸ **getGroups**(`payload?`): `Promise`<`default`[]\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `payload?` | `GroupQuery` & { `realm?`: `string`  } |
 
 #### Returns
 
-`Promise`<[`AwsDatabase`](AwsDatabase.md)[]\>
+`Promise`<`default`[]\>
+
+#### Defined in
+
+src/drivers/KeycloakDriver.ts:149
+
+___
+
+### getInfomationSchemas
+
+▸ **getInfomationSchemas**(): `Promise`<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
+
+#### Returns
+
+`Promise`<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
 
 #### Inherited from
 
@@ -458,11 +470,11 @@ ___
 
 ### getInfomationSchemasSub
 
-▸ **getInfomationSchemasSub**(): `Promise`<[`AwsDatabase`](AwsDatabase.md)[]\>
+▸ **getInfomationSchemasSub**(): `Promise`<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
 
 #### Returns
 
-`Promise`<[`AwsDatabase`](AwsDatabase.md)[]\>
+`Promise`<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
 
 #### Overrides
 
@@ -470,7 +482,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L164)
+src/drivers/KeycloakDriver.ts:286
 
 ___
 
@@ -489,6 +501,67 @@ ___
 #### Defined in
 
 [src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/BaseDriver.ts#L60)
+
+___
+
+### getRealms
+
+▸ **getRealms**(`payload?`): `Promise`<`default`[]\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `payload?` | `Object` |
+| `payload.briefRepresentation?` | `boolean` |
+
+#### Returns
+
+`Promise`<`default`[]\>
+
+#### Defined in
+
+src/drivers/KeycloakDriver.ts:176
+
+___
+
+### getRoles
+
+▸ **getRoles**(`payload?`): `Promise`<`default`[]\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `payload?` | `RoleQuery` & { `realm?`: `string`  } |
+
+#### Returns
+
+`Promise`<`default`[]\>
+
+#### Defined in
+
+src/drivers/KeycloakDriver.ts:138
+
+___
+
+### getUsers
+
+▸ **getUsers**(`options?`): `Promise`<`default`[]\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options?` | `UserQuery` & { `realm?`: `string`  } |
+
+#### Returns
+
+`Promise`<`default`[]\>
+
+#### Defined in
+
+src/drivers/KeycloakDriver.ts:101
 
 ___
 
@@ -552,6 +625,30 @@ ___
 
 ___
 
+### listMembers
+
+▸ **listMembers**(`payload?`): `Promise`<`default`[]\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `payload?` | `Object` |
+| `payload.first?` | `number` |
+| `payload.id` | `string` |
+| `payload.max?` | `number` |
+| `payload.realm?` | `string` |
+
+#### Returns
+
+`Promise`<`default`[]\>
+
+#### Defined in
+
+src/drivers/KeycloakDriver.ts:157
+
+___
+
 ### parseSchemaAndTableHints
 
 ▸ **parseSchemaAndTableHints**(`sql`): [`SchemaAndTableHints`](../interfaces/SchemaAndTableHints.md)
@@ -576,6 +673,30 @@ ___
 
 ___
 
+### scan
+
+▸ **scan**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`ScanParams`](../modules.md#scanparams) |
+
+#### Returns
+
+`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+
+#### Implementation of
+
+[Scannable](../interfaces/Scannable.md).[scan](../interfaces/Scannable.md#scan)
+
+#### Defined in
+
+src/drivers/KeycloakDriver.ts:182
+
+___
+
 ### test
 
 ▸ **test**(`with_connect?`): `Promise`<`string`\>
@@ -596,4 +717,4 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:183](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/drivers/AwsDriver.ts#L183)
+src/drivers/KeycloakDriver.ts:66

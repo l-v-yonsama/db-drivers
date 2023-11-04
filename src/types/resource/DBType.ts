@@ -2,6 +2,7 @@ export const DBType = {
   MySQL: 'MySQL',
   Postgres: 'Postgres',
   Redis: 'Redis',
+  Keycloak: 'Keycloak',
   Aws: 'Aws',
 } as const;
 

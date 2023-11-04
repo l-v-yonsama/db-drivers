@@ -1,47 +1,46 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / RdsDatabase
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / KeycloakDatabase
 
-# Class: RdsDatabase
+# Class: KeycloakDatabase
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)<[`DbSchema`](DbSchema.md)\>
+- [`DbResource`](DbResource.md)<[`IamRealm`](IamRealm.md)\>
 
-  ↳ **`RdsDatabase`**
+  ↳ **`KeycloakDatabase`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](RdsDatabase.md#constructor)
+- [constructor](KeycloakDatabase.md#constructor)
 
 ### Properties
 
-- [children](RdsDatabase.md#children)
-- [comment](RdsDatabase.md#comment)
-- [id](RdsDatabase.md#id)
-- [isInProgress](RdsDatabase.md#isinprogress)
-- [meta](RdsDatabase.md#meta)
-- [name](RdsDatabase.md#name)
-- [resourceType](RdsDatabase.md#resourcetype)
-- [version](RdsDatabase.md#version)
+- [children](KeycloakDatabase.md#children)
+- [comment](KeycloakDatabase.md#comment)
+- [id](KeycloakDatabase.md#id)
+- [isInProgress](KeycloakDatabase.md#isinprogress)
+- [meta](KeycloakDatabase.md#meta)
+- [name](KeycloakDatabase.md#name)
+- [resourceType](KeycloakDatabase.md#resourcetype)
 
 ### Methods
 
-- [addChild](RdsDatabase.md#addchild)
-- [clearChildren](RdsDatabase.md#clearchildren)
-- [findChildren](RdsDatabase.md#findchildren)
-- [getChildByName](RdsDatabase.md#getchildbyname)
-- [getProperties](RdsDatabase.md#getproperties)
-- [getSchema](RdsDatabase.md#getschema)
-- [hasChildren](RdsDatabase.md#haschildren)
-- [toJsonStringify](RdsDatabase.md#tojsonstringify)
-- [toString](RdsDatabase.md#tostring)
+- [addChild](KeycloakDatabase.md#addchild)
+- [clearChildren](KeycloakDatabase.md#clearchildren)
+- [findChildren](KeycloakDatabase.md#findchildren)
+- [getChildByName](KeycloakDatabase.md#getchildbyname)
+- [getProperties](KeycloakDatabase.md#getproperties)
+- [getRealm](KeycloakDatabase.md#getrealm)
+- [hasChildren](KeycloakDatabase.md#haschildren)
+- [toJsonStringify](KeycloakDatabase.md#tojsonstringify)
+- [toString](KeycloakDatabase.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new RdsDatabase**(`name`)
+• **new KeycloakDatabase**(`name`)
 
 #### Parameters
 
@@ -55,13 +54,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:268](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L268)
+[src/resource/DbResource.ts:323](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L323)
 
 ## Properties
 
 ### children
 
-• `Readonly` **children**: [`DbSchema`](DbSchema.md)[]
+• `Readonly` **children**: [`IamRealm`](IamRealm.md)[]
 
 #### Inherited from
 
@@ -159,31 +158,21 @@ ___
 
 [src/resource/DbResource.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L120)
 
-___
-
-### version
-
-• `Optional` **version**: `number`
-
-#### Defined in
-
-[src/resource/DbResource.ts:267](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L267)
-
 ## Methods
 
 ### addChild
 
-▸ **addChild**(`res`): [`DbSchema`](DbSchema.md)
+▸ **addChild**(`res`): [`IamRealm`](IamRealm.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`DbSchema`](DbSchema.md) |
+| `res` | [`IamRealm`](IamRealm.md) |
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`IamRealm`](IamRealm.md)
 
 #### Inherited from
 
@@ -248,7 +237,7 @@ ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`DbSchema`](DbSchema.md)
+▸ **getChildByName**(`name`, `insensitive?`): [`IamRealm`](IamRealm.md)
 
 #### Parameters
 
@@ -259,7 +248,7 @@ ___
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`IamRealm`](IamRealm.md)
 
 #### Inherited from
 
@@ -285,13 +274,13 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:272](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L272)
+[src/resource/DbResource.ts:327](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L327)
 
 ___
 
-### getSchema
+### getRealm
 
-▸ **getSchema**(`option`): [`DbSchema`](DbSchema.md)
+▸ **getRealm**(`option`): [`IamRealm`](IamRealm.md)
 
 #### Parameters
 
@@ -303,11 +292,11 @@ ___
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`IamRealm`](IamRealm.md)
 
 #### Defined in
 
-[src/resource/DbResource.ts:279](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L279)
+[src/resource/DbResource.ts:333](https://github.com/l-v-yonsama/db-drivers/blob/4b69f05/src/resource/DbResource.ts#L333)
 
 ___
 
