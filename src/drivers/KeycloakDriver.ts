@@ -1,4 +1,3 @@
-import KcAdminClient from '@keycloak/keycloak-admin-client';
 import { BaseDriver, Scannable } from './BaseDriver';
 import {
   IamGroup,
@@ -10,27 +9,60 @@ import {
 import {
   ConnectionSetting,
   GeneralColumnType,
-  ResultSetData,
-  ScanParams,
-} from '../types';
-import { toDate } from '../utils';
-import { ConnectionConfig } from '@keycloak/keycloak-admin-client/lib/client';
-import { UserQuery } from '@keycloak/keycloak-admin-client/lib/resources/users';
-import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
-import RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
-import { RoleQuery } from '@keycloak/keycloak-admin-client/lib/resources/roles';
-import {
   GroupCountQuery,
   GroupQuery,
-} from '@keycloak/keycloak-admin-client/lib/resources/groups';
-import RealmRepresentation from '@keycloak/keycloak-admin-client/lib/defs/realmRepresentation';
-import GroupRepresentation from '@keycloak/keycloak-admin-client/lib/defs/groupRepresentation';
+  GroupRepresentation,
+  RealmRepresentation,
+  ResultSetData,
+  RoleRepresentation,
+  RoleQuery,
+  ScanParams,
+  UserQuery,
+  UserRepresentation,
+  CredentialRepresentation,
+  KeycloakErrorResponse,
+  KeycloakInternalServerErrorResponse,
+  RealmParam,
+} from '../types';
+import { toDate } from '../utils';
+import axios, { Axios, AxiosResponse, HttpStatusCode } from 'axios';
+import { BaseClient, Issuer, TokenSet } from 'openid-client';
+
+function isKeycloakErrorResponse(o: any): o is KeycloakErrorResponse {
+  if (
+    o === null ||
+    o === undefined ||
+    typeof o !== 'object' ||
+    o.errorMessage === undefined ||
+    typeof o.errorMessage !== 'string'
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function isKeycloakIntermalServerErrorResponse(
+  o: any,
+): o is KeycloakInternalServerErrorResponse {
+  if (
+    o === null ||
+    o === undefined ||
+    typeof o !== 'object' ||
+    o.error === undefined ||
+    typeof o.error !== 'string'
+  ) {
+    return false;
+  }
+
+  return true;
+}
 
 export class KeycloakDriver
   extends BaseDriver<KeycloakDatabase>
   implements Scannable
 {
-  client: KcAdminClient | undefined;
+  private issuerClient: BaseClient | undefined;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -38,22 +70,18 @@ export class KeycloakDriver
 
   async connectSub(): Promise<string> {
     try {
-      const { url, database, user, password, iamSolution } = this.conRes;
+      const { url, iamSolution } = this.conRes;
 
-      const config: ConnectionConfig = {};
-      if (url) {
-        config.baseUrl = url;
-      }
-      if (database) {
-        config.realmName = database;
-      }
-      this.client = new KcAdminClient(config);
-
-      await this.client.auth({
-        username: user,
-        password,
-        grantType: iamSolution.grantType,
-        clientId: iamSolution.clientId,
+      const issuer = await Issuer.discover(`${url}/realms/master`);
+      this.issuerClient = new issuer.Client({
+        client_id: iamSolution.clientId,
+        client_secret: 'dummy',
+        // client_secret:
+        //   'TQV5U29k1gHibH5bx1layBo0OSAvAbRT3UYW3EWrSYBB5swxjVfWUa1BS8lqzxG/0v9wruMcrGadany3',
+        // redirect_uris: ['http://localhost:3000/cb'],
+        // response_types: ['code'],
+        // id_token_signed_response_alg (default "RS256")
+        // token_endpoint_auth_method (default "client_secret_basic")
       });
     } catch (e) {
       // console.error(e);
@@ -61,6 +89,32 @@ export class KeycloakDriver
     }
 
     return '';
+  }
+
+  async getAxiosClient(): Promise<Axios> {
+    const { url } = this.conRes;
+    const tokenSet = await this.getTokenSet();
+    const client = new Axios({
+      baseURL: url,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + tokenSet.access_token,
+      },
+    });
+
+    client.defaults.transformRequest = axios.defaults.transformRequest;
+    client.defaults.transformResponse = axios.defaults.transformResponse;
+
+    return client;
+  }
+
+  private async getTokenSet(): Promise<TokenSet> {
+    const { user, password } = this.conRes;
+    return await this.issuerClient.grant({
+      grant_type: 'password',
+      username: user,
+      password: password,
+    });
   }
 
   async test(with_connect = false): Promise<string> {
@@ -84,31 +138,59 @@ export class KeycloakDriver
 
   // Users...
 
-  async createUser(
-    options?: UserRepresentation & {
-      realm?: string | undefined;
-    },
-  ): Promise<{
-    id: string;
-  }> {
-    const payload: UserRepresentation = {
+  /**
+   * Create a new user Username must be unique.
+   * POST /admin/realms/{realm}/users
+   *
+   * @param payload
+   * @returns
+   */
+  async createUser(payload?: UserRepresentation & RealmParam): Promise<void> {
+    const { realm, ...data } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+
+    const res = await client.post(`/admin/realms/${realmId}/users`, {
       enabled: true,
-      ...options,
-    };
-    return await this.client.users.create(payload);
+      ...data,
+    });
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+  }
+
+  async updateUser(payload?: UserRepresentation & RealmParam): Promise<void> {
+    const { realm, id, ...data } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+    const res = await client.put(`/admin/realms/${realmId}/users/${id}`, {
+      ...data,
+    });
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
   }
 
   async getUsers(
-    options?: UserQuery & {
-      realm?: string | undefined;
-    },
+    payload?: UserQuery & RealmParam,
   ): Promise<UserRepresentation[]> {
-    const payload = {
-      first: 0,
-      max: 10,
-      ...options,
-    };
-    return await this.client.users.find(payload);
+    const { realm, ...params } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+    const res = await client.get(`/admin/realms/${realmId}/users`, {
+      params,
+    });
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data;
   }
 
   async countUsers(
@@ -116,67 +198,363 @@ export class KeycloakDriver
       realm?: string | undefined;
     },
   ): Promise<number> {
-    return await this.client.users.count(payload);
+    const { realm } = payload;
+    // /admin/realms/{realm}/users/count
+
+    const client = await this.getAxiosClient();
+    const res = await client.get(`/admin/realms/${realm}/users/count`, {
+      params: payload,
+    });
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data;
   }
 
-  // Roles...
+  /**
+   * Set up a new password for the user
+   * PUT /admin/realms/{realm}/users/{id}/reset-password
+   * @param payload
+   */
+  async setupNewPassword(
+    payload?: CredentialRepresentation &
+      RealmParam & {
+        userId: string;
+      },
+  ): Promise<void> {
+    const { realm, userId, ...data } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
 
+    const client = await this.getAxiosClient();
+    const res = await client.put(
+      `/admin/realms/${realmId}/users/${userId}/reset-password`,
+      {
+        ...data,
+      },
+    );
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+  }
+
+  // // Roles...
+
+  /**
+   * Create a new role for the realm or client
+   * POST /admin/realms/{realm}/roles
+   * @param payload
+   */
   async createRole(
-    options?: RoleRepresentation & {
+    payload?: RoleRepresentation & {
       realm?: string | undefined;
     },
-  ): Promise<{
-    roleName: string;
-  }> {
-    const payload: RoleRepresentation = {
-      // enabled: true,
-      ...options,
-    };
-    return await this.client.roles.create(payload);
+  ): Promise<void> {
+    const { realm, attributes, ...data } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+    if (payload.name === undefined || payload.name === '') {
+      throw new Error('name is not defined.');
+    }
+
+    const client = await this.getAxiosClient();
+
+    const res = await client.post(`/admin/realms/${realmId}/roles`, data);
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    if (attributes) {
+      const roleRes = await this.getRole({
+        realm: realmId,
+        name: payload.name,
+      });
+      await this.updateRole({
+        ...roleRes,
+        realm: realmId,
+        attributes,
+      });
+    }
   }
 
-  async getRoles(
-    payload?: RoleQuery & {
+  /**
+   * Update the role
+   * PUT /admin/realms/{realm}/roles-by-id/{role-id}
+   * @param payload
+   */
+  async updateRole(
+    payload?: RoleRepresentation & {
       realm?: string | undefined;
     },
+  ): Promise<void> {
+    const { realm, id, ...data } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+    if (payload.id === undefined || payload.id === '') {
+      throw new Error('id is not defined.');
+    }
+
+    const client = await this.getAxiosClient();
+
+    const res = await client.put(
+      `/admin/realms/${realmId}/roles-by-id/${id}`,
+      data,
+    );
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Get all roles for the realm or client
+   * GET /admin/realms/{realm}/roles
+   * @param payload
+   * @returns
+   */
+  async getRoles(
+    payload?: RoleQuery & RealmParam,
   ): Promise<RoleRepresentation[]> {
-    console.log('oayload=', payload);
-    return await this.client.roles.find(payload);
+    const { realm, ...params } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+    const res = await client.get(`/admin/realms/${realmId}/roles`, {
+      params,
+    });
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data;
+  }
+
+  async getRole(
+    payload: {
+      id?: string;
+      name?: string;
+    } & RealmParam,
+  ): Promise<RoleRepresentation | undefined> {
+    const { realm, id, name } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    if (id === undefined && name === undefined) {
+      throw new Error('id or name must be defined.');
+    }
+
+    if (id !== undefined) {
+      const client = await this.getAxiosClient();
+      // Get a specific role’s representation
+      const res = await client.get(
+        `/admin/realms/${realmId}/roles-by-id//${id}`,
+      );
+      const errorMessage = this.getErrorMessage(res);
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      return res.data;
+    }
+
+    if (name !== undefined) {
+      const client = await this.getAxiosClient();
+      const res = await client.get(`/admin/realms/${realmId}/roles/${name}`);
+      const errorMessage = this.getErrorMessage(res);
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      return res.data;
+    }
+
+    return undefined;
   }
 
   // Groups...
 
+  /**
+   * create or add a top level realm groupSet or create child.
+   *
+   * POST /admin/realms/{realm}/groups
+   *
+   * @param payload GroupRepresentation
+   */
+  async createGroup(payload?: GroupRepresentation & RealmParam): Promise<void> {
+    const { realm, attributes, ...data } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+    if (payload.name === undefined || payload.name === '') {
+      throw new Error('name is not defined.');
+    }
+
+    const client = await this.getAxiosClient();
+
+    const res = await client.post(`/admin/realms/${realmId}/groups`, data);
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    if (attributes) {
+      const groupRes = await this.getGroup({
+        realm: realmId,
+        name: payload.name,
+      });
+      await this.updateGroup({
+        ...groupRes,
+        realm: realmId,
+        attributes,
+      });
+    }
+  }
+
+  /**
+   * Update group, ignores subgroups.
+   * PUT /admin/realms/{realm}/groups/{id}
+   *
+   * @param payload
+   */
+  async updateGroup(payload?: GroupRepresentation & RealmParam): Promise<void> {
+    const { id, realm, ...data } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+
+    const res = await client.put(`/admin/realms/${realmId}/groups/${id}`, {
+      ...data,
+      attributes: this.normalizeAttribute(data.attributes),
+    });
+
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+  }
+
   async getGroups(
-    payload?: GroupQuery & {
-      realm?: string | undefined;
-    },
+    payload?: GroupQuery & RealmParam,
   ): Promise<GroupRepresentation[]> {
-    return await this.client.groups.find(payload);
+    const { realm, ...params } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+    const res = await client.get(`/admin/realms/${realmId}/groups`, {
+      params,
+    });
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data ?? [];
   }
 
-  async listMembers(payload?: {
-    id: string;
-    first?: number | undefined;
-    max?: number | undefined;
-    realm?: string | undefined;
-  }): Promise<UserRepresentation[]> {
-    return await this.client.groups.listMembers(payload);
+  async getGroup(
+    payload: {
+      id?: string;
+      name?: string;
+    } & RealmParam,
+  ): Promise<GroupRepresentation | undefined> {
+    const { realm, id, name } = payload;
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+
+    if (id !== undefined) {
+      const res = await client.get(`/admin/realms/${realmId}/groups/${id}`);
+      const errorMessage = this.getErrorMessage(res);
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      return res.data;
+    }
+    const groups = await this.getGroups({
+      realm,
+      search: name,
+    });
+    return groups.find((it) => it.name === name);
   }
 
-  async countGroups(
-    payload?: GroupCountQuery & {
-      realm?: string | undefined;
-    },
-  ): Promise<number> {
-    return (await this.client.groups.count(payload)).count;
+  /**
+   * Get users Returns a stream of users, filtered according to query parameters
+   * GET /admin/realms/{realm}/groups/{id}/members
+
+   * @param payload 
+   * @returns 
+   */
+  async listMembers(
+    payload?: {
+      id: string;
+      first?: number | undefined;
+      max?: number | undefined;
+    } & RealmParam,
+  ): Promise<UserRepresentation[]> {
+    const { realm, id } = payload;
+    const realmId = realm ?? this.conRes.database;
+    const client = await this.getAxiosClient();
+    const res = await client.get(
+      `/admin/realms/${realmId}/groups/${id}/members`,
+    );
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data;
+  }
+
+  async countGroups(payload?: GroupCountQuery & RealmParam): Promise<number> {
+    const { realm, ...params } = payload;
+    const realmId = realm ?? this.conRes.database;
+    const client = await this.getAxiosClient();
+    const res = await client.get(`/admin/realms/${realmId}/groups/count`, {
+      params,
+    });
+    return res.data.count;
   }
 
   // Realms...
 
+  /**
+   * Create a realm
+   * Realm name must be unique
+   * POST /admin/realms
+   * @param payload
+   */
+  async createRealm(payload?: RealmRepresentation): Promise<void> {
+    const { realm, ...data } = payload;
+    if (realm === undefined || realm === '') {
+      throw new Error('realm is not defined.');
+    }
+    const client = await this.getAxiosClient();
+
+    const res = await client.post(`/admin/realms`, {
+      ...data,
+      realm,
+      enabled: true,
+    });
+
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+  }
+
   async getRealms(payload?: {
     briefRepresentation?: boolean | undefined;
   }): Promise<RealmRepresentation[]> {
-    return await this.client.realms.find(payload);
+    const client = await this.getAxiosClient();
+    const res = await client.get(`/admin/realms`, {
+      params: payload,
+    });
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data;
   }
 
   async scan(params: ScanParams): Promise<ResultSetData> {
@@ -219,8 +597,6 @@ export class KeycloakDriver
           });
         });
 
-        console.log(rdb.toString());
-
         return rdb.build();
       }
       case 'IamRole': {
@@ -248,8 +624,6 @@ export class KeycloakDriver
           });
         });
 
-        console.log(rdb.toString());
-
         return rdb.build();
       }
       case 'IamGroup': {
@@ -274,8 +648,6 @@ export class KeycloakDriver
           });
         });
 
-        console.log(rdb.toString());
-
         return rdb.build();
       }
       default:
@@ -298,7 +670,7 @@ export class KeycloakDriver
       if (realm.id) {
         (realmRes as any)['id'] = realm.id;
       }
-      if (realm.realm === this.client.realmName) {
+      if (realm.realm === this.conRes.database) {
         realmRes.isDefault = true;
       }
       db.addChild(realmRes);
@@ -343,5 +715,44 @@ export class KeycloakDriver
     //   // await this.client.quit();
     // }
     return '';
+  }
+
+  private normalizeAttribute(
+    attr: Record<string, any> | undefined,
+  ): Record<string, any[]> | undefined {
+    if (attr === undefined) {
+      return undefined;
+    }
+    const record: Record<string, any[]> = {};
+    Object.keys(attr).forEach((key) => {
+      const v = attr[key];
+      if (Array.isArray(v)) {
+        record[key] = v;
+      } else {
+        record[key] = [v];
+      }
+    });
+
+    return record;
+  }
+
+  private getErrorMessage(res: AxiosResponse): string | undefined {
+    const { status, data } = res;
+    if (
+      status === HttpStatusCode.InternalServerError &&
+      isKeycloakIntermalServerErrorResponse(data)
+    ) {
+      return `${res.config?.method?.toUpperCase()} ${res.config.url}, ${
+        res.statusText
+      }, ${data.error}`;
+    }
+
+    if (isKeycloakErrorResponse(data)) {
+      return `${res.config?.method?.toUpperCase()} ${res.config.url}, ${
+        res.statusText
+      }, ${data.errorMessage}`;
+    }
+
+    return undefined;
   }
 }

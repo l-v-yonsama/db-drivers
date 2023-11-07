@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.210",
+  "version": "0.1.211",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 16"
@@ -71,7 +71,7 @@
     "@aws-sdk/client-sqs": "^3.398.0",
     "@aws-sdk/credential-providers": "^3.279.0",
     "@aws-sdk/s3-request-presigner": "^3.427.0",
-    "@keycloak/keycloak-admin-client": "^20.0.5",
+    "axios": "^1.6.0",
     "bytes": "^3.1.2",
     "dayjs": "^1.11.7",
     "enum-values": "^1.2.1",
@@ -84,6 +84,7 @@
     "lodash.isequal": "^4.5.0",
     "mime-lite": "^1.0.3",
     "mysql2": "^3.1.2",
+    "openid-client": "^5.6.1",
     "pg": "^8.9.0",
     "pgsql-ast-parser": "^11.0.1",
     "pluralize": "^8.0.0",

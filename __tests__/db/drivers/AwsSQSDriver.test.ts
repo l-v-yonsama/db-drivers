@@ -184,7 +184,6 @@ describe('AwsSQSDriver', () => {
         });
         return [url1, url2];
       });
-      console.log('list result', JSON.stringify(r.result, null, 2));
       expect(r.ok).toBe(true);
       expect(r.result).toBeDefined();
       const [standardQueueUrl, fifoQueueUrl] = r.result;
