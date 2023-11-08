@@ -27,6 +27,7 @@ import {
 import { toDate } from '../utils';
 import axios, { Axios, AxiosResponse, HttpStatusCode } from 'axios';
 import { BaseClient, Issuer, TokenSet } from 'openid-client';
+import { plural } from 'pluralize';
 
 function isKeycloakErrorResponse(o: any): o is KeycloakErrorResponse {
   if (
@@ -705,7 +706,13 @@ export class KeycloakDriver
     });
 
     await Promise.all(promises);
+    db.children.forEach((realm) => {
+      realm.comment = `${realm.numOfGroups} ${plural('group')}, ${
+        realm.numOfUsers
+      } ${plural('user')}`;
+    });
 
+    db.comment = `${db.children.length} ${plural('realm')}`;
     dbResources.push(db);
 
     return dbResources;

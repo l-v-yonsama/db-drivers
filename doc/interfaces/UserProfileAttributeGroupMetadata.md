@@ -19,7 +19,7 @@
 
 #### Defined in
 
-src/types/drivers/Keycloak.ts:265
+[src/types/drivers/Keycloak.ts:265](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/types/drivers/Keycloak.ts#L265)
 
 ___
 
@@ -29,7 +29,7 @@ ___
 
 #### Defined in
 
-src/types/drivers/Keycloak.ts:264
+[src/types/drivers/Keycloak.ts:264](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/types/drivers/Keycloak.ts#L264)
 
 ___
 
@@ -39,7 +39,7 @@ ___
 
 #### Defined in
 
-src/types/drivers/Keycloak.ts:263
+[src/types/drivers/Keycloak.ts:263](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/types/drivers/Keycloak.ts#L263)
 
 ___
 
@@ -49,4 +49,4 @@ ___
 
 #### Defined in
 
-src/types/drivers/Keycloak.ts:262
+[src/types/drivers/Keycloak.ts:262](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/types/drivers/Keycloak.ts#L262)

@@ -54,7 +54,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:323](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L323)
+[src/resource/DbResource.ts:326](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L326)
 
 ## Properties
 
@@ -68,7 +68,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:123](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L123)
+[src/resource/DbResource.ts:124](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L124)
 
 ___
 
@@ -82,7 +82,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:122](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L122)
+[src/resource/DbResource.ts:123](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L123)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:119](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L119)
+[src/resource/DbResource.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L120)
 
 ___
 
@@ -110,7 +110,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:125](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L125)
+[src/resource/DbResource.ts:126](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L126)
 
 ___
 
@@ -128,7 +128,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:124](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L124)
+[src/resource/DbResource.ts:125](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L125)
 
 ___
 
@@ -142,7 +142,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:121](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L121)
+[src/resource/DbResource.ts:122](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L122)
 
 ___
 
@@ -156,7 +156,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L120)
+[src/resource/DbResource.ts:121](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L121)
 
 ## Methods
 
@@ -180,7 +180,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:140](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L140)
+[src/resource/DbResource.ts:141](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L141)
 
 ___
 
@@ -198,7 +198,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:149](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L149)
+[src/resource/DbResource.ts:150](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L150)
 
 ___
 
@@ -231,7 +231,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:161](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L161)
+[src/resource/DbResource.ts:162](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L162)
 
 ___
 
@@ -256,7 +256,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:153](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L153)
+[src/resource/DbResource.ts:154](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L154)
 
 ___
 
@@ -274,7 +274,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:327](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L327)
+[src/resource/DbResource.ts:330](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L330)
 
 ___
 
@@ -296,7 +296,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:333](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L333)
+[src/resource/DbResource.ts:336](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L336)
 
 ___
 
@@ -314,7 +314,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:145](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L145)
+[src/resource/DbResource.ts:146](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L146)
 
 ___
 
@@ -338,7 +338,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:198](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L198)
+[src/resource/DbResource.ts:199](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L199)
 
 ___
 
@@ -356,4 +356,4 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:195](https://github.com/l-v-yonsama/db-drivers/blob/622eff5/src/resource/DbResource.ts#L195)
+[src/resource/DbResource.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/DbResource.ts#L196)

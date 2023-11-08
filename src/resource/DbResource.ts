@@ -8,6 +8,7 @@ import {
   FirebaseSetting,
   ForeignKeyConstraint,
   GeneralColumnType,
+  IamSolutionSetting,
   RedisKeyType,
   ResourceType,
   SshSetting,
@@ -227,6 +228,7 @@ export class DbConnection
   public apiVersion?: string;
   public ssh?: SshSetting;
   public awsSetting?: AwsSetting;
+  public iamSolution?: IamSolutionSetting;
   public firebase?: FirebaseSetting;
 
   constructor(prop: any) {
@@ -243,6 +245,7 @@ export class DbConnection
     this.apiVersion = prop.apiVersion;
     this.ssh = prop.ssh;
     this.awsSetting = prop.awsSetting;
+    this.iamSolution = prop.iamSolution;
     this.firebase = prop.firebase;
     this.isConnected = false;
     this.isInProgress = false;
@@ -382,11 +385,12 @@ export class IamRealm extends DbResource<IamUser | IamGroup | IamRole> {
   }
 
   getProperties(): { [key: string]: any } {
-    const { numOfGroups, numOfUsers } = this;
+    const { id, numOfGroups, numOfUsers } = this;
     return {
-      ...super.getProperties(),
+      id,
       numOfUsers,
       numOfGroups,
+      ...super.getProperties(),
     };
   }
 }
@@ -394,6 +398,15 @@ export class IamRealm extends DbResource<IamUser | IamGroup | IamRole> {
 export class IamUser extends DbResource {
   constructor(name: string) {
     super(ResourceType.IamUser, name);
+  }
+
+  getProperties(): { [key: string]: any } {
+    const { id } = this;
+
+    return {
+      id,
+      ...super.getProperties(),
+    };
   }
 }
 
@@ -406,6 +419,15 @@ export class IamGroup extends DbResource {
 export class IamRole extends DbResource {
   constructor(name: string) {
     super(ResourceType.IamRole, name);
+  }
+
+  getProperties(): { [key: string]: any } {
+    const { id } = this;
+
+    return {
+      id,
+      ...super.getProperties(),
+    };
   }
 }
 
