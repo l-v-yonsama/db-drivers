@@ -150,7 +150,6 @@ export class RedisDriver
         name: 'key',
         type: GeneralColumnType.TEXT,
         width: 150,
-        align: 'left',
       }),
       createRdhKey({
         name: 'type',
@@ -159,7 +158,7 @@ export class RedisDriver
       }),
       createRdhKey({
         name: 'ttl',
-        type: GeneralColumnType.TEXT,
+        type: GeneralColumnType.TEXT, // number to pretty time
         width: 60,
         align: 'right',
       }),

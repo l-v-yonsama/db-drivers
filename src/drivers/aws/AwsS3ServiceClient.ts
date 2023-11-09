@@ -223,11 +223,10 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
         name: 'key',
         type: GeneralColumnType.TEXT,
         width: 200,
-        align: 'left',
       }),
       createRdhKey({
         name: 'size',
-        type: GeneralColumnType.TEXT,
+        type: GeneralColumnType.TEXT, // number to pretty string
         width: 60,
         align: 'right',
       }),

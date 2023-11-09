@@ -321,6 +321,7 @@ export class KeycloakDriver
     const realmId = realm ?? this.conRes.database;
 
     const client = await this.getAxiosClient();
+
     const res = await client.get(`/admin/realms/${realmId}/roles`, {
       params,
     });
@@ -329,7 +330,13 @@ export class KeycloakDriver
       throw new Error(errorMessage);
     }
 
-    return res.data;
+    const list: RoleRepresentation[] = res.data;
+
+    if (params.max !== undefined && list.length > params.max) {
+      // max param doesn"t work.
+      return list.slice(0, params.max);
+    }
+    return list;
   }
 
   async getRole(
@@ -559,16 +566,88 @@ export class KeycloakDriver
   }
 
   async scan(params: ScanParams): Promise<ResultSetData> {
-    const { targetResourceType, keyword, target, limit } = params;
+    const { targetResourceType, parentTarget, keyword, target, limit } = params;
 
     const realm = target;
     switch (targetResourceType) {
-      case 'IamUser': {
-        const users = await this.getUsers({
-          realm,
-          search: keyword,
-          max: limit,
+      case 'IamRealm': {
+        const realms = await this.getRealms();
+        const rdb = new ResultSetDataBuilder([
+          createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'displayName', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'realm', type: GeneralColumnType.TEXT }),
+          createRdhKey({
+            name: 'dockerAuthenticationFlow',
+            type: GeneralColumnType.TEXT,
+          }),
+          createRdhKey({
+            name: 'duplicateEmailsAllowed',
+            type: GeneralColumnType.BOOLEAN,
+          }),
+          createRdhKey({
+            name: 'editUsernameAllowed',
+            type: GeneralColumnType.TEXT,
+          }),
+          createRdhKey({ name: 'enabled', type: GeneralColumnType.BOOLEAN }),
+          createRdhKey({
+            name: 'keycloakVersion',
+            type: GeneralColumnType.TEXT,
+          }),
+          createRdhKey({
+            name: 'verifyEmail',
+            type: GeneralColumnType.BOOLEAN,
+          }),
+        ]);
+        realms.forEach((realm) => {
+          rdb.addRow({
+            id: realm.id,
+            displayName: realm.displayName,
+            realm: realm.realm,
+            dockerAuthenticationFlow: realm.dockerAuthenticationFlow,
+            duplicateEmailsAllowed: realm.duplicateEmailsAllowed,
+            editUsernameAllowed: realm.editUsernameAllowed,
+            enabled: realm.enabled,
+            keycloakVersion: realm.keycloakVersion,
+            verifyEmail: realm.verifyEmail,
+          });
         });
+
+        return rdb.build();
+      }
+      case 'IamUser': {
+        let users: UserRepresentation[] = [];
+        if (parentTarget) {
+          users = await this.listMembers({
+            realm,
+            id: parentTarget,
+            max: limit,
+          });
+          if (keyword) {
+            users = users.filter((it) => {
+              const { username, firstName, lastName, email } = it;
+              if (username !== undefined && username.indexOf(keyword) >= 0) {
+                return true;
+              }
+              if (firstName !== undefined && firstName.indexOf(keyword) >= 0) {
+                return true;
+              }
+              if (lastName !== undefined && lastName.indexOf(keyword) >= 0) {
+                return true;
+              }
+              if (email !== undefined && email.indexOf(keyword) >= 0) {
+                return true;
+              }
+              return false;
+            });
+          }
+        } else {
+          users = await this.getUsers({
+            realm,
+            search: keyword,
+            max: limit,
+          });
+        }
+
         const rdb = new ResultSetDataBuilder([
           createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
           createRdhKey({

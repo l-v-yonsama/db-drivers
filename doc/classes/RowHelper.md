@@ -46,7 +46,7 @@
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:149](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L149)
+[src/resource/ResultSetDataBuilder.ts:157](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L157)
 
 ___
 
@@ -67,7 +67,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:155](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L155)
+[src/resource/ResultSetDataBuilder.ts:163](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L163)
 
 ___
 
@@ -95,7 +95,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:137](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L137)
+[src/resource/ResultSetDataBuilder.ts:145](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L145)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:121](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L121)
+[src/resource/ResultSetDataBuilder.ts:129](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L129)
 
 ___
 
@@ -150,7 +150,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:107](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L107)
+[src/resource/ResultSetDataBuilder.ts:115](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L115)
 
 ___
 
@@ -171,7 +171,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:209](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L209)
+[src/resource/ResultSetDataBuilder.ts:217](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L217)
 
 ___
 
@@ -192,7 +192,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:76](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L76)
+[src/resource/ResultSetDataBuilder.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L84)
 
 ___
 
@@ -213,7 +213,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:195](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L195)
+[src/resource/ResultSetDataBuilder.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L203)
 
 ___
 
@@ -234,7 +234,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:184](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L184)
+[src/resource/ResultSetDataBuilder.ts:192](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L192)
 
 ___
 
@@ -255,7 +255,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:199](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L199)
+[src/resource/ResultSetDataBuilder.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L207)
 
 ___
 
@@ -277,4 +277,4 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/b0e09fd/src/resource/ResultSetDataBuilder.ts#L96)
+[src/resource/ResultSetDataBuilder.ts:104](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/resource/ResultSetDataBuilder.ts#L104)

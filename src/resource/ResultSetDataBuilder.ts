@@ -27,6 +27,7 @@ import {
   displayGeneralColumnType,
   isDateTimeOrDate,
   isNumericLike,
+  isTextLike,
 } from './GeneralColumnUtil';
 import { abbr, toDate } from '../utils';
 import { conditionsToString } from '../helpers';
@@ -47,6 +48,13 @@ export function createRdhKey({
   comment?: string;
   align?: RdhKey['align'];
 }): RdhKey {
+  if (align === undefined) {
+    if (isNumericLike(type)) {
+      align = 'right';
+    } else if (isTextLike(type)) {
+      align = 'left';
+    }
+  }
   return {
     name,
     type: type ?? GeneralColumnType.UNKNOWN,
