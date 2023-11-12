@@ -312,4 +312,8 @@ export class AwsCloudwatchServiceClient
   protected async closeSub(): Promise<void> {
     await this.logClient.destroy();
   }
+
+  protected getServiceName(): string {
+    return 'Cloudwatch';
+  }
 }

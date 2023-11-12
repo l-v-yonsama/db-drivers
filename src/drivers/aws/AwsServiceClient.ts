@@ -42,7 +42,8 @@ export abstract class AwsServiceClient {
       try {
         await this.testSub();
       } catch (e) {
-        errorReason = e.message;
+        console.error('Test error:', e);
+        errorReason = `${this.getServiceName()}:Test Error:${e.message}`;
       }
       if (with_connect) {
         await this.disconnect();
@@ -82,4 +83,5 @@ export abstract class AwsServiceClient {
   protected abstract connectSub(): Promise<string>;
   protected abstract testSub(): Promise<void>;
   protected abstract closeSub(): Promise<void>;
+  protected abstract getServiceName(): string;
 }

@@ -436,4 +436,8 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   protected async closeSub(): Promise<void> {
     await this.s3Client.destroy();
   }
+
+  protected getServiceName(): string {
+    return 'S3';
+  }
 }

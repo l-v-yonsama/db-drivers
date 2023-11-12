@@ -96,4 +96,8 @@ export class AwsSESServiceClient extends AwsServiceClient {
   protected async closeSub(): Promise<void> {
     await this.sesClient.destroy();
   }
+
+  protected getServiceName(): string {
+    return 'SES';
+  }
 }

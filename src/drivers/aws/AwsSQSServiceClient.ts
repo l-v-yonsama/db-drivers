@@ -227,4 +227,8 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
   protected async closeSub(): Promise<void> {
     await this.sqsClient.destroy();
   }
+
+  protected getServiceName(): string {
+    return 'SQS';
+  }
 }
