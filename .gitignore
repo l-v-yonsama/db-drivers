@@ -33,3 +33,4 @@ l-v-yonsama-multi-platform-database-drivers-*.tgz
 src/examples/
 test.sh
 .env
+docker/data
