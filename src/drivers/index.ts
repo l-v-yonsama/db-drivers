@@ -1,3 +1,4 @@
+export * from './Auth0Driver';
 export * from './AwsDriver';
 export * from './BaseDriver';
 export * from './MySQLDriver';

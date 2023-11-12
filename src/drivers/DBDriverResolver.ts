@@ -12,6 +12,7 @@ import { RedisDriver } from './RedisDriver';
 import { AwsDriver } from './AwsDriver';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { KeycloakDriver } from './KeycloakDriver';
+import { Auth0Driver } from './Auth0Driver';
 
 const uid = new ShortUniqueId();
 
@@ -60,6 +61,9 @@ export class DBDriverResolver {
         break;
       case DBType.Redis:
         driver = new RedisDriver(conRes);
+        break;
+      case DBType.Auth0:
+        driver = new Auth0Driver(conRes);
         break;
       case DBType.Keycloak:
         driver = new KeycloakDriver(conRes);

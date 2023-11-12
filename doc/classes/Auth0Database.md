@@ -1,54 +1,58 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / RedisDatabase
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / Auth0Database
 
-# Class: RedisDatabase
+# Class: Auth0Database
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)<[`DbKey`](DbKey.md)\>
+- [`DbResource`](DbResource.md)<[`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)\>
 
-  ↳ **`RedisDatabase`**
+  ↳ **`Auth0Database`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](RedisDatabase.md#constructor)
+- [constructor](Auth0Database.md#constructor)
 
 ### Properties
 
-- [children](RedisDatabase.md#children)
-- [comment](RedisDatabase.md#comment)
-- [id](RedisDatabase.md#id)
-- [isInProgress](RedisDatabase.md#isinprogress)
-- [meta](RedisDatabase.md#meta)
-- [name](RedisDatabase.md#name)
-- [numOfKeys](RedisDatabase.md#numofkeys)
-- [resourceType](RedisDatabase.md#resourcetype)
+- [children](Auth0Database.md#children)
+- [comment](Auth0Database.md#comment)
+- [id](Auth0Database.md#id)
+- [isDefault](Auth0Database.md#isdefault)
+- [isInProgress](Auth0Database.md#isinprogress)
+- [meta](Auth0Database.md#meta)
+- [name](Auth0Database.md#name)
+- [numOfOrganizations](Auth0Database.md#numoforganizations)
+- [numOfUsers](Auth0Database.md#numofusers)
+- [resourceType](Auth0Database.md#resourcetype)
 
 ### Methods
 
-- [addChild](RedisDatabase.md#addchild)
-- [clearChildren](RedisDatabase.md#clearchildren)
-- [findChildren](RedisDatabase.md#findchildren)
-- [getChildByName](RedisDatabase.md#getchildbyname)
-- [getDBIndex](RedisDatabase.md#getdbindex)
-- [getProperties](RedisDatabase.md#getproperties)
-- [hasChildren](RedisDatabase.md#haschildren)
-- [toJsonStringify](RedisDatabase.md#tojsonstringify)
-- [toString](RedisDatabase.md#tostring)
+- [addChild](Auth0Database.md#addchild)
+- [clearChildren](Auth0Database.md#clearchildren)
+- [findChildren](Auth0Database.md#findchildren)
+- [getChildByName](Auth0Database.md#getchildbyname)
+- [getClientByName](Auth0Database.md#getclientbyname)
+- [getGroupByName](Auth0Database.md#getgroupbyname)
+- [getProperties](Auth0Database.md#getproperties)
+- [getRoleByName](Auth0Database.md#getrolebyname)
+- [getUserByName](Auth0Database.md#getuserbyname)
+- [hasChildren](Auth0Database.md#haschildren)
+- [toJsonStringify](Auth0Database.md#tojsonstringify)
+- [toString](Auth0Database.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new RedisDatabase**(`name`, `numOfKeys`)
+• **new Auth0Database**(`name`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `name` | `string` |
-| `numOfKeys` | `number` |
 
 #### Overrides
 
@@ -56,13 +60,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L309)
+[src/resource/DbResource.ts:361](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L361)
 
 ## Properties
 
 ### children
 
-• `Readonly` **children**: [`DbKey`](DbKey.md)<`any`\>[]
+• `Readonly` **children**: ([`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md))[]
 
 #### Inherited from
 
@@ -99,6 +103,16 @@ ___
 #### Defined in
 
 [src/resource/DbResource.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L120)
+
+___
+
+### isDefault
+
+• **isDefault**: `boolean` = `false`
+
+#### Defined in
+
+[src/resource/DbResource.ts:357](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L357)
 
 ___
 
@@ -148,13 +162,23 @@ ___
 
 ___
 
-### numOfKeys
+### numOfOrganizations
 
-• **numOfKeys**: `number`
+• **numOfOrganizations**: `number` = `0`
 
 #### Defined in
 
-[src/resource/DbResource.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L309)
+[src/resource/DbResource.ts:359](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L359)
+
+___
+
+### numOfUsers
+
+• **numOfUsers**: `number` = `0`
+
+#### Defined in
+
+[src/resource/DbResource.ts:358](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L358)
 
 ___
 
@@ -174,17 +198,17 @@ ___
 
 ### addChild
 
-▸ **addChild**(`res`): [`DbKey`](DbKey.md)<`any`\>
+▸ **addChild**(`res`): [`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`DbKey`](DbKey.md)<`any`\> |
+| `res` | [`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md) |
 
 #### Returns
 
-[`DbKey`](DbKey.md)<`any`\>
+[`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Inherited from
 
@@ -249,7 +273,7 @@ ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`DbKey`](DbKey.md)<`any`\>
+▸ **getChildByName**(`name`, `insensitive?`): [`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Parameters
 
@@ -260,7 +284,7 @@ ___
 
 #### Returns
 
-[`DbKey`](DbKey.md)<`any`\>
+[`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Inherited from
 
@@ -272,17 +296,43 @@ ___
 
 ___
 
-### getDBIndex
+### getClientByName
 
-▸ **getDBIndex**(): `number`
+▸ **getClientByName**(`name`): [`IamClient`](IamClient.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
 
 #### Returns
 
-`number`
+[`IamClient`](IamClient.md)
 
 #### Defined in
 
-[src/resource/DbResource.ts:313](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L313)
+[src/resource/DbResource.ts:365](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L365)
+
+___
+
+### getGroupByName
+
+▸ **getGroupByName**(`name`): [`IamGroup`](IamGroup.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+
+#### Returns
+
+[`IamGroup`](IamGroup.md)
+
+#### Defined in
+
+[src/resource/DbResource.ts:381](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L381)
 
 ___
 
@@ -300,7 +350,47 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:317](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L317)
+[src/resource/DbResource.ts:397](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L397)
+
+___
+
+### getRoleByName
+
+▸ **getRoleByName**(`name`): [`IamRole`](IamRole.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+
+#### Returns
+
+[`IamRole`](IamRole.md)
+
+#### Defined in
+
+[src/resource/DbResource.ts:389](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L389)
+
+___
+
+### getUserByName
+
+▸ **getUserByName**(`name`): [`IamUser`](IamUser.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+
+#### Returns
+
+[`IamUser`](IamUser.md)
+
+#### Defined in
+
+[src/resource/DbResource.ts:373](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L373)
 
 ___
 

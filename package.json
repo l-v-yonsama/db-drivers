@@ -1,11 +1,12 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.213",
+  "version": "0.1.214",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
-    "node": ">= 16"
+    "node": ">= 18"
   },
   "devDependencies": {
+    "@types/auth0": "^3.3.9",
     "@types/bytes": "^3.1.1",
     "@types/humanize-duration": "^3.27.2",
     "@types/jest": "~29.2",
@@ -49,6 +50,7 @@
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
     "test:driver:postgres": "npm run clean && jest __tests__/db/drivers/PostgresDriver.test.ts",
     "test:driver:redis": "npm run clean && jest __tests__/db/drivers/RedisDriver.test.ts",
+    "test:driver:auth0": "npm run clean && jest __tests__/db/drivers/Auth0Driver.test.ts",
     "test:driver:keycloak": "npm run clean && jest __tests__/db/drivers/KeycloakDriver.test.ts",
     "test:driver:s3": "npm run clean && jest __tests__/db/drivers/AwsS3Driver.test.ts",
     "test:driver:sqs": "npm run clean && jest __tests__/db/drivers/AwsSQSDriver.test.ts",
@@ -71,15 +73,18 @@
     "@aws-sdk/client-sqs": "^3.398.0",
     "@aws-sdk/credential-providers": "^3.279.0",
     "@aws-sdk/s3-request-presigner": "^3.427.0",
+    "auth0": "^3.7.1",
     "axios": "^1.6.0",
     "bytes": "^3.1.2",
     "dayjs": "^1.11.7",
+    "dotenv": "^16.3.1",
     "enum-values": "^1.2.1",
     "get-port-please": "^3.0.1",
     "humanize-duration": "^3.30.0",
     "ioredis": "^5.3.1",
     "jconv": "^0.1.5",
     "json-rules-engine": "^6.1.2",
+    "jwt-decode": "^4.0.0",
     "list-it": "^1.3.10",
     "lodash.isequal": "^4.5.0",
     "mime-lite": "^1.0.3",

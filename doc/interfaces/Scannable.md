@@ -4,6 +4,7 @@
 
 ## Implemented by
 
+- [`Auth0Driver`](../classes/Auth0Driver.md)
 - [`AwsCloudwatchServiceClient`](../classes/AwsCloudwatchServiceClient.md)
 - [`AwsS3ServiceClient`](../classes/AwsS3ServiceClient.md)
 - [`AwsSQSServiceClient`](../classes/AwsSQSServiceClient.md)
@@ -34,4 +35,4 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/ac66b7e/src/drivers/BaseDriver.ts#L14)
+[src/drivers/BaseDriver.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/drivers/BaseDriver.ts#L14)

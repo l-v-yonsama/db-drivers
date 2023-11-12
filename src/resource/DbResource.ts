@@ -93,12 +93,11 @@ export type DbDatabase =
   | RdsDatabase
   | AwsDatabase
   | RedisDatabase
+  | Auth0Database
   | KeycloakDatabase;
 
 export type AllSubDbResource =
-  | RdsDatabase
-  | AwsDatabase
-  | RedisDatabase
+  | DbDatabase
   | DbSchema
   | DbTable
   | DbKey
@@ -109,8 +108,9 @@ export type AllSubDbResource =
   | DbLogStream
   | DbS3Owner
   // IAM
-  | KeycloakDatabase
   | IamRealm
+  | IamClient
+  | IamOrganization
   | IamUser
   | IamGroup
   | IamRole;
@@ -351,6 +351,60 @@ export class KeycloakDatabase extends DbResource<IamRealm> {
   }
 }
 
+export class Auth0Database extends DbResource<
+  IamClient | IamUser | IamGroup | IamRole
+> {
+  public isDefault = false;
+  public numOfUsers = 0;
+  public numOfOrganizations = 0;
+
+  constructor(name: string) {
+    super(ResourceType.Auth0Database, name);
+  }
+
+  getClientByName(name: string): IamClient | undefined {
+    return this.findChildren<IamClient>({
+      keyword: name,
+      resourceType: ResourceType.IamClient,
+      recursively: false,
+    })?.[0];
+  }
+
+  getUserByName(name: string): IamUser | undefined {
+    return this.findChildren<IamUser>({
+      keyword: name,
+      resourceType: ResourceType.IamUser,
+      recursively: false,
+    })?.[0];
+  }
+
+  getGroupByName(name: string): IamGroup | undefined {
+    return this.findChildren<IamGroup>({
+      keyword: name,
+      resourceType: ResourceType.IamUser,
+      recursively: false,
+    })?.[0];
+  }
+
+  getRoleByName(name: string): IamRole | undefined {
+    return this.findChildren<IamRole>({
+      keyword: name,
+      resourceType: ResourceType.IamUser,
+      recursively: false,
+    })?.[0];
+  }
+
+  getProperties(): { [key: string]: any } {
+    const { id, numOfOrganizations, numOfUsers } = this;
+    return {
+      id,
+      numOfUsers,
+      numOfOrganizations,
+      ...super.getProperties(),
+    };
+  }
+}
+
 export class IamRealm extends DbResource<IamUser | IamGroup | IamRole> {
   public isDefault = false;
   public numOfUsers = 0;
@@ -395,6 +449,20 @@ export class IamRealm extends DbResource<IamUser | IamGroup | IamRole> {
   }
 }
 
+export class IamClient extends DbResource {
+  constructor(name: string) {
+    super(ResourceType.IamClient, name);
+  }
+
+  getProperties(): { [key: string]: any } {
+    const { id } = this;
+
+    return {
+      id,
+      ...super.getProperties(),
+    };
+  }
+}
 export class IamUser extends DbResource {
   constructor(name: string) {
     super(ResourceType.IamUser, name);
@@ -413,6 +481,12 @@ export class IamUser extends DbResource {
 export class IamGroup extends DbResource {
   constructor(name: string) {
     super(ResourceType.IamGroup, name);
+  }
+}
+
+export class IamOrganization extends DbResource {
+  constructor(name: string) {
+    super(ResourceType.IamOrganization, name);
   }
 }
 

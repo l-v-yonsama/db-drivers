@@ -1,54 +1,51 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / RedisDatabase
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / IamOrganization
 
-# Class: RedisDatabase
+# Class: IamOrganization
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)<[`DbKey`](DbKey.md)\>
+- [`DbResource`](DbResource.md)
 
-  ↳ **`RedisDatabase`**
+  ↳ **`IamOrganization`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](RedisDatabase.md#constructor)
+- [constructor](IamOrganization.md#constructor)
 
 ### Properties
 
-- [children](RedisDatabase.md#children)
-- [comment](RedisDatabase.md#comment)
-- [id](RedisDatabase.md#id)
-- [isInProgress](RedisDatabase.md#isinprogress)
-- [meta](RedisDatabase.md#meta)
-- [name](RedisDatabase.md#name)
-- [numOfKeys](RedisDatabase.md#numofkeys)
-- [resourceType](RedisDatabase.md#resourcetype)
+- [children](IamOrganization.md#children)
+- [comment](IamOrganization.md#comment)
+- [id](IamOrganization.md#id)
+- [isInProgress](IamOrganization.md#isinprogress)
+- [meta](IamOrganization.md#meta)
+- [name](IamOrganization.md#name)
+- [resourceType](IamOrganization.md#resourcetype)
 
 ### Methods
 
-- [addChild](RedisDatabase.md#addchild)
-- [clearChildren](RedisDatabase.md#clearchildren)
-- [findChildren](RedisDatabase.md#findchildren)
-- [getChildByName](RedisDatabase.md#getchildbyname)
-- [getDBIndex](RedisDatabase.md#getdbindex)
-- [getProperties](RedisDatabase.md#getproperties)
-- [hasChildren](RedisDatabase.md#haschildren)
-- [toJsonStringify](RedisDatabase.md#tojsonstringify)
-- [toString](RedisDatabase.md#tostring)
+- [addChild](IamOrganization.md#addchild)
+- [clearChildren](IamOrganization.md#clearchildren)
+- [findChildren](IamOrganization.md#findchildren)
+- [getChildByName](IamOrganization.md#getchildbyname)
+- [getProperties](IamOrganization.md#getproperties)
+- [hasChildren](IamOrganization.md#haschildren)
+- [toJsonStringify](IamOrganization.md#tojsonstringify)
+- [toString](IamOrganization.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new RedisDatabase**(`name`, `numOfKeys`)
+• **new IamOrganization**(`name`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `name` | `string` |
-| `numOfKeys` | `number` |
 
 #### Overrides
 
@@ -56,13 +53,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L309)
+[src/resource/DbResource.ts:488](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L488)
 
 ## Properties
 
 ### children
 
-• `Readonly` **children**: [`DbKey`](DbKey.md)<`any`\>[]
+• `Readonly` **children**: [`AllSubDbResource`](../modules.md#allsubdbresource)[]
 
 #### Inherited from
 
@@ -148,16 +145,6 @@ ___
 
 ___
 
-### numOfKeys
-
-• **numOfKeys**: `number`
-
-#### Defined in
-
-[src/resource/DbResource.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L309)
-
-___
-
 ### resourceType
 
 • `Readonly` **resourceType**: [`ResourceType`](../modules.md#resourcetype-1)
@@ -174,17 +161,17 @@ ___
 
 ### addChild
 
-▸ **addChild**(`res`): [`DbKey`](DbKey.md)<`any`\>
+▸ **addChild**(`res`): [`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`DbKey`](DbKey.md)<`any`\> |
+| `res` | [`AllSubDbResource`](../modules.md#allsubdbresource) |
 
 #### Returns
 
-[`DbKey`](DbKey.md)<`any`\>
+[`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Inherited from
 
@@ -249,7 +236,7 @@ ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`DbKey`](DbKey.md)<`any`\>
+▸ **getChildByName**(`name`, `insensitive?`): [`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Parameters
 
@@ -260,7 +247,7 @@ ___
 
 #### Returns
 
-[`DbKey`](DbKey.md)<`any`\>
+[`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Inherited from
 
@@ -272,20 +259,6 @@ ___
 
 ___
 
-### getDBIndex
-
-▸ **getDBIndex**(): `number`
-
-#### Returns
-
-`number`
-
-#### Defined in
-
-[src/resource/DbResource.ts:313](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L313)
-
-___
-
 ### getProperties
 
 ▸ **getProperties**(): `Object`
@@ -294,13 +267,13 @@ ___
 
 `Object`
 
-#### Overrides
+#### Inherited from
 
 [DbResource](DbResource.md).[getProperties](DbResource.md#getproperties)
 
 #### Defined in
 
-[src/resource/DbResource.ts:317](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L317)
+[src/resource/DbResource.ts:134](https://github.com/l-v-yonsama/db-drivers/blob/d4478ef/src/resource/DbResource.ts#L134)
 
 ___
 

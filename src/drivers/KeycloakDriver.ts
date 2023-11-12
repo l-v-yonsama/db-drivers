@@ -24,10 +24,10 @@ import {
   KeycloakInternalServerErrorResponse,
   RealmParam,
 } from '../types';
-import { toDate } from '../utils';
+import { containsIgnoreCase, toDate } from '../utils';
 import axios, { Axios, AxiosResponse, HttpStatusCode } from 'axios';
 import { BaseClient, Issuer, TokenSet } from 'openid-client';
-import { plural } from 'pluralize';
+import pluralize from 'pluralize';
 
 function isKeycloakErrorResponse(o: any): o is KeycloakErrorResponse {
   if (
@@ -64,6 +64,7 @@ export class KeycloakDriver
   implements Scannable
 {
   private issuerClient: BaseClient | undefined;
+  private cachedTokenSet: TokenSet | undefined;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -77,12 +78,6 @@ export class KeycloakDriver
       this.issuerClient = new issuer.Client({
         client_id: iamSolution.clientId,
         client_secret: 'dummy',
-        // client_secret:
-        //   'TQV5U29k1gHibH5bx1layBo0OSAvAbRT3UYW3EWrSYBB5swxjVfWUa1BS8lqzxG/0v9wruMcrGadany3',
-        // redirect_uris: ['http://localhost:3000/cb'],
-        // response_types: ['code'],
-        // id_token_signed_response_alg (default "RS256")
-        // token_endpoint_auth_method (default "client_secret_basic")
       });
     } catch (e) {
       // console.error(e);
@@ -110,12 +105,19 @@ export class KeycloakDriver
   }
 
   private async getTokenSet(): Promise<TokenSet> {
+    if (this.cachedTokenSet && !this.cachedTokenSet.expired()) {
+      return this.cachedTokenSet;
+    }
+
     const { user, password } = this.conRes;
-    return await this.issuerClient.grant({
+    const tokenSet = await this.issuerClient.grant({
       grant_type: 'password',
       username: user,
       password: password,
     });
+    this.cachedTokenSet = tokenSet;
+
+    return tokenSet;
   }
 
   async test(with_connect = false): Promise<string> {
@@ -127,7 +129,7 @@ export class KeycloakDriver
           return con_result;
         }
       }
-      // await this.client.ping();
+      await this.getTokenSet();
       if (with_connect) {
         await this.disconnect();
       }
@@ -241,7 +243,7 @@ export class KeycloakDriver
     }
   }
 
-  // // Roles...
+  // Roles...
 
   /**
    * Create a new role for the realm or client
@@ -499,11 +501,12 @@ export class KeycloakDriver
       max?: number | undefined;
     } & RealmParam,
   ): Promise<UserRepresentation[]> {
-    const { realm, id } = payload;
+    const { realm, id, ...params } = payload;
     const realmId = realm ?? this.conRes.database;
     const client = await this.getAxiosClient();
     const res = await client.get(
       `/admin/realms/${realmId}/groups/${id}/members`,
+      { params },
     );
     const errorMessage = this.getErrorMessage(res);
     if (errorMessage) {
@@ -577,8 +580,8 @@ export class KeycloakDriver
           createRdhKey({ name: 'displayName', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'realm', type: GeneralColumnType.TEXT }),
           createRdhKey({
-            name: 'dockerAuthenticationFlow',
-            type: GeneralColumnType.TEXT,
+            name: 'notBefore',
+            type: GeneralColumnType.INTEGER,
           }),
           createRdhKey({
             name: 'duplicateEmailsAllowed',
@@ -586,12 +589,16 @@ export class KeycloakDriver
           }),
           createRdhKey({
             name: 'editUsernameAllowed',
-            type: GeneralColumnType.TEXT,
+            type: GeneralColumnType.BOOLEAN,
           }),
           createRdhKey({ name: 'enabled', type: GeneralColumnType.BOOLEAN }),
           createRdhKey({
             name: 'keycloakVersion',
             type: GeneralColumnType.TEXT,
+          }),
+          createRdhKey({
+            name: 'rememberMe',
+            type: GeneralColumnType.BOOLEAN,
           }),
           createRdhKey({
             name: 'verifyEmail',
@@ -603,11 +610,12 @@ export class KeycloakDriver
             id: realm.id,
             displayName: realm.displayName,
             realm: realm.realm,
-            dockerAuthenticationFlow: realm.dockerAuthenticationFlow,
+            notBefore: realm.notBefore,
             duplicateEmailsAllowed: realm.duplicateEmailsAllowed,
             editUsernameAllowed: realm.editUsernameAllowed,
             enabled: realm.enabled,
             keycloakVersion: realm.keycloakVersion,
+            rememberMe: realm.rememberMe,
             verifyEmail: realm.verifyEmail,
           });
         });
@@ -623,22 +631,14 @@ export class KeycloakDriver
             max: limit,
           });
           if (keyword) {
-            users = users.filter((it) => {
-              const { username, firstName, lastName, email } = it;
-              if (username !== undefined && username.indexOf(keyword) >= 0) {
-                return true;
-              }
-              if (firstName !== undefined && firstName.indexOf(keyword) >= 0) {
-                return true;
-              }
-              if (lastName !== undefined && lastName.indexOf(keyword) >= 0) {
-                return true;
-              }
-              if (email !== undefined && email.indexOf(keyword) >= 0) {
-                return true;
-              }
-              return false;
-            });
+            users = users.filter((it) =>
+              containsIgnoreCase(keyword, [
+                it.username,
+                it.firstName,
+                it.lastName,
+                it.email,
+              ]),
+            );
           }
         } else {
           users = await this.getUsers({
@@ -663,6 +663,18 @@ export class KeycloakDriver
             name: 'emailVerified',
             type: GeneralColumnType.BOOLEAN,
           }),
+          createRdhKey({
+            name: 'notBefore',
+            type: GeneralColumnType.INTEGER,
+          }),
+          createRdhKey({
+            name: 'requiredActions',
+            type: GeneralColumnType.JSON,
+          }),
+          createRdhKey({
+            name: 'attributes',
+            type: GeneralColumnType.JSON,
+          }),
         ]);
         users.forEach((user) => {
           rdb.addRow({
@@ -674,6 +686,9 @@ export class KeycloakDriver
             email: user.email,
             enabled: user.enabled,
             emailVerified: user.emailVerified,
+            notBefore: user.notBefore,
+            requiredActions: JSON.stringify(user.requiredActions),
+            attributes: JSON.stringify(user.attributes),
           });
         });
 
@@ -786,20 +801,22 @@ export class KeycloakDriver
 
     await Promise.all(promises);
     db.children.forEach((realm) => {
-      realm.comment = `${realm.numOfGroups} ${plural('group')}, ${
-        realm.numOfUsers
-      } ${plural('user')}`;
+      realm.comment = `${realm.numOfGroups} ${pluralize(
+        'group',
+        realm.numOfGroups,
+      )}, ${realm.numOfUsers} ${pluralize('user', realm.numOfUsers)}`;
     });
 
-    db.comment = `${db.children.length} ${plural('realm')}`;
+    db.comment = `${db.children.length} ${pluralize(
+      'realm',
+      db.children.length,
+    )}`;
     dbResources.push(db);
 
     return dbResources;
   }
   async closeSub(): Promise<string> {
-    // if (this.client) {
-    //   // await this.client.quit();
-    // }
+    this.cachedTokenSet = undefined;
     return '';
   }
 

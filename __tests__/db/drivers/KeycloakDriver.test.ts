@@ -14,10 +14,10 @@ describe('KeycloakDriver', () => {
     driverResolver = DBDriverResolver.getInstance();
 
     const setting: ConnectionSetting = {
-      name: 'localKeycloak', // as base url
+      name: 'localKeycloak',
       dbType: DBType.Keycloak,
       database: 'master', // as realm
-      url: 'http://localhost:8090',
+      url: 'http://localhost:6100', // as base issuer url
       user: 'admin',
       password: 'admin',
       iamSolution: {
@@ -171,7 +171,7 @@ describe('KeycloakDriver', () => {
       expect(masterRealm.numOfUsers).toBeGreaterThanOrEqual(1);
       expect(masterRealm.numOfGroups).toBeGreaterThanOrEqual(0);
 
-      const myRealm = testDbRes.getRealm({ name: 'My Realm' });
+      const myRealm = testDbRes.getRealm({ name: 'test-realm-99' });
       expect(myRealm.numOfUsers).toBeGreaterThanOrEqual(1);
       expect(myRealm.numOfGroups).toBeGreaterThanOrEqual(0);
     });

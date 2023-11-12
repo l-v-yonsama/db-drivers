@@ -13,11 +13,16 @@ export const ResourceType = {
   Owner: 'Owner',
   LogGroup: 'LogGroup',
   LogStream: 'LogStream',
-  // IAM
+  // IAM-KEYCLOAK
   KeycloakDatabase: 'KeycloakDatabase',
   IamRealm: 'IamRealm',
-  IamUser: 'IamUser',
   IamGroup: 'IamGroup',
+  // IAM-AUTH0
+  Auth0Database: 'Auth0Database',
+  IamClient: 'IamClient',
+  IamOrganization: 'IamOrganization',
+  // IAM-COMMON
+  IamUser: 'IamUser',
   IamRole: 'IamRole',
 } as const;
 

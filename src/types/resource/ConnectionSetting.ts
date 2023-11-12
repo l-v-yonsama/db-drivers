@@ -30,6 +30,7 @@ export type AwsSetting = {
 export type IamSolutionSetting = {
   grantType: 'client_credentials' | 'password' | 'refresh_token';
   clientId: string;
+  clientSecret?: string;
 };
 
 export type FirebaseSetting = {
