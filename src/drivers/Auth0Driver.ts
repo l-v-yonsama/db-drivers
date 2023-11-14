@@ -447,10 +447,22 @@ export class Auth0Driver
           limit,
         });
         const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'client_id', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
+          createRdhKey({
+            name: 'client_id',
+            type: GeneralColumnType.TEXT,
+            width: 265,
+          }),
+          createRdhKey({
+            name: 'name',
+            type: GeneralColumnType.TEXT,
+            width: 150,
+          }),
           createRdhKey({ name: 'description', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'tenant', type: GeneralColumnType.TEXT }),
+          createRdhKey({
+            name: 'tenant',
+            type: GeneralColumnType.TEXT,
+            width: 150,
+          }),
           createRdhKey({ name: 'client_secret', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'app_type', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'logo_uri', type: GeneralColumnType.TEXT }),
@@ -462,7 +474,11 @@ export class Auth0Driver
             name: 'oidc_conformant',
             type: GeneralColumnType.BOOLEAN,
           }),
-          createRdhKey({ name: 'grant_types', type: GeneralColumnType.JSON }),
+          createRdhKey({
+            name: 'grant_types',
+            type: GeneralColumnType.JSON,
+            width: 150,
+          }),
           createRdhKey({
             name: 'custom_login_page_on',
             type: GeneralColumnType.BOOLEAN,
@@ -493,9 +509,17 @@ export class Auth0Driver
             keyword,
           });
           const rdb = new ResultSetDataBuilder([
-            createRdhKey({ name: 'user_id', type: GeneralColumnType.TEXT }),
+            createRdhKey({
+              name: 'user_id',
+              type: GeneralColumnType.TEXT,
+              width: 215,
+            }),
             createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
-            createRdhKey({ name: 'email', type: GeneralColumnType.TEXT }),
+            createRdhKey({
+              name: 'email',
+              type: GeneralColumnType.TEXT,
+              width: 150,
+            }),
             createRdhKey({ name: 'picture', type: GeneralColumnType.TEXT }),
           ]);
           members.forEach((user) => {
@@ -515,9 +539,17 @@ export class Auth0Driver
           });
 
           const rdb = new ResultSetDataBuilder([
-            createRdhKey({ name: 'user_id', type: GeneralColumnType.TEXT }),
+            createRdhKey({
+              name: 'user_id',
+              type: GeneralColumnType.TEXT,
+              width: 215,
+            }),
             createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
-            createRdhKey({ name: 'email', type: GeneralColumnType.TEXT }),
+            createRdhKey({
+              name: 'email',
+              type: GeneralColumnType.TEXT,
+              width: 150,
+            }),
             createRdhKey({
               name: 'created_at',
               type: GeneralColumnType.TIMESTAMP,
@@ -539,10 +571,12 @@ export class Auth0Driver
             createRdhKey({
               name: 'app_metadata',
               type: GeneralColumnType.JSON,
+              width: 215,
             }),
             createRdhKey({
               name: 'user_metadata',
               type: GeneralColumnType.JSON,
+              width: 215,
             }),
           ]);
           users.forEach((user) => {
@@ -577,7 +611,11 @@ export class Auth0Driver
             name: 'branding_logo_url',
             type: GeneralColumnType.TEXT,
           }),
-          createRdhKey({ name: 'metadata', type: GeneralColumnType.JSON }),
+          createRdhKey({
+            name: 'metadata',
+            type: GeneralColumnType.JSON,
+            width: 215,
+          }),
         ]);
         orgs.forEach((org) => {
           rdb.addRow({
