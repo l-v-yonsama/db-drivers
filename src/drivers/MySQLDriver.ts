@@ -315,12 +315,7 @@ export class MySQLDriver extends RDSBaseDriver {
     for (const dbSchema of dbSchemas) {
       const dbTables = await this.getTables(dbSchema);
       dbTables.forEach((res) => dbSchema.addChild(res));
-    }
-    for (const dbSchema of dbSchemas) {
-      for (const dbTable of dbSchema.children) {
-        const dbColumns = await this.getColumns(dbSchema.name, dbTable);
-        dbColumns.forEach((res) => dbTable.addChild(res));
-      }
+      await this.setColumns(dbSchema);
     }
     const defaultSchema = dbDatabase.getSchema({ isDefault: true });
     await this.setForinKeys(defaultSchema);
@@ -364,13 +359,12 @@ export class MySQLDriver extends RDSBaseDriver {
     });
   }
 
-  async getColumns(
-    schemaName: string,
-    dbTable: DbTable,
-  ): Promise<Array<DbColumn>> {
-    const binds = [schemaName, dbTable.name];
+  async setColumns(dbSchema: DbSchema): Promise<void> {
+    const binds = [dbSchema.name];
     const rdh = await this.requestSql({
-      sql: `SELECT COLUMN_NAME as name,
+      sql: `SELECT 
+            TABLE_NAME as tname,
+            COLUMN_NAME as name,
             DATA_TYPE as col_type,
             CASE WHEN IS_NULLABLE = 'YES' THEN 1 ELSE 0 END as nullable,
             COLUMN_KEY as col_key,
@@ -378,28 +372,32 @@ export class MySQLDriver extends RDSBaseDriver {
             EXTRA as col_extra,
             COLUMN_COMMENT as comment
             FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA = ? AND  TABLE_NAME = ?`,
+            WHERE TABLE_SCHEMA = ?
+            ORDER BY TABLE_NAME,ORDINAL_POSITION`,
       conditions: { binds },
     });
 
-    return rdh.rows.map((r) => {
-      const type_name = EnumValues.getNameFromValue(
-        MySQLColumnType,
-        MySQLColumnType.parse(r.values.col_type),
-      ) as any;
-      const res = new DbColumn(
-        r.values.name,
-        parseColumnType(type_name),
-        {
-          nullable: r.values.nullable === 1,
-          key: r.values.col_key,
-          default: r.values.col_default,
-          extra: r.values.col_extra,
-        },
-        r.values.comment,
-      );
+    rdh.rows.forEach((r) => {
+      const dbTable = dbSchema.getChildByName(r.values.tname);
+      if (dbTable) {
+        const type_name = EnumValues.getNameFromValue(
+          MySQLColumnType,
+          MySQLColumnType.parse(r.values.col_type),
+        ) as any;
 
-      return res;
+        const res = new DbColumn(
+          r.values.name,
+          parseColumnType(type_name),
+          {
+            nullable: r.values.nullable === 1,
+            key: r.values.col_key,
+            default: r.values.col_default,
+            extra: r.values.col_extra,
+          },
+          r.values.comment,
+        );
+        dbTable.addChild(res);
+      }
     });
   }
 

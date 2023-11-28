@@ -290,12 +290,7 @@ export class PostgresDriver extends RDSBaseDriver {
     for (const dbSchema of dbSchemas) {
       const dbTables = await this.getTables(dbSchema);
       dbTables.forEach((res) => dbSchema.addChild(res));
-    }
-    for (const dbSchema of dbSchemas) {
-      for (const dbTable of dbSchema.children) {
-        const dbColumns = await this.getColumns(dbSchema.name, dbTable);
-        dbColumns.forEach((res) => dbTable.addChild(res));
-      }
+      await this.setColumns(dbSchema);
     }
     const defaultSchema = dbDatabase.getSchema({ isDefault: true });
     await this.setForinKeys(defaultSchema);
@@ -368,13 +363,12 @@ export class PostgresDriver extends RDSBaseDriver {
     );
   }
 
-  async getColumns(
-    schemaName: string,
-    dbTable: DbTable,
-  ): Promise<Array<DbColumn>> {
-    const binds = [schemaName, dbTable.name];
+  async setColumns(dbSchema: DbSchema): Promise<void> {
+    const binds = [dbSchema.name];
     const rdh = await this.requestSql({
       sql: `select
+      col.table_name as tname,
+      quote_ident(col.table_name) as qtname,
       col.COLUMN_NAME as name,
       quote_ident(col.COLUMN_NAME) as qname,
       data_type as col_type,
@@ -424,29 +418,33 @@ export class PostgresDriver extends RDSBaseDriver {
         and col.table_name = pk.table_name
         and col.column_name = pk.column_name)
     where
-    col.table_schema = $1 AND  quote_ident(col.table_name) = $2
+    col.table_schema = $1
     order by
+      tname,
       col.ordinal_position`,
       conditions: { binds },
     });
 
-    return rdh.rows.map((r) => {
-      const type_name = EnumValues.getNameFromValue(
-        PostgresColumnType,
-        PostgresColumnType.parse(r.values.col_type),
-      );
-      const res = new DbColumn(
-        r.values.qname,
-        parseColumnType(type_name),
-        {
-          nullable: r.values.nullable === 1,
-          key: r.values.col_key,
-          default: r.values.col_default,
-          extra: r.values.col_extra,
-        },
-        r.values.comment,
-      );
-      return res;
+    rdh.rows.forEach((r) => {
+      const dbTable = dbSchema.getChildByName(r.values.qtname);
+      if (dbTable) {
+        const type_name = EnumValues.getNameFromValue(
+          PostgresColumnType,
+          PostgresColumnType.parse(r.values.col_type),
+        );
+        const res = new DbColumn(
+          r.values.qname,
+          parseColumnType(type_name),
+          {
+            nullable: r.values.nullable === 1,
+            key: r.values.col_key,
+            default: r.values.col_default,
+            extra: r.values.col_extra,
+          },
+          r.values.comment,
+        );
+        dbTable.addChild(res);
+      }
     });
   }
 
