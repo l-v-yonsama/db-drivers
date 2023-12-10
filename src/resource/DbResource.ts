@@ -405,13 +405,23 @@ export class Auth0Database extends DbResource<
   }
 }
 
-export class IamRealm extends DbResource<IamUser | IamGroup | IamRole> {
+export class IamRealm extends DbResource<
+  IamClient | IamUser | IamGroup | IamRole
+> {
   public isDefault = false;
   public numOfUsers = 0;
   public numOfGroups = 0;
 
   constructor(name: string) {
     super(ResourceType.IamRealm, name);
+  }
+
+  getClientByName(name: string): IamClient | undefined {
+    return this.findChildren<IamClient>({
+      keyword: name,
+      resourceType: ResourceType.IamClient,
+      recursively: false,
+    })?.[0];
   }
 
   getUserByName(name: string): IamUser | undefined {
@@ -450,15 +460,26 @@ export class IamRealm extends DbResource<IamUser | IamGroup | IamRole> {
 }
 
 export class IamClient extends DbResource {
+  baseUrl: string;
+  protocol: string;
+  clientId: string;
+  numOfUserSessions?: number;
+  numOfOfflineSessions?: number;
+
   constructor(name: string) {
     super(ResourceType.IamClient, name);
   }
 
   getProperties(): { [key: string]: any } {
-    const { id } = this;
+    const { id, protocol, clientId, numOfUserSessions, numOfOfflineSessions } =
+      this;
 
     return {
       id,
+      protocol,
+      clientId,
+      numOfUserSessions,
+      numOfOfflineSessions,
       ...super.getProperties(),
     };
   }

@@ -132,6 +132,24 @@ export interface RequiredActionProviderRepresentation {
   providerId?: string;
   priority?: number;
 }
+
+export interface SessionQuery {
+  first?: number;
+  max?: number;
+  clientUUID?: string;
+}
+
+export interface ClientQuery {
+  clientId?: string;
+  first?: number;
+  max?: number;
+  q?: any;
+  /** whether this is a search query or a getClientById query */
+  search?: string;
+  /** filter clients that cannot be viewed in full by admin */
+  viewableOnly?: boolean;
+}
+
 export interface ClientRepresentation {
   access?: Record<string, boolean>;
   adminUrl?: string;
@@ -353,4 +371,21 @@ export interface RoleQuery {
   max?: number;
   search?: string;
   briefRepresentation?: boolean;
+}
+
+export interface UserSessionRepresentation {
+  id?: string;
+  clients?: Record<string, string>;
+  ipAddress?: string;
+  lastAccess?: number;
+  start?: number;
+  userId?: string;
+  username?: string;
+}
+
+export interface SessionStat {
+  id: string;
+  offline: number;
+  active: number;
+  clientId: string;
 }

@@ -56,6 +56,7 @@
 
 ### Interfaces
 
+- [ClientQuery](interfaces/ClientQuery.md)
 - [ClientRepresentation](interfaces/ClientRepresentation.md)
 - [ColumnResolver](interfaces/ColumnResolver.md)
 - [Composites](interfaces/Composites.md)
@@ -75,6 +76,8 @@
 - [Scannable](interfaces/Scannable.md)
 - [SchemaAndTableHints](interfaces/SchemaAndTableHints.md)
 - [SchemaAndTableName](interfaces/SchemaAndTableName.md)
+- [SessionQuery](interfaces/SessionQuery.md)
+- [SessionStat](interfaces/SessionStat.md)
 - [TableRows](interfaces/TableRows.md)
 - [UserConsentRepresentation](interfaces/UserConsentRepresentation.md)
 - [UserProfileAttributeGroupMetadata](interfaces/UserProfileAttributeGroupMetadata.md)
@@ -82,6 +85,7 @@
 - [UserProfileMetadata](interfaces/UserProfileMetadata.md)
 - [UserQuery](interfaces/UserQuery.md)
 - [UserRepresentation](interfaces/UserRepresentation.md)
+- [UserSessionRepresentation](interfaces/UserSessionRepresentation.md)
 
 ### Type Aliases
 
@@ -251,7 +255,7 @@
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L35)
+[src/types/resource/Annonations.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L35)
 
 ___
 
@@ -261,7 +265,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:99](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L99)
+[src/resource/DbResource.ts:99](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L99)
 
 ___
 
@@ -271,7 +275,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L15)
+[src/types/resource/Annonations.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L15)
 
 ___
 
@@ -292,7 +296,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/CodeResolverTypes.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/CodeResolverTypes.ts#L8)
+[src/types/resource/CodeResolverTypes.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/CodeResolverTypes.ts#L8)
 
 ___
 
@@ -302,9 +306,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsRegion.ts#L1)
+[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsRegion.ts#L1)
 
-[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsRegion.ts#L44)
+[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsRegion.ts#L44)
 
 ___
 
@@ -340,7 +344,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSQSAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsSQSAttributes.ts#L1)
+[src/types/resource/AwsSQSAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsSQSAttributes.ts#L1)
 
 ___
 
@@ -350,9 +354,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsServiceType.ts#L1)
+[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsServiceType.ts#L1)
 
-[src/types/resource/AwsServiceType.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsServiceType.ts#L7)
+[src/types/resource/AwsServiceType.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsServiceType.ts#L7)
 
 ___
 
@@ -372,7 +376,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ConnectionSetting.ts#L19)
+[src/types/resource/ConnectionSetting.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ConnectionSetting.ts#L19)
 
 ___
 
@@ -396,7 +400,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L28)
+[src/types/resource/Annonations.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L28)
 
 ___
 
@@ -413,7 +417,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L20)
+[src/types/helpers/index.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L20)
 
 ___
 
@@ -431,7 +435,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L69)
+[src/types/helpers/index.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L69)
 
 ___
 
@@ -441,7 +445,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L18)
+[src/types/resource/Annonations.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L18)
 
 ___
 
@@ -459,7 +463,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/drivers/AwsDriver.ts#L25)
+[src/drivers/AwsDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/drivers/AwsDriver.ts#L25)
 
 ___
 
@@ -478,7 +482,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/CodeResolverTypes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/CodeResolverTypes.ts#L1)
+[src/types/resource/CodeResolverTypes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/CodeResolverTypes.ts#L1)
 
 ___
 
@@ -495,7 +499,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/CodeResolverTypes.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/CodeResolverTypes.ts#L19)
+[src/types/resource/CodeResolverTypes.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/CodeResolverTypes.ts#L19)
 
 ___
 
@@ -505,7 +509,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L53)
+[src/types/resource/Annonations.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L53)
 
 ___
 
@@ -522,7 +526,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/CompareKey.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/CompareKey.ts#L1)
+[src/types/resource/CompareKey.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/CompareKey.ts#L1)
 
 ___
 
@@ -543,7 +547,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Rules.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Rules.ts#L17)
+[src/types/resource/Rules.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Rules.ts#L17)
 
 ___
 
@@ -559,7 +563,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/drivers/Auth0Driver.ts#L39)
+[src/drivers/Auth0Driver.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/drivers/Auth0Driver.ts#L39)
 
 ___
 
@@ -591,7 +595,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ConnectionSetting.ts#L44)
+[src/types/resource/ConnectionSetting.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ConnectionSetting.ts#L44)
 
 ___
 
@@ -610,7 +614,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ContentTypeInfo.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ContentTypeInfo.ts#L1)
+[src/types/resource/ContentTypeInfo.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ContentTypeInfo.ts#L1)
 
 ___
 
@@ -620,9 +624,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/DBType.ts#L1)
+[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/DBType.ts#L1)
 
-[src/types/resource/DBType.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/DBType.ts#L10)
+[src/types/resource/DBType.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/DBType.ts#L10)
 
 ___
 
@@ -632,7 +636,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:92](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L92)
+[src/resource/DbResource.ts:92](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L92)
 
 ___
 
@@ -642,7 +646,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L33)
+[src/types/resource/Annonations.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L33)
 
 ___
 
@@ -662,7 +666,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L75)
+[src/types/helpers/index.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L75)
 
 ___
 
@@ -682,7 +686,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L83)
+[src/types/helpers/index.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L83)
 
 ___
 
@@ -692,7 +696,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:80](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L80)
+[src/types/resource/Annonations.ts:80](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L80)
 
 ___
 
@@ -712,7 +716,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ConnectionSetting.ts#L36)
+[src/types/resource/ConnectionSetting.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ConnectionSetting.ts#L36)
 
 ___
 
@@ -729,7 +733,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ForeignKeyConstraint.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ForeignKeyConstraint.ts#L7)
+[src/types/resource/ForeignKeyConstraint.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ForeignKeyConstraint.ts#L7)
 
 ___
 
@@ -747,7 +751,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ForeignKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ForeignKeyConstraint.ts#L1)
+[src/types/resource/ForeignKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ForeignKeyConstraint.ts#L1)
 
 ___
 
@@ -757,9 +761,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/GeneralColumnType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/GeneralColumnType.ts#L1)
+[src/types/resource/GeneralColumnType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/GeneralColumnType.ts#L1)
 
-[src/types/resource/GeneralColumnType.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/GeneralColumnType.ts#L74)
+[src/types/resource/GeneralColumnType.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/GeneralColumnType.ts#L74)
 
 ___
 
@@ -769,7 +773,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L118)
+[src/resource/DbResource.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L118)
 
 ___
 
@@ -787,7 +791,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ConnectionSetting.ts#L30)
+[src/types/resource/ConnectionSetting.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ConnectionSetting.ts#L30)
 
 ___
 
@@ -803,7 +807,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/drivers/Keycloak.ts#L5)
+[src/types/drivers/Keycloak.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L5)
 
 ___
 
@@ -819,7 +823,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/drivers/Keycloak.ts#L9)
+[src/types/drivers/Keycloak.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L9)
 
 ___
 
@@ -836,7 +840,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/drivers/Auth0Driver.ts#L43)
+[src/drivers/Auth0Driver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/drivers/Auth0Driver.ts#L43)
 
 ___
 
@@ -846,7 +850,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L61)
+[src/types/resource/Annonations.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L61)
 
 ___
 
@@ -862,7 +866,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:704](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L704)
+[src/resource/DbResource.ts:725](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L725)
 
 ___
 
@@ -881,7 +885,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L47)
+[src/types/resource/ResultSetDataType.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L47)
 
 ___
 
@@ -900,7 +904,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L41)
+[src/types/helpers/index.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L41)
 
 ___
 
@@ -920,7 +924,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L48)
+[src/types/helpers/index.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L48)
 
 ___
 
@@ -937,7 +941,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L5)
+[src/types/helpers/index.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L5)
 
 ___
 
@@ -954,7 +958,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L10)
+[src/types/helpers/index.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L10)
 
 ___
 
@@ -970,7 +974,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/QueryConditions.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/drivers/QueryConditions.ts#L1)
+[src/types/drivers/QueryConditions.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/QueryConditions.ts#L1)
 
 ___
 
@@ -988,7 +992,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/QueryParams.ts:4](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/drivers/QueryParams.ts#L4)
+[src/types/drivers/QueryParams.ts:4](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/QueryParams.ts#L4)
 
 ___
 
@@ -1005,7 +1009,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L15)
+[src/types/helpers/index.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L15)
 
 ___
 
@@ -1029,7 +1033,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L54)
+[src/types/resource/ResultSetDataType.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L54)
 
 ___
 
@@ -1058,7 +1062,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L8)
+[src/types/resource/ResultSetDataType.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L8)
 
 ___
 
@@ -1075,7 +1079,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L69)
+[src/types/resource/ResultSetDataType.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L69)
 
 ___
 
@@ -1089,7 +1093,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L67)
+[src/types/resource/ResultSetDataType.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L67)
 
 ___
 
@@ -1110,7 +1114,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L74)
+[src/types/resource/ResultSetDataType.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L74)
 
 ___
 
@@ -1126,7 +1130,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/drivers/Keycloak.ts#L1)
+[src/types/drivers/Keycloak.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L1)
 
 ___
 
@@ -1143,7 +1147,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Rules.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Rules.ts#L23)
+[src/types/resource/Rules.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Rules.ts#L23)
 
 ___
 
@@ -1161,7 +1165,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Rules.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Rules.ts#L28)
+[src/types/resource/Rules.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Rules.ts#L28)
 
 ___
 
@@ -1180,7 +1184,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:651](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L651)
+[src/resource/DbResource.ts:672](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L672)
 
 ___
 
@@ -1190,9 +1194,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/RedisKeyType.ts#L1)
+[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/RedisKeyType.ts#L1)
 
-[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/RedisKeyType.ts#L9)
+[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/RedisKeyType.ts#L9)
 
 ___
 
@@ -1212,7 +1216,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L56)
+[src/types/helpers/index.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L56)
 
 ___
 
@@ -1229,7 +1233,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L64)
+[src/types/helpers/index.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L64)
 
 ___
 
@@ -1239,9 +1243,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResourceType.ts#L1)
+[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResourceType.ts#L1)
 
-[src/types/resource/ResourceType.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResourceType.ts#L29)
+[src/types/resource/ResourceType.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResourceType.ts#L30)
 
 ___
 
@@ -1266,7 +1270,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L83)
+[src/types/resource/ResultSetDataType.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L83)
 
 ___
 
@@ -1276,7 +1280,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L44)
+[src/types/resource/Annonations.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L44)
 
 ___
 
@@ -1305,7 +1309,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:658](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L658)
+[src/resource/DbResource.ts:679](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L679)
 
 ___
 
@@ -1325,7 +1329,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:696](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L696)
+[src/resource/DbResource.ts:717](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L717)
 
 ___
 
@@ -1342,7 +1346,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L35)
+[src/types/resource/ResultSetDataType.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L35)
 
 ___
 
@@ -1361,7 +1365,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L40)
+[src/types/resource/ResultSetDataType.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L40)
 
 ___
 
@@ -1385,7 +1389,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/ScanParams.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/drivers/ScanParams.ts#L3)
+[src/types/drivers/ScanParams.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/ScanParams.ts#L3)
 
 ___
 
@@ -1411,7 +1415,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ConnectionSetting.ts#L5)
+[src/types/resource/ConnectionSetting.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ConnectionSetting.ts#L5)
 
 ___
 
@@ -1421,7 +1425,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L70)
+[src/types/resource/Annonations.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L70)
 
 ___
 
@@ -1431,9 +1435,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsSupplyCredentialType.ts#L1)
+[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsSupplyCredentialType.ts#L1)
 
-[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsSupplyCredentialType.ts#L15)
+[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsSupplyCredentialType.ts#L15)
 
 ___
 
@@ -1450,7 +1454,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Rules.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Rules.ts#L3)
+[src/types/resource/Rules.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Rules.ts#L3)
 
 ___
 
@@ -1470,7 +1474,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Rules.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Rules.ts#L8)
+[src/types/resource/Rules.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Rules.ts#L8)
 
 ___
 
@@ -1493,7 +1497,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L24)
+[src/types/resource/ResultSetDataType.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L24)
 
 ___
 
@@ -1514,7 +1518,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/helpers/index.ts#L25)
+[src/types/helpers/index.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/helpers/index.ts#L25)
 
 ___
 
@@ -1524,7 +1528,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/TransactionControlType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/drivers/TransactionControlType.ts#L1)
+[src/types/drivers/TransactionControlType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/TransactionControlType.ts#L1)
 
 ___
 
@@ -1541,7 +1545,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/UniqueKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/UniqueKeyConstraint.ts#L1)
+[src/types/resource/UniqueKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/UniqueKeyConstraint.ts#L1)
 
 ___
 
@@ -1551,7 +1555,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L37)
+[src/types/resource/Annonations.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L37)
 
 ## Variables
 
@@ -1575,7 +1579,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/Annonations.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/Annonations.ts#L3)
+[src/types/resource/Annonations.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/Annonations.ts#L3)
 
 ___
 
@@ -1617,9 +1621,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsRegion.ts#L1)
+[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsRegion.ts#L1)
 
-[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsRegion.ts#L44)
+[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsRegion.ts#L44)
 
 ___
 
@@ -1629,7 +1633,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsRegion.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsRegion.ts#L46)
+[src/types/resource/AwsRegion.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsRegion.ts#L46)
 
 ___
 
@@ -1648,9 +1652,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsServiceType.ts#L1)
+[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsServiceType.ts#L1)
 
-[src/types/resource/AwsServiceType.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsServiceType.ts#L7)
+[src/types/resource/AwsServiceType.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsServiceType.ts#L7)
 
 ___
 
@@ -1660,7 +1664,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsServiceType.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsServiceType.ts#L10)
+[src/types/resource/AwsServiceType.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsServiceType.ts#L10)
 
 ___
 
@@ -1681,9 +1685,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/DBType.ts#L1)
+[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/DBType.ts#L1)
 
-[src/types/resource/DBType.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/DBType.ts#L10)
+[src/types/resource/DBType.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/DBType.ts#L10)
 
 ___
 
@@ -1693,7 +1697,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/DBType.ts:12](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/DBType.ts#L12)
+[src/types/resource/DBType.ts:12](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/DBType.ts#L12)
 
 ___
 
@@ -1703,7 +1707,7 @@ ___
 
 #### Defined in
 
-[src/helpers/constant.ts:228](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/constant.ts#L228)
+[src/helpers/constant.ts:228](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/constant.ts#L228)
 
 ___
 
@@ -1788,9 +1792,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/GeneralColumnType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/GeneralColumnType.ts#L1)
+[src/types/resource/GeneralColumnType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/GeneralColumnType.ts#L1)
 
-[src/types/resource/GeneralColumnType.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/GeneralColumnType.ts#L74)
+[src/types/resource/GeneralColumnType.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/GeneralColumnType.ts#L74)
 
 ___
 
@@ -1800,7 +1804,7 @@ ___
 
 #### Defined in
 
-[src/helpers/constant.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/constant.ts#L1)
+[src/helpers/constant.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/constant.ts#L1)
 
 ___
 
@@ -1821,9 +1825,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/RedisKeyType.ts#L1)
+[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/RedisKeyType.ts#L1)
 
-[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/RedisKeyType.ts#L9)
+[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/RedisKeyType.ts#L9)
 
 ___
 
@@ -1833,7 +1837,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/RedisKeyType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/RedisKeyType.ts#L11)
+[src/types/resource/RedisKeyType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/RedisKeyType.ts#L11)
 
 ___
 
@@ -1855,6 +1859,7 @@ ___
 | `IamOrganization` | ``"IamOrganization"`` |
 | `IamRealm` | ``"IamRealm"`` |
 | `IamRole` | ``"IamRole"`` |
+| `IamSession` | ``"IamSession"`` |
 | `IamUser` | ``"IamUser"`` |
 | `Key` | ``"Key"`` |
 | `KeycloakDatabase` | ``"KeycloakDatabase"`` |
@@ -1869,9 +1874,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResourceType.ts#L1)
+[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResourceType.ts#L1)
 
-[src/types/resource/ResourceType.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResourceType.ts#L29)
+[src/types/resource/ResourceType.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResourceType.ts#L30)
 
 ___
 
@@ -1881,7 +1886,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSupplyCredentialType.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsSupplyCredentialType.ts#L18)
+[src/types/resource/AwsSupplyCredentialType.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsSupplyCredentialType.ts#L18)
 
 ___
 
@@ -1899,9 +1904,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsSupplyCredentialType.ts#L1)
+[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsSupplyCredentialType.ts#L1)
 
-[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/AwsSupplyCredentialType.ts#L15)
+[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/AwsSupplyCredentialType.ts#L15)
 
 ## Functions
 
@@ -1922,7 +1927,7 @@ ___
 
 #### Defined in
 
-[src/utils/strings.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/strings.ts#L15)
+[src/utils/strings.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/strings.ts#L15)
 
 ___
 
@@ -1944,7 +1949,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:238](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/RuleEngine.ts#L238)
+[src/helpers/RuleEngine.ts:238](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/RuleEngine.ts#L238)
 
 ___
 
@@ -1965,7 +1970,7 @@ ___
 
 #### Defined in
 
-[src/utils/strings.ts:31](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/strings.ts#L31)
+[src/utils/strings.ts:31](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/strings.ts#L31)
 
 ___
 
@@ -1990,7 +1995,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/ResultSetDataBuilder.ts#L38)
+[src/resource/ResultSetDataBuilder.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/ResultSetDataBuilder.ts#L38)
 
 ___
 
@@ -2016,7 +2021,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L50)
+[src/helpers/SQLHelper.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L50)
 
 ___
 
@@ -2036,7 +2041,7 @@ ___
 
 #### Defined in
 
-[src/utils/strings.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/strings.ts#L53)
+[src/utils/strings.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/strings.ts#L53)
 
 ___
 
@@ -2057,7 +2062,7 @@ ___
 
 #### Defined in
 
-[src/helpers/ResourceHelper.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/ResourceHelper.ts#L18)
+[src/helpers/ResourceHelper.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/ResourceHelper.ts#L18)
 
 ___
 
@@ -2078,7 +2083,7 @@ ___
 
 #### Defined in
 
-[src/helpers/ResourceHelper.ts:124](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/ResourceHelper.ts#L124)
+[src/helpers/ResourceHelper.ts:124](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/ResourceHelper.ts#L124)
 
 ___
 
@@ -2098,7 +2103,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L3)
+[src/resource/GeneralColumnUtil.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L3)
 
 ___
 
@@ -2118,7 +2123,7 @@ ___
 
 #### Defined in
 
-[src/utils/strings.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/strings.ts#L7)
+[src/utils/strings.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/strings.ts#L7)
 
 ___
 
@@ -2139,7 +2144,7 @@ ___
 
 #### Defined in
 
-[src/utils/strings.ts:27](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/strings.ts#L27)
+[src/utils/strings.ts:27](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/strings.ts#L27)
 
 ___
 
@@ -2165,7 +2170,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L40)
+[src/resource/DbResource.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L40)
 
 ___
 
@@ -2185,7 +2190,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:744](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L744)
+[src/helpers/SQLHelper.ts:744](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L744)
 
 ___
 
@@ -2205,7 +2210,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:798](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L798)
+[src/helpers/SQLHelper.ts:798](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L798)
 
 ___
 
@@ -2225,7 +2230,7 @@ item is AllConditions
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/RuleEngine.ts#L21)
+[src/helpers/RuleEngine.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/RuleEngine.ts#L21)
 
 ___
 
@@ -2245,7 +2250,7 @@ item is AnyConditions
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/RuleEngine.ts#L25)
+[src/helpers/RuleEngine.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/RuleEngine.ts#L25)
 
 ___
 
@@ -2265,7 +2270,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:173](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L173)
+[src/resource/GeneralColumnUtil.ts:173](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L173)
 
 ___
 
@@ -2285,7 +2290,7 @@ ___
 
 #### Defined in
 
-[src/utils/dbType.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/dbType.ts#L3)
+[src/utils/dbType.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/dbType.ts#L3)
 
 ___
 
@@ -2309,7 +2314,7 @@ true:BYTEA,BLOB,MEDIUMBLOB,LONGBLOB OR BINARY
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L75)
+[src/resource/GeneralColumnUtil.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L75)
 
 ___
 
@@ -2333,7 +2338,7 @@ true:BOOLEAN or BIT
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:167](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L167)
+[src/resource/GeneralColumnUtil.ts:167](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L167)
 
 ___
 
@@ -2357,7 +2362,7 @@ true:DATE,TIMESTAMP OR TIMESTAMP_WITH_TIME_ZONE
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:114](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L114)
+[src/resource/GeneralColumnUtil.ts:114](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L114)
 
 ___
 
@@ -2381,7 +2386,7 @@ true:TIME,TIME_WITH_TIME_ZONE,DATE,TIMESTAMP OR TIMESTAMP_WITH_TIME_ZONE
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:129](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L129)
+[src/resource/GeneralColumnUtil.ts:129](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L129)
 
 ___
 
@@ -2401,7 +2406,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L170)
+[src/resource/GeneralColumnUtil.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L170)
 
 ___
 
@@ -2421,7 +2426,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L89)
+[src/resource/GeneralColumnUtil.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L89)
 
 ___
 
@@ -2445,7 +2450,7 @@ true:JSON or JSONB
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L159)
+[src/resource/GeneralColumnUtil.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L159)
 
 ___
 
@@ -2465,7 +2470,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:99](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L99)
+[src/resource/GeneralColumnUtil.ts:99](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L99)
 
 ___
 
@@ -2485,7 +2490,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L35)
+[src/resource/GeneralColumnUtil.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L35)
 
 ___
 
@@ -2505,7 +2510,7 @@ ___
 
 #### Defined in
 
-[src/utils/dbType.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/dbType.ts#L5)
+[src/utils/dbType.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/dbType.ts#L5)
 
 ___
 
@@ -2525,7 +2530,7 @@ item is ResultSetData
 
 #### Defined in
 
-[src/types/resource/ResultSetDataType.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/types/resource/ResultSetDataType.ts#L96)
+[src/types/resource/ResultSetDataType.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/resource/ResultSetDataType.ts#L96)
 
 ___
 
@@ -2545,7 +2550,7 @@ item is ResultSetDataBuilder
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/ResultSetDataBuilder.ts#L67)
+[src/resource/ResultSetDataBuilder.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/ResultSetDataBuilder.ts#L67)
 
 ___
 
@@ -2565,7 +2570,7 @@ arg is Scannable
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/drivers/BaseDriver.ts#L17)
+[src/drivers/BaseDriver.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/drivers/BaseDriver.ts#L17)
 
 ___
 
@@ -2585,7 +2590,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L57)
+[src/resource/GeneralColumnUtil.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L57)
 
 ___
 
@@ -2605,7 +2610,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:141](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L141)
+[src/resource/GeneralColumnUtil.ts:141](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L141)
 
 ___
 
@@ -2625,7 +2630,7 @@ item is TopLevelCondition
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/RuleEngine.ts#L28)
+[src/helpers/RuleEngine.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/RuleEngine.ts#L28)
 
 ___
 
@@ -2645,7 +2650,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:150](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L150)
+[src/resource/GeneralColumnUtil.ts:150](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L150)
 
 ___
 
@@ -2671,7 +2676,7 @@ positionals parameters (i.e. $1, $2, etc...)
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:562](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L562)
+[src/helpers/SQLHelper.ts:562](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L562)
 
 ___
 
@@ -2694,7 +2699,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:541](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L541)
+[src/helpers/SQLHelper.ts:541](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L541)
 
 ___
 
@@ -2720,7 +2725,7 @@ simple parameters (i.e. ?, ?, etc...)
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:684](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L684)
+[src/helpers/SQLHelper.ts:684](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L684)
 
 ___
 
@@ -2740,7 +2745,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:230](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/RuleEngine.ts#L230)
+[src/helpers/RuleEngine.ts:230](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/RuleEngine.ts#L230)
 
 ___
 
@@ -2760,7 +2765,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:234](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/RuleEngine.ts#L234)
+[src/helpers/RuleEngine.ts:234](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/RuleEngine.ts#L234)
 
 ___
 
@@ -2780,7 +2785,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L9)
+[src/resource/GeneralColumnUtil.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L9)
 
 ___
 
@@ -2802,7 +2807,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:122](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/base.ts#L122)
+[src/utils/base.ts:122](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/base.ts#L122)
 
 ___
 
@@ -2822,7 +2827,7 @@ ___
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/GeneralColumnUtil.ts#L177)
+[src/resource/GeneralColumnUtil.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/GeneralColumnUtil.ts#L177)
 
 ___
 
@@ -2847,7 +2852,7 @@ parse result
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:521](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L521)
+[src/helpers/SQLHelper.ts:521](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L521)
 
 ___
 
@@ -2867,7 +2872,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:214](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/base.ts#L214)
+[src/utils/base.ts:214](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/base.ts#L214)
 
 ___
 
@@ -2887,7 +2892,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:221](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/base.ts#L221)
+[src/utils/base.ts:221](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/base.ts#L221)
 
 ___
 
@@ -2907,7 +2912,7 @@ ___
 
 #### Defined in
 
-[src/helpers/CodeResolver.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/CodeResolver.ts#L5)
+[src/helpers/CodeResolver.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/CodeResolver.ts#L5)
 
 ___
 
@@ -2931,7 +2936,7 @@ https://github.com/CacheControl/json-rules-engine/blob/beb656df2502c8716ffab9dc3
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/RuleEngine.ts#L58)
+[src/helpers/RuleEngine.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/RuleEngine.ts#L58)
 
 ___
 
@@ -2951,7 +2956,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/base.ts#L23)
+[src/utils/base.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/base.ts#L23)
 
 ___
 
@@ -2972,7 +2977,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:175](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/RuleEngine.ts#L175)
+[src/helpers/RuleEngine.ts:175](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/RuleEngine.ts#L175)
 
 ___
 
@@ -2992,7 +2997,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/base.ts#L44)
+[src/utils/base.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/base.ts#L44)
 
 ___
 
@@ -3012,7 +3017,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/base.ts#L67)
+[src/utils/base.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/base.ts#L67)
 
 ___
 
@@ -3038,7 +3043,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:263](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L263)
+[src/helpers/SQLHelper.ts:263](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L263)
 
 ___
 
@@ -3064,7 +3069,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:117](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L117)
+[src/helpers/SQLHelper.ts:117](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L117)
 
 ___
 
@@ -3084,7 +3089,7 @@ ___
 
 #### Defined in
 
-[src/utils/strings.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/strings.ts#L3)
+[src/utils/strings.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/strings.ts#L3)
 
 ___
 
@@ -3104,7 +3109,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/base.ts#L26)
+[src/utils/base.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/base.ts#L26)
 
 ___
 
@@ -3128,7 +3133,7 @@ set global general_log = on; => set general_log TO 1;
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:489](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L489)
+[src/helpers/SQLHelper.ts:489](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L489)
 
 ___
 
@@ -3148,7 +3153,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:106](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/utils/base.ts#L106)
+[src/utils/base.ts:106](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/utils/base.ts#L106)
 
 ___
 
@@ -3175,7 +3180,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:179](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L179)
+[src/helpers/SQLHelper.ts:179](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L179)
 
 ___
 
@@ -3195,4 +3200,4 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:320](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/helpers/SQLHelper.ts#L320)
+[src/helpers/SQLHelper.ts:320](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/helpers/SQLHelper.ts#L320)

@@ -1,5 +1,6 @@
 import { BaseDriver, Scannable } from './BaseDriver';
 import {
+  IamClient,
   IamGroup,
   IamRealm,
   KeycloakDatabase,
@@ -23,8 +24,13 @@ import {
   KeycloakErrorResponse,
   KeycloakInternalServerErrorResponse,
   RealmParam,
+  ClientRepresentation,
+  ClientQuery,
+  SessionQuery,
+  UserSessionRepresentation,
+  SessionStat,
 } from '../types';
-import { containsIgnoreCase, toDate } from '../utils';
+import { containsIgnoreCase, toDate, toNum } from '../utils';
 import axios, { Axios, AxiosResponse, HttpStatusCode } from 'axios';
 import { BaseClient, Issuer, TokenSet } from 'openid-client';
 import pluralize from 'pluralize';
@@ -568,6 +574,168 @@ export class KeycloakDriver
     return res.data;
   }
 
+  // Clients
+  async getClients(
+    payload?: ClientQuery & RealmParam,
+  ): Promise<ClientRepresentation[]> {
+    const { realm, ...params } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+    const res = await client.get(`/admin/realms/${realmId}/clients`, {
+      params,
+    });
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data ?? [];
+  }
+
+  // Sessions
+
+  /**
+   * Get application offline session count Returns a number of offline user sessions associated with this client { \"count\": number }
+   * GET /admin/realms/{realm}/clients/{id}/offline-session-count
+   * @param payload
+   * @returns
+   */
+  async countOfflineSessions(payload: {
+    realm?: string | undefined;
+    clientUUID: string;
+  }): Promise<number> {
+    const { realm, clientUUID } = payload;
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+    const res = await client.get(
+      `/admin/realms/${realmId}/clients/${clientUUID}/offline-session-count`,
+    );
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data.count;
+  }
+
+  /**
+   * Get application session count Returns a number of user sessions associated with this client { \"count\": number }
+   * GET /admin/realms/{realm}/clients/{id}/session-count
+   * @param payload
+   * @returns
+   */
+  async countUserSessions(payload: {
+    realm?: string | undefined;
+    clientUUID: string;
+  }): Promise<number> {
+    const { realm, clientUUID } = payload;
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+    const res = await client.get(
+      `/admin/realms/${realmId}/clients/${clientUUID}/session-count`,
+    );
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data.count;
+  }
+
+  /**
+   * Get client session stats Returns a JSON map.
+   * GET /admin/realms/{realm}/client-session-stats
+   * @param payload
+   * @returns
+   */
+  async getClientSessionStats(payload: {
+    realm?: string | undefined;
+  }): Promise<SessionStat[]> {
+    const { realm } = payload;
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+    const res = await client.get(
+      `/admin/realms/${realmId}/client-session-stats`,
+    );
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    const list = res.data as any[];
+    if (list && list.length) {
+      return list
+        .filter((it) => it.id && it.clientId)
+        .map((it) => {
+          return {
+            offline: toNum(it.offline),
+            active: toNum(it.active),
+            ...it,
+          } as SessionStat;
+        });
+    }
+    return [];
+  }
+
+  /**
+   * Get user sessions for client Returns a list of user sessions associated with this client
+   * GET /admin/realms/{realm}/clients/{id}/user-sessions
+   * @param payload
+   * @returns
+   */
+  async getSessions(
+    payload?: SessionQuery & RealmParam,
+  ): Promise<UserSessionRepresentation[]> {
+    const { realm, clientUUID } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    if (clientUUID) {
+      return await this.getSessionByClientUUID(payload);
+    }
+
+    const stats = await this.getClientSessionStats({ realm: realmId });
+    const list: UserSessionRepresentation[] = [];
+    for (const stat of stats) {
+      if (stat.active === 0) {
+        continue;
+      }
+      const sessions = await this.getSessionByClientUUID({
+        ...payload,
+        clientUUID: stat.id,
+      });
+      list.push(...sessions);
+      if (payload.max && list.length > payload.max) {
+        return list.slice(0, payload.max);
+      }
+    }
+    return list;
+  }
+
+  private async getSessionByClientUUID(
+    payload?: SessionQuery & RealmParam,
+  ): Promise<UserSessionRepresentation[]> {
+    const { realm, clientUUID, ...params } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+
+    const client = await this.getAxiosClient();
+    const res = await client.get(
+      `/admin/realms/${realmId}/clients/${clientUUID}/user-sessions`,
+      {
+        params,
+      },
+    );
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    return res.data ?? [];
+  }
+
   async scan(params: ScanParams): Promise<ResultSetData> {
     const { targetResourceType, parentTarget, keyword, target, limit } = params;
 
@@ -745,6 +913,38 @@ export class KeycloakDriver
 
         return rdb.build();
       }
+      case 'IamSession': {
+        const sessions = await this.getSessions({
+          realm,
+          clientUUID: parentTarget,
+          max: limit,
+        });
+        const rdb = new ResultSetDataBuilder([
+          createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'userId', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'username', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'start', type: GeneralColumnType.TIMESTAMP }),
+          createRdhKey({
+            name: 'lastAccess',
+            type: GeneralColumnType.TIMESTAMP,
+          }),
+          createRdhKey({ name: 'ipAddress', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'clients', type: GeneralColumnType.JSON }),
+        ]);
+        sessions.forEach((session) => {
+          rdb.addRow({
+            id: session.id,
+            userId: session.userId,
+            username: session.username,
+            start: toDate(session.start),
+            lastAccess: toDate(session.lastAccess),
+            ipAddress: session.ipAddress,
+            clients: session.clients,
+          });
+        });
+
+        return rdb.build();
+      }
       default:
         throw new Error(`Not supported resource type ${targetResourceType}`);
     }
@@ -758,7 +958,7 @@ export class KeycloakDriver
     const db = new KeycloakDatabase('Keycloak');
 
     const realms = await this.getRealms();
-    const promises: Promise<void>[] = [];
+    let promises: Promise<void>[] = [];
 
     realms.forEach((realm) => {
       const realmRes = new IamRealm(realm.realm);
@@ -782,24 +982,52 @@ export class KeycloakDriver
         });
       };
 
-      const setGroupRes = async (res: IamRealm): Promise<void> => {
-        const groups = await this.getGroups({
+      const setClientRes = async (res: IamRealm): Promise<void> => {
+        const clients = await this.getClients({
           realm: res.name,
         });
-        for (const group of groups) {
-          const groupRes = new IamGroup(group.name);
-          (groupRes as any)['id'] = group.id;
-          groupRes.comment = group.path;
-          res.addChild(groupRes);
+        for (const client of clients) {
+          const { name, id, clientId, protocol, baseUrl, ...params } = client;
+          const clientRes = new IamClient(name);
+          clientRes.clientId = clientId;
+          clientRes.protocol = protocol;
+          clientRes.baseUrl = baseUrl;
+          (clientRes as any)['id'] = id;
+          clientRes.comment = clientId;
+          clientRes.meta = params;
+          res.addChild(clientRes);
         }
       };
 
       promises.push(setUserCount(realmRes));
       promises.push(setGroupCount(realmRes));
-      promises.push(setGroupRes(realmRes));
+      promises.push(setClientRes(realmRes));
     });
 
     await Promise.all(promises);
+
+    promises = [];
+
+    db.children.forEach((realm) => {
+      const setSessionCounts = async (res: IamRealm): Promise<void> => {
+        const stats = await this.getClientSessionStats({
+          realm: res.name,
+        });
+        stats.forEach((stat) => {
+          const clientRes = res.children.find(
+            (it) => it.id === stat.id,
+          ) as IamClient;
+          if (clientRes) {
+            clientRes.numOfUserSessions = stat.active;
+            clientRes.numOfOfflineSessions = stat.offline;
+          }
+        });
+      };
+      promises.push(setSessionCounts(realm));
+    });
+
+    await Promise.all(promises);
+
     db.children.forEach((realm) => {
       realm.comment = `${realm.numOfGroups} ${pluralize(
         'group',

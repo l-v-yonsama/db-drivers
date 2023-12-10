@@ -19,11 +19,12 @@ export const ResourceType = {
   IamGroup: 'IamGroup',
   // IAM-AUTH0
   Auth0Database: 'Auth0Database',
-  IamClient: 'IamClient',
   IamOrganization: 'IamOrganization',
   // IAM-COMMON
+  IamClient: 'IamClient',
   IamUser: 'IamUser',
   IamRole: 'IamRole',
+  IamSession: 'IamSession',
 } as const;
 
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];

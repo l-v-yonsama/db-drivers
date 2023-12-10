@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)<[`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)\>
+- [`DbResource`](DbResource.md)<[`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)\>
 
   ↳ **`IamRealm`**
 
@@ -33,6 +33,7 @@
 - [clearChildren](IamRealm.md#clearchildren)
 - [findChildren](IamRealm.md#findchildren)
 - [getChildByName](IamRealm.md#getchildbyname)
+- [getClientByName](IamRealm.md#getclientbyname)
 - [getGroupByName](IamRealm.md#getgroupbyname)
 - [getProperties](IamRealm.md#getproperties)
 - [getRoleByName](IamRealm.md#getrolebyname)
@@ -59,13 +60,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:413](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L413)
+[src/resource/DbResource.ts:415](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L415)
 
 ## Properties
 
 ### children
 
-• `Readonly` **children**: ([`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md))[]
+• `Readonly` **children**: ([`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md))[]
 
 #### Inherited from
 
@@ -73,7 +74,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:124](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L124)
+[src/resource/DbResource.ts:124](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L124)
 
 ___
 
@@ -87,7 +88,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:123](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L123)
+[src/resource/DbResource.ts:123](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L123)
 
 ___
 
@@ -101,7 +102,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L120)
+[src/resource/DbResource.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L120)
 
 ___
 
@@ -111,7 +112,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:409](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L409)
+[src/resource/DbResource.ts:411](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L411)
 
 ___
 
@@ -125,7 +126,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:126](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L126)
+[src/resource/DbResource.ts:126](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L126)
 
 ___
 
@@ -143,7 +144,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:125](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L125)
+[src/resource/DbResource.ts:125](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L125)
 
 ___
 
@@ -157,7 +158,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:122](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L122)
+[src/resource/DbResource.ts:122](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L122)
 
 ___
 
@@ -167,7 +168,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:411](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L411)
+[src/resource/DbResource.ts:413](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L413)
 
 ___
 
@@ -177,7 +178,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:410](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L410)
+[src/resource/DbResource.ts:412](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L412)
 
 ___
 
@@ -191,23 +192,23 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:121](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L121)
+[src/resource/DbResource.ts:121](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L121)
 
 ## Methods
 
 ### addChild
 
-▸ **addChild**(`res`): [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
+▸ **addChild**(`res`): [`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md) |
+| `res` | [`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md) |
 
 #### Returns
 
-[`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
+[`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Inherited from
 
@@ -215,7 +216,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:141](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L141)
+[src/resource/DbResource.ts:141](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L141)
 
 ___
 
@@ -233,7 +234,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:150](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L150)
+[src/resource/DbResource.ts:150](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L150)
 
 ___
 
@@ -266,13 +267,13 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:162](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L162)
+[src/resource/DbResource.ts:162](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L162)
 
 ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
+▸ **getChildByName**(`name`, `insensitive?`): [`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Parameters
 
@@ -283,7 +284,7 @@ ___
 
 #### Returns
 
-[`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
+[`IamClient`](IamClient.md) \| [`IamUser`](IamUser.md) \| [`IamGroup`](IamGroup.md) \| [`IamRole`](IamRole.md)
 
 #### Inherited from
 
@@ -291,7 +292,27 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:154](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L154)
+[src/resource/DbResource.ts:154](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L154)
+
+___
+
+### getClientByName
+
+▸ **getClientByName**(`name`): [`IamClient`](IamClient.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+
+#### Returns
+
+[`IamClient`](IamClient.md)
+
+#### Defined in
+
+[src/resource/DbResource.ts:419](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L419)
 
 ___
 
@@ -311,7 +332,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:425](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L425)
+[src/resource/DbResource.ts:435](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L435)
 
 ___
 
@@ -329,7 +350,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:441](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L441)
+[src/resource/DbResource.ts:451](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L451)
 
 ___
 
@@ -349,7 +370,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:433](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L433)
+[src/resource/DbResource.ts:443](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L443)
 
 ___
 
@@ -369,7 +390,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:417](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L417)
+[src/resource/DbResource.ts:427](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L427)
 
 ___
 
@@ -387,7 +408,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:146](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L146)
+[src/resource/DbResource.ts:146](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L146)
 
 ___
 
@@ -411,7 +432,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:199](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L199)
+[src/resource/DbResource.ts:199](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L199)
 
 ___
 
@@ -429,4 +450,4 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/6a1707e/src/resource/DbResource.ts#L196)
+[src/resource/DbResource.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/resource/DbResource.ts#L196)
