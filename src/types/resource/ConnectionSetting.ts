@@ -31,6 +31,8 @@ export type IamSolutionSetting = {
   grantType: 'client_credentials' | 'password' | 'refresh_token';
   clientId: string;
   clientSecret?: string;
+  retrieveClientResOnConnection?: boolean;
+  retrieveGroupOrOrgResOnConnection?: boolean;
 };
 
 export type FirebaseSetting = {

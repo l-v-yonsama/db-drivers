@@ -23,6 +23,8 @@ describe('KeycloakDriver', () => {
       iamSolution: {
         clientId: 'admin-cli',
         grantType: 'password',
+        retrieveClientResOnConnection: true,
+        retrieveGroupOrOrgResOnConnection: true,
       },
     };
 
@@ -36,6 +38,21 @@ describe('KeycloakDriver', () => {
       const realms = await driver.getRealms({ briefRepresentation: true });
       if (!realms.some((it) => it.realm === realmId)) {
         await driver.createRealm({ realm: realmId });
+      }
+      const accountConsoleClients = await driver.getClients({
+        realm: realmId,
+        clientId: 'account-console',
+      });
+
+      if (accountConsoleClients.length > 0) {
+        const client = accountConsoleClients[0];
+        if (client.directAccessGrantsEnabled !== true) {
+          await driver.updateClient({
+            realm: realmId,
+            ...client,
+            directAccessGrantsEnabled: true,
+          });
+        }
       }
 
       const groups = await driver.getGroups({ realm: realmId });
@@ -102,28 +119,36 @@ describe('KeycloakDriver', () => {
             }@example.com`,
             firstName: `fn${i + 1}`,
             lastName: `ln${i + 1}`,
-            requiredActions: ['VERIFY_EMAIL', 'UPDATE_PROFILE'],
+            requiredActions: [],
             emailVerified: true,
             groups: [groupPath],
             attributes: {
               picture: 'https://example.com/u/1234?v=4',
             },
-            credentials: [{ temporary: true, type: 'password', value: 'abc' }],
+            credentials: [{ temporary: false, type: 'password', value: 'abc' }],
           });
         } else {
           await driver.updateUser({
             realm: realmId,
             id: userRes.id,
-            requiredActions: ['VERIFY_EMAIL', 'UPDATE_PROFILE'],
+            requiredActions: [],
             emailVerified: true,
             groups: [groupPath],
             attributes: {
               picture: 'https://example.com/u/1234?v=4',
             },
-            credentials: [{ temporary: true, type: 'password', value: 'abc' }],
+            credentials: [{ temporary: false, type: 'password', value: 'abc' }],
           });
         }
       }
+
+      // create a session.
+      await driver.grant({
+        realmId,
+        clientId: 'account-console',
+        username: 'test.user.b1',
+        password: 'abc',
+      });
     } catch (e) {
       console.error(e);
     }

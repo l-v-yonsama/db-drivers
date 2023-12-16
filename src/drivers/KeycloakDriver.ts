@@ -40,8 +40,8 @@ function isKeycloakErrorResponse(o: any): o is KeycloakErrorResponse {
     o === null ||
     o === undefined ||
     typeof o !== 'object' ||
-    o.errorMessage === undefined ||
-    typeof o.errorMessage !== 'string'
+    ((o.errorMessage === undefined || typeof o.errorMessage !== 'string') &&
+      (o.error === undefined || typeof o.error !== 'string'))
   ) {
     return false;
   }
@@ -124,6 +124,33 @@ export class KeycloakDriver
     this.cachedTokenSet = tokenSet;
 
     return tokenSet;
+  }
+
+  async grant({
+    realmId,
+    clientId,
+    username,
+    password,
+  }: {
+    realmId: string;
+    clientId: string;
+    username: string;
+    password: string;
+  }): Promise<TokenSet> {
+    const { url } = this.conRes;
+
+    const issuer = await Issuer.discover(`${url}/realms/${realmId}`);
+
+    const issuerClient = new issuer.Client({
+      client_id: clientId,
+      client_secret: 'dummy',
+    });
+
+    return await issuerClient.grant({
+      grant_type: 'password',
+      username,
+      password,
+    });
   }
 
   async test(with_connect = false): Promise<string> {
@@ -593,6 +620,25 @@ export class KeycloakDriver
     return res.data ?? [];
   }
 
+  async updateClient(
+    payload?: ClientRepresentation & RealmParam,
+  ): Promise<void> {
+    const { realm, ...data } = payload ?? {};
+    const realmId = realm ?? this.conRes.database;
+    const client = await this.getAxiosClient();
+
+    const res = await client.put(
+      `/admin/realms/${realmId}/clients/${data.id}`,
+      {
+        ...data,
+      },
+    );
+    const errorMessage = this.getErrorMessage(res);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+  }
+
   // Sessions
 
   /**
@@ -672,9 +718,9 @@ export class KeycloakDriver
         .filter((it) => it.id && it.clientId)
         .map((it) => {
           return {
+            ...it,
             offline: toNum(it.offline),
             active: toNum(it.active),
-            ...it,
           } as SessionStat;
         });
     }
@@ -956,6 +1002,8 @@ export class KeycloakDriver
     }
     const dbResources = new Array<KeycloakDatabase>();
     const db = new KeycloakDatabase('Keycloak');
+    const { retrieveClientResOnConnection, retrieveGroupOrOrgResOnConnection } =
+      this.conRes.iamSolution;
 
     const realms = await this.getRealms();
     let promises: Promise<void>[] = [];
@@ -982,16 +1030,41 @@ export class KeycloakDriver
         });
       };
 
+      const setGroupRes = async (res: IamRealm): Promise<void> => {
+        const groups = await this.getGroups({
+          realm: res.name,
+        });
+        for (const group of groups) {
+          const groupRes = new IamGroup(group.name);
+          (groupRes as any)['id'] = group.id;
+          groupRes.comment = group.path;
+          res.addChild(groupRes);
+        }
+      };
+
       const setClientRes = async (res: IamRealm): Promise<void> => {
         const clients = await this.getClients({
           realm: res.name,
         });
         for (const client of clients) {
-          const { name, id, clientId, protocol, baseUrl, ...params } = client;
+          const {
+            name,
+            id,
+            clientId,
+            protocol,
+            baseUrl,
+            standardFlowEnabled,
+            implicitFlowEnabled,
+            directAccessGrantsEnabled,
+            ...params
+          } = client;
           const clientRes = new IamClient(name);
           clientRes.clientId = clientId;
           clientRes.protocol = protocol;
           clientRes.baseUrl = baseUrl;
+          clientRes.standardFlowEnabled = standardFlowEnabled;
+          clientRes.implicitFlowEnabled = implicitFlowEnabled;
+          clientRes.directAccessGrantsEnabled = directAccessGrantsEnabled;
           (clientRes as any)['id'] = id;
           clientRes.comment = clientId;
           clientRes.meta = params;
@@ -1001,32 +1074,42 @@ export class KeycloakDriver
 
       promises.push(setUserCount(realmRes));
       promises.push(setGroupCount(realmRes));
-      promises.push(setClientRes(realmRes));
+
+      if (retrieveClientResOnConnection === true) {
+        promises.push(setClientRes(realmRes));
+      }
+
+      if (retrieveGroupOrOrgResOnConnection === true) {
+        promises.push(setGroupRes(realmRes));
+      }
     });
 
     await Promise.all(promises);
 
     promises = [];
 
-    db.children.forEach((realm) => {
-      const setSessionCounts = async (res: IamRealm): Promise<void> => {
-        const stats = await this.getClientSessionStats({
-          realm: res.name,
-        });
-        stats.forEach((stat) => {
-          const clientRes = res.children.find(
-            (it) => it.id === stat.id,
-          ) as IamClient;
-          if (clientRes) {
-            clientRes.numOfUserSessions = stat.active;
-            clientRes.numOfOfflineSessions = stat.offline;
-          }
-        });
-      };
-      promises.push(setSessionCounts(realm));
-    });
+    if (retrieveClientResOnConnection === true) {
+      db.children.forEach((realm) => {
+        const setSessionCounts = async (res: IamRealm): Promise<void> => {
+          const stats = await this.getClientSessionStats({
+            realm: res.name,
+          });
+          stats.forEach((stat) => {
+            const clientRes = res.children.find(
+              (it) => it.id === stat.id,
+            ) as IamClient;
 
-    await Promise.all(promises);
+            if (clientRes) {
+              clientRes.numOfUserSessions = stat.active;
+              clientRes.numOfOfflineSessions = stat.offline;
+            }
+          });
+        };
+        promises.push(setSessionCounts(realm));
+      });
+
+      await Promise.all(promises);
+    }
 
     db.children.forEach((realm) => {
       realm.comment = `${realm.numOfGroups} ${pluralize(
@@ -1081,7 +1164,7 @@ export class KeycloakDriver
     if (isKeycloakErrorResponse(data)) {
       return `${res.config?.method?.toUpperCase()} ${res.config.url}, ${
         res.statusText
-      }, ${data.errorMessage}`;
+      }, ${data.errorMessage ?? data.error}`;
     }
 
     return undefined;

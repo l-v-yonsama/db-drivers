@@ -22,7 +22,7 @@
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:378](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L378)
+[src/types/drivers/Keycloak.ts:383](https://github.com/l-v-yonsama/db-drivers/blob/9964f1f/src/types/drivers/Keycloak.ts#L383)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:377](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L377)
+[src/types/drivers/Keycloak.ts:382](https://github.com/l-v-yonsama/db-drivers/blob/9964f1f/src/types/drivers/Keycloak.ts#L382)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:379](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L379)
+[src/types/drivers/Keycloak.ts:384](https://github.com/l-v-yonsama/db-drivers/blob/9964f1f/src/types/drivers/Keycloak.ts#L384)
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:380](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L380)
+[src/types/drivers/Keycloak.ts:385](https://github.com/l-v-yonsama/db-drivers/blob/9964f1f/src/types/drivers/Keycloak.ts#L385)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:381](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L381)
+[src/types/drivers/Keycloak.ts:386](https://github.com/l-v-yonsama/db-drivers/blob/9964f1f/src/types/drivers/Keycloak.ts#L386)
 
 ___
 
@@ -72,7 +72,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:382](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L382)
+[src/types/drivers/Keycloak.ts:387](https://github.com/l-v-yonsama/db-drivers/blob/9964f1f/src/types/drivers/Keycloak.ts#L387)
 
 ___
 
@@ -82,4 +82,4 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:383](https://github.com/l-v-yonsama/db-drivers/blob/2dbc968/src/types/drivers/Keycloak.ts#L383)
+[src/types/drivers/Keycloak.ts:388](https://github.com/l-v-yonsama/db-drivers/blob/9964f1f/src/types/drivers/Keycloak.ts#L388)

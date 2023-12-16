@@ -461,23 +461,47 @@ export class IamRealm extends DbResource<
 
 export class IamClient extends DbResource {
   baseUrl: string;
+  /**
+   * protocol(client type) For Keycloak
+   * openid-connect or saml
+   */
   protocol: string;
   clientId: string;
+  standardFlowEnabled?: boolean;
+  implicitFlowEnabled?: boolean;
+  directAccessGrantsEnabled?: boolean;
   numOfUserSessions?: number;
   numOfOfflineSessions?: number;
+  /**
+   * The type of application this client represents for Auth0.
+   */
+  appType: string;
 
   constructor(name: string) {
     super(ResourceType.IamClient, name);
   }
 
   getProperties(): { [key: string]: any } {
-    const { id, protocol, clientId, numOfUserSessions, numOfOfflineSessions } =
-      this;
+    const {
+      id,
+      protocol,
+      clientId,
+      appType,
+      standardFlowEnabled,
+      implicitFlowEnabled,
+      directAccessGrantsEnabled,
+      numOfUserSessions,
+      numOfOfflineSessions,
+    } = this;
 
     return {
       id,
       protocol,
       clientId,
+      appType,
+      standardFlowEnabled,
+      implicitFlowEnabled,
+      directAccessGrantsEnabled,
       numOfUserSessions,
       numOfOfflineSessions,
       ...super.getProperties(),

@@ -1,6 +1,7 @@
 import { BaseDriver, Scannable } from './BaseDriver';
 import {
   Auth0Database,
+  IamClient,
   IamOrganization,
   ResultSetDataBuilder,
   createRdhKey,
@@ -681,9 +682,32 @@ export class Auth0Driver
       }
     };
 
+    const setClientRes = async (res: Auth0Database): Promise<void> => {
+      const clients = await this.getClients();
+      for (const client of clients) {
+        const { name, client_id, description, app_type, ...params } = client;
+        const clientRes = new IamClient(name);
+        clientRes.clientId = client_id;
+        clientRes.appType = app_type;
+        clientRes.comment = description;
+        clientRes.meta = params;
+        res.addChild(clientRes);
+      }
+    };
+
     promises.push(setUserCount(db));
     promises.push(setOrganizationCount(db));
-    promises.push(setOrganizationRes(db));
+
+    const { retrieveClientResOnConnection, retrieveGroupOrOrgResOnConnection } =
+      this.conRes.iamSolution;
+
+    if (retrieveClientResOnConnection === true) {
+      promises.push(setClientRes(db));
+    }
+
+    if (retrieveGroupOrOrgResOnConnection === true) {
+      promises.push(setOrganizationRes(db));
+    }
 
     await Promise.all(promises);
 

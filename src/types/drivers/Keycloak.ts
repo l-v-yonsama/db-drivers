@@ -3,7 +3,8 @@ export type RealmParam = {
 };
 
 export type KeycloakErrorResponse = {
-  errorMessage: string;
+  errorMessage?: string;
+  error?: string;
 };
 
 export type KeycloakInternalServerErrorResponse = {
@@ -177,6 +178,10 @@ export interface ClientRepresentation {
   notBefore?: number;
   optionalClientScopes?: string[];
   origin?: string;
+  /**
+   * protocol(client type)
+   * openid-connect or saml
+   */
   protocol?: string;
   protocolMappers?: any[];
   publicClient?: boolean;

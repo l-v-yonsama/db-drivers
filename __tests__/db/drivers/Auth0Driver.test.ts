@@ -18,7 +18,7 @@ const getOrCreateTestClient = async (
   const setting: ConnectionSetting = {
     name: 'localAuth0',
     dbType: DBType.Auth0,
-    // database: 'master', // as realm
+    // database: 'master',
     host: domain, // host as domain
     // user: 'admin',
     // password: 'admin',
