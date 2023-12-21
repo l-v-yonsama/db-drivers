@@ -26,6 +26,7 @@ import dayjs from 'dayjs';
 import {
   displayGeneralColumnType,
   isDateTimeOrDate,
+  isJsonLike,
   isNumericLike,
   isTextLike,
 } from './GeneralColumnUtil';
@@ -419,13 +420,23 @@ export class ResultSetDataBuilder {
     } else {
       switch (t) {
         case 'object':
-          if (strTitles.length !== 2) {
-            strTitles.splice(0, strTitles.length);
-            strTitles.push('KEY');
-            strTitles.push('TYPE');
-            strTitles.push('VALUE');
-          }
-          ret = new ResultSetDataBuilder(strTitles);
+          ret = new ResultSetDataBuilder([
+            createRdhKey({
+              name: 'KEY',
+              type: GeneralColumnType.TEXT,
+              width: 120,
+            }),
+            createRdhKey({
+              name: 'TYPE',
+              type: GeneralColumnType.TEXT,
+              width: 80,
+            }),
+            createRdhKey({
+              name: 'VALUE',
+              type: GeneralColumnType.JSON,
+              width: 400,
+            }),
+          ]);
           Object.keys(list).forEach((k: string) => {
             const v = list[k];
             let type: string = typeof v;
@@ -433,9 +444,9 @@ export class ResultSetDataBuilder {
               type = 'null';
             }
             const values: any = {};
-            values[strTitles[0]] = k;
-            values[strTitles[1]] = type;
-            values[strTitles[2]] = v;
+            values['KEY'] = k;
+            values['TYPE'] = type;
+            values['VALUE'] = v;
 
             ret.addRow(values);
           });
@@ -1368,6 +1379,13 @@ export class ResultSetDataBuilder {
       s = '' + o;
       if (isDateTimeOrDate(opt?.keyType)) {
         s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
+      } else if (isJsonLike(opt?.keyType)) {
+        try {
+          if (typeof o === 'object' || Array.isArray(o)) {
+            s = JSON.stringify(o);
+          }
+          // eslint-disable-next-line no-empty
+        } catch (_) {}
       }
       s = abbr(s, maxCellValueLength);
       if (opt?.label) {
@@ -1396,6 +1414,13 @@ export class ResultSetDataBuilder {
       s = '' + o;
       if (isDateTimeOrDate(opt?.keyType)) {
         s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
+      } else if (isJsonLike(opt?.keyType)) {
+        try {
+          if (typeof o === 'object' || Array.isArray(o)) {
+            s = JSON.stringify(o);
+          }
+          // eslint-disable-next-line no-empty
+        } catch (_) {}
       }
       s = abbr(s, maxCellValueLength);
       if (opt?.label) {
@@ -1425,6 +1450,13 @@ export class ResultSetDataBuilder {
       s = '' + o;
       if (isDateTimeOrDate(opt?.keyType)) {
         s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
+      } else if (isJsonLike(opt?.keyType)) {
+        try {
+          if (typeof o === 'object' || Array.isArray(o)) {
+            s = JSON.stringify(o);
+          }
+          // eslint-disable-next-line no-empty
+        } catch (_) {}
       }
       s = abbr(s, maxCellValueLength);
       if (opt?.label) {
