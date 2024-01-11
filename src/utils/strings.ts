@@ -1,4 +1,4 @@
-import { JwtPayload, jwtDecode } from 'jwt-decode';
+import { JwtHeader, JwtPayload, jwtDecode } from 'jwt-decode';
 
 export const toLines = (s: string): string[] => {
   return s.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split(/\n/);
@@ -50,6 +50,10 @@ export default function isDate(value: unknown): value is Date {
   );
 }
 
-export const decodeToken = (token: string): JwtPayload => {
-  return jwtDecode(token);
+export const decodeJwt = (
+  token: string,
+): { header: JwtHeader; payload: JwtPayload } => {
+  const header = jwtDecode(token, { header: true });
+  const payload = jwtDecode(token);
+  return { header, payload };
 };

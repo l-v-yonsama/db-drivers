@@ -14,7 +14,7 @@ import {
 } from '../types';
 import {
   equalsIgnoreCase,
-  decodeToken,
+  decodeJwt,
   containsIgnoreCase,
   toDate,
 } from '../utils';
@@ -743,7 +743,7 @@ export class Auth0Driver
 
   private async getAvailableAccessToken(): Promise<string> {
     if (this.cachedAccessToken) {
-      const payload = decodeToken(this.cachedAccessToken);
+      const { payload } = decodeJwt(this.cachedAccessToken);
 
       // payload.exp -> unit is sec, not msec.
       if (payload.exp - 60 > Math.floor(new Date().getTime() / 1000)) {

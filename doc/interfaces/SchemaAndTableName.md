@@ -23,7 +23,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/a9ac185/src/resource/DbResource.ts#L24)
+[src/resource/DbResource.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/1129024/src/resource/DbResource.ts#L24)
 
 ___
 
@@ -33,4 +33,4 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/a9ac185/src/resource/DbResource.ts#L25)
+[src/resource/DbResource.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/1129024/src/resource/DbResource.ts#L25)
