@@ -500,6 +500,9 @@ export class Auth0Driver
             custom_login_page_on: client.custom_login_page_on,
           });
         });
+        rdb.updateMeta({
+          compareKeys: [{ kind: 'primary', names: ['client_id'] }],
+        });
 
         return rdb.build();
       }
@@ -530,6 +533,9 @@ export class Auth0Driver
               email: user.email,
               picture: user.picture,
             });
+          });
+          rdb.updateMeta({
+            compareKeys: [{ kind: 'primary', names: ['user_id'] }],
           });
 
           return rdb.build();
@@ -595,6 +601,9 @@ export class Auth0Driver
               user_metadata: JSON.stringify(user.user_metadata),
             });
           });
+          rdb.updateMeta({
+            compareKeys: [{ kind: 'primary', names: ['user_id'] }],
+          });
 
           return rdb.build();
         }
@@ -627,6 +636,7 @@ export class Auth0Driver
             metadata: JSON.stringify(org.metadata),
           });
         });
+        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
 
         return rdb.build();
       }
@@ -647,6 +657,7 @@ export class Auth0Driver
             description: role.description,
           });
         });
+        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
 
         return rdb.build();
       }

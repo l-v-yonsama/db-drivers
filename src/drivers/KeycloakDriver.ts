@@ -833,6 +833,7 @@ export class KeycloakDriver
             verifyEmail: realm.verifyEmail,
           });
         });
+        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
 
         return rdb.build();
       }
@@ -905,6 +906,7 @@ export class KeycloakDriver
             attributes: JSON.stringify(user.attributes),
           });
         });
+        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
 
         return rdb.build();
       }
@@ -932,6 +934,7 @@ export class KeycloakDriver
             containerId: role.containerId,
           });
         });
+        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
 
         return rdb.build();
       }
@@ -956,6 +959,7 @@ export class KeycloakDriver
               group.subGroups?.map((it) => it.name ?? '')?.join(',') ?? '',
           });
         });
+        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
 
         return rdb.build();
       }
@@ -988,6 +992,7 @@ export class KeycloakDriver
             clients: session.clients,
           });
         });
+        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
 
         return rdb.build();
       }
