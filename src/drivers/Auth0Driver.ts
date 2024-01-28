@@ -519,7 +519,6 @@ export class Auth0Driver
               width: 215,
             }),
             createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
-            createRdhKey({ name: 'nickname', type: GeneralColumnType.TEXT }),
             createRdhKey({
               name: 'email',
               type: GeneralColumnType.TEXT,
