@@ -563,6 +563,10 @@ export class Auth0Driver
               name: 'created_at',
               type: GeneralColumnType.TIMESTAMP,
             }),
+            createRdhKey({
+              name: 'updated_at',
+              type: GeneralColumnType.TIMESTAMP,
+            }),
             createRdhKey({ name: 'last_login', type: GeneralColumnType.TEXT }),
             createRdhKey({
               name: 'last_password_reset',
@@ -594,7 +598,8 @@ export class Auth0Driver
               name: user.name,
               nickname: user.nickname,
               email: user.email,
-              createdTimestamp: toDate(user.created_at),
+              created_at: toDate(user.created_at),
+              updated_at: toDate(user.updated_at),
               last_login: user.last_login,
               last_password_reset: user.last_password_reset,
               logins_count: user.logins_count,
