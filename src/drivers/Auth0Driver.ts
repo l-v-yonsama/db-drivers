@@ -519,6 +519,7 @@ export class Auth0Driver
               width: 215,
             }),
             createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
+            createRdhKey({ name: 'nickname', type: GeneralColumnType.TEXT }),
             createRdhKey({
               name: 'email',
               type: GeneralColumnType.TEXT,
@@ -552,6 +553,7 @@ export class Auth0Driver
               width: 215,
             }),
             createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
+            createRdhKey({ name: 'nickname', type: GeneralColumnType.TEXT }),
             createRdhKey({
               name: 'email',
               type: GeneralColumnType.TEXT,
@@ -589,7 +591,8 @@ export class Auth0Driver
           users.forEach((user) => {
             rdb.addRow({
               user_id: user.user_id,
-              username: user.name,
+              name: user.name,
+              nickname: user.nickname,
               email: user.email,
               createdTimestamp: toDate(user.created_at),
               last_login: user.last_login,
