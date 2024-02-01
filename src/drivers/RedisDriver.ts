@@ -164,7 +164,7 @@ export class RedisDriver
       }),
       createRdhKey({
         name: 'val',
-        type: GeneralColumnType.UNKNOWN,
+        type: GeneralColumnType.JSON,
         width: 300,
         align: 'left',
       }),
@@ -173,9 +173,10 @@ export class RedisDriver
       const ttl =
         dbKey.params.ttl < 0 ? '' : prettyTime(dbKey.params.ttl * 1000); // sec to ms
       rdb.addRow({
-        ...dbKey.params,
-        ttl,
         key: dbKey.name,
+        type: dbKey.params.type,
+        ttl,
+        val: JSON.stringify(dbKey.params.val),
       });
     });
     rdb.updateMeta({

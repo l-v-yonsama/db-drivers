@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.227",
+  "version": "0.1.230",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -45,6 +45,7 @@
     "examples:rules": "npm run build && node built/src/examples/rules.js",
     "examples:aws": "npm run build && node built/src/examples/aws.js",
     "examples:auth0": "npm run build && node built/src/examples/auth0.js",
+    "examples:keycloak": "npm run build && node built/src/examples/keycloak.js",
     "test0": "jest --coverage",
     "test": "npm run clean && jest --runInBand",
     "test:util": "npm run clean && jest __tests__/util/util.test.ts",

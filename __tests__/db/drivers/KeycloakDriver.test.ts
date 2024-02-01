@@ -105,7 +105,11 @@ describe('KeycloakDriver', () => {
         }
       }
 
-      const users = await driver.getUsers({ realm: realmId });
+      const users = await driver.getUsers({
+        realm: realmId,
+        max: 6000,
+        search: 'test.user.b',
+      });
       for (let i = 0; i < 15; i++) {
         const userName = `test.user.b${i + 1}`;
         const groupPath = `/TestB${(i % 5) + 1}`;

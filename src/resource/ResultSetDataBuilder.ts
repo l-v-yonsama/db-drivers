@@ -713,7 +713,7 @@ export class ResultSetDataBuilder {
     this.rs.keys.push(
       createRdhKey({ name: new_key, type: GeneralColumnType.TEXT }),
     );
-    this.rs.rows.forEach((row: any) => {
+    this.rs.rows.forEach((row) => {
       const existing_val = row.values[existing_key];
       if (
         existing_val === undefined ||

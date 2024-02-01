@@ -17,6 +17,7 @@ import {
   decodeJwt,
   containsIgnoreCase,
   toDate,
+  getUniqObjectKeys,
 } from '../utils';
 import {
   AddOrganizationMembers,
@@ -440,7 +441,8 @@ export class Auth0Driver
   }
 
   async scan(params: ScanParams): Promise<ResultSetData> {
-    const { targetResourceType, parentTarget, keyword, limit } = params;
+    const { targetResourceType, parentTarget, keyword, limit, jsonExpansion } =
+      params;
     switch (targetResourceType) {
       case 'IamClient': {
         const clients = await this.getClients({
@@ -477,7 +479,7 @@ export class Auth0Driver
           }),
           createRdhKey({
             name: 'grant_types',
-            type: GeneralColumnType.JSON,
+            type: GeneralColumnType.ARRAY,
             width: 150,
           }),
           createRdhKey({
@@ -496,7 +498,7 @@ export class Auth0Driver
             logo_uri: client.logo_uri,
             is_first_party: client.is_first_party,
             oidc_conformant: client.oidc_conformant,
-            grant_types: JSON.stringify(client.grant_types),
+            grant_types: client.grant_types,
             custom_login_page_on: client.custom_login_page_on,
           });
         });
@@ -544,12 +546,13 @@ export class Auth0Driver
             keyword,
             limit,
           });
+          let innerAppMetaNames = [];
+          let innerUserMetaNames = [];
 
-          const rdb = new ResultSetDataBuilder([
+          const keys = [
             createRdhKey({
               name: 'user_id',
-              type: GeneralColumnType.TEXT,
-              width: 215,
+              type: GeneralColumnType.UUID,
             }),
             createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
             createRdhKey({ name: 'nickname', type: GeneralColumnType.TEXT }),
@@ -580,19 +583,51 @@ export class Auth0Driver
               name: 'email_verified',
               type: GeneralColumnType.BOOLEAN,
             }),
-            createRdhKey({
-              name: 'app_metadata',
-              type: GeneralColumnType.JSON,
-              width: 215,
-            }),
-            createRdhKey({
-              name: 'user_metadata',
-              type: GeneralColumnType.JSON,
-              width: 215,
-            }),
-          ]);
+          ];
+
+          if (jsonExpansion) {
+            innerAppMetaNames = getUniqObjectKeys(
+              users.map((it) => it.app_metadata),
+            );
+            innerUserMetaNames = getUniqObjectKeys(
+              users.map((it) => it.user_metadata),
+            );
+            innerAppMetaNames.forEach((it) => {
+              keys.push(
+                createRdhKey({
+                  name: `app_metadata::${it}`,
+                  type: GeneralColumnType.JSON,
+                }),
+              );
+            });
+            innerUserMetaNames.forEach((it) => {
+              keys.push(
+                createRdhKey({
+                  name: `user_metadata::${it}`,
+                  type: GeneralColumnType.JSON,
+                }),
+              );
+            });
+          } else {
+            keys.push(
+              createRdhKey({
+                name: 'app_metadata',
+                type: GeneralColumnType.JSON,
+                width: 215,
+              }),
+            );
+            keys.push(
+              createRdhKey({
+                name: 'user_metadata',
+                type: GeneralColumnType.JSON,
+                width: 215,
+              }),
+            );
+          }
+
+          const rdb = new ResultSetDataBuilder(keys);
           users.forEach((user) => {
-            rdb.addRow({
+            const rowData = {
               user_id: user.user_id,
               name: user.name,
               nickname: user.nickname,
@@ -604,9 +639,23 @@ export class Auth0Driver
               logins_count: user.logins_count,
               blocked: user.blocked,
               email_verified: user.email_verified,
-              app_metadata: JSON.stringify(user.app_metadata),
-              user_metadata: JSON.stringify(user.user_metadata),
-            });
+            };
+            if (jsonExpansion) {
+              innerAppMetaNames.forEach((it) => {
+                rowData[`app_metadata::${it}`] = JSON.stringify(
+                  user.app_metadata?.[it],
+                );
+              });
+              innerUserMetaNames.forEach((it) => {
+                rowData[`user_metadata::${it}`] = JSON.stringify(
+                  user.user_metadata?.[it],
+                );
+              });
+            } else {
+              rowData['app_metadata'] = JSON.stringify(user.app_metadata);
+              rowData['user_metadata'] = JSON.stringify(user.user_metadata);
+            }
+            rdb.addRow(rowData);
           });
           rdb.updateMeta({
             compareKeys: [{ kind: 'primary', names: ['user_id'] }],
@@ -620,7 +669,9 @@ export class Auth0Driver
           keyword,
           limit,
         });
-        const rdb = new ResultSetDataBuilder([
+
+        let innerAttrNames = [];
+        const keys = [
           createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'display_name', type: GeneralColumnType.TEXT }),
@@ -628,20 +679,43 @@ export class Auth0Driver
             name: 'branding_logo_url',
             type: GeneralColumnType.TEXT,
           }),
-          createRdhKey({
-            name: 'metadata',
-            type: GeneralColumnType.JSON,
-            width: 215,
-          }),
-        ]);
+        ];
+        if (jsonExpansion) {
+          innerAttrNames = getUniqObjectKeys(orgs.map((it) => it.metadata));
+          innerAttrNames.forEach((it) => {
+            keys.push(
+              createRdhKey({
+                name: `metadata::${it}`,
+                type: GeneralColumnType.JSON,
+              }),
+            );
+          });
+        } else {
+          keys.push(
+            createRdhKey({
+              name: 'metadata',
+              type: GeneralColumnType.JSON,
+              width: 215,
+            }),
+          );
+        }
+
+        const rdb = new ResultSetDataBuilder(keys);
         orgs.forEach((org) => {
-          rdb.addRow({
+          const rowData = {
             id: org.id,
             name: org.name,
             display_name: org.display_name,
             branding_logo_url: org.branding?.logo_url,
-            metadata: JSON.stringify(org.metadata),
-          });
+          };
+          if (jsonExpansion) {
+            innerAttrNames.forEach((it) => {
+              rowData[`metadata::${it}`] = JSON.stringify(org.metadata?.[it]);
+            });
+          } else {
+            rowData['metadata'] = JSON.stringify(org.metadata);
+          }
+          rdb.addRow(rowData);
         });
         rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
 

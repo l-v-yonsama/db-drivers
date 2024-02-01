@@ -17,4 +17,5 @@ export type ScanParams = {
   startTime?: number;
   endTime?: number;
   targetResourceType?: ResourceType;
+  jsonExpansion?: boolean;
 };

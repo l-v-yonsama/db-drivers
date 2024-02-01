@@ -30,7 +30,7 @@ import {
   UserSessionRepresentation,
   SessionStat,
 } from '../types';
-import { containsIgnoreCase, toDate, toNum } from '../utils';
+import { containsIgnoreCase, getUniqObjectKeys, toDate, toNum } from '../utils';
 import axios, { Axios, AxiosResponse, HttpStatusCode } from 'axios';
 import { BaseClient, Issuer, TokenSet } from 'openid-client';
 import pluralize from 'pluralize';
@@ -783,14 +783,21 @@ export class KeycloakDriver
   }
 
   async scan(params: ScanParams): Promise<ResultSetData> {
-    const { targetResourceType, parentTarget, keyword, target, limit } = params;
+    const {
+      targetResourceType,
+      parentTarget,
+      keyword,
+      target,
+      limit,
+      jsonExpansion,
+    } = params;
 
     const realm = target;
     switch (targetResourceType) {
       case 'IamRealm': {
         const realms = await this.getRealms();
         const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
           createRdhKey({ name: 'displayName', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'realm', type: GeneralColumnType.TEXT }),
           createRdhKey({
@@ -838,33 +845,15 @@ export class KeycloakDriver
         return rdb.build();
       }
       case 'IamUser': {
-        let users: UserRepresentation[] = [];
-        if (parentTarget) {
-          users = await this.listMembers({
-            realm,
-            id: parentTarget,
-            max: limit,
-          });
-          if (keyword) {
-            users = users.filter((it) =>
-              containsIgnoreCase(keyword, [
-                it.username,
-                it.firstName,
-                it.lastName,
-                it.email,
-              ]),
-            );
-          }
-        } else {
-          users = await this.getUsers({
-            realm,
-            search: keyword,
-            max: limit,
-          });
-        }
+        const users = await this.getUsers({
+          realm,
+          search: keyword,
+          max: limit,
+        });
 
-        const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
+        let innerAttrNames = [];
+        const keys = [
+          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
           createRdhKey({
             name: 'createdTimestamp',
             type: GeneralColumnType.TIMESTAMP,
@@ -884,15 +873,33 @@ export class KeycloakDriver
           }),
           createRdhKey({
             name: 'requiredActions',
-            type: GeneralColumnType.JSON,
+            type: GeneralColumnType.ARRAY,
           }),
-          createRdhKey({
-            name: 'attributes',
-            type: GeneralColumnType.JSON,
-          }),
-        ]);
+        ];
+
+        if (jsonExpansion) {
+          innerAttrNames = getUniqObjectKeys(users.map((it) => it.attributes));
+          innerAttrNames.forEach((it) => {
+            keys.push(
+              createRdhKey({
+                name: `attributes::${it}`,
+                type: GeneralColumnType.JSON,
+              }),
+            );
+          });
+        } else {
+          keys.push(
+            createRdhKey({
+              name: 'attributes',
+              type: GeneralColumnType.JSON,
+            }),
+          );
+        }
+
+        const rdb = new ResultSetDataBuilder(keys);
+
         users.forEach((user) => {
-          rdb.addRow({
+          const rowData = {
             id: user.id,
             createdTimestamp: toDate(user.createdTimestamp),
             username: user.username,
@@ -902,9 +909,18 @@ export class KeycloakDriver
             enabled: user.enabled,
             emailVerified: user.emailVerified,
             notBefore: user.notBefore,
-            requiredActions: JSON.stringify(user.requiredActions),
-            attributes: JSON.stringify(user.attributes),
-          });
+            requiredActions: user.requiredActions,
+          };
+          if (jsonExpansion) {
+            innerAttrNames.forEach((it) => {
+              rowData[`attributes::${it}`] = JSON.stringify(
+                user.attributes?.[it],
+              );
+            });
+          } else {
+            rowData['attributes'] = JSON.stringify(user.attributes);
+          }
+          rdb.addRow(rowData);
         });
         rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
 
@@ -917,7 +933,7 @@ export class KeycloakDriver
           max: limit,
         });
         const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
           createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'description', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'composite', type: GeneralColumnType.BOOLEAN }),
@@ -945,7 +961,7 @@ export class KeycloakDriver
           max: limit,
         });
         const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
           createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'path', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'subGroupNames', type: GeneralColumnType.TEXT }),
@@ -970,8 +986,8 @@ export class KeycloakDriver
           max: limit,
         });
         const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'userId', type: GeneralColumnType.TEXT }),
+          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
+          createRdhKey({ name: 'userId', type: GeneralColumnType.UUID }),
           createRdhKey({ name: 'username', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'start', type: GeneralColumnType.TIMESTAMP }),
           createRdhKey({

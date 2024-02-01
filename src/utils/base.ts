@@ -119,6 +119,18 @@ export const toTime = (s: string | undefined): string | undefined => {
   return s;
 };
 
+export const getUniqObjectKeys = (list: any[]): string[] => {
+  const keys = new Set<string>();
+  list
+    .filter((it) => it !== undefined && it !== null)
+    .forEach((it) => {
+      Object.keys(it).forEach((key) => {
+        keys.add(key);
+      });
+    });
+  return [...keys];
+};
+
 export const parseContentType = (params: {
   fileName?: string;
   contentType?: string;
