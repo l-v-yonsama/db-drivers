@@ -492,11 +492,13 @@ export class ResultSetDataBuilder {
     this.rs.keys
       .filter((k) => isNumericLike(k.type))
       .forEach((k) => {
-        desc_keys.push({
-          name: k.name,
-          type: k.type,
-          comment: k.comment ?? '',
-        });
+        desc_keys.push(
+          createRdhKey({
+            name: k.name,
+            type: k.type,
+            comment: k.comment ?? '',
+          }),
+        );
       });
     desc_keys.unshift(
       createRdhKey({ name: 'stat', type: GeneralColumnType.TEXT }),
@@ -1345,6 +1347,7 @@ export class ResultSetDataBuilder {
           }
         } else if (types.has('number')) {
           k.type = GeneralColumnType.NUMERIC;
+          k.align = 'right';
           emptyToNull();
         } else if (types.has('date')) {
           k.type = GeneralColumnType.DATE;
