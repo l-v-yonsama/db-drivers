@@ -81,6 +81,7 @@ export class PostgresDriver extends RDSBaseDriver {
       name: fieldInfo.name,
       type: parseColumnType(name),
       comment: tableColumn?.comment ?? '',
+      required: tableColumn?.nullable === false,
     });
 
     // Correspondence to ENUM type returned as text type
@@ -90,7 +91,6 @@ export class PostgresDriver extends RDSBaseDriver {
     ) {
       key.type = tableColumn.colType;
     }
-    key.required = tableColumn?.nullable === false;
 
     return key;
   }

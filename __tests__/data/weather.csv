@@ -1,0 +1,8 @@
+date,outlook,temperature,humidity,windy,play
+2016-01-03,overcast,10.5,high,TRUE,yes
+2016-01-04,overcast,11.2,normal,FALSE,yes
+2016-01-05,rainy,5.6,normal,TRUE,no
+2016-01-06,rainy,8.0,normal,FALSE,yes
+2016-01-07,sunny,13.2,high,TRUE,no
+2016-01-08,sunny,9.5,high,FALSE,no
+2016-01-09,sunny,8.9,normal,TRUE,yes

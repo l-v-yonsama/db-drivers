@@ -69,16 +69,13 @@ export class MySQLDriver extends RDSBaseDriver {
       name: fieldInfo.name,
       type: parseColumnType(mysqlColumnTypename),
       comment: tableColumn?.comment ?? '',
+      required: tableColumn?.nullable === false,
     });
 
     // Correspondence to ENUM type returned as text type
     if (useTableColumnType && tableColumn) {
       key.type = tableColumn.colType;
     }
-    key.required = tableColumn?.nullable === false;
-    //  if (key.type === GeneralColumnType.UNKNOWN) {
-    //   console.log('Unknownt=', fieldInfo);
-    // }
 
     return key;
   }

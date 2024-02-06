@@ -1,8 +1,10 @@
 import dayjs from 'dayjs';
-import { getType } from 'mime-lite';
+import { getType, getExtension } from 'mime-lite';
 import { ContentTypeInfo } from '../types';
+import { parse } from 'url';
 import { format } from 'bytes';
 import * as humanizeDuration from 'humanize-duration';
+import { basename } from 'path';
 
 const shortEnglishHumanizer = humanizeDuration.humanizer({
   language: 'shortEn',
@@ -86,6 +88,7 @@ export const toDate = (
   if (/^(now|CURRENT_TIMESTAMP)$/i.test(s)) {
     return new Date();
   }
+
   if (/^(today|CURRENT_DATE)$/i.test(s)) {
     const now = new Date();
     return new Date(
@@ -139,9 +142,23 @@ export const parseContentType = (params: {
     contentType: params.contentType ?? '',
     isTextValue: false,
     renderType: 'Unknown',
+    fileName: '',
   };
 
-  const fileName = (params.fileName ?? '').toLocaleLowerCase();
+  if (params.fileName) {
+    if (params.fileName.indexOf('://') >= 0) {
+      try {
+        const parsed = parse(params.fileName);
+        info.fileName = basename(parsed.pathname);
+      } catch (_) {
+        console.error(_);
+      }
+    } else {
+      info.fileName = basename(params.fileName);
+    }
+  }
+
+  const fileName = (info.fileName ?? '').toLocaleLowerCase();
   let contentType = (params.contentType ?? '').toLocaleLowerCase();
 
   if (fileName.length === 0 && contentType.length === 0) {
@@ -185,6 +202,14 @@ export const parseContentType = (params: {
   } else if (contentType.startsWith('audio/')) {
     info.renderType = 'Audio';
     info.isTextValue = false;
+  } else if (
+    contentType.startsWith('font/') ||
+    contentType.startsWith('application/font-') ||
+    contentType.startsWith('application/x-font-') ||
+    contentType.startsWith('application/vnd.ms-fontobject')
+  ) {
+    info.renderType = 'Font';
+    info.isTextValue = false;
   } else if (contentType.startsWith('video/')) {
     info.renderType = 'Video';
     info.isTextValue = false;
@@ -218,6 +243,10 @@ export const parseContentType = (params: {
     ) {
       info.shortLang = extension;
     }
+  }
+
+  if (info.fileName === '') {
+    info.fileName = `filename.${getExtension(info.contentType)}`;
   }
 
   return info;

@@ -61,6 +61,7 @@ export type RdhKey = {
   meta?: {
     is_image?: boolean;
     is_hyperlink?: boolean;
+    [key: string]: any;
   };
 };
 

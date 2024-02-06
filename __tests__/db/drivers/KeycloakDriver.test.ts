@@ -39,6 +39,7 @@ describe('KeycloakDriver', () => {
       if (!realms.some((it) => it.realm === realmId)) {
         await driver.createRealm({ realm: realmId });
       }
+
       const accountConsoleClients = await driver.getClients({
         realm: realmId,
         clientId: 'account-console',
@@ -107,13 +108,19 @@ describe('KeycloakDriver', () => {
 
       const users = await driver.getUsers({
         realm: realmId,
-        max: 6000,
+        max: 100,
         search: 'test.user.b',
       });
-      for (let i = 0; i < 15; i++) {
+      for (let i = 0; i < 50; i++) {
         const userName = `test.user.b${i + 1}`;
         const groupPath = `/TestB${(i % 5) + 1}`;
         const userRes = users.find((it) => it.username === userName);
+        const attributes = {
+          picture: `https://example.com/u/${1000 + i}?v=4`,
+          status: i % 3,
+          locale: i % 4 === 0 ? 'ja' : 'en',
+          phone: `090-1234-${9321 - i}`,
+        };
         if (userRes === undefined) {
           await driver.createUser({
             realm: realmId,
@@ -126,9 +133,7 @@ describe('KeycloakDriver', () => {
             requiredActions: [],
             emailVerified: true,
             groups: [groupPath],
-            attributes: {
-              picture: 'https://example.com/u/1234?v=4',
-            },
+            attributes,
             credentials: [{ temporary: false, type: 'password', value: 'abc' }],
           });
         } else {
@@ -138,9 +143,7 @@ describe('KeycloakDriver', () => {
             requiredActions: [],
             emailVerified: true,
             groups: [groupPath],
-            attributes: {
-              picture: 'https://example.com/u/1234?v=4',
-            },
+            attributes,
             credentials: [{ temporary: false, type: 'password', value: 'abc' }],
           });
         }

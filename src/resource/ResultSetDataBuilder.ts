@@ -30,7 +30,7 @@ import {
   isNumericLike,
   isTextLike,
 } from './GeneralColumnUtil';
-import { abbr, toDate } from '../utils';
+import isDate, { abbr, toBoolean, toDate } from '../utils';
 import { conditionsToString } from '../helpers';
 
 const MAX_CELL_VALUE_LENGTH = 50;
@@ -38,16 +38,20 @@ const MAX_PRINT_LINE = 10;
 
 export function createRdhKey({
   name,
+  comment,
   type,
   width,
-  comment,
+  required,
   align,
+  meta,
 }: {
   name: string;
+  comment?: string;
   type?: GeneralColumnType;
   width?: number;
-  comment?: string;
+  required?: boolean;
   align?: RdhKey['align'];
+  meta?: RdhKey['meta'];
 }): RdhKey {
   if (align === undefined) {
     if (isNumericLike(type)) {
@@ -56,13 +60,18 @@ export function createRdhKey({
       align = 'left';
     }
   }
-  return {
+
+  const key: RdhKey = {
     name,
     type: type ?? GeneralColumnType.UNKNOWN,
     comment,
     width,
+    required,
     align,
+    meta,
   };
+
+  return key;
 }
 
 export function isResultSetDataBuilder(
@@ -1303,14 +1312,43 @@ export class ResultSetDataBuilder {
         if (v === '' || v === null) {
           continue;
         }
-        types.add(typeof v);
+
+        if (['TRUE', 'FALSE', 'True', 'False', 'true', 'false'].includes(v)) {
+          types.add('boolean');
+        } else if (isDate(v)) {
+          types.add('date');
+        } else {
+          types.add(typeof v);
+        }
       }
-      if (types.size === 1 && types.has('number')) {
-        k.type = GeneralColumnType.NUMERIC;
-        for (let i = 0; i < length; i++) {
-          if (this.rs.rows[i].values[k.name] === '') {
-            this.rs.rows[i].values[k.name] = null;
+
+      if (types.size === 1) {
+        const emptyToNull = (): void => {
+          for (let i = 0; i < length; i++) {
+            if (this.rs.rows[i].values[k.name] === '') {
+              this.rs.rows[i].values[k.name] = null;
+            }
           }
+        };
+
+        if (types.has('string')) {
+          k.type = GeneralColumnType.TEXT;
+        } else if (types.has('boolean')) {
+          k.type = GeneralColumnType.BOOLEAN;
+          for (let i = 0; i < length; i++) {
+            const v = this.rs.rows[i].values[k.name];
+            if (v === '') {
+              this.rs.rows[i].values[k.name] = null;
+            } else {
+              this.rs.rows[i].values[k.name] = toBoolean(v);
+            }
+          }
+        } else if (types.has('number')) {
+          k.type = GeneralColumnType.NUMERIC;
+          emptyToNull();
+        } else if (types.has('date')) {
+          k.type = GeneralColumnType.DATE;
+          emptyToNull();
         }
       }
     });
