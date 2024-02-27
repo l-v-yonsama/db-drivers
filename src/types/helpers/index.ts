@@ -25,7 +25,6 @@ export type BindOptions = {
 export type ToViewDataQueryParams = {
   tableRes: DbTable;
   schemaName?: string;
-  toPositionedParameter?: boolean;
   conditions?: TopLevelCondition;
   quote?: boolean;
   limit?: number;

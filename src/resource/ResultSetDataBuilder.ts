@@ -1512,6 +1512,7 @@ export class ResultSetDataBuilder {
       s = `\`${opt.ruleMarker}\` ${s}`;
     }
     s = `${s
+      .replace(/ {2}/g, '&emsp;')
       .replace(/\|/g, '&#124;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')

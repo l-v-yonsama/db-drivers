@@ -6,6 +6,7 @@ import {
   parseQuery,
   ProposalKind,
   RdsDatabase,
+  toViewDataNormalizedQuery,
   toViewDataQuery,
 } from '../../src';
 import { loadRes } from '../setup/mysql';
@@ -509,7 +510,7 @@ describe('SQLHelper', () => {
   describe('toViewDataQuery', () => {
     it('Simple (no conitions)', () => {
       const schemaRes = db.getSchema({ isDefault: true });
-      const { query, binds } = toViewDataQuery({
+      const { query, binds } = toViewDataNormalizedQuery({
         tableRes: schemaRes.getChildByName('testtable'),
         schemaName: schemaRes.name,
       });
@@ -520,6 +521,58 @@ describe('SQLHelper', () => {
       const schemaRes = db.getSchema({ isDefault: true });
 
       const { query, binds } = toViewDataQuery({
+        tableRes: schemaRes.getChildByName('testtable'),
+        schemaName: schemaRes.name,
+        conditions: {
+          all: [
+            {
+              fact: 'ID',
+              operator: 'notEqual',
+              value: '100',
+            },
+            {
+              fact: 'n0',
+              operator: 'equal',
+              value: '1',
+            },
+            {
+              fact: 'n1',
+              operator: 'isNotNull',
+              value: null,
+            },
+            {
+              fact: 'n2',
+              operator: 'in',
+              value: '1, 2, 3',
+            },
+            {
+              fact: 'd1',
+              operator: 'in',
+              value: '2020-01-01, today',
+            },
+            {
+              fact: 'd3',
+              operator: 'lessThan',
+              value: 'now',
+            },
+          ],
+        },
+      });
+      expect(eolToSpace(query)).toBe(
+        'SELECT * FROM testdb.testtable WHERE ID <> :val1 AND n0 = :val2 AND n1 IS NOT NULL AND n2 IN (:val3) AND d1 IN (:val4) AND d3 < :val5',
+      );
+      expect(binds).toEqual({
+        val1: 100,
+        val2: true,
+        val3: [1, 2, 3],
+        val4: expect.any(Array),
+        val5: expect.anything(),
+      });
+    });
+    it('With conitions2', () => {
+      const schemaRes = db.getSchema({ isDefault: true });
+
+      const { query, binds } = toViewDataNormalizedQuery({
         tableRes: schemaRes.getChildByName('testtable'),
         schemaName: schemaRes.name,
         conditions: {
@@ -571,9 +624,9 @@ describe('SQLHelper', () => {
         expect.anything(),
       ]);
     });
-    it('With conitions2', () => {
+    it('With conitions3', () => {
       const schemaRes = db.getSchema({ isDefault: true });
-      const { query, binds } = toViewDataQuery({
+      const { query, binds } = toViewDataNormalizedQuery({
         tableRes: schemaRes.getChildByName('testtable'),
         schemaName: schemaRes.name,
         toPositionedParameter: true,

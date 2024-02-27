@@ -323,8 +323,10 @@ export const toViewDataQuery = ({
   conditions,
   quote,
   limit,
-  toPositionedParameter,
-}: ToViewDataQueryParams): QueryWithBindsResult => {
+}: ToViewDataQueryParams): {
+  query: string;
+  binds: { [key: string]: any };
+} => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableRes.name,
@@ -332,7 +334,7 @@ export const toViewDataQuery = ({
   });
   const params = {
     pos: 1,
-    bindParams: [],
+    bindParams: {},
   };
 
   let query = `SELECT * ${os.EOL}FROM ${tableNameWithSchema} `;
@@ -352,10 +354,24 @@ export const toViewDataQuery = ({
     query += os.EOL + 'LIMIT ' + limit;
   }
 
-  return normalizeQuery({
+  return {
     query: query.trim(),
-    bindParams: params.bindParams,
+    binds: params.bindParams,
+  };
+};
+
+export const toViewDataNormalizedQuery = (
+  params: ToViewDataQueryParams & {
+    toPositionedParameter?: boolean;
+  },
+): QueryWithBindsResult => {
+  const { toPositionedParameter, ...others } = params;
+  const result = toViewDataQuery(others);
+
+  return normalizeQuery({
+    query: result.query,
     toPositionedParameter,
+    bindParams: result.binds,
   });
 };
 
@@ -369,7 +385,7 @@ const createConditionalClause = ({
   conditions?: TopLevelCondition;
   columns: DbColumn[];
   params: {
-    bindParams: any[];
+    bindParams: { [key: string]: any };
     pos: number;
   };
   indent: string;
