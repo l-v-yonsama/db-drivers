@@ -77,6 +77,7 @@ export const createUndoChangeSQL = ({
         columns,
         values: it.values,
         bindOption,
+        compactSql: true,
         quote,
       }),
     ),
@@ -117,16 +118,22 @@ export const createUndoChangeSQL = ({
 export const toInsertStatement = ({
   schemaName,
   tableName,
+  tableComment,
   columns,
   values,
   bindOption,
+  withComment,
+  compactSql,
   quote,
 }: {
   schemaName?: string;
   tableName: string;
+  tableComment?: string;
   columns: RdhKey[];
   values: { [key: string]: any };
   bindOption: BindOptions;
+  withComment?: boolean;
+  compactSql?: boolean;
   quote?: boolean;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
@@ -137,15 +144,15 @@ export const toInsertStatement = ({
   const { specifyValuesWithBindParameters, toPositionedParameter } = bindOption;
   const binds: any[] = [];
   const embdeddedValues: string[] = [];
+  const columnComments: string[] = [];
 
   const columnNames: string[] = [];
   const placeHolders: string[] = [];
 
   let index = 0;
   Object.keys(values).forEach((key) => {
-    const colType =
-      columns.find((it) => equalsIgnoreCase(it.name, key))?.type ??
-      GeneralColumnType.UNKNOWN;
+    const column = columns.find((it) => equalsIgnoreCase(it.name, key));
+    const colType = column?.type ?? GeneralColumnType.UNKNOWN;
 
     columnNames.push(`${wrapQuote(key, quote)}`);
 
@@ -160,15 +167,45 @@ export const toInsertStatement = ({
     } else {
       embdeddedValues.push(toEmbeddedStringValue(colType, values[key]));
     }
+
+    if (column?.comment) {
+      columnComments.push(`${column?.comment} [${colType}]`);
+    } else {
+      columnComments.push(`${key} [${colType}]`);
+    }
   });
 
-  const query = `INSERT INTO ${tableNameWithSchema} (${columnNames.join(
-    ',',
-  )}) VALUES (${
-    specifyValuesWithBindParameters
-      ? placeHolders.join(',')
-      : embdeddedValues.join(',')
-  })`;
+  let query = '';
+  if (withComment && tableComment) {
+    query += `-- ${tableComment + os.EOL}`;
+  }
+  if (compactSql) {
+    query += `INSERT INTO ${tableNameWithSchema} (${columnNames.join(
+      ',',
+    )}) VALUES (${
+      specifyValuesWithBindParameters
+        ? placeHolders.join(',')
+        : embdeddedValues.join(',')
+    })`;
+  } else {
+    query += `INSERT INTO ${tableNameWithSchema + os.EOL} (${os.EOL}  `;
+    query += `${columnNames.join(',' + os.EOL + '  ')}${os.EOL}`;
+    query += `) VALUES (${os.EOL}`;
+    if (specifyValuesWithBindParameters) {
+      for (let i = 0; i < placeHolders.length; i++) {
+        query += `  ${placeHolders[i]}${
+          i < placeHolders.length - 1 ? ',' : ''
+        }${withComment ? ' -- ' + columnComments[i] : ''}${os.EOL}`;
+      }
+    } else {
+      for (let i = 0; i < embdeddedValues.length; i++) {
+        query += `  ${embdeddedValues[i]}${
+          i < embdeddedValues.length - 1 ? ',' : ''
+        }${withComment ? ' -- ' + columnComments[i] : ''}${os.EOL}`;
+      }
+    }
+    query += `)${os.EOL}`;
+  }
 
   return {
     query,
