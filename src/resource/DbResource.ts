@@ -12,6 +12,7 @@ import {
   RedisKeyType,
   ResourceType,
   SshSetting,
+  SslSetting,
   UniqueKeyConstraint,
 } from '../types';
 import { format } from 'bytes';
@@ -227,6 +228,7 @@ export class DbConnection
   public isConnected: boolean;
   public apiVersion?: string;
   public ssh?: SshSetting;
+  public ssl?: SslSetting;
   public awsSetting?: AwsSetting;
   public iamSolution?: IamSolutionSetting;
   public firebase?: FirebaseSetting;
@@ -244,6 +246,7 @@ export class DbConnection
     this.url = prop.url;
     this.apiVersion = prop.apiVersion;
     this.ssh = prop.ssh;
+    this.ssl = prop.ssl;
     this.awsSetting = prop.awsSetting;
     this.iamSolution = prop.iamSolution;
     this.firebase = prop.firebase;

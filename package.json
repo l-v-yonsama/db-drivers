@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.1.245",
+  "version": "0.1.246",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
