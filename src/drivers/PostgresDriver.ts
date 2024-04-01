@@ -613,7 +613,7 @@ export class PostgresDriver extends RDSBaseDriver {
       {
         max: 1,
         idleTimeoutMillis: 3000,
-        connectionTimeoutMillis: 1000,
+        connectionTimeoutMillis: 3000,
         port: this.conRes.port,
         host: this.conRes.host,
         user: this.conRes.user,
@@ -621,6 +621,12 @@ export class PostgresDriver extends RDSBaseDriver {
         database: this.conRes.database,
       },
     );
+
+    if (this.conRes.ssl?.use) {
+      options['ssl'] = {
+        rejectUnauthorized: false,
+      };
+    }
 
     return new pg.Pool(options);
   }

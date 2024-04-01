@@ -16,6 +16,11 @@ export type SshSetting = {
   dstHost: string;
 };
 
+// sslmode=no-verify or disabled only.
+export type SslSetting = {
+  use: boolean;
+};
+
 export type AwsSetting = {
   supplyCredentialType: SupplyCredentialType;
   /**
@@ -57,6 +62,7 @@ export type ConnectionSetting = {
   ds?: string;
   apiVersion?: string;
   ssh?: SshSetting;
+  ssl?: SslSetting;
   awsSetting?: AwsSetting;
   firebase?: FirebaseSetting;
   iamSolution?: IamSolutionSetting;

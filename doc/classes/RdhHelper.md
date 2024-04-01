@@ -37,7 +37,7 @@
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:242](https://github.com/l-v-yonsama/db-drivers/blob/ae1242a/src/resource/ResultSetDataBuilder.ts#L242)
+[src/resource/ResultSetDataBuilder.ts:242](https://github.com/l-v-yonsama/db-drivers/blob/4df4db1/src/resource/ResultSetDataBuilder.ts#L242)
 
 ___
 
@@ -57,4 +57,4 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:246](https://github.com/l-v-yonsama/db-drivers/blob/ae1242a/src/resource/ResultSetDataBuilder.ts#L246)
+[src/resource/ResultSetDataBuilder.ts:246](https://github.com/l-v-yonsama/db-drivers/blob/4df4db1/src/resource/ResultSetDataBuilder.ts#L246)
