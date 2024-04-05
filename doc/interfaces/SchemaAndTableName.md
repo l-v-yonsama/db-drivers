@@ -2,12 +2,6 @@
 
 # Interface: SchemaAndTableName
 
-## Hierarchy
-
-- **`SchemaAndTableName`**
-
-  ↳ [`TableRows`](TableRows.md)
-
 ## Table of contents
 
 ### Properties
@@ -23,7 +17,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/resource/DbResource.ts#L25)
+[src/resource/DbResource.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/resource/DbResource.ts#L25)
 
 ___
 
@@ -33,4 +27,4 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/resource/DbResource.ts#L26)
+[src/resource/DbResource.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/resource/DbResource.ts#L26)

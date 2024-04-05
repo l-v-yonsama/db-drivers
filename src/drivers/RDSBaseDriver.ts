@@ -3,9 +3,7 @@ import {
   DbTable,
   RdsDatabase,
   ResultSetDataBuilder,
-  SchemaAndTableHints,
   SchemaAndTableName,
-  TableRows,
 } from '../resource';
 import { Statement } from 'pgsql-ast-parser';
 import {
@@ -16,7 +14,7 @@ import {
   ResultSetData,
   TransactionControlType,
 } from '../types';
-import { parseQuery } from '../helpers';
+import { parseQuery, toCountRecordsQuery } from '../helpers';
 import { equalsIgnoreCase, toNum } from '../utils';
 
 export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
@@ -46,12 +44,15 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     return errorReason;
   }
 
-  abstract countTables(
-    tables: SchemaAndTableHints,
-    options: any,
-  ): Promise<TableRows[]>;
-
-  abstract count(params: SchemaAndTableName): Promise<number>;
+  async count(params: SchemaAndTableName): Promise<number | undefined> {
+    const { query } = toCountRecordsQuery({
+      schemaName: params.schema,
+      tableRes: new DbTable(params.table, null),
+    });
+    return await this.countSql({
+      sql: query,
+    });
+  }
 
   abstract isPositionedParameterAvailable(): boolean;
 

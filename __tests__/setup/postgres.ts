@@ -1,5 +1,4 @@
 import { default as pg } from 'pg';
-import * as crypto from 'crypto';
 
 const baseConnectOption = {
   host: '127.0.0.1',

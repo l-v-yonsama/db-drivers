@@ -3,7 +3,6 @@ import {
   ConnectionSetting,
   DBType,
   MySQLDriver,
-  ResultSetDataBuilder,
   RowHelper,
 } from '../../src';
 import { resolveCodeLabel } from '../../src/helpers/CodeResolver';

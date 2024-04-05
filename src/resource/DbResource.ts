@@ -26,16 +26,8 @@ export interface SchemaAndTableName {
   table: string;
 }
 
-export interface TableRows extends SchemaAndTableName {
-  count: number;
-}
-
 export interface SchemaAndTableHints {
   list: SchemaAndTableName[];
-}
-
-export interface ColumnResolver {
-  hints: SchemaAndTableHints;
 }
 
 export function fromJson<T extends DbResource>(json: any): T {

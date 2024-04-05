@@ -354,47 +354,28 @@ export const toDeleteStatement = ({
   };
 };
 
-export const toViewDataQuery = ({
-  tableRes,
-  schemaName,
-  conditions,
-  quote,
-  limit,
-}: ToViewDataQueryParams): {
+export const toCountRecordsQuery = (
+  params: ToViewDataQueryParams,
+): {
   query: string;
   binds: { [key: string]: any };
 } => {
-  const tableNameWithSchema = createTableNameWithSchema({
-    schema: schemaName,
-    table: tableRes.name,
-    quote,
+  return toGeneralQuery({
+    selectClause: 'COUNT(*)',
+    ...params,
   });
-  const params = {
-    pos: 1,
-    bindParams: {},
-  };
+};
 
-  let query = `SELECT * ${os.EOL}FROM ${tableNameWithSchema} `;
-  if (conditions && conditions) {
-    const q = createConditionalClause({
-      conditions,
-      columns: tableRes.children,
-      params,
-      indent: '  ',
-      quote,
-    });
-    if (q) {
-      query += os.EOL + 'WHERE' + os.EOL + q;
-    }
-  }
-  if (limit !== undefined) {
-    query += os.EOL + 'LIMIT ' + limit;
-  }
-
-  return {
-    query: query.trim(),
-    binds: params.bindParams,
-  };
+export const toViewDataQuery = (
+  params: ToViewDataQueryParams,
+): {
+  query: string;
+  binds: { [key: string]: any };
+} => {
+  return toGeneralQuery({
+    selectClause: '*',
+    ...params,
+  });
 };
 
 export const toViewDataNormalizedQuery = (
@@ -674,7 +655,7 @@ export const normalizePositionedParametersQuery = (
   // /\S/ ユニコード空白文字以外のあらゆる文字
   lines.forEach((line) => {
     const reg = /((?<!:):([a-zA-Z_$]\w*)\b)/gi;
-    const normalized = line.replace(reg, (substring, g1, g2, offset) => {
+    const normalized = line.replace(reg, (substring, g1, g2) => {
       // g1: ((?<!:):(\w+)\b) ... simple named parameter
       // g2: (\w+)
 
@@ -762,7 +743,7 @@ export const normalizeSimpleParametersQuery = (
   // /\S/ ユニコード空白文字以外のあらゆる文字
   lines.forEach((line) => {
     const reg = /((?<!:):([a-zA-Z_$]\w*)\b)/gi;
-    const normalized = line.replace(reg, (substring, g1, g2, offset) => {
+    const normalized = line.replace(reg, (substring, g1, g2) => {
       // g1: ((?<!:):(\w+)\b) ... simple named parameter
       // g2: (\w+)
       // offset: position
@@ -1260,5 +1241,49 @@ const createQNamesUsingLocation = ({
   return {
     tableName,
     schemaName,
+  };
+};
+
+const toGeneralQuery = ({
+  selectClause,
+  tableRes,
+  schemaName,
+  conditions,
+  quote,
+  limit,
+}: ToViewDataQueryParams & { selectClause: string }): {
+  query: string;
+  binds: { [key: string]: any };
+} => {
+  const tableNameWithSchema = createTableNameWithSchema({
+    schema: schemaName,
+    table: tableRes.name,
+    quote,
+  });
+  const params = {
+    pos: 1,
+    bindParams: {},
+  };
+
+  let query = `SELECT ${selectClause} ${os.EOL}FROM ${tableNameWithSchema} `;
+  if (conditions && conditions) {
+    const q = createConditionalClause({
+      conditions,
+      columns: tableRes.children,
+      params,
+      indent: '  ',
+      quote,
+    });
+    if (q) {
+      query += os.EOL + 'WHERE' + os.EOL + q;
+    }
+  }
+  if (limit !== undefined) {
+    query += os.EOL + 'LIMIT ' + limit;
+  }
+
+  return {
+    query: query.trim(),
+    binds: params.bindParams,
   };
 };

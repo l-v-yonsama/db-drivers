@@ -41,7 +41,6 @@
 - [connect](BaseDriver.md#connect)
 - [connectSub](BaseDriver.md#connectsub)
 - [connectToSshServer](BaseDriver.md#connecttosshserver)
-- [createColumnResolver](BaseDriver.md#createcolumnresolver)
 - [createDBError](BaseDriver.md#createdberror)
 - [disconnect](BaseDriver.md#disconnect)
 - [flow](BaseDriver.md#flow)
@@ -76,7 +75,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L55)
+[src/drivers/BaseDriver.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L55)
 
 ## Properties
 
@@ -86,7 +85,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L51)
+[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L51)
 
 ___
 
@@ -96,7 +95,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L50)
+[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L50)
 
 ___
 
@@ -106,7 +105,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L53)
 
 ___
 
@@ -116,7 +115,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L52)
+[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L52)
 
 ## Methods
 
@@ -130,7 +129,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:211](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L211)
+[src/drivers/BaseDriver.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L203)
 
 ___
 
@@ -144,7 +143,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:167](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L167)
+[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L159)
 
 ___
 
@@ -158,7 +157,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L210)
+[src/drivers/BaseDriver.ts:202](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L202)
 
 ___
 
@@ -172,27 +171,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:141](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L141)
-
-___
-
-### createColumnResolver
-
-▸ **createColumnResolver**(`sql?`): [`ColumnResolver`](../interfaces/ColumnResolver.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `sql?` | `string` |
-
-#### Returns
-
-[`ColumnResolver`](../interfaces/ColumnResolver.md)
-
-#### Defined in
-
-[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L85)
+[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L133)
 
 ___
 
@@ -213,7 +192,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:233](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L233)
+[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L225)
 
 ___
 
@@ -227,7 +206,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:186](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L186)
+[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L178)
 
 ___
 
@@ -253,7 +232,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:109](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L109)
+[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L101)
 
 ___
 
@@ -267,7 +246,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L63)
+[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L63)
 
 ___
 
@@ -281,7 +260,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:227](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L227)
+[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L219)
 
 ___
 
@@ -295,7 +274,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L212)
+[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L204)
 
 ___
 
@@ -309,7 +288,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L225)
+[src/drivers/BaseDriver.ts:217](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L217)
 
 ___
 
@@ -323,7 +302,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -337,7 +316,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L67)
 
 ___
 
@@ -351,7 +330,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L71)
+[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L71)
 
 ___
 
@@ -371,7 +350,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L74)
+[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L74)
 
 ___
 
@@ -391,7 +370,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:93](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L93)
+[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L85)
 
 ___
 
@@ -411,4 +390,4 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:231](https://github.com/l-v-yonsama/db-drivers/blob/b24942f/src/drivers/BaseDriver.ts#L231)
+[src/drivers/BaseDriver.ts:223](https://github.com/l-v-yonsama/db-drivers/blob/a093526/src/drivers/BaseDriver.ts#L223)

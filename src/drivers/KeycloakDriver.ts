@@ -30,7 +30,7 @@ import {
   UserSessionRepresentation,
   SessionStat,
 } from '../types';
-import { containsIgnoreCase, getUniqObjectKeys, toDate, toNum } from '../utils';
+import { getUniqObjectKeys, toDate, toNum } from '../utils';
 import axios, { Axios, AxiosResponse, HttpStatusCode } from 'axios';
 import { BaseClient, Issuer, TokenSet } from 'openid-client';
 import pluralize from 'pluralize';

@@ -7,7 +7,6 @@ import {
   diffToUndoChanges,
   PostgresDriver,
   RdsDatabase,
-  ResultSetDataBuilder,
   RowHelper,
 } from '../../src';
 import * as crypto from 'crypto';

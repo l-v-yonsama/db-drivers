@@ -8,11 +8,9 @@ import {
   RdsDatabase,
   ConnectionSetting,
   sleep,
-  ResultSetDataBuilder,
   RDSBaseDriver,
 } from '../../../src';
 import { init } from '../../setup/postgres';
-import { saveRes } from '../../setup/resourceIO';
 
 const baseConnectOption = {
   host: '127.0.0.1',

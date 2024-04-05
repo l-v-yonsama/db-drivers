@@ -1,7 +1,7 @@
 import * as tunnel from 'tunnel-ssh';
 import { getPort } from 'get-port-please';
 import * as fs from 'fs';
-import { ColumnResolver, DbDatabase, SchemaAndTableHints } from '../resource';
+import { DbDatabase, SchemaAndTableHints } from '../resource';
 import {
   ConnectionSetting,
   GeneralResult,
@@ -80,14 +80,6 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
       return true;
     }
     return false;
-  }
-
-  createColumnResolver(sql?: string): ColumnResolver {
-    if (sql) {
-      const hints = this.parseSchemaAndTableHints(sql);
-      return { hints };
-    }
-    return { hints: { list: [] } };
   }
 
   parseSchemaAndTableHints(sql: string): SchemaAndTableHints {

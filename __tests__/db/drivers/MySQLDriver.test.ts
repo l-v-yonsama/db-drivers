@@ -6,12 +6,11 @@ import {
   DBType,
   RdsDatabase,
   ConnectionSetting,
-  ResultSetDataBuilder,
   sleep,
   RDSBaseDriver,
   GeneralColumnType,
 } from '../../../src';
-import { init, saveRes } from '../../setup/mysql';
+import { init } from '../../setup/mysql';
 
 const baseConnectOption = {
   host: '127.0.0.1',

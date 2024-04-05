@@ -894,7 +894,7 @@ export class ResultSetDataBuilder {
         if (withRowNo) {
           rowValues.push('...');
         }
-        rdhKeys.forEach((_) => {
+        rdhKeys.forEach(() => {
           rowValues.push('...');
         });
         retList.push(rowValues.join(delimiter));
@@ -1055,7 +1055,7 @@ export class ResultSetDataBuilder {
         pushLine(withRowNo ? `${idx + 1}` : undefined, retRow.join(' | '));
       });
       const retRow = new Array<string>();
-      rdhKeys.forEach((_) => {
+      rdhKeys.forEach(() => {
         retRow.push('...');
       });
       pushLine(withRowNo ? '...' : undefined, retRow.join(' | '));

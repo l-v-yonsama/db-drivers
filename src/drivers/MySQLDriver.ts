@@ -7,9 +7,6 @@ import {
   DbTable,
   RdsDatabase,
   ResultSetDataBuilder,
-  SchemaAndTableHints,
-  SchemaAndTableName,
-  TableRows,
   createRdhKey,
   parseColumnType,
 } from '../resource';
@@ -249,53 +246,6 @@ export class MySQLDriver extends RDSBaseDriver {
     rdb.updateKeyAlign('EXPLAIN', 'left');
 
     return rdb;
-  }
-
-  async count(params: SchemaAndTableName): Promise<number> {
-    let prefix = '';
-    if (params.schema) {
-      prefix = params.schema + '.';
-    }
-
-    const sql = `SELECT COUNT(*) as count FROM ${prefix}${params.table}`;
-    const [results] = await this.con.query(sql, []);
-    if (results && (results as any).length > 0) {
-      const row = results[0];
-      return row.count;
-    }
-    throw new Error('No records');
-  }
-
-  async countTables(
-    tables: SchemaAndTableHints,
-    options: any,
-  ): Promise<TableRows[]> {
-    const list = new Array<TableRows>();
-    let counter = 1;
-    for (const st of tables.list) {
-      let prefix = '';
-      if (st.schema) {
-        prefix = st.schema + '.';
-      }
-      if (options && options.progress_callback) {
-        if (counter % 5 === 0) {
-          options.progress_callback(`Count ${prefix}${st.table}`, 70);
-        }
-      }
-      const sql = `SELECT COUNT(*) as count FROM ${prefix}${st.table}`;
-      try {
-        const [results] = await this.con.query(sql, []);
-        if (results && (results as any).length > 0) {
-          const row = results[0];
-          const obj: TableRows = Object.assign({ count: row.count }, st);
-          list.push(obj);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-      counter++;
-    }
-    return list;
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {

@@ -1,5 +1,4 @@
 import {
-  ResultSetDataBuilder,
   parseContentType,
   parseCsvFromFile,
   parseCsvFromString,

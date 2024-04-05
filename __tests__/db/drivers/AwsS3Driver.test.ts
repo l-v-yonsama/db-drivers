@@ -8,7 +8,6 @@ import {
   AwsDatabase,
   SupplyCredentialType,
   AwsServiceType,
-  ResultSetDataBuilder,
 } from '../../../src';
 
 const connectOption = {
