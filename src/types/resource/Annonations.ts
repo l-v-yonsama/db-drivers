@@ -10,6 +10,7 @@ export const AnnotationTypeConst = {
   Rul: 'Rul', // RuleAnnotation
   Cod: 'Cod', // CodeResolvedAnnotation
   Fil: 'Fil', // FileAnnotation
+  CIN: 'Cin', // ChangeInNumbersAnnotation
 } as const;
 
 export type AnnotationType =
@@ -23,7 +24,8 @@ export type CellAnnotation =
   | LintAnnotation
   | StyleAnnotation
   | CodeResolvedAnnotation
-  | FileAnnotation;
+  | FileAnnotation
+  | ChangeInNumbersAnnotation;
 
 export type BaseCellAnnotation<T = AnnotationType, U = any> = {
   type: T;
@@ -86,5 +88,12 @@ export type FileAnnotation = BaseCellAnnotation<
     contentTypeInfo: ContentTypeInfo;
     encoding?: string;
     downloadUrl?: string;
+  }
+>;
+
+export type ChangeInNumbersAnnotation = BaseCellAnnotation<
+  'Cin',
+  {
+    value: number;
   }
 >;
