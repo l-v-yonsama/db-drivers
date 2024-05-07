@@ -46,7 +46,7 @@
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:167](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L167)
+[src/resource/ResultSetDataBuilder.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L164)
 
 ___
 
@@ -67,7 +67,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:173](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L173)
+[src/resource/ResultSetDataBuilder.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L170)
 
 ___
 
@@ -95,7 +95,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:155](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L155)
+[src/resource/ResultSetDataBuilder.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L152)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:139](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L139)
+[src/resource/ResultSetDataBuilder.ts:136](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L136)
 
 ___
 
@@ -150,7 +150,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:125](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L125)
+[src/resource/ResultSetDataBuilder.ts:122](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L122)
 
 ___
 
@@ -171,13 +171,13 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:227](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L227)
+[src/resource/ResultSetDataBuilder.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L224)
 
 ___
 
 ### getRuleEngineValues
 
-▸ `Static` **getRuleEngineValues**(`row`, `keys`): `Object`
+▸ `Static` **getRuleEngineValues**(`row`, `keys`): `Record`<`string`, `any`\>
 
 #### Parameters
 
@@ -188,11 +188,11 @@ ___
 
 #### Returns
 
-`Object`
+`Record`<`string`, `any`\>
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L94)
+[src/resource/ResultSetDataBuilder.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L94)
 
 ___
 
@@ -213,7 +213,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:213](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L213)
+[src/resource/ResultSetDataBuilder.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L210)
 
 ___
 
@@ -234,7 +234,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:202](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L202)
+[src/resource/ResultSetDataBuilder.ts:199](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L199)
 
 ___
 
@@ -255,7 +255,7 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:217](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L217)
+[src/resource/ResultSetDataBuilder.ts:214](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L214)
 
 ___
 
@@ -277,4 +277,4 @@ ___
 
 #### Defined in
 
-[src/resource/ResultSetDataBuilder.ts:114](https://github.com/l-v-yonsama/db-drivers/blob/d685d52/src/resource/ResultSetDataBuilder.ts#L114)
+[src/resource/ResultSetDataBuilder.ts:111](https://github.com/l-v-yonsama/db-drivers/blob/dea2517/src/resource/ResultSetDataBuilder.ts#L111)
