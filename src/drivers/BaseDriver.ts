@@ -22,7 +22,7 @@ export function isScannable(arg: any): arg is Scannable {
 }
 
 class SharedDbRes {
-  static instance;
+  static instance: SharedDbRes;
   private map = new Map<string, DbDatabase>();
 
   public static getInstance(): SharedDbRes {

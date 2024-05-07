@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { default as pg } from 'pg';
+import { PoolConfig, default as pg } from 'pg';
 import { EnumValues } from 'enum-values';
 import {
   DbColumn,
@@ -552,7 +552,7 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   private createPool(): pg.Pool {
-    const options = Object.assign(
+    const options: PoolConfig = Object.assign(
       {
         port: 5432,
         host: '127.0.0.1',
@@ -571,7 +571,7 @@ export class PostgresDriver extends RDSBaseDriver {
     );
 
     if (this.conRes.ssl?.use) {
-      options['ssl'] = {
+      options.ssl = {
         rejectUnauthorized: false,
       };
     }

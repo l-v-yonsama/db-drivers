@@ -5,6 +5,7 @@ import {
   AwsSetting,
   CompareKey,
   ConnectionSetting,
+  DBType,
   FirebaseSetting,
   ForeignKeyConstraint,
   GeneralColumnType,
@@ -16,7 +17,7 @@ import {
   UniqueKeyConstraint,
 } from '../types';
 import { format } from 'bytes';
-import { equalsIgnoreCase, toDate } from '../utils';
+import { castTo, equalsIgnoreCase, toDate } from '../utils';
 import { displayGeneralColumnType } from './GeneralColumnUtil';
 
 const uid = new ShortUniqueId();
@@ -30,7 +31,7 @@ export interface SchemaAndTableHints {
   list: SchemaAndTableName[];
 }
 
-export function fromJson<T extends DbResource>(json: any): T {
+export function fromJson<T extends DbResource = DbResource>(json: T): T {
   const resourceType: ResourceType = json.resourceType;
   const { name } = json;
   let res;
@@ -42,42 +43,70 @@ export function fromJson<T extends DbResource>(json: any): T {
       res = Object.assign(new RdsDatabase(name), json);
       break;
     case ResourceType.AwsDatabase:
-      res = Object.assign(new AwsDatabase(name, json.serviceType), json);
+      res = Object.assign(
+        new AwsDatabase(name, castTo<AwsDatabase>(json).serviceType),
+        json,
+      );
       break;
     case ResourceType.RedisDatabase:
-      res = Object.assign(new RedisDatabase(name, json.numOfKeys), json);
+      res = Object.assign(
+        new RedisDatabase(name, castTo<RedisDatabase>(json).numOfKeys),
+        json,
+      );
       break;
     case ResourceType.Schema:
       res = Object.assign(new DbSchema(name), json);
       break;
     case ResourceType.Table:
-      res = Object.assign(new DbTable(name, json.tableType), json);
+      res = Object.assign(
+        new DbTable(name, castTo<DbTable>(json).tableType),
+        json,
+      );
       break;
     case ResourceType.Column:
-      res = Object.assign(new DbColumn(name, json.colType, null), json);
+      res = Object.assign(
+        new DbColumn(name, castTo<DbColumn>(json).colType, null),
+        json,
+      );
       break;
     case ResourceType.Key:
-      res = Object.assign(new DbKey(name, json.params), json);
+      res = Object.assign(
+        new DbKey(name, (json as unknown as DbKey).params),
+        json,
+      );
       break;
     case ResourceType.Bucket:
       res = Object.assign(new DbS3Bucket(name), json);
       break;
     case ResourceType.Queue:
-      res = Object.assign(new DbSQSQueue(name, json.url, json.attr), json);
+      res = Object.assign(
+        new DbSQSQueue(
+          name,
+          castTo<DbSQSQueue>(json).url,
+          castTo<DbSQSQueue>(json).attr,
+        ),
+        json,
+      );
       break;
     case ResourceType.Owner:
       res = Object.assign(new DbS3Owner(json.id, name), json);
       break;
     case ResourceType.LogGroup:
-      res = Object.assign(new DbLogGroup(name, json.attr), json);
+      res = Object.assign(
+        new DbLogGroup(name, castTo<DbLogGroup>(json).attr),
+        json,
+      );
       break;
     case ResourceType.LogStream:
-      res = Object.assign(new DbLogStream(name, json.attr), json);
+      res = Object.assign(
+        new DbLogStream(name, castTo<DbLogStream>(json).attr),
+        json,
+      );
       break;
   }
   if (json.children) {
     const children = json.children.map((child) => fromJson(child));
-    res.children = children;
+    (res as any)['children'] = children;
   }
   return res;
 }
@@ -177,9 +206,15 @@ export abstract class DbResource<T extends DbResource = AllSubDbResource> {
         []) as unknown[] as U[];
     }
     if (recursively === true) {
-      const ret = [];
+      const ret: U[] = [];
       this.children.forEach((it) => {
-        ret.push(...it.findChildren({ keyword, resourceType, recursively }));
+        ret.push(
+          ...(it.findChildren({
+            keyword,
+            resourceType,
+            recursively,
+          }) as unknown[] as U[]),
+        );
       });
       return ret;
     }
@@ -207,7 +242,7 @@ export class DbConnection
   extends DbResource<DbDatabase>
   implements ConnectionSetting
 {
-  public dbType = undefined;
+  public dbType: DBType;
   public name: string;
   public url?: string;
   public host?: string;
@@ -752,7 +787,12 @@ export class DbColumn extends DbResource {
   public readonly uniqKey: boolean;
   public readonly default: any;
   public readonly extra: any;
-  constructor(name: string, colType, params: any, comment?: string) {
+  constructor(
+    name: string,
+    colType: GeneralColumnType,
+    params: any,
+    comment?: string,
+  ) {
     super(ResourceType.Column, name);
     this.colType = colType;
     this.comment = comment;

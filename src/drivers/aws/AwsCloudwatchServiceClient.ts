@@ -175,7 +175,7 @@ export class AwsCloudwatchServiceClient
 
     const rdb = new ResultSetDataBuilder(keys);
     results.forEach((rowResult) => {
-      const values = {};
+      const values: { [key: string]: any } = {};
       rowResult.forEach((it) => {
         if (it.field === '@timestamp') {
           // 2023-04-18 10:44:25.000  UTC

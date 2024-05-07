@@ -48,7 +48,7 @@ export class DBDriverResolver {
       id: uid.randomUUID(8),
     };
 
-    let driver = undefined;
+    let driver: BaseDriver = undefined;
     switch (conRes.dbType) {
       // case DBType.ODBC:
       //   driver = new ODBCDriver(conRes);
@@ -84,7 +84,7 @@ export class DBDriverResolver {
         throw new Error(`${conRes.dbType} is not supported.`);
     }
     this.driverMap.set(conRes.id, driver);
-    return driver;
+    return driver as T;
   }
 
   async workflow<T extends BaseDriver, U = any>(

@@ -49,7 +49,7 @@ export class MySQLDriver extends RDSBaseDriver {
   }
 
   fieldInfo2Key(
-    fieldInfo,
+    fieldInfo: mysql.FieldPacket,
     useTableColumnType: boolean,
     table?: DbTable,
   ): RdhKey {

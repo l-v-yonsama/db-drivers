@@ -91,11 +91,8 @@ function toRdhKeys(keys: Array<string | RdhKey>): RdhKey[] {
 }
 
 export class RowHelper {
-  static getRuleEngineValues(
-    row: RdhRow,
-    keys: RdhKey[],
-  ): { [key: string]: any } {
-    const ret = {};
+  static getRuleEngineValues(row: RdhRow, keys: RdhKey[]): Record<string, any> {
+    const ret: Record<string, any> = {};
     keys.forEach((key) => {
       const v = row.values[key.name];
       if (isDateTimeOrDate(key.type)) {
@@ -144,10 +141,10 @@ export class RowHelper {
     return keys
       .filter((key) => row.meta[key].some((it) => it.type === type))
       .reduce((p, key) => {
-        const obj = {
+        const obj: Record<string, T[]> = {
           ...p,
         };
-        obj[key] = row.meta[key].filter((it) => it.type === type);
+        obj[key] = row.meta[key].filter((it) => it.type === type) as T[];
         return obj;
       }, {});
   }
@@ -360,13 +357,13 @@ export class ResultSetDataBuilder {
     if (list === undefined || list === null || list === '') {
       throw new Error(typeof list + ' has no value.');
     }
-    const clone = (obj: any): ResultSetDataBuilder => {
-      const plainObj = JSON.parse(JSON.stringify(obj));
+    const cloneFromRdh = (obj: ResultSetData): ResultSetDataBuilder => {
+      const plainObj: ResultSetData = JSON.parse(JSON.stringify(obj));
       const rdb = new ResultSetDataBuilder(plainObj.keys);
       const dateKeys = rdb.rs.keys
         .filter((k) => isDateTimeOrDate(k.type))
         .map((k) => k.name);
-      plainObj.rows?.forEach((row) => {
+      plainObj.rows.forEach((row) => {
         const { values, meta } = row;
         for (const dateKey of dateKeys) {
           const v = values[dateKey];
@@ -390,10 +387,10 @@ export class ResultSetDataBuilder {
     };
 
     if (isResultSetData(list)) {
-      return clone(list);
+      return cloneFromRdh(list);
     }
     if (isResultSetDataBuilder(list)) {
-      return clone(list.rs);
+      return cloneFromRdh(list.rs);
     }
 
     const t = typeof list;
@@ -1406,7 +1403,7 @@ export class ResultSetDataBuilder {
 
   private toShortString(
     o: any,
-    maxCellValueLength,
+    maxCellValueLength: number,
     opt?: {
       keyType?: GeneralColumnType;
       label?: CodeResolvedAnnotation['values'];

@@ -22,6 +22,10 @@ const shortEnglishHumanizer = humanizeDuration.humanizer({
   },
 });
 
+export function castTo<T>(o: unknown): T {
+  return o as T;
+}
+
 export const sleep = (ms: number): Promise<void> =>
   new Promise((res) => setTimeout(res, ms));
 

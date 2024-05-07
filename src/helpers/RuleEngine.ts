@@ -98,7 +98,7 @@ export const runRuleEngine = async (rdh: ResultSetData): Promise<boolean> => {
     }
     return v.endsWith(jsonValue.toString());
   });
-  engine.addOperator('between', (factValue, jsonValue) => {
+  engine.addOperator<number, number[]>('between', (factValue, jsonValue) => {
     if (
       jsonValue === null ||
       jsonValue === undefined ||
@@ -289,7 +289,7 @@ function getConditionalValues(
   condition: TopLevelCondition,
   facts: { [key: string]: any },
 ): { [key: string]: any } {
-  let obj = {};
+  let obj: { [key: string]: any } = {};
 
   const nestedList = isAllConditions(condition) ? condition.all : condition.any;
   for (const nest of nestedList) {

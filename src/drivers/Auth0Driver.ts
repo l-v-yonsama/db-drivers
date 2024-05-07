@@ -21,6 +21,7 @@ import {
 } from '../utils';
 import {
   AddOrganizationMembers,
+  AppMetadata,
   Client,
   ClientGrant,
   CreateOrganization,
@@ -35,6 +36,7 @@ import {
   UpdateRoleData,
   User,
   UserData,
+  UserMetadata,
 } from 'auth0';
 import pluralize from 'pluralize';
 
@@ -46,6 +48,23 @@ export type KeywordParamWithLimit = {
   keyword?: string;
   limit?: number;
 };
+
+interface UserRowData
+  extends Omit<
+    User<AppMetadata, UserMetadata>,
+    'created_at' | 'updated_at' | 'app_metadata' | 'user_metadata'
+  > {
+  created_at: Date;
+  updated_at: Date;
+  app_metadata?: string;
+  user_metadata?: string;
+  [key: string]: any;
+}
+
+interface OrganizationRowData extends Organization {
+  metadata?: string;
+  [key: string]: any;
+}
 
 export class Auth0Driver
   extends BaseDriver<Auth0Database>
@@ -546,8 +565,8 @@ export class Auth0Driver
             keyword,
             limit,
           });
-          let innerAppMetaNames = [];
-          let innerUserMetaNames = [];
+          let innerAppMetaNames: string[] = [];
+          let innerUserMetaNames: string[] = [];
 
           const keys = [
             createRdhKey({
@@ -627,7 +646,7 @@ export class Auth0Driver
 
           const rdb = new ResultSetDataBuilder(keys);
           users.forEach((user) => {
-            const rowData = {
+            const rowData: UserRowData = {
               user_id: user.user_id,
               name: user.name,
               nickname: user.nickname,
@@ -670,7 +689,7 @@ export class Auth0Driver
           limit,
         });
 
-        let innerAttrNames = [];
+        let innerAttrNames: string[] = [];
         const keys = [
           createRdhKey({ name: 'id', type: GeneralColumnType.TEXT }),
           createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
@@ -702,7 +721,7 @@ export class Auth0Driver
 
         const rdb = new ResultSetDataBuilder(keys);
         orgs.forEach((org) => {
-          const rowData = {
+          const rowData: OrganizationRowData = {
             id: org.id,
             name: org.name,
             display_name: org.display_name,

@@ -35,6 +35,13 @@ import axios, { Axios, AxiosResponse, HttpStatusCode } from 'axios';
 import { BaseClient, Issuer, TokenSet } from 'openid-client';
 import pluralize from 'pluralize';
 
+interface UserRowData
+  extends Omit<UserRepresentation, 'createdTimestamp' | 'attributes'> {
+  createdTimestamp: Date;
+  attributes?: string;
+  [key: string]: any;
+}
+
 function isKeycloakErrorResponse(o: any): o is KeycloakErrorResponse {
   if (
     o === null ||
@@ -851,7 +858,7 @@ export class KeycloakDriver
           max: limit,
         });
 
-        let innerAttrNames = [];
+        let innerAttrNames: string[] = [];
         const keys = [
           createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
           createRdhKey({
@@ -899,7 +906,7 @@ export class KeycloakDriver
         const rdb = new ResultSetDataBuilder(keys);
 
         users.forEach((user) => {
-          const rowData = {
+          const rowData: UserRowData = {
             id: user.id,
             createdTimestamp: toDate(user.createdTimestamp),
             username: user.username,
