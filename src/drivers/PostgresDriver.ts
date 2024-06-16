@@ -533,6 +533,14 @@ export class PostgresDriver extends RDSBaseDriver {
     return true;
   }
 
+  getPositionalCharacter(): string | undefined {
+    return '$';
+  }
+
+  isLimitAsTop(): boolean {
+    return false;
+  }
+
   async closeSub(): Promise<string> {
     try {
       if (this.client) {

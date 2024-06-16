@@ -1,79 +1,80 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / MySQLDriver
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / SQLServerDriver
 
-# Class: MySQLDriver
+# Class: SQLServerDriver
 
 ## Hierarchy
 
 - [`RDSBaseDriver`](RDSBaseDriver.md)
 
-  ↳ **`MySQLDriver`**
+  ↳ **`SQLServerDriver`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](MySQLDriver.md#constructor)
+- [constructor](SQLServerDriver.md#constructor)
 
 ### Properties
 
-- [conRes](MySQLDriver.md#conres)
-- [isConnected](MySQLDriver.md#isconnected)
-- [sshLocalPort](MySQLDriver.md#sshlocalport)
-- [sshServer](MySQLDriver.md#sshserver)
+- [conRes](SQLServerDriver.md#conres)
+- [isConnected](SQLServerDriver.md#isconnected)
+- [sshLocalPort](SQLServerDriver.md#sshlocalport)
+- [sshServer](SQLServerDriver.md#sshserver)
 
 ### Methods
 
-- [begin](MySQLDriver.md#begin)
-- [closeSub](MySQLDriver.md#closesub)
-- [commit](MySQLDriver.md#commit)
-- [connect](MySQLDriver.md#connect)
-- [connectSub](MySQLDriver.md#connectsub)
-- [connectToSshServer](MySQLDriver.md#connecttosshserver)
-- [connectWithTest](MySQLDriver.md#connectwithtest)
-- [count](MySQLDriver.md#count)
-- [countSql](MySQLDriver.md#countsql)
-- [createDBError](MySQLDriver.md#createdberror)
-- [disconnect](MySQLDriver.md#disconnect)
-- [explainAnalyzeSql](MySQLDriver.md#explainanalyzesql)
-- [explainAnalyzeSqlSub](MySQLDriver.md#explainanalyzesqlsub)
-- [explainSql](MySQLDriver.md#explainsql)
-- [explainSqlSub](MySQLDriver.md#explainsqlsub)
-- [fieldInfo2Key](MySQLDriver.md#fieldinfo2key)
-- [flow](MySQLDriver.md#flow)
-- [flowTransaction](MySQLDriver.md#flowtransaction)
-- [getConnectionRes](MySQLDriver.md#getconnectionres)
-- [getDbDatabase](MySQLDriver.md#getdbdatabase)
-- [getInfomationSchemas](MySQLDriver.md#getinfomationschemas)
-- [getInfomationSchemasSub](MySQLDriver.md#getinfomationschemassub)
-- [getName](MySQLDriver.md#getname)
-- [getPositionalCharacter](MySQLDriver.md#getpositionalcharacter)
-- [getRdsDatabase](MySQLDriver.md#getrdsdatabase)
-- [getSchemas](MySQLDriver.md#getschemas)
-- [getTables](MySQLDriver.md#gettables)
-- [getTestSqlStatement](MySQLDriver.md#gettestsqlstatement)
-- [initBaseStatus](MySQLDriver.md#initbasestatus)
-- [isLimitAsTop](MySQLDriver.md#islimitastop)
-- [isNeedsSsh](MySQLDriver.md#isneedsssh)
-- [isPositionedParameterAvailable](MySQLDriver.md#ispositionedparameteravailable)
-- [isQuery](MySQLDriver.md#isquery)
-- [kill](MySQLDriver.md#kill)
-- [parseSchemaAndTableHints](MySQLDriver.md#parseschemaandtablehints)
-- [requestSql](MySQLDriver.md#requestsql)
-- [requestSqlSub](MySQLDriver.md#requestsqlsub)
-- [resetDefaultSchema](MySQLDriver.md#resetdefaultschema)
-- [rollback](MySQLDriver.md#rollback)
-- [setAutoCommit](MySQLDriver.md#setautocommit)
-- [setColumns](MySQLDriver.md#setcolumns)
-- [setForinKeys](MySQLDriver.md#setforinkeys)
-- [setRdhMetaAndStatement](MySQLDriver.md#setrdhmetaandstatement)
-- [setUniqueKeys](MySQLDriver.md#setuniquekeys)
-- [test](MySQLDriver.md#test)
+- [begin](SQLServerDriver.md#begin)
+- [closeSub](SQLServerDriver.md#closesub)
+- [commit](SQLServerDriver.md#commit)
+- [connect](SQLServerDriver.md#connect)
+- [connectSub](SQLServerDriver.md#connectsub)
+- [connectToSshServer](SQLServerDriver.md#connecttosshserver)
+- [connectWithTest](SQLServerDriver.md#connectwithtest)
+- [count](SQLServerDriver.md#count)
+- [countSql](SQLServerDriver.md#countsql)
+- [createDBError](SQLServerDriver.md#createdberror)
+- [disconnect](SQLServerDriver.md#disconnect)
+- [explainAnalyzeSql](SQLServerDriver.md#explainanalyzesql)
+- [explainAnalyzeSqlSub](SQLServerDriver.md#explainanalyzesqlsub)
+- [explainSql](SQLServerDriver.md#explainsql)
+- [explainSqlSub](SQLServerDriver.md#explainsqlsub)
+- [fieldInfo2Key](SQLServerDriver.md#fieldinfo2key)
+- [flow](SQLServerDriver.md#flow)
+- [flowTransaction](SQLServerDriver.md#flowtransaction)
+- [getConnectionRes](SQLServerDriver.md#getconnectionres)
+- [getCurrentSchema](SQLServerDriver.md#getcurrentschema)
+- [getDbDatabase](SQLServerDriver.md#getdbdatabase)
+- [getInfomationSchemas](SQLServerDriver.md#getinfomationschemas)
+- [getInfomationSchemasSub](SQLServerDriver.md#getinfomationschemassub)
+- [getName](SQLServerDriver.md#getname)
+- [getPositionalCharacter](SQLServerDriver.md#getpositionalcharacter)
+- [getRdsDatabase](SQLServerDriver.md#getrdsdatabase)
+- [getSchemas](SQLServerDriver.md#getschemas)
+- [getTables](SQLServerDriver.md#gettables)
+- [getTestSqlStatement](SQLServerDriver.md#gettestsqlstatement)
+- [initBaseStatus](SQLServerDriver.md#initbasestatus)
+- [isLimitAsTop](SQLServerDriver.md#islimitastop)
+- [isNeedsSsh](SQLServerDriver.md#isneedsssh)
+- [isPositionedParameterAvailable](SQLServerDriver.md#ispositionedparameteravailable)
+- [isQuery](SQLServerDriver.md#isquery)
+- [kill](SQLServerDriver.md#kill)
+- [parseSchemaAndTableHints](SQLServerDriver.md#parseschemaandtablehints)
+- [requestSql](SQLServerDriver.md#requestsql)
+- [requestSqlSub](SQLServerDriver.md#requestsqlsub)
+- [resetDefaultSchema](SQLServerDriver.md#resetdefaultschema)
+- [rollback](SQLServerDriver.md#rollback)
+- [setAutoCommit](SQLServerDriver.md#setautocommit)
+- [setColumns](SQLServerDriver.md#setcolumns)
+- [setForinKeys](SQLServerDriver.md#setforinkeys)
+- [setRdhMetaAndStatement](SQLServerDriver.md#setrdhmetaandstatement)
+- [setUniqueKeys](SQLServerDriver.md#setuniquekeys)
+- [test](SQLServerDriver.md#test)
 
 ## Constructors
 
 ### constructor
 
-• **new MySQLDriver**(`conRes`)
+• **new SQLServerDriver**(`conRes`)
 
 #### Parameters
 
@@ -87,7 +88,7 @@
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L26)
+src/drivers/SQLServerDriver.ts:89
 
 ## Properties
 
@@ -161,7 +162,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L30)
+src/drivers/SQLServerDriver.ts:93
 
 ___
 
@@ -179,7 +180,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:481](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L481)
+src/drivers/SQLServerDriver.ts:573
 
 ___
 
@@ -197,7 +198,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L34)
+src/drivers/SQLServerDriver.ts:98
 
 ___
 
@@ -275,7 +276,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:80](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L80)
+src/drivers/SQLServerDriver.ts:148
 
 ___
 
@@ -414,7 +415,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:236](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L236)
+src/drivers/SQLServerDriver.ts:276
 
 ___
 
@@ -462,7 +463,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:208](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L208)
+src/drivers/SQLServerDriver.ts:248
 
 ___
 
@@ -474,7 +475,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `fieldInfo` | `FieldPacket` |
+| `fieldInfo` | [`ResultColumn`](../modules.md#resultcolumn) |
 | `useTableColumnType` | `boolean` |
 | `table?` | [`DbTable`](DbTable.md) |
 
@@ -484,7 +485,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L51)
+src/drivers/SQLServerDriver.ts:119
 
 ___
 
@@ -502,7 +503,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `f` | (`driver`: [`MySQLDriver`](MySQLDriver.md)) => `Promise`<`T`\> |
+| `f` | (`driver`: [`SQLServerDriver`](SQLServerDriver.md)) => `Promise`<`T`\> |
 
 #### Returns
 
@@ -532,7 +533,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `f` | (`driver`: [`MySQLDriver`](MySQLDriver.md)) => `Promise`<`T`\> |
+| `f` | (`driver`: [`SQLServerDriver`](SQLServerDriver.md)) => `Promise`<`T`\> |
 | `options?` | `Object` |
 | `options.transactionControlType` | [`TransactionControlType`](../modules.md#transactioncontroltype) |
 
@@ -565,6 +566,20 @@ ___
 #### Defined in
 
 [src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L63)
+
+___
+
+### getCurrentSchema
+
+▸ **getCurrentSchema**(): `Promise`<`string`\>
+
+#### Returns
+
+`Promise`<`string`\>
+
+#### Defined in
+
+src/drivers/SQLServerDriver.ts:313
 
 ___
 
@@ -618,7 +633,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:251](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L251)
+src/drivers/SQLServerDriver.ts:282
 
 ___
 
@@ -654,7 +669,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:473](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L473)
+src/drivers/SQLServerDriver.ts:565
 
 ___
 
@@ -692,7 +707,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:274](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L274)
+src/drivers/SQLServerDriver.ts:319
 
 ___
 
@@ -712,7 +727,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:288](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L288)
+src/drivers/SQLServerDriver.ts:338
 
 ___
 
@@ -730,7 +745,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:119](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L119)
+src/drivers/SQLServerDriver.ts:183
 
 ___
 
@@ -766,7 +781,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:477](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L477)
+src/drivers/SQLServerDriver.ts:569
 
 ___
 
@@ -802,7 +817,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:469](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L469)
+src/drivers/SQLServerDriver.ts:561
 
 ___
 
@@ -844,7 +859,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L100)
+src/drivers/SQLServerDriver.ts:167
 
 ___
 
@@ -916,7 +931,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:123](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L123)
+src/drivers/SQLServerDriver.ts:187
 
 ___
 
@@ -959,7 +974,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L38)
+src/drivers/SQLServerDriver.ts:106
 
 ___
 
@@ -983,7 +998,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L42)
+src/drivers/SQLServerDriver.ts:115
 
 ___
 
@@ -1003,7 +1018,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L309)
+src/drivers/SQLServerDriver.ts:372
 
 ___
 
@@ -1023,7 +1038,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:403](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L403)
+src/drivers/SQLServerDriver.ts:495
 
 ___
 
@@ -1071,7 +1086,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:351](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/MySQLDriver.ts#L351)
+src/drivers/SQLServerDriver.ts:454
 
 ___
 

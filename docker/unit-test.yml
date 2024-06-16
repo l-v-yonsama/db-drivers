@@ -30,6 +30,21 @@ services:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD=testpass
       - POSTGRES_DB=testdb
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: mssql_container
+    ports:
+      - '6433:1433'
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Pass123zxcv!
+      - MSSQL_PID=Express
+      - MSSQL_LCID=1041 # Japanese
+      - MSSQL_COLLATION=Japanese_CI_AS
+      - TZ="Asia/Tokyo"
+
   minio:
     image: quay.io/minio/minio:latest
     container_name: minio_container

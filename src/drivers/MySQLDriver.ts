@@ -470,6 +470,14 @@ export class MySQLDriver extends RDSBaseDriver {
     return false;
   }
 
+  getPositionalCharacter(): string | undefined {
+    return undefined;
+  }
+
+  isLimitAsTop(): boolean {
+    return false;
+  }
+
   async closeSub(): Promise<string> {
     try {
       if (this.con) {

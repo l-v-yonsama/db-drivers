@@ -3,6 +3,7 @@ export * from './AwsDriver';
 export * from './BaseDriver';
 export * from './MySQLDriver';
 export * from './PostgresDriver';
+export * from './SQLServerDriver';
 export * from './RedisDriver';
 export * from './KeycloakDriver';
 export * from './DBDriverResolver';

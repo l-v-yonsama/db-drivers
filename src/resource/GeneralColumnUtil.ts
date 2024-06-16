@@ -23,6 +23,8 @@ export function parseColumnType(
     return GeneralColumnType.VARCHAR;
   } else if ('number' === s) {
     return GeneralColumnType.NUMERIC;
+  } else if ('int' === s) {
+    return GeneralColumnType.INTEGER;
   }
   const list = Object.values(GeneralColumnType);
   const m = list.find((it) => it == s);

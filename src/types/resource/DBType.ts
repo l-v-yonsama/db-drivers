@@ -1,6 +1,7 @@
 export const DBType = {
   MySQL: 'MySQL',
   Postgres: 'Postgres',
+  SQLServer: 'SQLServer',
   Redis: 'Redis',
   Keycloak: 'Keycloak',
   Auth0: 'Auth0',
