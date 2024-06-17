@@ -292,7 +292,7 @@ describe('SQLHelper', () => {
         expect(binds).toEqual(['myId', 42]);
       });
 
-      it('transform a named query to a standard positioned parameters query2', () => {
+      it('transform a named query to a standard positioned parameters query2(for PostgreSQL)', () => {
         const { query, binds } = normalizeQuery({
           query:
             'select * from xxx where id IN (:ids) AND other IN ( :others )',
@@ -302,6 +302,21 @@ describe('SQLHelper', () => {
 
         expect(query).toBe(
           'select * from xxx where id IN ($1,$2,$3) AND other IN ( $4 )',
+        );
+        expect(binds).toEqual(['myId1', 'myId2', 'myId3', 42]);
+      });
+
+      it('transform a named query to a standard positioned parameters query3(for SQL Server)', () => {
+        const { query, binds } = normalizeQuery({
+          query:
+            'select * from xxx where id IN (:ids) AND other IN ( :others )',
+          toPositionedParameter: true,
+          toPositionalCharacter: '@', // for SQL Server
+          bindParams: { ids: ['myId1', 'myId2', 'myId3'], others: [42] },
+        });
+
+        expect(query).toBe(
+          'select * from xxx where id IN (@1,@2,@3) AND other IN ( @4 )',
         );
         expect(binds).toEqual(['myId1', 'myId2', 'myId3', 42]);
       });

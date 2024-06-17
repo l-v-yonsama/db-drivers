@@ -48,6 +48,11 @@ export type FirebaseSetting = {
   serviceAccountCredentialsPath?: string;
 };
 
+export type SQLServerSetting = {
+  encrypt?: boolean;
+  onlyDefaultSchema?: boolean;
+};
+
 export type ConnectionSetting = {
   id?: string;
   dbType: DBType;
@@ -65,6 +70,7 @@ export type ConnectionSetting = {
   ssl?: SslSetting;
   awsSetting?: AwsSetting;
   firebase?: FirebaseSetting;
+  sqlServer?: SQLServerSetting;
   iamSolution?: IamSolutionSetting;
   /**
    * The timezone used to store local dates.

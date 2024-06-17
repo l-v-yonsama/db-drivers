@@ -20,6 +20,7 @@ export type QueryWithBindsResult = {
 export type BindOptions = {
   specifyValuesWithBindParameters: boolean;
   toPositionedParameter?: boolean;
+  toPositionalCharacter?: string;
 };
 
 export type ToViewDataQueryParams = {
@@ -27,7 +28,10 @@ export type ToViewDataQueryParams = {
   schemaName?: string;
   conditions?: TopLevelCondition;
   quote?: boolean;
+  // toPositionedParameter?: boolean;
+  // toPositionalCharacter?: string;
   limit?: number;
+  limitAsTop?: boolean;
 };
 
 export enum ProposalKind {

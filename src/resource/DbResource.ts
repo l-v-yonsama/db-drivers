@@ -12,6 +12,7 @@ import {
   IamSolutionSetting,
   RedisKeyType,
   ResourceType,
+  SQLServerSetting,
   SshSetting,
   SslSetting,
   UniqueKeyConstraint,
@@ -259,6 +260,7 @@ export class DbConnection
   public awsSetting?: AwsSetting;
   public iamSolution?: IamSolutionSetting;
   public firebase?: FirebaseSetting;
+  public sqlServer?: SQLServerSetting;
 
   constructor(prop: any) {
     super(ResourceType.Connection, prop.name);
@@ -277,6 +279,7 @@ export class DbConnection
     this.awsSetting = prop.awsSetting;
     this.iamSolution = prop.iamSolution;
     this.firebase = prop.firebase;
+    this.sqlServer = prop.sqlServer;
     this.isConnected = false;
     this.isInProgress = false;
   }

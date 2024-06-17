@@ -141,7 +141,12 @@ export const toInsertStatement = ({
     table: tableName,
     quote,
   });
-  const { specifyValuesWithBindParameters, toPositionedParameter } = bindOption;
+  const {
+    specifyValuesWithBindParameters,
+    toPositionedParameter,
+    toPositionalCharacter,
+  } = bindOption;
+  const pChar = toPositionalCharacter ?? '$';
   const binds: any[] = [];
   const embdeddedValues: string[] = [];
   const columnComments: string[] = [];
@@ -162,7 +167,9 @@ export const toInsertStatement = ({
         return;
       }
       binds.push(value);
-      placeHolders.push(toPositionedParameter === true ? `$${index + 1}` : '?');
+      placeHolders.push(
+        toPositionedParameter === true ? `${pChar}${index + 1}` : '?',
+      );
       index++;
     } else {
       embdeddedValues.push(toEmbeddedStringValue(colType, values[key]));
@@ -235,7 +242,12 @@ export const toUpdateStatement = ({
     table: tableName,
     quote,
   });
-  const { specifyValuesWithBindParameters, toPositionedParameter } = bindOption;
+  const {
+    specifyValuesWithBindParameters,
+    toPositionedParameter,
+    toPositionalCharacter,
+  } = bindOption;
+  const pChar = toPositionalCharacter ?? '$';
   const binds: any[] = [];
 
   const setList: string[] = [];
@@ -250,7 +262,7 @@ export const toUpdateStatement = ({
     if (specifyValuesWithBindParameters) {
       setList.push(
         `${wrapQuote(key, quote)} = ${
-          toPositionedParameter === true ? `$${index + 1}` : '?'
+          toPositionedParameter === true ? `${pChar}${index + 1}` : '?'
         }`,
       );
       binds.push(toBindValue(colType, values[key]));
@@ -317,7 +329,12 @@ export const toDeleteStatement = ({
     table: tableName,
     quote,
   });
-  const { specifyValuesWithBindParameters, toPositionedParameter } = bindOption;
+  const {
+    specifyValuesWithBindParameters,
+    toPositionedParameter,
+    toPositionalCharacter,
+  } = bindOption;
+  const pChar = toPositionalCharacter ?? '$';
   const binds: any[] = [];
 
   const conditionList: string[] = [];
@@ -330,7 +347,7 @@ export const toDeleteStatement = ({
     if (specifyValuesWithBindParameters) {
       conditionList.push(
         `${wrapQuote(key, quote)}  = ${
-          toPositionedParameter === true ? `$${index + 1}` : '?'
+          toPositionedParameter === true ? `${pChar}${index + 1}` : '?'
         }`,
       );
       binds.push(toBindValue(colType, conditions[key]));
@@ -381,14 +398,16 @@ export const toViewDataQuery = (
 export const toViewDataNormalizedQuery = (
   params: ToViewDataQueryParams & {
     toPositionedParameter?: boolean;
+    toPositionalCharacter?: string;
   },
 ): QueryWithBindsResult => {
-  const { toPositionedParameter, ...others } = params;
+  const { toPositionedParameter, toPositionalCharacter, ...others } = params;
   const result = toViewDataQuery(others);
 
   return normalizeQuery({
     query: result.query,
     toPositionedParameter,
+    toPositionalCharacter,
     bindParams: result.binds,
   });
 };
@@ -534,10 +553,15 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
     /\bLIMIT\s+([\d]+)\s*,\s*([\d]+)/i,
     'LIMIT $2 OFFSET $1',
   );
+  replacedSql = replacedSql.replace(/\b(SELECT)\s+TOP\s+[\d]+/i, '$1 ');
   replacedSql = replacedSql.replace(/\bLOCK\s+IN\s+(S+)\s+MODE/i, ' ');
   replacedSql = replacedSql.replace(
     /^\s*(SET)(\s+global)?\s+(\S+)\s+=\s+\S+$/i,
     '$1 $3 TO dummy',
+  );
+  replacedSql = replacedSql.replace(
+    /\s*WAITFOR\s+DELAY\s+'([\d:]+)'/i,
+    'SELECT pg_sleep(1)',
   );
 
   // Unexpected kw_authorization token: "authorization".
@@ -575,14 +599,20 @@ export const parseQuery = (sql: string): QStatement | undefined => {
 export const normalizeQuery = ({
   query,
   toPositionedParameter,
+  toPositionalCharacter,
   bindParams,
 }: {
   query: string;
   toPositionedParameter?: boolean;
+  toPositionalCharacter?: string;
   bindParams?: { [key: string]: any };
 }): QueryWithBindsResult => {
   if (toPositionedParameter) {
-    return normalizePositionedParametersQuery(query, bindParams);
+    return normalizePositionedParametersQuery(
+      query,
+      bindParams,
+      toPositionalCharacter,
+    );
   }
   return normalizeSimpleParametersQuery(query, bindParams);
 };
@@ -596,10 +626,12 @@ export const normalizeQuery = ({
 export const normalizePositionedParametersQuery = (
   query: string,
   bindParams?: { [key: string]: any },
+  toPositionalCharacter?: string,
 ): QueryWithBindsResult => {
   let i = 0;
   const nameWithPos: { [key: string]: BindParamPosition } = {};
   const missingParams = new Set<string>();
+  const pChar = toPositionalCharacter ?? '$';
 
   const checkBindParam = (s: string): boolean => {
     if (bindParams && bindParams[s] === undefined) {
@@ -617,7 +649,7 @@ export const normalizePositionedParametersQuery = (
         numOfBinds: 1,
       };
     }
-    return `$${nameWithPos[word].firstPosition}`;
+    return `${pChar}${nameWithPos[word].firstPosition}`;
   };
 
   const getOrCreateMultiplePosition = (word: string): string => {
@@ -642,7 +674,7 @@ export const normalizePositionedParametersQuery = (
     const list: string[] = [];
     const first = nameWithPos[word].firstPosition;
     for (let j = first; j < first + nameWithPos[word].numOfBinds; j++) {
-      list.push(`$${j}`);
+      list.push(`${pChar}${j}`);
     }
     return list.join(',');
   };
@@ -1251,6 +1283,7 @@ const toGeneralQuery = ({
   conditions,
   quote,
   limit,
+  limitAsTop,
 }: ToViewDataQueryParams & { selectClause: string }): {
   query: string;
   binds: { [key: string]: any };
@@ -1265,7 +1298,11 @@ const toGeneralQuery = ({
     bindParams: {},
   };
 
-  let query = `SELECT ${selectClause} ${os.EOL}FROM ${tableNameWithSchema} `;
+  let top = '';
+  if (limitAsTop === true) {
+    top = `TOP ${limit} `;
+  }
+  let query = `SELECT ${top}${selectClause} ${os.EOL}FROM ${tableNameWithSchema} `;
   if (conditions && conditions) {
     const q = createConditionalClause({
       conditions,
@@ -1278,7 +1315,7 @@ const toGeneralQuery = ({
       query += os.EOL + 'WHERE' + os.EOL + q;
     }
   }
-  if (limit !== undefined) {
+  if (limitAsTop !== true && limit !== undefined) {
     query += os.EOL + 'LIMIT ' + limit;
   }
 

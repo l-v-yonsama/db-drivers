@@ -56,6 +56,10 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
 
   abstract isPositionedParameterAvailable(): boolean;
 
+  abstract getPositionalCharacter(): string | undefined;
+
+  abstract isLimitAsTop(): boolean;
+
   protected getRdsDatabase(): RdsDatabase | undefined {
     const db = this.getDbDatabase();
     if (db instanceof RdsDatabase) {
@@ -197,8 +201,11 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     rdb.rs.queryConditions = conditions;
   }
 
-  resetDefaultSchema(database: RdsDatabase): void {
+  resetDefaultSchema(database: RdsDatabase, hint = ''): void {
     const searchNames = [];
+    if (hint) {
+      searchNames.push(hint);
+    }
     if (this.conRes.database) {
       searchNames.push(this.conRes.database);
     }
