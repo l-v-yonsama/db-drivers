@@ -84,7 +84,7 @@
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L75)
+[src/drivers/Auth0Driver.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L75)
 
 ## Properties
 
@@ -98,7 +98,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L51)
+[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L51)
 
 ___
 
@@ -112,7 +112,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L50)
+[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L50)
 
 ___
 
@@ -126,7 +126,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L53)
 
 ___
 
@@ -140,7 +140,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L52)
+[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L52)
 
 ## Methods
 
@@ -161,7 +161,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:454](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L454)
+[src/drivers/Auth0Driver.ts:454](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L454)
 
 ___
 
@@ -182,7 +182,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:449](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L449)
+[src/drivers/Auth0Driver.ts:449](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L449)
 
 ___
 
@@ -200,7 +200,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:834](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L834)
+[src/drivers/Auth0Driver.ts:834](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L834)
 
 ___
 
@@ -218,7 +218,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L159)
+[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L159)
 
 ___
 
@@ -236,7 +236,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L79)
+[src/drivers/Auth0Driver.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L79)
 
 ___
 
@@ -254,7 +254,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L133)
+[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L133)
 
 ___
 
@@ -268,7 +268,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:214](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L214)
+[src/drivers/Auth0Driver.ts:214](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L214)
 
 ___
 
@@ -282,7 +282,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:297](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L297)
+[src/drivers/Auth0Driver.ts:297](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L297)
 
 ___
 
@@ -296,7 +296,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:363](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L363)
+[src/drivers/Auth0Driver.ts:363](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L363)
 
 ___
 
@@ -316,7 +316,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:198](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L198)
+[src/drivers/Auth0Driver.ts:198](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L198)
 
 ___
 
@@ -339,7 +339,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L181)
+[src/drivers/Auth0Driver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L181)
 
 ___
 
@@ -364,7 +364,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L225)
+[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L225)
 
 ___
 
@@ -384,7 +384,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L224)
+[src/drivers/Auth0Driver.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L224)
 
 ___
 
@@ -404,7 +404,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:307](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L307)
+[src/drivers/Auth0Driver.ts:307](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L307)
 
 ___
 
@@ -424,7 +424,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:441](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L441)
+[src/drivers/Auth0Driver.ts:441](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L441)
 
 ___
 
@@ -442,7 +442,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L178)
+[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L178)
 
 ___
 
@@ -472,7 +472,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L101)
+[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L101)
 
 ___
 
@@ -495,7 +495,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:143](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L143)
+[src/drivers/Auth0Driver.ts:143](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L143)
 
 ___
 
@@ -515,7 +515,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:109](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L109)
+[src/drivers/Auth0Driver.ts:109](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L109)
 
 ___
 
@@ -533,7 +533,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L63)
+[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L63)
 
 ___
 
@@ -551,7 +551,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L219)
+[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L219)
 
 ___
 
@@ -569,7 +569,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L204)
+[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L204)
 
 ___
 
@@ -587,7 +587,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:769](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L769)
+[src/drivers/Auth0Driver.ts:769](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L769)
 
 ___
 
@@ -608,7 +608,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:403](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L403)
+[src/drivers/Auth0Driver.ts:403](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L403)
 
 ___
 
@@ -626,7 +626,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -648,7 +648,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:275](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L275)
+[src/drivers/Auth0Driver.ts:275](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L275)
 
 ___
 
@@ -668,7 +668,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L239)
+[src/drivers/Auth0Driver.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L239)
 
 ___
 
@@ -690,7 +690,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:345](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L345)
+[src/drivers/Auth0Driver.ts:345](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L345)
 
 ___
 
@@ -710,7 +710,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:318](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L318)
+[src/drivers/Auth0Driver.ts:318](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L318)
 
 ___
 
@@ -730,7 +730,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:373](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L373)
+[src/drivers/Auth0Driver.ts:373](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L373)
 
 ___
 
@@ -748,7 +748,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L67)
 
 ___
 
@@ -766,7 +766,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L71)
+[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L71)
 
 ___
 
@@ -790,7 +790,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L74)
+[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L74)
 
 ___
 
@@ -814,7 +814,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/BaseDriver.ts#L85)
+[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/BaseDriver.ts#L85)
 
 ___
 
@@ -838,7 +838,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:462](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L462)
+[src/drivers/Auth0Driver.ts:462](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L462)
 
 ___
 
@@ -862,7 +862,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:90](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L90)
+[src/drivers/Auth0Driver.ts:90](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L90)
 
 ___
 
@@ -882,7 +882,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:231](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L231)
+[src/drivers/Auth0Driver.ts:231](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L231)
 
 ___
 
@@ -902,4 +902,4 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/292a08a/src/drivers/Auth0Driver.ts#L312)
+[src/drivers/Auth0Driver.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/43c842e/src/drivers/Auth0Driver.ts#L312)

@@ -26,58 +26,71 @@ const EXPLAIN_COLUMNS: RdhKey[] = [
     align: 'left',
     width: 300,
   }),
-  createRdhKey({ name: 'PhysicalOp', type: GeneralColumnType.TEXT }),
+  createRdhKey({ name: 'PhysicalOp', type: GeneralColumnType.TEXT, width: 20 }),
   createRdhKey({
     name: 'LogicalOp',
     type: GeneralColumnType.TEXT,
+    width: 20,
   }),
   createRdhKey({
     name: 'Argument',
     type: GeneralColumnType.TEXT,
+    width: 20,
   }),
   createRdhKey({
     name: 'DefinedValues',
     type: GeneralColumnType.TEXT,
+    width: 20,
   }),
   createRdhKey({
     name: 'EstimateRows',
     type: GeneralColumnType.INTEGER,
+    width: 40,
   }),
   createRdhKey({
     name: 'EstimateIO',
     type: GeneralColumnType.REAL,
+    width: 40,
   }),
   createRdhKey({
     name: 'EstimateCPU',
     type: GeneralColumnType.REAL,
+    width: 40,
   }),
   createRdhKey({
     name: 'AvgRowSize',
     type: GeneralColumnType.INTEGER,
+    width: 40,
   }),
   createRdhKey({
     name: 'TotalSubtreeCost',
     type: GeneralColumnType.REAL,
+    width: 40,
   }),
   createRdhKey({
     name: 'OutputList',
     type: GeneralColumnType.UNKNOWN,
+    width: 20,
   }),
   createRdhKey({
     name: 'Warnings',
     type: GeneralColumnType.TEXT,
+    width: 40,
   }),
   createRdhKey({
     name: 'Type',
     type: GeneralColumnType.TEXT,
+    width: 40,
   }),
   createRdhKey({
     name: 'Parallel',
     type: GeneralColumnType.BOOLEAN,
+    width: 40,
   }),
   createRdhKey({
     name: 'EstimateExecutions',
     type: GeneralColumnType.INTEGER,
+    width: 40,
   }),
 ];
 
@@ -276,7 +289,7 @@ export class SQLServerDriver extends RDSBaseDriver {
   async explainAnalyzeSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
-    throw new Error('explainAnalyze is not supported');
+    throw new Error('SQL Server does not support explain analyze');
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {

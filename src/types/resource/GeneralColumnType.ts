@@ -68,6 +68,7 @@ export const GeneralColumnType = {
   PG_NDISTINCT: 'pg_ndistinct',
   PG_DEPENDENCIES: 'pg_dependencies',
   OBJECT: 'object',
+  VARIANT: 'variant',
   UNKNOWN: 'unknown',
 } as const;
 

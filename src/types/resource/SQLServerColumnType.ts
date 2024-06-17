@@ -88,7 +88,7 @@ export namespace SQLServerColumnType {
       colTypeWrapper = fieldInfo.type as ISqlType;
     }
 
-    // console.log('colTypeWrapper=', colTypeWrapper);
+    // console.log(fieldInfo.name, 'colTypeWrapper=', colTypeWrapper);
     // console.log('colTypeWrapper typeof =', typeof colTypeWrapper);
     // console.log('colTypeWrapper isArray =', Array.isArray(colTypeWrapper));
 

@@ -13,8 +13,12 @@ export function parseColumnType(
     return GeneralColumnType.UNKNOWN;
   }
   s = s.toLowerCase();
-  if ('var_string' === s) {
+  if (['var_string', 'nvarchar'].includes(s)) {
     return GeneralColumnType.VARCHAR;
+  } else if (['bpchar'].includes(s)) {
+    return GeneralColumnType.CHAR;
+  } else if (['ntext'].includes(s)) {
+    return GeneralColumnType.TEXT;
   } else if ('tiny' === s) {
     return GeneralColumnType.TINYINT;
   } else if ('datetime' === s || 'timestamp(6)' === s) {
@@ -31,6 +35,9 @@ export function parseColumnType(
   if (m) {
     return m;
   }
+
+  console.log('L35 unknown', s);
+
   return GeneralColumnType.UNKNOWN;
 }
 
@@ -243,6 +250,7 @@ export function parseFaIconType(type: GeneralColumnType): string {
       return 'fa-list';
     // object
     case GeneralColumnType.OBJECT:
+    case GeneralColumnType.VARIANT:
       return 'fa-folder';
     // etc
     case GeneralColumnType.BOX:

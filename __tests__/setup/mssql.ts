@@ -167,13 +167,12 @@ export async function init(): Promise<void> {
       req.input('8', dt); // DATE
       req.input('9', dt); // TIME
       req.input('10', dt); // DATETIME
-
-      req.input('12', 'No' + i);
-      req.input('13', 's2-' + i);
-      req.input('14', 's3b-' + i);
-      req.input('15', 's3c-' + i);
-      req.input('16', Buffer.from('s5')); // BINARY
-      req.input('17', Buffer.from('s6')); // VARBINARY
+      req.input('11', 'No' + i);
+      req.input('12', 's2-' + i);
+      req.input('13', 's3b-' + i);
+      req.input('14', 's3c-' + i);
+      req.input('15', Buffer.from('s5')); // BINARY
+      req.input('16', Buffer.from('s6')); // VARBINARY
 
       await req.query(INSERT_STATEMENT);
     }
@@ -282,7 +281,6 @@ CREATE TABLE testtable (
   d1 DATE,
   d2 TIME, 
   d3 DATETIME,
-  d4 TIMESTAMP, 
   s1 CHAR(10),
   s2 VARCHAR(10), 
   s3b TEXT,
@@ -296,14 +294,14 @@ CREATE TABLE testtable (
 const INSERT_STATEMENT = `INSERT INTO testtable (
   n0, n1, n2, n4, 
   f1, f2, f3,
-  d1, d2, d3, d4,
+  d1, d2, d3,
   s1, s2, s3b, s3c, s5, s6,
   g1 )
   VALUES(
     @1, @2, @3, @4,
     @5, @6, @7,
-    @8, @9, @10, DEFAULT,
-    @12, @13, @14, @15, @16, @17,
+    @8, @9, @10,
+    @11, @12, @13, @14, @15, @16,
     geometry::STGeomFromText('POINT(135 35)', 4326)
   )`;
 
