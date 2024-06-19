@@ -15,7 +15,7 @@ export function parseColumnType(
   s = s.toLowerCase();
   if (['var_string', 'nvarchar'].includes(s)) {
     return GeneralColumnType.VARCHAR;
-  } else if (['bpchar'].includes(s)) {
+  } else if (['bpchar', 'nchar'].includes(s)) {
     return GeneralColumnType.CHAR;
   } else if (['ntext'].includes(s)) {
     return GeneralColumnType.TEXT;
