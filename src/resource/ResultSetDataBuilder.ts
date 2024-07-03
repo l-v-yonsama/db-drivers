@@ -30,7 +30,7 @@ import {
   isNumericLike,
   isTextLike,
 } from './GeneralColumnUtil';
-import isDate, { abbr, toBoolean, toDate } from '../utils';
+import isDate, { abbr, escapeHtml, toBoolean, toDate } from '../utils';
 import { conditionsToString } from '../helpers';
 
 const MAX_CELL_VALUE_LENGTH = 50;
@@ -660,6 +660,10 @@ export class ResultSetDataBuilder {
     return this.rs.keys.some((k) => k.name === key);
   }
 
+  hasKeyComment(): boolean {
+    return this.rs.keys.some((k) => !!k.comment);
+  }
+
   drop(key: string): void {
     if (this.hasKey(key)) {
       this.rs.rows.forEach((v) => {
@@ -817,7 +821,7 @@ export class ResultSetDataBuilder {
         .map((k) => this.toCsvString(k.name, maxCellValueLength))
         .join(delimiter),
     );
-    if (withComment) {
+    if (withComment && this.hasKeyComment()) {
       pushLine(
         withRowNo ? '' : undefined,
         rdhKeys
@@ -985,7 +989,7 @@ export class ResultSetDataBuilder {
         })
         .join(' | '),
     );
-    if (withComment) {
+    if (withComment && this.hasKeyComment()) {
       pushLine(
         withRowNo ? '' : undefined,
         rdhKeys
@@ -1104,6 +1108,190 @@ export class ResultSetDataBuilder {
     return s + os.EOL;
   }
 
+  toHtml(params?: ToStringParam): string {
+    const {
+      withType,
+      withComment,
+      keyNames,
+      withRowNo,
+      withCodeLabel,
+      withRuleViolation,
+      maxPrintLines,
+      maxCellValueLength,
+    }: ToStringParam = {
+      maxPrintLines: MAX_PRINT_LINE,
+      maxCellValueLength: MAX_CELL_VALUE_LENGTH,
+      withType: false,
+      withComment: false,
+      withRuleViolation: false,
+      withRowNo: false,
+      withCodeLabel: false,
+      keyNames: [],
+      ...params,
+    };
+
+    const rdhKeys =
+      keyNames.length > 0
+        ? this.rs.keys.filter((k) => keyNames.includes(k.name))
+        : this.rs.keys;
+
+    if (rdhKeys.length < 0) {
+      return '<p>No Keys.</p>';
+    }
+    const retList: string[] = [];
+    retList.push(
+      '<div class="table-container"><table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth" >',
+    );
+    retList.push('<thead>');
+    const pushLine = (
+      sRow: string | undefined,
+      elms: string[],
+      isHead: boolean,
+    ): void => {
+      const tag = isHead ? 'th' : 'td';
+      const rowValues: string[] = [];
+      if (sRow !== undefined) {
+        rowValues.push(`<${tag}>${sRow}</${tag}>`);
+      }
+      elms.forEach((it) => rowValues.push(`<${tag}>${it}</${tag}>`));
+      retList.push(`  <tr>${rowValues.join('')}</tr>`);
+    };
+
+    pushLine(
+      withRowNo ? 'ROW' : undefined,
+      rdhKeys.map((k) => this.toHtmlString(k.name, maxCellValueLength)),
+      true,
+    );
+
+    if (withComment && this.hasKeyComment()) {
+      pushLine(
+        withRowNo ? '' : undefined,
+        rdhKeys.map((k) =>
+          this.toHtmlString(k.comment ?? '', maxCellValueLength),
+        ),
+        true,
+      );
+    }
+    if (withType) {
+      pushLine(
+        withRowNo ? '' : undefined,
+        rdhKeys.map((k) =>
+          this.toHtmlString(
+            displayGeneralColumnType(k.type),
+            maxCellValueLength,
+          ),
+        ),
+        true,
+      );
+    }
+
+    retList.push('</thead>');
+    retList.push('<tbody>');
+
+    if (this.rs.rows.length <= maxPrintLines) {
+      this.rs.rows.forEach((row, idx) => {
+        const retRow = new Array<any>();
+        rdhKeys.forEach((key) => {
+          const label = withCodeLabel
+            ? this.resolveCodeLabel(row, key.name)
+            : undefined;
+          const ruleMarker = withRuleViolation
+            ? this.resolveRuleMarkers(row, key.name)
+            : undefined;
+
+          retRow.push(
+            this.toHtmlString(row.values[key.name], maxCellValueLength, {
+              keyType: key.type,
+              label,
+              ruleMarker,
+            }),
+          );
+        });
+        pushLine(withRowNo ? `${idx + 1}` : undefined, retRow, false);
+      });
+    } else {
+      const num_of_head = Math.ceil(maxPrintLines / 2);
+      this.rs.rows.slice(0, num_of_head).forEach((row, idx) => {
+        const retRow = new Array<any>();
+        rdhKeys.forEach((key) => {
+          const label = withCodeLabel
+            ? this.resolveCodeLabel(row, key.name)
+            : undefined;
+          const ruleMarker = withRuleViolation
+            ? this.resolveRuleMarkers(row, key.name)
+            : undefined;
+          retRow.push(
+            this.toHtmlString(row.values[key.name], maxCellValueLength, {
+              keyType: key.type,
+              label,
+              ruleMarker,
+            }),
+          );
+        });
+        pushLine(withRowNo ? `${idx + 1}` : undefined, retRow, false);
+      });
+      const retRow = new Array<string>();
+      rdhKeys.forEach(() => {
+        retRow.push('...');
+      });
+      pushLine(withRowNo ? '...' : undefined, retRow, false);
+      this.rs.rows
+        .slice(this.rs.rows.length - num_of_head, this.rs.rows.length)
+        .forEach((row, idx) => {
+          const retRow = new Array<any>();
+          rdhKeys.forEach((key) => {
+            const label = withCodeLabel
+              ? this.resolveCodeLabel(row, key.name)
+              : undefined;
+            const ruleMarker = withRuleViolation
+              ? this.resolveRuleMarkers(row, key.name)
+              : undefined;
+            retRow.push(
+              this.toHtmlString(row.values[key.name], maxCellValueLength, {
+                keyType: key.type,
+                label,
+                ruleMarker,
+              }),
+            );
+          });
+          pushLine(
+            withRowNo
+              ? `${this.rs.rows.length - num_of_head + idx + 1}`
+              : undefined,
+            retRow,
+            false,
+          );
+        });
+    }
+
+    retList.push('</tbody>');
+    retList.push('</table>');
+    retList.push('</div>');
+    const s = retList.join(os.EOL);
+    if (withRuleViolation && this.rs.meta?.ruleViolationSummary) {
+      retList.push('<blockquote>');
+      retList.push('<div class="content is-small">');
+      retList.push('<ul>');
+      const { ruleViolationSummary } = this.rs.meta;
+      Object.keys(ruleViolationSummary).forEach((ruleName, idx) => {
+        retList.push(
+          `<li>*${idx + 1}: ${this.toHtmlString(
+            ruleName,
+            maxCellValueLength,
+          )}: ${this.toHtmlString(
+            ruleViolationSummary[ruleName],
+            maxCellValueLength,
+          )}</li>`,
+        );
+      });
+      retList.push('</ul>');
+      retList.push('</deiv>');
+      retList.push('</blockquote>');
+    }
+
+    return retList.join(os.EOL) + os.EOL;
+  }
+
   toString(params?: ToStringParam): string {
     const {
       maxPrintLines,
@@ -1141,7 +1329,7 @@ export class ResultSetDataBuilder {
     }
     rdhKeys.forEach((k) => buf.d(k.name));
     buf.nl();
-    if (withComment) {
+    if (withComment && this.hasKeyComment()) {
       if (withRowNo) {
         buf.d('');
       }
@@ -1514,6 +1702,51 @@ export class ResultSetDataBuilder {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/(\r?\n)/g, '<br>')}`;
+    return s;
+  }
+
+  private toHtmlString(
+    o: any,
+    maxCellValueLength: number,
+    opt?: {
+      keyType?: GeneralColumnType;
+      label?: CodeResolvedAnnotation['values'];
+      ruleMarker?: string;
+    },
+  ): string {
+    let s;
+    if (o === null || o === undefined) {
+      s = '<span class="tag is-light">NULL</span>';
+    } else {
+      s = '' + o;
+      if (isDateTimeOrDate(opt?.keyType)) {
+        s = dayjs(o).format('YYYY-MM-DD HH:mm:ss');
+      } else if (isJsonLike(opt?.keyType)) {
+        try {
+          if (typeof o === 'object' || Array.isArray(o)) {
+            s = JSON.stringify(o);
+          }
+          // eslint-disable-next-line no-empty
+        } catch (_) {}
+      }
+      s = escapeHtml(abbr(s, maxCellValueLength));
+      if (opt?.label) {
+        if (opt.label.isUndefined) {
+          s += ` <span class="tag is-danger is-light">${escapeHtml(
+            opt.label.label,
+          )}</span>`;
+        } else {
+          s += ` <span class="tag is-info is-light">${escapeHtml(
+            opt.label.label,
+          )}</span>`;
+        }
+      }
+    }
+    if (opt?.ruleMarker) {
+      s = `<span class="tag is-info is-light">${escapeHtml(
+        opt.ruleMarker,
+      )}</span> <span class="tag is-success is-light">${escapeHtml(s)}</span>`;
+    }
     return s;
   }
 

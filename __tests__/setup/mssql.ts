@@ -1,7 +1,7 @@
 import * as mssql from 'mssql';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { DbResource, fromJson } from '../../src';
+import { DbResource, fromJson, parseCsvFromFile } from '../../src';
 
 const baseConnectOption0: mssql.config = {
   server: '127.0.0.1',
@@ -260,6 +260,288 @@ export async function init(): Promise<void> {
           VALUES (@1, @2, @3, @4)`,
         binds3,
       );
+
+      await q('DROP TABLE IF EXISTS iris');
+      await q(CREATE_IRIS_TABLE_STATEMENT);
+
+      const irisResult = await parseCsvFromFile(
+        path.join(dataFolder, 'iris.csv'),
+        {
+          columns: true,
+          cast: true,
+        },
+      );
+      for (const row of irisResult.rs.rows) {
+        const { values } = row;
+        const binds = [
+          values['sepal.length'],
+          values['sepal.width'],
+          values['petal.length'],
+          values['petal.width'],
+          values['variety'],
+        ];
+        await pq(
+          `INSERT INTO iris (sepal_length, sepal_width,petal_length, petal_width,variety) 
+            VALUES (@1, @2, @3, @4, @5)`,
+          binds,
+        );
+      }
+
+      await q('DROP TABLE IF EXISTS weather');
+      await q(CREATE_WEATHER_TABLE_STATEMENT);
+
+      const weatherResult = await parseCsvFromFile(
+        path.join(dataFolder, 'weather.csv'),
+        {
+          columns: true,
+          cast: true,
+        },
+      );
+      for (const row of weatherResult.rs.rows) {
+        const { values } = row;
+        const binds = [
+          values['date'],
+          values['outlook'],
+          values['temperature'],
+          values['humidity'],
+          values['windy'],
+          values['play'] === 'yes',
+        ];
+        await pq(
+          `INSERT INTO weather (create_date,outlook, temperature,humidity, windy,play) 
+            VALUES (@1, @2, @3, @4, @5, @6)`,
+          binds,
+        );
+      }
+
+      await q('DROP TABLE IF EXISTS city');
+      await q(CREATE_CITY_TABLE_STATEMENT);
+
+      await q(`INSERT INTO city VALUES (1,'Kabul','AFG','Kabol',1780000)`);
+      await q(`INSERT INTO city VALUES (2,'Qandahar','AFG','Qandahar',237500)`);
+      await q(`INSERT INTO city VALUES (3,'Herat','AFG','Herat',186800)`);
+      await q(
+        `INSERT INTO city VALUES (4,'Mazar-e-Sharif','AFG','Balkh',127800)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (5,'Amsterdam','NLD','Noord-Holland',731200)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (6,'Rotterdam','NLD','Zuid-Holland',593321)`,
+      );
+      await q(`INSERT INTO city VALUES (7,'Haag','NLD','Zuid-Holland',440900)`);
+      await q(`INSERT INTO city VALUES (8,'Utrecht','NLD','Utrecht',234323)`);
+      await q(
+        `INSERT INTO city VALUES (9,'Eindhoven','NLD','Noord-Brabant',201843)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (10,'Tilburg','NLD','Noord-Brabant',193238)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (11,'Groningen','NLD','Groningen',172701)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (12,'Breda','NLD','Noord-Brabant',160398)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (13,'Apeldoorn','NLD','Gelderland',153491)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (14,'Nijmegen','NLD','Gelderland',152463)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (15,'Enschede','NLD','Overijssel',149544)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (16,'Haarlem','NLD','Noord-Holland',148772)`,
+      );
+      await q(`INSERT INTO city VALUES (17,'Almere','NLD','Flevoland',142465)`);
+      await q(
+        `INSERT INTO city VALUES (18,'Arnhem','NLD','Gelderland',138020)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (19,'Zaanstad','NLD','Noord-Holland',135621)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (20,'´s-Hertogenbosch','NLD','Noord-Brabant',129170)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (21,'Amersfoort','NLD','Utrecht',126270)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (22,'Maastricht','NLD','Limburg',122087)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (23,'Dordrecht','NLD','Zuid-Holland',119811)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (24,'Leiden','NLD','Zuid-Holland',117196)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (25,'Haarlemmermeer','NLD','Noord-Holland',110722)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (26,'Zoetermeer','NLD','Zuid-Holland',110214)`,
+      );
+      await q(`INSERT INTO city VALUES (27,'Emmen','NLD','Drenthe',105853)`);
+      await q(
+        `INSERT INTO city VALUES (28,'Zwolle','NLD','Overijssel',105819)`,
+      );
+      await q(`INSERT INTO city VALUES (29,'Ede','NLD','Gelderland',101574)`);
+      await q(
+        `INSERT INTO city VALUES (30,'Delft','NLD','Zuid-Holland',95268)`,
+      );
+
+      await q(`INSERT INTO city VALUES (31,'Heerlen','NLD','Limburg',95052)`);
+      await q(
+        `INSERT INTO city VALUES (32,'Alkmaar','NLD','Noord-Holland',92713)`,
+      );
+      await q(`INSERT INTO city VALUES (33,'Willemstad','ANT','Curaçao',2345)`);
+      await q(`INSERT INTO city VALUES (34,'Tirana','ALB','Tirana',270000)`);
+      await q(`INSERT INTO city VALUES (35,'Alger','DZA','Alger',2168000)`);
+      await q(`INSERT INTO city VALUES (36,'Oran','DZA','Oran',609823)`);
+      await q(
+        `INSERT INTO city VALUES (37,'Constantine','DZA','Constantine',443727)`,
+      );
+      await q(`INSERT INTO city VALUES (38,'Annaba','DZA','Annaba',222518)`);
+      await q(`INSERT INTO city VALUES (39,'Batna','DZA','Batna',183377)`);
+      await q(`INSERT INTO city VALUES (40,'Sétif','DZA','Sétif',179055)`);
+      await q(
+        `INSERT INTO city VALUES (41,'Sidi Bel Abbès','DZA','Sidi Bel Abbès',153106)`,
+      );
+      await q(`INSERT INTO city VALUES (42,'Skikda','DZA','Skikda',128747)`);
+      await q(`INSERT INTO city VALUES (43,'Biskra','DZA','Biskra',128281)`);
+      await q(
+        `INSERT INTO city VALUES (44,'Blida (el-Boulaida)','DZA','Blida',127284)`,
+      );
+      await q(`INSERT INTO city VALUES (45,'Béjaïa','DZA','Béjaïa',117162)`);
+      await q(
+        `INSERT INTO city VALUES (46,'Mostaganem','DZA','Mostaganem',115212)`,
+      );
+      await q(`INSERT INTO city VALUES (47,'Tébessa','DZA','Tébessa',112007)`);
+      await q(
+        `INSERT INTO city VALUES (48,'Tlemcen (Tilimsen)','DZA','Tlemcen',110242)`,
+      );
+      await q(`INSERT INTO city VALUES (49,'Béchar','DZA','Béchar',107311)`);
+      await q(`INSERT INTO city VALUES (50,'Tiaret','DZA','Tiaret',100118)`);
+      await q(
+        `INSERT INTO city VALUES (51,'Ech-Chleff (el-Asnam)','DZA','Chlef',96794)`,
+      );
+      await q(`INSERT INTO city VALUES (52,'Ghardaïa','DZA','Ghardaïa',89415)`);
+      await q(`INSERT INTO city VALUES (53,'Tafuna','ASM','Tutuila',5200)`);
+      await q(`INSERT INTO city VALUES (54,'Fagatogo','ASM','Tutuila',2323)`);
+      await q(
+        `INSERT INTO city VALUES (55,'Andorra la Vella','AND','Andorra la Vella',21189)`,
+      );
+      await q(`INSERT INTO city VALUES (56,'Luanda','AGO','Luanda',2022000)`);
+      await q(`INSERT INTO city VALUES (57,'Huambo','AGO','Huambo',163100)`);
+      await q(`INSERT INTO city VALUES (58,'Lobito','AGO','Benguela',130000)`);
+      await q(
+        `INSERT INTO city VALUES (59,'Benguela','AGO','Benguela',128300)`,
+      );
+      await q(`INSERT INTO city VALUES (60,'Namibe','AGO','Namibe',118200)`);
+      await q(`INSERT INTO city VALUES (61,'South Hill','AIA','–',961)`);
+      await q(`INSERT INTO city VALUES (62,'The Valley','AIA','–',595)`);
+      await q(
+        `INSERT INTO city VALUES (63,'Saint John´s','ATG','St John',24000)`,
+      );
+      await q(`INSERT INTO city VALUES (64,'Dubai','ARE','Dubai',669181)`);
+      await q(
+        `INSERT INTO city VALUES (65,'Abu Dhabi','ARE','Abu Dhabi',398695)`,
+      );
+      await q(`INSERT INTO city VALUES (66,'Sharja','ARE','Sharja',320095)`);
+      await q(`INSERT INTO city VALUES (67,'al-Ayn','ARE','Abu Dhabi',225970)`);
+      await q(`INSERT INTO city VALUES (68,'Ajman','ARE','Ajman',114395)`);
+      await q(
+        `INSERT INTO city VALUES (69,'Buenos Aires','ARG','Distrito Federal',2982146)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (70,'La Matanza','ARG','Buenos Aires',1266461)`,
+      );
+      await q(`INSERT INTO city VALUES (71,'Córdoba','ARG','Córdoba',1157507)`);
+      await q(`INSERT INTO city VALUES (72,'Rosario','ARG','Santa Fé',907718)`);
+      await q(
+        `INSERT INTO city VALUES (73,'Lomas de Zamora','ARG','Buenos Aires',622013)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (74,'Quilmes','ARG','Buenos Aires',559249)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (75,'Almirante Brown','ARG','Buenos Aires',538918)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (76,'La Plata','ARG','Buenos Aires',521936)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (77,'Mar del Plata','ARG','Buenos Aires',512880)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (78,'San Miguel de Tucumán','ARG','Tucumán',470809)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (79,'Lanús','ARG','Buenos Aires',469735)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (80,'Merlo','ARG','Buenos Aires',463846)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (81,'General San Martín','ARG','Buenos Aires',422542)`,
+      );
+      await q(`INSERT INTO city VALUES (82,'Salta','ARG','Salta',367550)`);
+      await q(
+        `INSERT INTO city VALUES (83,'Moreno','ARG','Buenos Aires',356993)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (84,'Santa Fé','ARG','Santa Fé',353063)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (85,'Avellaneda','ARG','Buenos Aires',353046)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (86,'Tres de Febrero','ARG','Buenos Aires',352311)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (87,'Morón','ARG','Buenos Aires',349246)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (88,'Florencio Varela','ARG','Buenos Aires',315432)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (89,'San Isidro','ARG','Buenos Aires',306341)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (90,'Tigre','ARG','Buenos Aires',296226)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (91,'Malvinas Argentinas','ARG','Buenos Aires',290335)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (92,'Vicente López','ARG','Buenos Aires',288341)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (93,'Berazategui','ARG','Buenos Aires',276916)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (94,'Corrientes','ARG','Corrientes',258103)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (95,'San Miguel','ARG','Buenos Aires',248700)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (96,'Bahía Blanca','ARG','Buenos Aires',239810)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (97,'Esteban Echeverría','ARG','Buenos Aires',235760)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (98,'Resistencia','ARG','Chaco',229212)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (99,'José C. Paz','ARG','Buenos Aires',221754)`,
+      );
+      await q(
+        `INSERT INTO city VALUES (100,'Paraná','ARG','Entre Rios',207041)`,
+      );
     }
   } finally {
     if (con) {
@@ -385,3 +667,28 @@ const CREATE_ORDER_DETAIL_TABLE_STATEMENT = `CREATE TABLE schema0.order_detail (
   FOREIGN KEY (order_no) REFERENCES schema0.order1(order_no)
 )
 `;
+
+const CREATE_IRIS_TABLE_STATEMENT = `CREATE TABLE iris (
+  sepal_length NUMERIC(7,1), 
+  sepal_width NUMERIC(7,1),
+  petal_length NUMERIC(7,1), 
+  petal_width NUMERIC(7,1),
+  variety varchar(255)
+)`;
+
+const CREATE_WEATHER_TABLE_STATEMENT = `CREATE TABLE weather (
+  create_date DATE,
+  outlook text, 
+  temperature NUMERIC(7,1),
+  humidity text, 
+  windy BIT,
+  play BIT
+)`;
+
+const CREATE_CITY_TABLE_STATEMENT = `CREATE TABLE city (
+  id int PRIMARY KEY,
+  name char(35), 
+  country_code char(3),
+  district char(20), 
+  population int
+)`;

@@ -155,12 +155,15 @@ export class MySQLDriver extends RDSBaseDriver {
       const results = rows as ResultSetHeader;
 
       rdb = new ResultSetDataBuilder([
-        'fieldCount',
-        'affectedRows',
-        'insertId',
-        'serverStatus',
-        'warningStatus',
-        'changedRows',
+        createRdhKey({ name: 'fieldCount', type: GeneralColumnType.INTEGER }),
+        createRdhKey({ name: 'affectedRows', type: GeneralColumnType.INTEGER }),
+        createRdhKey({ name: 'insertId', type: GeneralColumnType.INTEGER }),
+        createRdhKey({ name: 'serverStatus', type: GeneralColumnType.INTEGER }),
+        createRdhKey({
+          name: 'warningStatus',
+          type: GeneralColumnType.INTEGER,
+        }),
+        createRdhKey({ name: 'changedRows', type: GeneralColumnType.INTEGER }),
       ]);
 
       rdb.addRow({

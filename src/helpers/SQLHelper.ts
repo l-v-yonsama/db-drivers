@@ -563,6 +563,7 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
     /\s*WAITFOR\s+DELAY\s+'([\d:]+)'/i,
     'SELECT pg_sleep(1)',
   );
+  replacedSql = replacedSql.replace(/\bWITHIN\s+GROUP\s*\([^)]+?\)/gi, ' ');
 
   // Unexpected kw_authorization token: "authorization".
   replacedSql = replacedSql.replace(/\b(authorization)/i, '$1_1');

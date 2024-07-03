@@ -183,7 +183,12 @@ export class PostgresDriver extends RDSBaseDriver {
           selectedRows: rdb.rs.rows.length,
         });
       } else {
-        rdb = new ResultSetDataBuilder(['affectedRows']);
+        rdb = new ResultSetDataBuilder([
+          createRdhKey({
+            name: 'affectedRows',
+            type: GeneralColumnType.INTEGER,
+          }),
+        ]);
         rdb.addRow({ affectedRows: results.rowCount });
 
         rdb.setSummary({

@@ -57,3 +57,19 @@ export const decodeJwt = (
   const payload = jwtDecode(token);
   return { header, payload };
 };
+
+export const escapeHtml = (s: string): string => {
+  if (typeof s !== 'string') {
+    return s;
+  }
+  return s.replace(/[&'`"<>]/g, function (match) {
+    return {
+      '&': '&amp;',
+      "'": '&#x27;',
+      '`': '&#x60;',
+      '"': '&quot;',
+      '<': '&lt;',
+      '>': '&gt;',
+    }[match];
+  });
+};

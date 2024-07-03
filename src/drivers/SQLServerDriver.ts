@@ -226,7 +226,9 @@ export class SQLServerDriver extends RDSBaseDriver {
     const columns: ResultColumn[] | undefined = result['columns']?.[0];
 
     if (columns === undefined) {
-      rdb = new ResultSetDataBuilder(['affectedRows']);
+      rdb = new ResultSetDataBuilder([
+        createRdhKey({ name: 'affectedRows', type: GeneralColumnType.INTEGER }),
+      ]);
       rdb.addRow({
         affectedRows: result.rowsAffected[0],
       });
