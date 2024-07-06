@@ -59,7 +59,7 @@ describe('PostgresDriver', () => {
   let driver: PostgresDriver;
 
   beforeAll(async () => {
-    driver = createDriver();
+    driver = createRDSDriver();
 
     await init();
   });
@@ -248,7 +248,7 @@ describe('PostgresDriver', () => {
     };
 
     it('should be commited', async () => {
-      const driver2 = createDriver();
+      const driver2 = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driver2);
 
@@ -285,7 +285,7 @@ describe('PostgresDriver', () => {
     };
 
     it('should rollback', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -316,7 +316,7 @@ describe('PostgresDriver', () => {
     });
 
     it('should commit on success', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -347,7 +347,7 @@ describe('PostgresDriver', () => {
     });
 
     it('should rollback on error', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -381,7 +381,7 @@ describe('PostgresDriver', () => {
     });
 
     it('should commit on error', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -442,7 +442,7 @@ describe('PostgresDriver', () => {
     });
   });
 
-  function createDriver(): PostgresDriver {
+  function createRDSDriver(): PostgresDriver {
     return new PostgresDriver(connectOption);
   }
 });

@@ -8,6 +8,7 @@
 
 - [closeAll](DBDriverResolver.md#closeall)
 - [createDriver](DBDriverResolver.md#createdriver)
+- [createRDSDriver](DBDriverResolver.md#createrdsdriver)
 - [flowTransaction](DBDriverResolver.md#flowtransaction)
 - [getDriverById](DBDriverResolver.md#getdriverbyid)
 - [removeDriver](DBDriverResolver.md#removedriver)
@@ -26,7 +27,7 @@
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:121](https://github.com/l-v-yonsama/db-drivers/blob/06a0bd6/src/drivers/DBDriverResolver.ts#L121)
+[src/drivers/DBDriverResolver.ts:130](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/DBDriverResolver.ts#L130)
 
 ___
 
@@ -52,7 +53,33 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/06a0bd6/src/drivers/DBDriverResolver.ts#L46)
+[src/drivers/DBDriverResolver.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/DBDriverResolver.ts#L54)
+
+___
+
+### createRDSDriver
+
+▸ **createRDSDriver**<`T`\>(`setting`): `T`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends [`RDSBaseDriver`](RDSBaseDriver.md)<`T`\> |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `setting` | [`ConnectionSetting`](../modules.md#connectionsetting) |
+
+#### Returns
+
+`T`
+
+#### Defined in
+
+[src/drivers/DBDriverResolver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/DBDriverResolver.ts#L47)
 
 ___
 
@@ -82,7 +109,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:104](https://github.com/l-v-yonsama/db-drivers/blob/06a0bd6/src/drivers/DBDriverResolver.ts#L104)
+[src/drivers/DBDriverResolver.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/DBDriverResolver.ts#L113)
 
 ___
 
@@ -102,7 +129,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/06a0bd6/src/drivers/DBDriverResolver.ts#L37)
+[src/drivers/DBDriverResolver.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/DBDriverResolver.ts#L38)
 
 ___
 
@@ -122,7 +149,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:117](https://github.com/l-v-yonsama/db-drivers/blob/06a0bd6/src/drivers/DBDriverResolver.ts#L117)
+[src/drivers/DBDriverResolver.ts:126](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/DBDriverResolver.ts#L126)
 
 ___
 
@@ -150,7 +177,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/06a0bd6/src/drivers/DBDriverResolver.ts#L94)
+[src/drivers/DBDriverResolver.ts:103](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/DBDriverResolver.ts#L103)
 
 ___
 
@@ -164,4 +191,4 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/06a0bd6/src/drivers/DBDriverResolver.ts#L25)
+[src/drivers/DBDriverResolver.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/DBDriverResolver.ts#L26)

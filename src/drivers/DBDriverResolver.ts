@@ -14,6 +14,7 @@ import { RDSBaseDriver } from './RDSBaseDriver';
 import { KeycloakDriver } from './KeycloakDriver';
 import { Auth0Driver } from './Auth0Driver';
 import { SQLServerDriver } from './SQLServerDriver';
+import { isRDSType } from '../utils';
 
 const uid = new ShortUniqueId();
 
@@ -41,6 +42,13 @@ export class DBDriverResolver {
       );
     }
     return this.driverMap.get(connectionId);
+  }
+
+  createRDSDriver<T extends RDSBaseDriver>(setting: ConnectionSetting): T {
+    if (!isRDSType(setting.dbType)) {
+      throw new Error(`${setting.dbType} is not a relational database`);
+    }
+    return this.createDriver<T>(setting);
   }
 
   createDriver<T extends BaseDriver>(setting: ConnectionSetting): T {
@@ -87,6 +95,7 @@ export class DBDriverResolver {
       default:
         throw new Error(`${conRes.dbType} is not supported.`);
     }
+
     this.driverMap.set(conRes.id, driver);
     return driver as T;
   }

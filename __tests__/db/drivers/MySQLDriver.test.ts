@@ -30,7 +30,7 @@ describe('MySQLDriver', () => {
   let driver: MySQLDriver;
 
   beforeAll(async () => {
-    driver = createDriver();
+    driver = createRDSDriver();
 
     await init();
   });
@@ -293,7 +293,7 @@ describe('MySQLDriver', () => {
     };
 
     it('should be commited', async () => {
-      const driver2 = createDriver();
+      const driver2 = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driver2);
 
@@ -330,7 +330,7 @@ describe('MySQLDriver', () => {
     };
 
     it('should rollback', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -361,7 +361,7 @@ describe('MySQLDriver', () => {
     });
 
     it('should commit on success', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -392,7 +392,7 @@ describe('MySQLDriver', () => {
     });
 
     it('should rollback on error', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -426,7 +426,7 @@ describe('MySQLDriver', () => {
     });
 
     it('should commit on error', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -487,7 +487,7 @@ describe('MySQLDriver', () => {
     });
   });
 
-  function createDriver(): MySQLDriver {
+  function createRDSDriver(): MySQLDriver {
     return new MySQLDriver(connectOption);
   }
 });

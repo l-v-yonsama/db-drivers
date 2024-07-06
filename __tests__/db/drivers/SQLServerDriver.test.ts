@@ -33,7 +33,7 @@ describe('SQLServerDriver', () => {
   let driver: SQLServerDriver;
 
   beforeAll(async () => {
-    driver = createDriver();
+    driver = createRDSDriver();
 
     await init0();
     await init();
@@ -242,7 +242,7 @@ describe('SQLServerDriver', () => {
     };
 
     it('should be commited', async () => {
-      const driver2 = createDriver();
+      const driver2 = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driver2);
 
@@ -279,7 +279,7 @@ describe('SQLServerDriver', () => {
     };
 
     it('should rollback', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -310,7 +310,7 @@ describe('SQLServerDriver', () => {
     });
 
     it('should commit on success', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -341,7 +341,7 @@ describe('SQLServerDriver', () => {
     });
 
     it('should rollback on error', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -375,7 +375,7 @@ describe('SQLServerDriver', () => {
     });
 
     it('should commit on error', async () => {
-      const driverForFlow = createDriver();
+      const driverForFlow = createRDSDriver();
 
       const kingsSalBeforeUpdate = await getSal(driverForFlow);
 
@@ -409,7 +409,7 @@ describe('SQLServerDriver', () => {
     });
   });
 
-  function createDriver(): SQLServerDriver {
+  function createRDSDriver(): SQLServerDriver {
     return new SQLServerDriver(connectOption);
   }
 });

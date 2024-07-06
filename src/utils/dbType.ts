@@ -6,6 +6,7 @@ export const isRDSType = (dbType: DBType): boolean => {
   switch (dbType) {
     case DBType.MySQL:
     case DBType.Postgres:
+    case DBType.SQLServer:
       return true;
   }
   return false;
