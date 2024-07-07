@@ -20,6 +20,7 @@ import {
   TableRule,
   TableRuleDetail,
   ToStringParam,
+  UpdateAnnotation,
   isResultSetData,
 } from '../types';
 import dayjs from 'dayjs';
@@ -1145,16 +1146,25 @@ export class ResultSetDataBuilder {
     retList.push('<thead>');
     const pushLine = (
       sRow: string | undefined,
-      elms: string[],
+      elms: (string | { s: string; clazz: string })[],
       isHead: boolean,
+      rowClass?: string,
     ): void => {
       const tag = isHead ? 'th' : 'td';
       const rowValues: string[] = [];
       if (sRow !== undefined) {
         rowValues.push(`<${tag}>${sRow}</${tag}>`);
       }
-      elms.forEach((it) => rowValues.push(`<${tag}>${it}</${tag}>`));
-      retList.push(`  <tr>${rowValues.join('')}</tr>`);
+      elms.forEach((it) => {
+        if (typeof it === 'string') {
+          rowValues.push(`<${tag}>${it}</${tag}>`);
+        } else {
+          rowValues.push(`<${tag} class="${it.clazz}">${it.s}</${tag}>`);
+        }
+      });
+      retList.push(
+        `  <tr class="${rowClass ?? ''}">${rowValues.join('')}</tr>`,
+      );
     };
 
     pushLine(
@@ -1188,48 +1198,60 @@ export class ResultSetDataBuilder {
     retList.push('</thead>');
     retList.push('<tbody>');
 
-    if (this.rs.rows.length <= maxPrintLines) {
-      this.rs.rows.forEach((row, idx) => {
-        const retRow = new Array<any>();
-        rdhKeys.forEach((key) => {
-          const label = withCodeLabel
-            ? this.resolveCodeLabel(row, key.name)
-            : undefined;
-          const ruleMarker = withRuleViolation
-            ? this.resolveRuleMarkers(row, key.name)
-            : undefined;
+    const pushRowData = (row: RdhRow, rowNo: number): void => {
+      let rowClass = '';
+      const inserted = RowHelper.hasAnnotation(row, 'Add');
+      let removed = false;
+      let updated = false;
+      if (inserted) {
+        rowClass = 'is-primary is-light';
+      } else {
+        removed = RowHelper.hasAnnotation(row, 'Del');
+        if (removed) {
+          rowClass = 'is-danger is-light';
+        }
+      }
+      if (!inserted && !removed) {
+        updated = RowHelper.hasAnnotation(row, 'Upd');
+      }
 
-          retRow.push(
-            this.toHtmlString(row.values[key.name], maxCellValueLength, {
-              keyType: key.type,
-              label,
-              ruleMarker,
-            }),
+      const retRow = new Array<any>();
+      rdhKeys.forEach((key) => {
+        const label = withCodeLabel
+          ? this.resolveCodeLabel(row, key.name)
+          : undefined;
+        const ruleMarker = withRuleViolation
+          ? this.resolveRuleMarkers(row, key.name)
+          : undefined;
+
+        let cellUpdatedAnno = undefined;
+        if (updated) {
+          cellUpdatedAnno = RowHelper.getFirstAnnotationOf<UpdateAnnotation>(
+            row,
+            key.name,
+            'Upd',
           );
+        }
+
+        retRow.push({
+          clazz: cellUpdatedAnno ? 'is-info is-light' : '',
+          s: this.toHtmlString(row.values[key.name], maxCellValueLength, {
+            keyType: key.type,
+            label,
+            ruleMarker,
+          }),
         });
-        pushLine(withRowNo ? `${idx + 1}` : undefined, retRow, false);
       });
+      pushLine(withRowNo ? `${rowNo}` : undefined, retRow, false, rowClass);
+    };
+
+    if (this.rs.rows.length <= maxPrintLines) {
+      this.rs.rows.forEach((row, idx) => pushRowData(row, idx + 1));
     } else {
       const num_of_head = Math.ceil(maxPrintLines / 2);
-      this.rs.rows.slice(0, num_of_head).forEach((row, idx) => {
-        const retRow = new Array<any>();
-        rdhKeys.forEach((key) => {
-          const label = withCodeLabel
-            ? this.resolveCodeLabel(row, key.name)
-            : undefined;
-          const ruleMarker = withRuleViolation
-            ? this.resolveRuleMarkers(row, key.name)
-            : undefined;
-          retRow.push(
-            this.toHtmlString(row.values[key.name], maxCellValueLength, {
-              keyType: key.type,
-              label,
-              ruleMarker,
-            }),
-          );
-        });
-        pushLine(withRowNo ? `${idx + 1}` : undefined, retRow, false);
-      });
+      this.rs.rows
+        .slice(0, num_of_head)
+        .forEach((row, idx) => pushRowData(row, idx + 1));
       const retRow = new Array<string>();
       rdhKeys.forEach(() => {
         retRow.push('...');
@@ -1237,31 +1259,9 @@ export class ResultSetDataBuilder {
       pushLine(withRowNo ? '...' : undefined, retRow, false);
       this.rs.rows
         .slice(this.rs.rows.length - num_of_head, this.rs.rows.length)
-        .forEach((row, idx) => {
-          const retRow = new Array<any>();
-          rdhKeys.forEach((key) => {
-            const label = withCodeLabel
-              ? this.resolveCodeLabel(row, key.name)
-              : undefined;
-            const ruleMarker = withRuleViolation
-              ? this.resolveRuleMarkers(row, key.name)
-              : undefined;
-            retRow.push(
-              this.toHtmlString(row.values[key.name], maxCellValueLength, {
-                keyType: key.type,
-                label,
-                ruleMarker,
-              }),
-            );
-          });
-          pushLine(
-            withRowNo
-              ? `${this.rs.rows.length - num_of_head + idx + 1}`
-              : undefined,
-            retRow,
-            false,
-          );
-        });
+        .forEach((row, idx) =>
+          pushRowData(row, this.rs.rows.length - num_of_head + idx + 1),
+        );
     }
 
     retList.push('</tbody>');

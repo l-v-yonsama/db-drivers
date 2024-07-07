@@ -89,7 +89,7 @@
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L82)
+[src/drivers/KeycloakDriver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L82)
 
 ## Properties
 
@@ -103,7 +103,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L51)
+[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L51)
 
 ___
 
@@ -117,7 +117,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L50)
+[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L50)
 
 ___
 
@@ -131,7 +131,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L53)
 
 ___
 
@@ -145,7 +145,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L52)
+[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L52)
 
 ## Methods
 
@@ -163,7 +163,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:1157](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L1157)
+[src/drivers/KeycloakDriver.ts:1157](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L1157)
 
 ___
 
@@ -181,7 +181,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L159)
+[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L159)
 
 ___
 
@@ -199,7 +199,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L86)
+[src/drivers/KeycloakDriver.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L86)
 
 ___
 
@@ -217,7 +217,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L133)
+[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L133)
 
 ___
 
@@ -237,7 +237,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:559](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L559)
+[src/drivers/KeycloakDriver.ts:559](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L559)
 
 ___
 
@@ -262,7 +262,7 @@ GET /admin/realms/{realm}/clients/{id}/offline-session-count
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:657](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L657)
+[src/drivers/KeycloakDriver.ts:657](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L657)
 
 ___
 
@@ -287,7 +287,7 @@ GET /admin/realms/{realm}/clients/{id}/session-count
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:682](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L682)
+[src/drivers/KeycloakDriver.ts:682](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L682)
 
 ___
 
@@ -307,7 +307,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L239)
+[src/drivers/KeycloakDriver.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L239)
 
 ___
 
@@ -332,7 +332,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L225)
+[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L225)
 
 ___
 
@@ -356,7 +356,7 @@ POST /admin/realms/{realm}/groups
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:434](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L434)
+[src/drivers/KeycloakDriver.ts:434](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L434)
 
 ___
 
@@ -380,7 +380,7 @@ POST /admin/realms
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:577](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L577)
+[src/drivers/KeycloakDriver.ts:577](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L577)
 
 ___
 
@@ -403,7 +403,7 @@ POST /admin/realms/{realm}/roles
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:293](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L293)
+[src/drivers/KeycloakDriver.ts:293](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L293)
 
 ___
 
@@ -426,7 +426,7 @@ POST /admin/realms/{realm}/users
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:191](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L191)
+[src/drivers/KeycloakDriver.ts:191](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L191)
 
 ___
 
@@ -444,7 +444,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L178)
+[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L178)
 
 ___
 
@@ -474,7 +474,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L101)
+[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L101)
 
 ___
 
@@ -488,7 +488,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:103](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L103)
+[src/drivers/KeycloakDriver.ts:103](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L103)
 
 ___
 
@@ -512,7 +512,7 @@ GET /admin/realms/{realm}/client-session-stats
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:707](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L707)
+[src/drivers/KeycloakDriver.ts:707](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L707)
 
 ___
 
@@ -532,7 +532,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:612](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L612)
+[src/drivers/KeycloakDriver.ts:612](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L612)
 
 ___
 
@@ -550,7 +550,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L63)
+[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L63)
 
 ___
 
@@ -568,7 +568,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L219)
+[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L219)
 
 ___
 
@@ -588,7 +588,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:503](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L503)
+[src/drivers/KeycloakDriver.ts:503](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L503)
 
 ___
 
@@ -608,7 +608,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:485](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L485)
+[src/drivers/KeycloakDriver.ts:485](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L485)
 
 ___
 
@@ -626,7 +626,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L204)
+[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L204)
 
 ___
 
@@ -644,7 +644,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:1027](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L1027)
+[src/drivers/KeycloakDriver.ts:1027](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L1027)
 
 ___
 
@@ -662,7 +662,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -683,7 +683,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:596](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L596)
+[src/drivers/KeycloakDriver.ts:596](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L596)
 
 ___
 
@@ -703,7 +703,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:384](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L384)
+[src/drivers/KeycloakDriver.ts:384](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L384)
 
 ___
 
@@ -726,7 +726,7 @@ GET /admin/realms/{realm}/roles
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:359](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L359)
+[src/drivers/KeycloakDriver.ts:359](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L359)
 
 ___
 
@@ -749,7 +749,7 @@ GET /admin/realms/{realm}/clients/{id}/user-sessions
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:743](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L743)
+[src/drivers/KeycloakDriver.ts:743](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L743)
 
 ___
 
@@ -769,7 +769,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:221](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L221)
+[src/drivers/KeycloakDriver.ts:221](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L221)
 
 ___
 
@@ -793,7 +793,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:136](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L136)
+[src/drivers/KeycloakDriver.ts:136](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L136)
 
 ___
 
@@ -811,7 +811,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L67)
 
 ___
 
@@ -829,7 +829,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L71)
+[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L71)
 
 ___
 
@@ -853,7 +853,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L74)
+[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L74)
 
 ___
 
@@ -876,7 +876,7 @@ GET /admin/realms/{realm}/groups/{id}/members
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:537](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L537)
+[src/drivers/KeycloakDriver.ts:537](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L537)
 
 ___
 
@@ -900,7 +900,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/BaseDriver.ts#L85)
+[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L85)
 
 ___
 
@@ -924,7 +924,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:792](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L792)
+[src/drivers/KeycloakDriver.ts:792](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L792)
 
 ___
 
@@ -947,7 +947,7 @@ PUT /admin/realms/{realm}/users/{id}/reset-password
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:264](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L264)
+[src/drivers/KeycloakDriver.ts:264](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L264)
 
 ___
 
@@ -971,7 +971,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:163](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L163)
+[src/drivers/KeycloakDriver.ts:163](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L163)
 
 ___
 
@@ -991,7 +991,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:630](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L630)
+[src/drivers/KeycloakDriver.ts:630](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L630)
 
 ___
 
@@ -1014,7 +1014,7 @@ PUT /admin/realms/{realm}/groups/{id}
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:468](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L468)
+[src/drivers/KeycloakDriver.ts:468](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L468)
 
 ___
 
@@ -1037,7 +1037,7 @@ PUT /admin/realms/{realm}/roles-by-id/{role-id}
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:330](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L330)
+[src/drivers/KeycloakDriver.ts:330](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L330)
 
 ___
 
@@ -1057,4 +1057,4 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/6b82ef0/src/drivers/KeycloakDriver.ts#L207)
+[src/drivers/KeycloakDriver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L207)
