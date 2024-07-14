@@ -28,7 +28,6 @@
 - [commit](MySQLDriver.md#commit)
 - [connect](MySQLDriver.md#connect)
 - [connectSub](MySQLDriver.md#connectsub)
-- [connectToSshServer](MySQLDriver.md#connecttosshserver)
 - [connectWithTest](MySQLDriver.md#connectwithtest)
 - [count](MySQLDriver.md#count)
 - [countSql](MySQLDriver.md#countsql)
@@ -73,7 +72,7 @@
 
 ### constructor
 
-• **new MySQLDriver**(`conRes`)
+• **new MySQLDriver**(`conRes`): [`MySQLDriver`](MySQLDriver.md)
 
 #### Parameters
 
@@ -81,13 +80,17 @@
 | :------ | :------ |
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 
+#### Returns
+
+[`MySQLDriver`](MySQLDriver.md)
+
 #### Overrides
 
 [RDSBaseDriver](RDSBaseDriver.md).[constructor](RDSBaseDriver.md#constructor)
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L26)
+[src/drivers/MySQLDriver.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L20)
 
 ## Properties
 
@@ -101,7 +104,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L51)
+[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L44)
 
 ___
 
@@ -115,7 +118,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L50)
+[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L43)
 
 ___
 
@@ -129,7 +132,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L46)
 
 ___
 
@@ -143,17 +146,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L52)
+[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L45)
 
 ## Methods
 
 ### begin
 
-▸ **begin**(): `Promise`<`void`\>
+▸ **begin**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -161,17 +164,17 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L30)
+[src/drivers/MySQLDriver.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L24)
 
 ___
 
 ### closeSub
 
-▸ **closeSub**(): `Promise`<`string`\>
+▸ **closeSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -179,17 +182,17 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:484](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L484)
+[src/drivers/MySQLDriver.ts:478](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L478)
 
 ___
 
 ### commit
 
-▸ **commit**(): `Promise`<`void`\>
+▸ **commit**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -197,17 +200,17 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L34)
+[src/drivers/MySQLDriver.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L28)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -215,13 +218,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L159)
+[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L152)
 
 ___
 
 ### connectSub
 
-▸ **connectSub**(`autoCommit?`): `Promise`<`string`\>
+▸ **connectSub**(`autoCommit?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -231,7 +234,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -239,35 +242,17 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:238](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L238)
-
-___
-
-### connectToSshServer
-
-▸ **connectToSshServer**(): `Promise`<`string`\>
-
-#### Returns
-
-`Promise`<`string`\>
-
-#### Inherited from
-
-[RDSBaseDriver](RDSBaseDriver.md).[connectToSshServer](RDSBaseDriver.md#connecttosshserver)
-
-#### Defined in
-
-[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L133)
+[src/drivers/RDSBaseDriver.ts:237](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L237)
 
 ___
 
 ### connectWithTest
 
-▸ **connectWithTest**(): `Promise`<`string`\>
+▸ **connectWithTest**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -275,13 +260,13 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:80](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L80)
+[src/drivers/MySQLDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L74)
 
 ___
 
 ### count
 
-▸ **count**(`params`): `Promise`<`number`\>
+▸ **count**(`params`): `Promise`\<`number`\>
 
 #### Parameters
 
@@ -291,7 +276,7 @@ ___
 
 #### Returns
 
-`Promise`<`number`\>
+`Promise`\<`number`\>
 
 #### Inherited from
 
@@ -299,13 +284,13 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L47)
+[src/drivers/RDSBaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L46)
 
 ___
 
 ### countSql
 
-▸ **countSql**(`params`): `Promise`<`number`\>
+▸ **countSql**(`params`): `Promise`\<`number`\>
 
 #### Parameters
 
@@ -315,7 +300,7 @@ ___
 
 #### Returns
 
-`Promise`<`number`\>
+`Promise`\<`number`\>
 
 #### Inherited from
 
@@ -323,7 +308,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L85)
+[src/drivers/RDSBaseDriver.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L84)
 
 ___
 
@@ -348,17 +333,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L225)
+[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L218)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -366,13 +351,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L178)
+[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L171)
 
 ___
 
 ### explainAnalyzeSql
 
-▸ **explainAnalyzeSql**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **explainAnalyzeSql**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -382,7 +367,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Inherited from
 
@@ -390,23 +375,23 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:117](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L117)
+[src/drivers/RDSBaseDriver.ts:116](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L116)
 
 ___
 
 ### explainAnalyzeSqlSub
 
-▸ **explainAnalyzeSqlSub**(`params`): `Promise`<[`ResultSetDataBuilder`](ResultSetDataBuilder.md)\>
+▸ **explainAnalyzeSqlSub**(`params`): `Promise`\<`ResultSetDataBuilder`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `params` | [`QueryParams`](../modules.md#queryparams) & { `dbTable`: [`DbTable`](DbTable.md)  } |
+| `params` | [`QueryParams`](../modules.md#queryparams) & \{ `dbTable`: [`DbTable`](DbTable.md)  } |
 
 #### Returns
 
-`Promise`<[`ResultSetDataBuilder`](ResultSetDataBuilder.md)\>
+`Promise`\<`ResultSetDataBuilder`\>
 
 #### Overrides
 
@@ -414,13 +399,13 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L239)
+[src/drivers/MySQLDriver.ts:233](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L233)
 
 ___
 
 ### explainSql
 
-▸ **explainSql**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **explainSql**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -430,7 +415,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Inherited from
 
@@ -438,23 +423,23 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L98)
+[src/drivers/RDSBaseDriver.ts:97](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L97)
 
 ___
 
 ### explainSqlSub
 
-▸ **explainSqlSub**(`params`): `Promise`<[`ResultSetDataBuilder`](ResultSetDataBuilder.md)\>
+▸ **explainSqlSub**(`params`): `Promise`\<`ResultSetDataBuilder`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `params` | [`QueryParams`](../modules.md#queryparams) & { `dbTable`: [`DbTable`](DbTable.md)  } |
+| `params` | [`QueryParams`](../modules.md#queryparams) & \{ `dbTable`: [`DbTable`](DbTable.md)  } |
 
 #### Returns
 
-`Promise`<[`ResultSetDataBuilder`](ResultSetDataBuilder.md)\>
+`Promise`\<`ResultSetDataBuilder`\>
 
 #### Overrides
 
@@ -462,13 +447,13 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:211](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L211)
+[src/drivers/MySQLDriver.ts:205](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L205)
 
 ___
 
 ### fieldInfo2Key
 
-▸ **fieldInfo2Key**(`fieldInfo`, `useTableColumnType`, `table?`): [`RdhKey`](../modules.md#rdhkey)
+▸ **fieldInfo2Key**(`fieldInfo`, `useTableColumnType`, `table?`): `RdhKey`
 
 #### Parameters
 
@@ -480,17 +465,17 @@ ___
 
 #### Returns
 
-[`RdhKey`](../modules.md#rdhkey)
+`RdhKey`
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L51)
+[src/drivers/MySQLDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L45)
 
 ___
 
 ### flow
 
-▸ **flow**<`T`\>(`f`): `Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+▸ **flow**\<`T`\>(`f`): `Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Type parameters
 
@@ -502,11 +487,11 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `f` | (`driver`: [`MySQLDriver`](MySQLDriver.md)) => `Promise`<`T`\> |
+| `f` | (`driver`: `this`) => `Promise`\<`T`\> |
 
 #### Returns
 
-`Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+`Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Inherited from
 
@@ -514,13 +499,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L101)
+[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L94)
 
 ___
 
 ### flowTransaction
 
-▸ **flowTransaction**<`T`\>(`f`, `options?`): `Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+▸ **flowTransaction**\<`T`\>(`f`, `options?`): `Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Type parameters
 
@@ -532,13 +517,13 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `f` | (`driver`: [`MySQLDriver`](MySQLDriver.md)) => `Promise`<`T`\> |
+| `f` | (`driver`: `this`) => `Promise`\<`T`\> |
 | `options?` | `Object` |
 | `options.transactionControlType` | [`TransactionControlType`](../modules.md#transactioncontroltype) |
 
 #### Returns
 
-`Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+`Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Inherited from
 
@@ -546,7 +531,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:251](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L251)
+[src/drivers/RDSBaseDriver.ts:250](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L250)
 
 ___
 
@@ -564,13 +549,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L63)
+[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L56)
 
 ___
 
 ### getDbDatabase
 
-▸ `Protected` **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
+▸ **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
 
 #### Returns
 
@@ -582,17 +567,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L219)
+[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L212)
 
 ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`<[`RdsDatabase`](RdsDatabase.md)[]\>
+▸ **getInfomationSchemas**(): `Promise`\<[`RdsDatabase`](RdsDatabase.md)[]\>
 
 #### Returns
 
-`Promise`<[`RdsDatabase`](RdsDatabase.md)[]\>
+`Promise`\<[`RdsDatabase`](RdsDatabase.md)[]\>
 
 #### Inherited from
 
@@ -600,17 +585,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L204)
+[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L197)
 
 ___
 
 ### getInfomationSchemasSub
 
-▸ **getInfomationSchemasSub**(): `Promise`<[`RdsDatabase`](RdsDatabase.md)[]\>
+▸ **getInfomationSchemasSub**(): `Promise`\<[`RdsDatabase`](RdsDatabase.md)[]\>
 
 #### Returns
 
-`Promise`<[`RdsDatabase`](RdsDatabase.md)[]\>
+`Promise`\<[`RdsDatabase`](RdsDatabase.md)[]\>
 
 #### Overrides
 
@@ -618,7 +603,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:254](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L254)
+[src/drivers/MySQLDriver.ts:248](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L248)
 
 ___
 
@@ -636,7 +621,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L53)
 
 ___
 
@@ -654,13 +639,13 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:476](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L476)
+[src/drivers/MySQLDriver.ts:470](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L470)
 
 ___
 
 ### getRdsDatabase
 
-▸ `Protected` **getRdsDatabase**(): [`RdsDatabase`](RdsDatabase.md)
+▸ **getRdsDatabase**(): [`RdsDatabase`](RdsDatabase.md)
 
 #### Returns
 
@@ -672,13 +657,13 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L63)
+[src/drivers/RDSBaseDriver.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L62)
 
 ___
 
 ### getSchemas
 
-▸ **getSchemas**(`dbDatabase`): `Promise`<[`DbSchema`](DbSchema.md)[]\>
+▸ **getSchemas**(`dbDatabase`): `Promise`\<[`DbSchema`](DbSchema.md)[]\>
 
 #### Parameters
 
@@ -688,17 +673,17 @@ ___
 
 #### Returns
 
-`Promise`<[`DbSchema`](DbSchema.md)[]\>
+`Promise`\<[`DbSchema`](DbSchema.md)[]\>
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:277](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L277)
+[src/drivers/MySQLDriver.ts:271](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L271)
 
 ___
 
 ### getTables
 
-▸ **getTables**(`dbSchema`): `Promise`<[`DbTable`](DbTable.md)[]\>
+▸ **getTables**(`dbSchema`): `Promise`\<[`DbTable`](DbTable.md)[]\>
 
 #### Parameters
 
@@ -708,17 +693,17 @@ ___
 
 #### Returns
 
-`Promise`<[`DbTable`](DbTable.md)[]\>
+`Promise`\<[`DbTable`](DbTable.md)[]\>
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:291](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L291)
+[src/drivers/MySQLDriver.ts:285](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L285)
 
 ___
 
 ### getTestSqlStatement
 
-▸ `Protected` **getTestSqlStatement**(): `string`
+▸ **getTestSqlStatement**(): `string`
 
 #### Returns
 
@@ -730,7 +715,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:119](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L119)
+[src/drivers/MySQLDriver.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L113)
 
 ___
 
@@ -748,7 +733,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -766,7 +751,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:480](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L480)
+[src/drivers/MySQLDriver.ts:474](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L474)
 
 ___
 
@@ -784,7 +769,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L71)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -802,7 +787,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:472](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L472)
+[src/drivers/MySQLDriver.ts:466](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L466)
 
 ___
 
@@ -826,17 +811,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L74)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L67)
 
 ___
 
 ### kill
 
-▸ **kill**(): `Promise`<`string`\>
+▸ **kill**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -844,7 +829,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L100)
+[src/drivers/MySQLDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L94)
 
 ___
 
@@ -868,13 +853,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L85)
+[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L78)
 
 ___
 
 ### requestSql
 
-▸ **requestSql**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **requestSql**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -884,7 +869,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Inherited from
 
@@ -892,23 +877,23 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L71)
+[src/drivers/RDSBaseDriver.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L70)
 
 ___
 
 ### requestSqlSub
 
-▸ **requestSqlSub**(`params`): `Promise`<[`ResultSetDataBuilder`](ResultSetDataBuilder.md)\>
+▸ **requestSqlSub**(`params`): `Promise`\<`ResultSetDataBuilder`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `params` | [`QueryParams`](../modules.md#queryparams) & { `dbTable`: [`DbTable`](DbTable.md)  } |
+| `params` | [`QueryParams`](../modules.md#queryparams) & \{ `dbTable`: [`DbTable`](DbTable.md)  } |
 
 #### Returns
 
-`Promise`<[`ResultSetDataBuilder`](ResultSetDataBuilder.md)\>
+`Promise`\<`ResultSetDataBuilder`\>
 
 #### Overrides
 
@@ -916,7 +901,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:123](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L123)
+[src/drivers/MySQLDriver.ts:117](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L117)
 
 ___
 
@@ -941,17 +926,17 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L204)
+[src/drivers/RDSBaseDriver.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L203)
 
 ___
 
 ### rollback
 
-▸ **rollback**(): `Promise`<`void`\>
+▸ **rollback**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -959,13 +944,13 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L38)
+[src/drivers/MySQLDriver.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L32)
 
 ___
 
 ### setAutoCommit
 
-▸ **setAutoCommit**(`value`): `Promise`<`void`\>
+▸ **setAutoCommit**(`value`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -975,7 +960,7 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -983,13 +968,13 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L42)
+[src/drivers/MySQLDriver.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L36)
 
 ___
 
 ### setColumns
 
-▸ **setColumns**(`dbSchema`): `Promise`<`void`\>
+▸ **setColumns**(`dbSchema`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -999,17 +984,17 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L312)
+[src/drivers/MySQLDriver.ts:306](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L306)
 
 ___
 
 ### setForinKeys
 
-▸ **setForinKeys**(`dbSchema`): `Promise`<`void`\>
+▸ **setForinKeys**(`dbSchema`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -1019,11 +1004,11 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:406](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L406)
+[src/drivers/MySQLDriver.ts:400](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L400)
 
 ___
 
@@ -1036,8 +1021,8 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `params` | [`QueryParams`](../modules.md#queryparams) |
-| `rdb` | [`ResultSetDataBuilder`](ResultSetDataBuilder.md) |
-| `type` | ``"set"`` \| ``"comment"`` \| ``"values"`` \| ``"select"`` \| ``"union"`` \| ``"union all"`` \| ``"with"`` \| ``"with recursive"`` \| ``"create table"`` \| ``"create sequence"`` \| ``"create index"`` \| ``"create extension"`` \| ``"commit"`` \| ``"insert"`` \| ``"update"`` \| ``"show"`` \| ``"prepare"`` \| ``"deallocate"`` \| ``"delete"`` \| ``"rollback"`` \| ``"tablespace"`` \| ``"create view"`` \| ``"create materialized view"`` \| ``"refresh materialized view"`` \| ``"alter table"`` \| ``"alter index"`` \| ``"alter sequence"`` \| ``"set timezone"`` \| ``"create enum"`` \| ``"create composite type"`` \| ``"truncate table"`` \| ``"drop table"`` \| ``"drop sequence"`` \| ``"drop index"`` \| ``"drop type"`` \| ``"drop trigger"`` \| ``"create schema"`` \| ``"raise"`` \| ``"create function"`` \| ``"drop function"`` \| ``"do"`` \| ``"begin"`` \| ``"start transaction"`` |
+| `rdb` | `ResultSetDataBuilder` |
+| `type` | ``"set"`` \| ``"values"`` \| ``"comment"`` \| ``"delete"`` \| ``"select"`` \| ``"union"`` \| ``"union all"`` \| ``"with"`` \| ``"with recursive"`` \| ``"create table"`` \| ``"create sequence"`` \| ``"create index"`` \| ``"create extension"`` \| ``"commit"`` \| ``"insert"`` \| ``"update"`` \| ``"show"`` \| ``"prepare"`` \| ``"deallocate"`` \| ``"rollback"`` \| ``"tablespace"`` \| ``"create view"`` \| ``"create materialized view"`` \| ``"refresh materialized view"`` \| ``"alter table"`` \| ``"alter index"`` \| ``"alter sequence"`` \| ``"set timezone"`` \| ``"set names"`` \| ``"create enum"`` \| ``"create composite type"`` \| ``"truncate table"`` \| ``"drop table"`` \| ``"drop sequence"`` \| ``"drop index"`` \| ``"drop type"`` \| ``"drop trigger"`` \| ``"create schema"`` \| ``"raise"`` \| ``"create function"`` \| ``"drop function"`` \| ``"do"`` \| ``"begin"`` \| ``"start transaction"`` |
 | `qst` | [`QStatement`](../modules.md#qstatement) |
 | `dbTable?` | [`DbTable`](DbTable.md) |
 
@@ -1051,13 +1036,13 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:165](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L165)
+[src/drivers/RDSBaseDriver.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L164)
 
 ___
 
 ### setUniqueKeys
 
-▸ **setUniqueKeys**(`dbSchema`): `Promise`<`void`\>
+▸ **setUniqueKeys**(`dbSchema`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -1067,17 +1052,17 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:354](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/MySQLDriver.ts#L354)
+[src/drivers/MySQLDriver.ts:348](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/MySQLDriver.ts#L348)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -1087,7 +1072,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -1095,4 +1080,4 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RDSBaseDriver.ts#L29)
+[src/drivers/RDSBaseDriver.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RDSBaseDriver.ts#L28)

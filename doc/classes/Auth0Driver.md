@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- [`BaseDriver`](BaseDriver.md)<[`Auth0Database`](Auth0Database.md)\>
+- [`BaseDriver`](BaseDriver.md)\<[`Auth0Database`](Auth0Database.md)\>
 
   ↳ **`Auth0Driver`**
 
@@ -32,7 +32,6 @@
 - [closeSub](Auth0Driver.md#closesub)
 - [connect](Auth0Driver.md#connect)
 - [connectSub](Auth0Driver.md#connectsub)
-- [connectToSshServer](Auth0Driver.md#connecttosshserver)
 - [countOrganizations](Auth0Driver.md#countorganizations)
 - [countRoles](Auth0Driver.md#countroles)
 - [countUsers](Auth0Driver.md#countusers)
@@ -70,7 +69,7 @@
 
 ### constructor
 
-• **new Auth0Driver**(`conRes`)
+• **new Auth0Driver**(`conRes`): [`Auth0Driver`](Auth0Driver.md)
 
 #### Parameters
 
@@ -78,13 +77,17 @@
 | :------ | :------ |
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 
+#### Returns
+
+[`Auth0Driver`](Auth0Driver.md)
+
 #### Overrides
 
 [BaseDriver](BaseDriver.md).[constructor](BaseDriver.md#constructor)
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L75)
+[src/drivers/Auth0Driver.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L68)
 
 ## Properties
 
@@ -98,7 +101,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L51)
+[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L44)
 
 ___
 
@@ -112,7 +115,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L50)
+[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L43)
 
 ___
 
@@ -126,7 +129,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L46)
 
 ___
 
@@ -140,13 +143,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L52)
+[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L45)
 
 ## Methods
 
 ### addMembers
 
-▸ **addMembers**(`orgId`, `payload`): `Promise`<`void`\>
+▸ **addMembers**(`orgId`, `payload`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -157,17 +160,17 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:454](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L454)
+[src/drivers/Auth0Driver.ts:447](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L447)
 
 ___
 
 ### assignRolestoUser
 
-▸ **assignRolestoUser**(`userId`, `payload`): `Promise`<`void`\>
+▸ **assignRolestoUser**(`userId`, `payload`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -178,21 +181,21 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:449](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L449)
+[src/drivers/Auth0Driver.ts:442](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L442)
 
 ___
 
 ### closeSub
 
-▸ **closeSub**(): `Promise`<`string`\>
+▸ **closeSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -200,17 +203,17 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:834](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L834)
+[src/drivers/Auth0Driver.ts:827](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L827)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -218,17 +221,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L159)
+[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L152)
 
 ___
 
 ### connectSub
 
-▸ **connectSub**(): `Promise`<`string`\>
+▸ **connectSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -236,73 +239,55 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L79)
-
-___
-
-### connectToSshServer
-
-▸ **connectToSshServer**(): `Promise`<`string`\>
-
-#### Returns
-
-`Promise`<`string`\>
-
-#### Inherited from
-
-[BaseDriver](BaseDriver.md).[connectToSshServer](BaseDriver.md#connecttosshserver)
-
-#### Defined in
-
-[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L133)
+[src/drivers/Auth0Driver.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L72)
 
 ___
 
 ### countOrganizations
 
-▸ **countOrganizations**(): `Promise`<`number`\>
+▸ **countOrganizations**(): `Promise`\<`number`\>
 
 #### Returns
 
-`Promise`<`number`\>
+`Promise`\<`number`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:214](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L214)
+[src/drivers/Auth0Driver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L207)
 
 ___
 
 ### countRoles
 
-▸ **countRoles**(): `Promise`<`number`\>
+▸ **countRoles**(): `Promise`\<`number`\>
 
 #### Returns
 
-`Promise`<`number`\>
+`Promise`\<`number`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:297](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L297)
+[src/drivers/Auth0Driver.ts:290](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L290)
 
 ___
 
 ### countUsers
 
-▸ **countUsers**(): `Promise`<`number`\>
+▸ **countUsers**(): `Promise`\<`number`\>
 
 #### Returns
 
-`Promise`<`number`\>
+`Promise`\<`number`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:363](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L363)
+[src/drivers/Auth0Driver.ts:356](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L356)
 
 ___
 
 ### createClient
 
-▸ **createClient**(`data`): `Promise`<`Client`\>
+▸ **createClient**(`data`): `Promise`\<`Client`\>
 
 #### Parameters
 
@@ -312,17 +297,17 @@ ___
 
 #### Returns
 
-`Promise`<`Client`\>
+`Promise`\<`Client`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:198](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L198)
+[src/drivers/Auth0Driver.ts:191](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L191)
 
 ___
 
 ### createClientGrants
 
-▸ **createClientGrants**(`data`): `Promise`<`ClientGrant`\>
+▸ **createClientGrants**(`data`): `Promise`\<`ClientGrant`\>
 
 #### Parameters
 
@@ -335,11 +320,11 @@ ___
 
 #### Returns
 
-`Promise`<`ClientGrant`\>
+`Promise`\<`ClientGrant`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L181)
+[src/drivers/Auth0Driver.ts:174](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L174)
 
 ___
 
@@ -364,13 +349,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L225)
+[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L218)
 
 ___
 
 ### createOrganization
 
-▸ **createOrganization**(`payload?`): `Promise`<`Organization`\>
+▸ **createOrganization**(`payload?`): `Promise`\<`Organization`\>
 
 #### Parameters
 
@@ -380,17 +365,17 @@ ___
 
 #### Returns
 
-`Promise`<`Organization`\>
+`Promise`\<`Organization`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L224)
+[src/drivers/Auth0Driver.ts:217](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L217)
 
 ___
 
 ### createRole
 
-▸ **createRole**(`payload?`): `Promise`<`Role`\>
+▸ **createRole**(`payload?`): `Promise`\<`Role`\>
 
 #### Parameters
 
@@ -400,41 +385,41 @@ ___
 
 #### Returns
 
-`Promise`<`Role`\>
+`Promise`\<`Role`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:307](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L307)
+[src/drivers/Auth0Driver.ts:300](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L300)
 
 ___
 
 ### createUser
 
-▸ **createUser**(`payload?`): `Promise`<`User`<`AppMetadata`, `UserMetadata`\>\>
+▸ **createUser**(`payload?`): `Promise`\<`User`\<`AppMetadata`, `UserMetadata`\>\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `payload?` | `UserData`<`AppMetadata`, `UserMetadata`\> & [`ConnectionParam`](../modules.md#connectionparam) |
+| `payload?` | `UserData`\<`AppMetadata`, `UserMetadata`\> & [`ConnectionParam`](../modules.md#connectionparam) |
 
 #### Returns
 
-`Promise`<`User`<`AppMetadata`, `UserMetadata`\>\>
+`Promise`\<`User`\<`AppMetadata`, `UserMetadata`\>\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:441](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L441)
+[src/drivers/Auth0Driver.ts:434](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L434)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -442,13 +427,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L178)
+[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L171)
 
 ___
 
 ### flow
 
-▸ **flow**<`T`\>(`f`): `Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+▸ **flow**\<`T`\>(`f`): `Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Type parameters
 
@@ -460,11 +445,11 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `f` | (`driver`: [`Auth0Driver`](Auth0Driver.md)) => `Promise`<`T`\> |
+| `f` | (`driver`: `this`) => `Promise`\<`T`\> |
 
 #### Returns
 
-`Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+`Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Inherited from
 
@@ -472,13 +457,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L101)
+[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L94)
 
 ___
 
 ### getClient
 
-▸ **getClient**(`«destructured»`): `Promise`<`Client`\>
+▸ **getClient**(`«destructured»`): `Promise`\<`Client`\>
 
 #### Parameters
 
@@ -491,17 +476,17 @@ ___
 
 #### Returns
 
-`Promise`<`Client`\>
+`Promise`\<`Client`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:143](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L143)
+[src/drivers/Auth0Driver.ts:136](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L136)
 
 ___
 
 ### getClients
 
-▸ **getClients**(`params?`): `Promise`<`Client`[]\>
+▸ **getClients**(`params?`): `Promise`\<`Client`[]\>
 
 #### Parameters
 
@@ -511,11 +496,11 @@ ___
 
 #### Returns
 
-`Promise`<`Client`[]\>
+`Promise`\<`Client`[]\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:109](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L109)
+[src/drivers/Auth0Driver.ts:102](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L102)
 
 ___
 
@@ -533,13 +518,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L63)
+[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L56)
 
 ___
 
 ### getDbDatabase
 
-▸ `Protected` **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
+▸ **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
 
 #### Returns
 
@@ -551,17 +536,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L219)
+[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L212)
 
 ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`<[`Auth0Database`](Auth0Database.md)[]\>
+▸ **getInfomationSchemas**(): `Promise`\<[`Auth0Database`](Auth0Database.md)[]\>
 
 #### Returns
 
-`Promise`<[`Auth0Database`](Auth0Database.md)[]\>
+`Promise`\<[`Auth0Database`](Auth0Database.md)[]\>
 
 #### Inherited from
 
@@ -569,17 +554,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L204)
+[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L197)
 
 ___
 
 ### getInfomationSchemasSub
 
-▸ **getInfomationSchemasSub**(): `Promise`<[`Auth0Database`](Auth0Database.md)[]\>
+▸ **getInfomationSchemasSub**(): `Promise`\<[`Auth0Database`](Auth0Database.md)[]\>
 
 #### Returns
 
-`Promise`<[`Auth0Database`](Auth0Database.md)[]\>
+`Promise`\<[`Auth0Database`](Auth0Database.md)[]\>
 
 #### Overrides
 
@@ -587,13 +572,13 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:769](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L769)
+[src/drivers/Auth0Driver.ts:762](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L762)
 
 ___
 
 ### getMembers
 
-▸ **getMembers**(`orgId`, `params?`): `Promise`<`OrganizationMember`[]\>
+▸ **getMembers**(`orgId`, `params?`): `Promise`\<`OrganizationMember`[]\>
 
 #### Parameters
 
@@ -604,11 +589,11 @@ ___
 
 #### Returns
 
-`Promise`<`OrganizationMember`[]\>
+`Promise`\<`OrganizationMember`[]\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:403](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L403)
+[src/drivers/Auth0Driver.ts:396](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L396)
 
 ___
 
@@ -626,13 +611,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L53)
 
 ___
 
 ### getOrganization
 
-▸ **getOrganization**(`«destructured»`): `Promise`<`Organization`\>
+▸ **getOrganization**(`«destructured»`): `Promise`\<`Organization`\>
 
 #### Parameters
 
@@ -644,17 +629,17 @@ ___
 
 #### Returns
 
-`Promise`<`Organization`\>
+`Promise`\<`Organization`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:275](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L275)
+[src/drivers/Auth0Driver.ts:268](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L268)
 
 ___
 
 ### getOrganizations
 
-▸ **getOrganizations**(`params?`): `Promise`<`Organization`[]\>
+▸ **getOrganizations**(`params?`): `Promise`\<`Organization`[]\>
 
 #### Parameters
 
@@ -664,17 +649,17 @@ ___
 
 #### Returns
 
-`Promise`<`Organization`[]\>
+`Promise`\<`Organization`[]\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L239)
+[src/drivers/Auth0Driver.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L232)
 
 ___
 
 ### getRole
 
-▸ **getRole**(`«destructured»`): `Promise`<`Role`\>
+▸ **getRole**(`«destructured»`): `Promise`\<`Role`\>
 
 #### Parameters
 
@@ -686,17 +671,17 @@ ___
 
 #### Returns
 
-`Promise`<`Role`\>
+`Promise`\<`Role`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:345](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L345)
+[src/drivers/Auth0Driver.ts:338](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L338)
 
 ___
 
 ### getRoles
 
-▸ **getRoles**(`params?`): `Promise`<`Role`[]\>
+▸ **getRoles**(`params?`): `Promise`\<`Role`[]\>
 
 #### Parameters
 
@@ -706,17 +691,17 @@ ___
 
 #### Returns
 
-`Promise`<`Role`[]\>
+`Promise`\<`Role`[]\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:318](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L318)
+[src/drivers/Auth0Driver.ts:311](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L311)
 
 ___
 
 ### getUsers
 
-▸ **getUsers**(`params?`): `Promise`<`User`<`AppMetadata`, `UserMetadata`\>[]\>
+▸ **getUsers**(`params?`): `Promise`\<`User`\<`AppMetadata`, `UserMetadata`\>[]\>
 
 #### Parameters
 
@@ -726,11 +711,11 @@ ___
 
 #### Returns
 
-`Promise`<`User`<`AppMetadata`, `UserMetadata`\>[]\>
+`Promise`\<`User`\<`AppMetadata`, `UserMetadata`\>[]\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:373](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L373)
+[src/drivers/Auth0Driver.ts:366](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L366)
 
 ___
 
@@ -748,7 +733,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -766,7 +751,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L71)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -790,7 +775,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L74)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L67)
 
 ___
 
@@ -814,13 +799,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L85)
+[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L78)
 
 ___
 
 ### scan
 
-▸ **scan**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **scan**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -830,7 +815,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Implementation of
 
@@ -838,13 +823,13 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:462](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L462)
+[src/drivers/Auth0Driver.ts:455](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L455)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -854,7 +839,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -862,13 +847,13 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:90](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L90)
+[src/drivers/Auth0Driver.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L83)
 
 ___
 
 ### updateOrganization
 
-▸ **updateOrganization**(`payload`): `Promise`<`Organization`\>
+▸ **updateOrganization**(`payload`): `Promise`\<`Organization`\>
 
 #### Parameters
 
@@ -878,17 +863,17 @@ ___
 
 #### Returns
 
-`Promise`<`Organization`\>
+`Promise`\<`Organization`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:231](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L231)
+[src/drivers/Auth0Driver.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L224)
 
 ___
 
 ### updateRole
 
-▸ **updateRole**(`payload?`): `Promise`<`Role`\>
+▸ **updateRole**(`payload?`): `Promise`\<`Role`\>
 
 #### Parameters
 
@@ -898,8 +883,8 @@ ___
 
 #### Returns
 
-`Promise`<`Role`\>
+`Promise`\<`Role`\>
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L312)
+[src/drivers/Auth0Driver.ts:305](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L305)

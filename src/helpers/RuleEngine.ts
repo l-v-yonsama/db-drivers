@@ -1,22 +1,24 @@
 import {
-  RowHelper,
-  isBooleanLike,
-  isDateTimeOrDate,
-  isNumericLike,
-} from '../resource';
-import {
   GeneralColumnType,
   RdhKey,
   ResultSetData,
+  RowHelper,
   TableRuleDetail,
-} from '../types';
+  isBooleanLike,
+  isDateTimeOrDate,
+  isNumericLike,
+  toBoolean,
+  toDate,
+  toNum,
+} from '@l-v-yonsama/rdh';
 import {
   AllConditions,
   AnyConditions,
+  ConditionReference,
   Engine,
+  NotConditions,
   TopLevelCondition,
 } from 'json-rules-engine';
-import { toBoolean, toDate, toNum } from '../utils';
 
 export function isAllConditions(item: any): item is AllConditions {
   return item.all && item.all.length !== undefined;
@@ -25,8 +27,19 @@ export function isAllConditions(item: any): item is AllConditions {
 export function isAnyConditions(item: any): item is AnyConditions {
   return item.any && item.any.length !== undefined;
 }
+export function isNotConditions(item: any): item is NotConditions {
+  return !!item.not;
+}
+export function isConditionReference(item: any): item is ConditionReference {
+  return item.condition && typeof item.condition === 'string';
+}
 export function isTopLevelCondition(item: any): item is TopLevelCondition {
-  return isAllConditions(item) || isAnyConditions(item);
+  return (
+    isAllConditions(item) ||
+    isAnyConditions(item) ||
+    isNotConditions(item) ||
+    isConditionReference(item)
+  );
 }
 
 const OPERATORS = [
@@ -179,7 +192,7 @@ export function stringConditionToJsonCondition(
   const nestedList = [];
   if (isAllConditions(condition)) {
     nestedList.push(...condition.all);
-  } else {
+  } else if (isAnyConditions(condition)) {
     nestedList.push(...condition.any);
   }
 
@@ -245,7 +258,7 @@ export function conditionsToString(
   if (isAllConditions(condition)) {
     nestedList.push(...condition.all);
     s += `${indent}AND\n`;
-  } else {
+  } else if (isAnyConditions(condition)) {
     nestedList.push(...condition.any);
     s += `${indent}OR\n`;
   }
@@ -291,7 +304,12 @@ function getConditionalValues(
 ): { [key: string]: any } {
   let obj: { [key: string]: any } = {};
 
-  const nestedList = isAllConditions(condition) ? condition.all : condition.any;
+  const nestedList = [];
+  if (isAllConditions(condition)) {
+    nestedList.push(...condition.all);
+  } else if (isAnyConditions(condition)) {
+    nestedList.push(...condition.any);
+  }
   for (const nest of nestedList) {
     if (isTopLevelCondition(nest)) {
       obj = {

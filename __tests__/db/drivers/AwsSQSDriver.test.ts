@@ -1,22 +1,22 @@
 import {
-  AwsRegion,
-  AwsDriver,
-  DBDriverResolver,
-  ConnectionSetting,
-  DBType,
-  DbSQSQueue,
-  AwsDatabase,
-  SupplyCredentialType,
-  AwsServiceType,
-  ResultSetData,
-} from '../../../src';
-import {
   CreateQueueCommand,
   DeleteQueueCommand,
   ListQueuesCommand,
-  SQSClient,
   SendMessageCommand,
+  SQSClient,
 } from '@aws-sdk/client-sqs';
+import { ResultSetData } from '@l-v-yonsama/rdh';
+import {
+  AwsDatabase,
+  AwsDriver,
+  AwsRegion,
+  AwsServiceType,
+  ConnectionSetting,
+  DBDriverResolver,
+  DbSQSQueue,
+  DBType,
+  SupplyCredentialType,
+} from '../../../src';
 
 const connectOption = {
   url: 'http://localhost:6005',
@@ -56,7 +56,7 @@ describe('AwsSQSDriver', () => {
 
     try {
       const list = await sqsClient.send(
-        new ListQueuesCommand({ MaxResults: 1000 }),
+        new ListQueuesCommand({ MaxResults: 10 }),
       );
       for (const queueUrl of list.QueueUrls ?? []) {
         await sqsClient.send(new DeleteQueueCommand({ QueueUrl: queueUrl }));
@@ -143,7 +143,7 @@ describe('AwsSQSDriver', () => {
         async (): Promise<ResultSetData> => {
           return await driver.sqsClient.scan({
             target: queueUrl1,
-            limit: 1000,
+            limit: 10,
           });
         },
       );
@@ -167,19 +167,19 @@ describe('AwsSQSDriver', () => {
         const url1 = await driver.sqsClient.createQueue({
           name: 'standardQueue1',
           attributes: {
-            MaximumMessageSize: 1000,
-            ReceiveMessageWaitTimeSeconds: 3,
-            VisibilityTimeout: 2,
+            MaximumMessageSize: '1000',
+            ReceiveMessageWaitTimeSeconds: '3',
+            VisibilityTimeout: '2',
           },
         });
         const url2 = await driver.sqsClient.createQueue({
           name: 'fifoQueue1.fifo',
           attributes: {
-            MaximumMessageSize: 500,
-            ReceiveMessageWaitTimeSeconds: 2,
-            VisibilityTimeout: 1,
-            FifoQueue: true,
-            ContentBasedDeduplication: true,
+            MaximumMessageSize: '500',
+            ReceiveMessageWaitTimeSeconds: '2',
+            VisibilityTimeout: '1',
+            FifoQueue: 'true',
+            ContentBasedDeduplication: 'true',
           },
         });
         return [url1, url2];

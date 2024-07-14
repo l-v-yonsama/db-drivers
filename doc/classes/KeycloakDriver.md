@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- [`BaseDriver`](BaseDriver.md)<[`KeycloakDatabase`](KeycloakDatabase.md)\>
+- [`BaseDriver`](BaseDriver.md)\<[`KeycloakDatabase`](KeycloakDatabase.md)\>
 
   ↳ **`KeycloakDriver`**
 
@@ -30,7 +30,6 @@
 - [closeSub](KeycloakDriver.md#closesub)
 - [connect](KeycloakDriver.md#connect)
 - [connectSub](KeycloakDriver.md#connectsub)
-- [connectToSshServer](KeycloakDriver.md#connecttosshserver)
 - [countGroups](KeycloakDriver.md#countgroups)
 - [countOfflineSessions](KeycloakDriver.md#countofflinesessions)
 - [countUserSessions](KeycloakDriver.md#countusersessions)
@@ -75,7 +74,7 @@
 
 ### constructor
 
-• **new KeycloakDriver**(`conRes`)
+• **new KeycloakDriver**(`conRes`): [`KeycloakDriver`](KeycloakDriver.md)
 
 #### Parameters
 
@@ -83,13 +82,17 @@
 | :------ | :------ |
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 
+#### Returns
+
+[`KeycloakDriver`](KeycloakDriver.md)
+
 #### Overrides
 
 [BaseDriver](BaseDriver.md).[constructor](BaseDriver.md#constructor)
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L82)
+[src/drivers/KeycloakDriver.ts:81](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L81)
 
 ## Properties
 
@@ -103,7 +106,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L51)
+[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L44)
 
 ___
 
@@ -117,7 +120,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L50)
+[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L43)
 
 ___
 
@@ -131,7 +134,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L46)
 
 ___
 
@@ -145,17 +148,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L52)
+[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L45)
 
 ## Methods
 
 ### closeSub
 
-▸ **closeSub**(): `Promise`<`string`\>
+▸ **closeSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -163,17 +166,17 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:1157](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L1157)
+[src/drivers/KeycloakDriver.ts:1156](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L1156)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -181,17 +184,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L159)
+[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L152)
 
 ___
 
 ### connectSub
 
-▸ **connectSub**(): `Promise`<`string`\>
+▸ **connectSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -199,31 +202,13 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L86)
-
-___
-
-### connectToSshServer
-
-▸ **connectToSshServer**(): `Promise`<`string`\>
-
-#### Returns
-
-`Promise`<`string`\>
-
-#### Inherited from
-
-[BaseDriver](BaseDriver.md).[connectToSshServer](BaseDriver.md#connecttosshserver)
-
-#### Defined in
-
-[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L133)
+[src/drivers/KeycloakDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L85)
 
 ___
 
 ### countGroups
 
-▸ **countGroups**(`payload?`): `Promise`<`number`\>
+▸ **countGroups**(`payload?`): `Promise`\<`number`\>
 
 #### Parameters
 
@@ -233,17 +218,17 @@ ___
 
 #### Returns
 
-`Promise`<`number`\>
+`Promise`\<`number`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:559](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L559)
+[src/drivers/KeycloakDriver.ts:558](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L558)
 
 ___
 
 ### countOfflineSessions
 
-▸ **countOfflineSessions**(`payload`): `Promise`<`number`\>
+▸ **countOfflineSessions**(`payload`): `Promise`\<`number`\>
 
 Get application offline session count Returns a number of offline user sessions associated with this client { \"count\": number }
 GET /admin/realms/{realm}/clients/{id}/offline-session-count
@@ -258,17 +243,17 @@ GET /admin/realms/{realm}/clients/{id}/offline-session-count
 
 #### Returns
 
-`Promise`<`number`\>
+`Promise`\<`number`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:657](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L657)
+[src/drivers/KeycloakDriver.ts:656](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L656)
 
 ___
 
 ### countUserSessions
 
-▸ **countUserSessions**(`payload`): `Promise`<`number`\>
+▸ **countUserSessions**(`payload`): `Promise`\<`number`\>
 
 Get application session count Returns a number of user sessions associated with this client { \"count\": number }
 GET /admin/realms/{realm}/clients/{id}/session-count
@@ -283,31 +268,31 @@ GET /admin/realms/{realm}/clients/{id}/session-count
 
 #### Returns
 
-`Promise`<`number`\>
+`Promise`\<`number`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:682](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L682)
+[src/drivers/KeycloakDriver.ts:681](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L681)
 
 ___
 
 ### countUsers
 
-▸ **countUsers**(`payload?`): `Promise`<`number`\>
+▸ **countUsers**(`payload?`): `Promise`\<`number`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `payload?` | [`UserQuery`](../interfaces/UserQuery.md) & { `realm?`: `string`  } |
+| `payload?` | [`UserQuery`](../interfaces/UserQuery.md) & \{ `realm?`: `string`  } |
 
 #### Returns
 
-`Promise`<`number`\>
+`Promise`\<`number`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L239)
+[src/drivers/KeycloakDriver.ts:238](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L238)
 
 ___
 
@@ -332,13 +317,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L225)
+[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L218)
 
 ___
 
 ### createGroup
 
-▸ **createGroup**(`payload?`): `Promise`<`void`\>
+▸ **createGroup**(`payload?`): `Promise`\<`void`\>
 
 create or add a top level realm groupSet or create child.
 
@@ -352,17 +337,17 @@ POST /admin/realms/{realm}/groups
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:434](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L434)
+[src/drivers/KeycloakDriver.ts:433](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L433)
 
 ___
 
 ### createRealm
 
-▸ **createRealm**(`payload?`): `Promise`<`void`\>
+▸ **createRealm**(`payload?`): `Promise`\<`void`\>
 
 Create a realm
 Realm name must be unique
@@ -376,17 +361,17 @@ POST /admin/realms
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:577](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L577)
+[src/drivers/KeycloakDriver.ts:576](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L576)
 
 ___
 
 ### createRole
 
-▸ **createRole**(`payload?`): `Promise`<`void`\>
+▸ **createRole**(`payload?`): `Promise`\<`void`\>
 
 Create a new role for the realm or client
 POST /admin/realms/{realm}/roles
@@ -395,21 +380,21 @@ POST /admin/realms/{realm}/roles
 
 | Name | Type |
 | :------ | :------ |
-| `payload?` | [`RoleRepresentation`](../interfaces/RoleRepresentation.md) & { `realm?`: `string`  } |
+| `payload?` | [`RoleRepresentation`](../interfaces/RoleRepresentation.md) & \{ `realm?`: `string`  } |
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:293](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L293)
+[src/drivers/KeycloakDriver.ts:292](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L292)
 
 ___
 
 ### createUser
 
-▸ **createUser**(`payload?`): `Promise`<`void`\>
+▸ **createUser**(`payload?`): `Promise`\<`void`\>
 
 Create a new user Username must be unique.
 POST /admin/realms/{realm}/users
@@ -422,21 +407,21 @@ POST /admin/realms/{realm}/users
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:191](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L191)
+[src/drivers/KeycloakDriver.ts:190](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L190)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -444,13 +429,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L178)
+[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L171)
 
 ___
 
 ### flow
 
-▸ **flow**<`T`\>(`f`): `Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+▸ **flow**\<`T`\>(`f`): `Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Type parameters
 
@@ -462,11 +447,11 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `f` | (`driver`: [`KeycloakDriver`](KeycloakDriver.md)) => `Promise`<`T`\> |
+| `f` | (`driver`: `this`) => `Promise`\<`T`\> |
 
 #### Returns
 
-`Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+`Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Inherited from
 
@@ -474,27 +459,27 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L101)
+[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L94)
 
 ___
 
 ### getAxiosClient
 
-▸ **getAxiosClient**(): `Promise`<`Axios`\>
+▸ **getAxiosClient**(): `Promise`\<`Axios`\>
 
 #### Returns
 
-`Promise`<`Axios`\>
+`Promise`\<`Axios`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:103](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L103)
+[src/drivers/KeycloakDriver.ts:102](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L102)
 
 ___
 
 ### getClientSessionStats
 
-▸ **getClientSessionStats**(`payload`): `Promise`<[`SessionStat`](../interfaces/SessionStat.md)[]\>
+▸ **getClientSessionStats**(`payload`): `Promise`\<[`SessionStat`](../interfaces/SessionStat.md)[]\>
 
 Get client session stats Returns a JSON map.
 GET /admin/realms/{realm}/client-session-stats
@@ -508,17 +493,17 @@ GET /admin/realms/{realm}/client-session-stats
 
 #### Returns
 
-`Promise`<[`SessionStat`](../interfaces/SessionStat.md)[]\>
+`Promise`\<[`SessionStat`](../interfaces/SessionStat.md)[]\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:707](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L707)
+[src/drivers/KeycloakDriver.ts:706](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L706)
 
 ___
 
 ### getClients
 
-▸ **getClients**(`payload?`): `Promise`<[`ClientRepresentation`](../interfaces/ClientRepresentation.md)[]\>
+▸ **getClients**(`payload?`): `Promise`\<[`ClientRepresentation`](../interfaces/ClientRepresentation.md)[]\>
 
 #### Parameters
 
@@ -528,11 +513,11 @@ ___
 
 #### Returns
 
-`Promise`<[`ClientRepresentation`](../interfaces/ClientRepresentation.md)[]\>
+`Promise`\<[`ClientRepresentation`](../interfaces/ClientRepresentation.md)[]\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:612](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L612)
+[src/drivers/KeycloakDriver.ts:611](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L611)
 
 ___
 
@@ -550,13 +535,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L63)
+[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L56)
 
 ___
 
 ### getDbDatabase
 
-▸ `Protected` **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
+▸ **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
 
 #### Returns
 
@@ -568,33 +553,33 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L219)
+[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L212)
 
 ___
 
 ### getGroup
 
-▸ **getGroup**(`payload`): `Promise`<[`GroupRepresentation`](../interfaces/GroupRepresentation.md)\>
+▸ **getGroup**(`payload`): `Promise`\<[`GroupRepresentation`](../interfaces/GroupRepresentation.md)\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `payload` | { `id?`: `string` ; `name?`: `string`  } & [`RealmParam`](../modules.md#realmparam) |
+| `payload` | \{ `id?`: `string` ; `name?`: `string`  } & [`RealmParam`](../modules.md#realmparam) |
 
 #### Returns
 
-`Promise`<[`GroupRepresentation`](../interfaces/GroupRepresentation.md)\>
+`Promise`\<[`GroupRepresentation`](../interfaces/GroupRepresentation.md)\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:503](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L503)
+[src/drivers/KeycloakDriver.ts:502](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L502)
 
 ___
 
 ### getGroups
 
-▸ **getGroups**(`payload?`): `Promise`<[`GroupRepresentation`](../interfaces/GroupRepresentation.md)[]\>
+▸ **getGroups**(`payload?`): `Promise`\<[`GroupRepresentation`](../interfaces/GroupRepresentation.md)[]\>
 
 #### Parameters
 
@@ -604,21 +589,21 @@ ___
 
 #### Returns
 
-`Promise`<[`GroupRepresentation`](../interfaces/GroupRepresentation.md)[]\>
+`Promise`\<[`GroupRepresentation`](../interfaces/GroupRepresentation.md)[]\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:485](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L485)
+[src/drivers/KeycloakDriver.ts:484](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L484)
 
 ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
+▸ **getInfomationSchemas**(): `Promise`\<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
 
 #### Returns
 
-`Promise`<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
+`Promise`\<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
 
 #### Inherited from
 
@@ -626,17 +611,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L204)
+[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L197)
 
 ___
 
 ### getInfomationSchemasSub
 
-▸ **getInfomationSchemasSub**(): `Promise`<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
+▸ **getInfomationSchemasSub**(): `Promise`\<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
 
 #### Returns
 
-`Promise`<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
+`Promise`\<[`KeycloakDatabase`](KeycloakDatabase.md)[]\>
 
 #### Overrides
 
@@ -644,7 +629,7 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:1027](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L1027)
+[src/drivers/KeycloakDriver.ts:1026](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L1026)
 
 ___
 
@@ -662,13 +647,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L53)
 
 ___
 
 ### getRealms
 
-▸ **getRealms**(`payload?`): `Promise`<[`RealmRepresentation`](../interfaces/RealmRepresentation.md)[]\>
+▸ **getRealms**(`payload?`): `Promise`\<[`RealmRepresentation`](../interfaces/RealmRepresentation.md)[]\>
 
 #### Parameters
 
@@ -679,37 +664,37 @@ ___
 
 #### Returns
 
-`Promise`<[`RealmRepresentation`](../interfaces/RealmRepresentation.md)[]\>
+`Promise`\<[`RealmRepresentation`](../interfaces/RealmRepresentation.md)[]\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:596](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L596)
+[src/drivers/KeycloakDriver.ts:595](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L595)
 
 ___
 
 ### getRole
 
-▸ **getRole**(`payload`): `Promise`<[`RoleRepresentation`](../interfaces/RoleRepresentation.md)\>
+▸ **getRole**(`payload`): `Promise`\<[`RoleRepresentation`](../interfaces/RoleRepresentation.md)\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `payload` | { `id?`: `string` ; `name?`: `string`  } & [`RealmParam`](../modules.md#realmparam) |
+| `payload` | \{ `id?`: `string` ; `name?`: `string`  } & [`RealmParam`](../modules.md#realmparam) |
 
 #### Returns
 
-`Promise`<[`RoleRepresentation`](../interfaces/RoleRepresentation.md)\>
+`Promise`\<[`RoleRepresentation`](../interfaces/RoleRepresentation.md)\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:384](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L384)
+[src/drivers/KeycloakDriver.ts:383](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L383)
 
 ___
 
 ### getRoles
 
-▸ **getRoles**(`payload?`): `Promise`<[`RoleRepresentation`](../interfaces/RoleRepresentation.md)[]\>
+▸ **getRoles**(`payload?`): `Promise`\<[`RoleRepresentation`](../interfaces/RoleRepresentation.md)[]\>
 
 Get all roles for the realm or client
 GET /admin/realms/{realm}/roles
@@ -722,17 +707,17 @@ GET /admin/realms/{realm}/roles
 
 #### Returns
 
-`Promise`<[`RoleRepresentation`](../interfaces/RoleRepresentation.md)[]\>
+`Promise`\<[`RoleRepresentation`](../interfaces/RoleRepresentation.md)[]\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:359](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L359)
+[src/drivers/KeycloakDriver.ts:358](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L358)
 
 ___
 
 ### getSessions
 
-▸ **getSessions**(`payload?`): `Promise`<[`UserSessionRepresentation`](../interfaces/UserSessionRepresentation.md)[]\>
+▸ **getSessions**(`payload?`): `Promise`\<[`UserSessionRepresentation`](../interfaces/UserSessionRepresentation.md)[]\>
 
 Get user sessions for client Returns a list of user sessions associated with this client
 GET /admin/realms/{realm}/clients/{id}/user-sessions
@@ -745,17 +730,17 @@ GET /admin/realms/{realm}/clients/{id}/user-sessions
 
 #### Returns
 
-`Promise`<[`UserSessionRepresentation`](../interfaces/UserSessionRepresentation.md)[]\>
+`Promise`\<[`UserSessionRepresentation`](../interfaces/UserSessionRepresentation.md)[]\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:743](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L743)
+[src/drivers/KeycloakDriver.ts:742](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L742)
 
 ___
 
 ### getUsers
 
-▸ **getUsers**(`payload?`): `Promise`<[`UserRepresentation`](../interfaces/UserRepresentation.md)[]\>
+▸ **getUsers**(`payload?`): `Promise`\<[`UserRepresentation`](../interfaces/UserRepresentation.md)[]\>
 
 #### Parameters
 
@@ -765,17 +750,17 @@ ___
 
 #### Returns
 
-`Promise`<[`UserRepresentation`](../interfaces/UserRepresentation.md)[]\>
+`Promise`\<[`UserRepresentation`](../interfaces/UserRepresentation.md)[]\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:221](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L221)
+[src/drivers/KeycloakDriver.ts:220](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L220)
 
 ___
 
 ### grant
 
-▸ **grant**(`«destructured»`): `Promise`<`TokenSet`\>
+▸ **grant**(`«destructured»`): `Promise`\<`TokenSet`\>
 
 #### Parameters
 
@@ -789,11 +774,11 @@ ___
 
 #### Returns
 
-`Promise`<`TokenSet`\>
+`Promise`\<`TokenSet`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:136](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L136)
+[src/drivers/KeycloakDriver.ts:135](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L135)
 
 ___
 
@@ -811,7 +796,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -829,7 +814,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L71)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -853,13 +838,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L74)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L67)
 
 ___
 
 ### listMembers
 
-▸ **listMembers**(`payload?`): `Promise`<[`UserRepresentation`](../interfaces/UserRepresentation.md)[]\>
+▸ **listMembers**(`payload?`): `Promise`\<[`UserRepresentation`](../interfaces/UserRepresentation.md)[]\>
 
 Get users Returns a stream of users, filtered according to query parameters
 GET /admin/realms/{realm}/groups/{id}/members
@@ -868,15 +853,15 @@ GET /admin/realms/{realm}/groups/{id}/members
 
 | Name | Type |
 | :------ | :------ |
-| `payload?` | { `first?`: `number` ; `id`: `string` ; `max?`: `number`  } & [`RealmParam`](../modules.md#realmparam) |
+| `payload?` | \{ `first?`: `number` ; `id`: `string` ; `max?`: `number`  } & [`RealmParam`](../modules.md#realmparam) |
 
 #### Returns
 
-`Promise`<[`UserRepresentation`](../interfaces/UserRepresentation.md)[]\>
+`Promise`\<[`UserRepresentation`](../interfaces/UserRepresentation.md)[]\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:537](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L537)
+[src/drivers/KeycloakDriver.ts:536](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L536)
 
 ___
 
@@ -900,13 +885,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L85)
+[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L78)
 
 ___
 
 ### scan
 
-▸ **scan**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **scan**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -916,7 +901,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Implementation of
 
@@ -924,13 +909,13 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:792](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L792)
+[src/drivers/KeycloakDriver.ts:791](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L791)
 
 ___
 
 ### setupNewPassword
 
-▸ **setupNewPassword**(`payload?`): `Promise`<`void`\>
+▸ **setupNewPassword**(`payload?`): `Promise`\<`void`\>
 
 Set up a new password for the user
 PUT /admin/realms/{realm}/users/{id}/reset-password
@@ -939,21 +924,21 @@ PUT /admin/realms/{realm}/users/{id}/reset-password
 
 | Name | Type |
 | :------ | :------ |
-| `payload?` | [`CredentialRepresentation`](../interfaces/CredentialRepresentation.md) & [`RealmParam`](../modules.md#realmparam) & { `userId`: `string`  } |
+| `payload?` | [`CredentialRepresentation`](../interfaces/CredentialRepresentation.md) & [`RealmParam`](../modules.md#realmparam) & \{ `userId`: `string`  } |
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:264](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L264)
+[src/drivers/KeycloakDriver.ts:263](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L263)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -963,7 +948,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -971,13 +956,13 @@ ___
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:163](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L163)
+[src/drivers/KeycloakDriver.ts:162](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L162)
 
 ___
 
 ### updateClient
 
-▸ **updateClient**(`payload?`): `Promise`<`void`\>
+▸ **updateClient**(`payload?`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -987,17 +972,17 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:630](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L630)
+[src/drivers/KeycloakDriver.ts:629](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L629)
 
 ___
 
 ### updateGroup
 
-▸ **updateGroup**(`payload?`): `Promise`<`void`\>
+▸ **updateGroup**(`payload?`): `Promise`\<`void`\>
 
 Update group, ignores subgroups.
 PUT /admin/realms/{realm}/groups/{id}
@@ -1010,17 +995,17 @@ PUT /admin/realms/{realm}/groups/{id}
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:468](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L468)
+[src/drivers/KeycloakDriver.ts:467](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L467)
 
 ___
 
 ### updateRole
 
-▸ **updateRole**(`payload?`): `Promise`<`void`\>
+▸ **updateRole**(`payload?`): `Promise`\<`void`\>
 
 Update the role
 PUT /admin/realms/{realm}/roles-by-id/{role-id}
@@ -1029,21 +1014,21 @@ PUT /admin/realms/{realm}/roles-by-id/{role-id}
 
 | Name | Type |
 | :------ | :------ |
-| `payload?` | [`RoleRepresentation`](../interfaces/RoleRepresentation.md) & { `realm?`: `string`  } |
+| `payload?` | [`RoleRepresentation`](../interfaces/RoleRepresentation.md) & \{ `realm?`: `string`  } |
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:330](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L330)
+[src/drivers/KeycloakDriver.ts:329](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L329)
 
 ___
 
 ### updateUser
 
-▸ **updateUser**(`payload?`): `Promise`<`void`\>
+▸ **updateUser**(`payload?`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -1053,8 +1038,8 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/KeycloakDriver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/KeycloakDriver.ts#L207)
+[src/drivers/KeycloakDriver.ts:206](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/KeycloakDriver.ts#L206)

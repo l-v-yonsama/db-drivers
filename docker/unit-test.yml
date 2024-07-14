@@ -57,14 +57,12 @@ services:
       - 6004:9001
 
   localstack:
-    image: localstack/localstack:0.14.4
+    image: localstack/localstack
     ports:
       - 6005:4566 # all services
       - 6006:8080 # dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      # データのマウント
-      - 'localstack-data:/tmp/localstack'
     environment:
       - SERVICES=s3,sqs,ses,cloudwatch,logs,lambda
       - AWS_ACCESS_KEY_ID=test

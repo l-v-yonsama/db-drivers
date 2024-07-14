@@ -1,7 +1,7 @@
-import * as os from 'os';
 import {
-  DbResource,
-  DbSchema,
+  DiffToUndoChangesResult,
+  equalsIgnoreCase,
+  GeneralColumnType,
   isBooleanLike,
   isDateTimeOrDate,
   isDateTimeOrDateOrTime,
@@ -11,41 +11,39 @@ import {
   isTextLike,
   isTime,
   isUUIDType,
-} from '../resource';
-import { DbColumn, DbTable, RdsDatabase } from '../resource/DbResource';
-import { NodeLocation, parse, Statement } from 'pgsql-ast-parser';
-import {
-  equalsIgnoreCase,
+  RdhKey,
   toBoolean,
   toDate,
+  toLines,
   toNum,
   toTime,
-  toLines,
-} from '../utils';
+} from '@l-v-yonsama/rdh';
+import dayjs from 'dayjs';
+import { TopLevelCondition } from 'json-rules-engine';
+import * as os from 'os';
+import { NodeLocation, parse, Statement } from 'pgsql-ast-parser';
+import { DbResource, DbSchema } from '../resource';
+import { DbColumn, DbTable, RdsDatabase } from '../resource/DbResource';
 import {
   BindOptions,
   BindParamPosition,
-  DiffToUndoChangesResult,
-  GeneralColumnType,
   Proposal,
   ProposalKind,
   ProposalParams,
   QNames,
   QStatement,
   QueryWithBindsResult,
-  RdhKey,
   ResourcePosition,
   ResourcePositionParams,
   ToViewDataQueryParams,
 } from '../types';
 import { FUNCTIONS, RESERVED_WORDS } from './constant';
-import { TopLevelCondition } from 'json-rules-engine';
 import {
   isAllConditions,
+  isAnyConditions,
   isTopLevelCondition,
   operatorToSQLString,
 } from './RuleEngine';
-import dayjs from 'dayjs';
 
 export const createUndoChangeSQL = ({
   schemaName,
@@ -433,7 +431,7 @@ const createConditionalClause = ({
   const nestedList = [];
   if (isAllConditions(conditions)) {
     nestedList.push(...conditions.all);
-  } else {
+  } else if (isAnyConditions(conditions)) {
     nestedList.push(...conditions.any);
     andOr = 'OR';
   }

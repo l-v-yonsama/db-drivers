@@ -19,27 +19,27 @@
 
 ### closeAll
 
-▸ **closeAll**(): `Promise`<`string`\>
+▸ **closeAll**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:130](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/DBDriverResolver.ts#L130)
+[src/drivers/DBDriverResolver.ts:130](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/DBDriverResolver.ts#L130)
 
 ___
 
 ### createDriver
 
-▸ **createDriver**<`T`\>(`setting`): `T`
+▸ **createDriver**\<`T`\>(`setting`): `T`
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`BaseDriver`](BaseDriver.md)<[`DbDatabase`](../modules.md#dbdatabase), `T`\> |
+| `T` | extends [`BaseDriver`](BaseDriver.md)\<[`DbDatabase`](../modules.md#dbdatabase), `T`\> |
 
 #### Parameters
 
@@ -53,19 +53,19 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/DBDriverResolver.ts#L54)
+[src/drivers/DBDriverResolver.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/DBDriverResolver.ts#L54)
 
 ___
 
 ### createRDSDriver
 
-▸ **createRDSDriver**<`T`\>(`setting`): `T`
+▸ **createRDSDriver**\<`T`\>(`setting`): `T`
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`RDSBaseDriver`](RDSBaseDriver.md)<`T`\> |
+| `T` | extends [`RDSBaseDriver`](RDSBaseDriver.md)\<`T`\> |
 
 #### Parameters
 
@@ -79,19 +79,19 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/DBDriverResolver.ts#L47)
+[src/drivers/DBDriverResolver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/DBDriverResolver.ts#L47)
 
 ___
 
 ### flowTransaction
 
-▸ **flowTransaction**<`T`, `U`\>(`setting`, `f`, `options?`): `Promise`<[`GeneralResult`](GeneralResult.md)<`U`\>\>
+▸ **flowTransaction**\<`T`, `U`\>(`setting`, `f`, `options?`): `Promise`\<[`GeneralResult`](GeneralResult.md)\<`U`\>\>
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`RDSBaseDriver`](RDSBaseDriver.md)<`T`\> |
+| `T` | extends [`RDSBaseDriver`](RDSBaseDriver.md)\<`T`\> |
 | `U` | `any` |
 
 #### Parameters
@@ -99,23 +99,23 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `setting` | [`ConnectionSetting`](../modules.md#connectionsetting) |
-| `f` | (`driver`: `T`) => `Promise`<`U`\> |
+| `f` | (`driver`: `T`) => `Promise`\<`U`\> |
 | `options?` | `Object` |
 | `options.transactionControlType` | [`TransactionControlType`](../modules.md#transactioncontroltype) |
 
 #### Returns
 
-`Promise`<[`GeneralResult`](GeneralResult.md)<`U`\>\>
+`Promise`\<[`GeneralResult`](GeneralResult.md)\<`U`\>\>
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/DBDriverResolver.ts#L113)
+[src/drivers/DBDriverResolver.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/DBDriverResolver.ts#L113)
 
 ___
 
 ### getDriverById
 
-▸ **getDriverById**(`connectionId`): [`BaseDriver`](BaseDriver.md)<[`DbDatabase`](../modules.md#dbdatabase)\>
+▸ **getDriverById**(`connectionId`): [`BaseDriver`](BaseDriver.md)\<[`DbDatabase`](../modules.md#dbdatabase)\>
 
 #### Parameters
 
@@ -125,11 +125,11 @@ ___
 
 #### Returns
 
-[`BaseDriver`](BaseDriver.md)<[`DbDatabase`](../modules.md#dbdatabase)\>
+[`BaseDriver`](BaseDriver.md)\<[`DbDatabase`](../modules.md#dbdatabase)\>
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/DBDriverResolver.ts#L38)
+[src/drivers/DBDriverResolver.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/DBDriverResolver.ts#L38)
 
 ___
 
@@ -141,7 +141,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `driver` | [`BaseDriver`](BaseDriver.md)<[`DbDatabase`](../modules.md#dbdatabase)\> |
+| `driver` | [`BaseDriver`](BaseDriver.md)\<[`DbDatabase`](../modules.md#dbdatabase)\> |
 
 #### Returns
 
@@ -149,19 +149,19 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:126](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/DBDriverResolver.ts#L126)
+[src/drivers/DBDriverResolver.ts:126](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/DBDriverResolver.ts#L126)
 
 ___
 
 ### workflow
 
-▸ **workflow**<`T`, `U`\>(`setting`, `f`): `Promise`<[`GeneralResult`](GeneralResult.md)<`U`\>\>
+▸ **workflow**\<`T`, `U`\>(`setting`, `f`): `Promise`\<[`GeneralResult`](GeneralResult.md)\<`U`\>\>
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`BaseDriver`](BaseDriver.md)<[`DbDatabase`](../modules.md#dbdatabase), `T`\> |
+| `T` | extends [`BaseDriver`](BaseDriver.md)\<[`DbDatabase`](../modules.md#dbdatabase), `T`\> |
 | `U` | `any` |
 
 #### Parameters
@@ -169,21 +169,21 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `setting` | [`ConnectionSetting`](../modules.md#connectionsetting) |
-| `f` | (`driver`: `T`) => `Promise`<`U`\> |
+| `f` | (`driver`: `T`) => `Promise`\<`U`\> |
 
 #### Returns
 
-`Promise`<[`GeneralResult`](GeneralResult.md)<`U`\>\>
+`Promise`\<[`GeneralResult`](GeneralResult.md)\<`U`\>\>
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:103](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/DBDriverResolver.ts#L103)
+[src/drivers/DBDriverResolver.ts:103](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/DBDriverResolver.ts#L103)
 
 ___
 
 ### getInstance
 
-▸ `Static` **getInstance**(): [`DBDriverResolver`](DBDriverResolver.md)
+▸ **getInstance**(): [`DBDriverResolver`](DBDriverResolver.md)
 
 #### Returns
 
@@ -191,4 +191,4 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/DBDriverResolver.ts#L26)
+[src/drivers/DBDriverResolver.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/DBDriverResolver.ts#L26)

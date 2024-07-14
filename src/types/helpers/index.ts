@@ -1,6 +1,6 @@
 import { TopLevelCondition } from 'json-rules-engine';
-import { DbTable, RdsDatabase } from '../../resource';
 import { Statement } from 'pgsql-ast-parser';
+import { DbTable, RdsDatabase } from '../../resource';
 
 export type QNames = {
   tableName: string;
@@ -73,27 +73,4 @@ export type BindParamPosition = {
   firstPosition: number;
   numOfBinds: number;
   kind: 'single' | 'multiple';
-};
-
-export type DiffResult = {
-  ok: boolean;
-  message: string;
-  deleted: number;
-  inserted: number;
-  updated: number;
-};
-
-export type DiffToUndoChangesResult = {
-  ok: boolean;
-  message: string;
-  toBeDeleted: {
-    conditions: { [key: string]: any };
-  }[];
-  toBeInserted: {
-    values: { [key: string]: any };
-  }[];
-  toBeUpdated: {
-    values: { [key: string]: any };
-    conditions: { [key: string]: any };
-  }[];
 };

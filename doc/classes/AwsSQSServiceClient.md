@@ -48,7 +48,7 @@
 
 ### constructor
 
-• **new AwsSQSServiceClient**(`conRes`, `config`)
+• **new AwsSQSServiceClient**(`conRes`, `config`): [`AwsSQSServiceClient`](AwsSQSServiceClient.md)
 
 #### Parameters
 
@@ -57,13 +57,17 @@
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 | `config` | [`ClientConfigType`](../modules.md#clientconfigtype) |
 
+#### Returns
+
+[`AwsSQSServiceClient`](AwsSQSServiceClient.md)
+
 #### Overrides
 
 [AwsServiceClient](AwsServiceClient.md).[constructor](AwsServiceClient.md#constructor)
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L44)
+[src/drivers/aws/AwsSQSServiceClient.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L49)
 
 ## Properties
 
@@ -77,7 +81,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -91,7 +95,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L11)
 
 ___
 
@@ -105,7 +109,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ___
 
@@ -115,17 +119,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L42)
+[src/drivers/aws/AwsSQSServiceClient.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L47)
 
 ## Methods
 
 ### closeSub
 
-▸ `Protected` **closeSub**(): `Promise`<`void`\>
+▸ **closeSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -133,17 +137,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:227](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L227)
+[src/drivers/aws/AwsSQSServiceClient.ts:235](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L235)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -151,17 +155,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L17)
 
 ___
 
 ### connectSub
 
-▸ `Protected` **connectSub**(): `Promise`<`string`\>
+▸ **connectSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -169,35 +173,35 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L48)
+[src/drivers/aws/AwsSQSServiceClient.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L53)
 
 ___
 
 ### createQueue
 
-▸ **createQueue**(`«destructured»`): `Promise`<`string`\>
+▸ **createQueue**(`«destructured»`): `Promise`\<`string`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `«destructured»` | `Object` |
-| › `attributes?` | [`AwsSQSAttributes`](../modules.md#awssqsattributes) |
+| › `attributes?` | `Partial`\<`Record`\<`QueueAttributeName`, `string`\>\> |
 | › `name` | `string` |
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:194](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L194)
+[src/drivers/aws/AwsSQSServiceClient.ts:202](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L202)
 
 ___
 
 ### deleteMessage
 
-▸ **deleteMessage**(`«destructured»`): `Promise`<`void`\>
+▸ **deleteMessage**(`«destructured»`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -209,17 +213,17 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:215](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L215)
+[src/drivers/aws/AwsSQSServiceClient.ts:223](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L223)
 
 ___
 
 ### deleteQueue
 
-▸ **deleteQueue**(`«destructured»`): `Promise`<`void`\>
+▸ **deleteQueue**(`«destructured»`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -230,21 +234,21 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L207)
+[src/drivers/aws/AwsSQSServiceClient.ts:215](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L215)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -252,27 +256,27 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L59)
+[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L59)
 
 ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`<[`AwsDatabase`](AwsDatabase.md)\>
+▸ **getInfomationSchemas**(): `Promise`\<[`AwsDatabase`](AwsDatabase.md)\>
 
 #### Returns
 
-`Promise`<[`AwsDatabase`](AwsDatabase.md)\>
+`Promise`\<[`AwsDatabase`](AwsDatabase.md)\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:124](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L124)
+[src/drivers/aws/AwsSQSServiceClient.ts:132](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L132)
 
 ___
 
 ### getServiceName
 
-▸ `Protected` **getServiceName**(): `string`
+▸ **getServiceName**(): `string`
 
 #### Returns
 
@@ -284,7 +288,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:231](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L231)
+[src/drivers/aws/AwsSQSServiceClient.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L239)
 
 ___
 
@@ -302,13 +306,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L55)
+[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L55)
 
 ___
 
 ### purgeQueue
 
-▸ **purgeQueue**(`«destructured»`): `Promise`<`void`\>
+▸ **purgeQueue**(`«destructured»`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -319,17 +323,17 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:211](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L211)
+[src/drivers/aws/AwsSQSServiceClient.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L219)
 
 ___
 
 ### receiveMessages
 
-▸ **receiveMessages**(`params`): `Promise`<[`DbKey`](DbKey.md)<[`SQSMessageParams`](../modules.md#sqsmessageparams)\>[]\>
+▸ **receiveMessages**(`params`): `Promise`\<[`DbKey`](DbKey.md)\<[`SQSMessageParams`](../modules.md#sqsmessageparams)\>[]\>
 
 #### Parameters
 
@@ -339,17 +343,17 @@ ___
 
 #### Returns
 
-`Promise`<[`DbKey`](DbKey.md)<[`SQSMessageParams`](../modules.md#sqsmessageparams)\>[]\>
+`Promise`\<[`DbKey`](DbKey.md)\<[`SQSMessageParams`](../modules.md#sqsmessageparams)\>[]\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L59)
+[src/drivers/aws/AwsSQSServiceClient.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L64)
 
 ___
 
 ### scan
 
-▸ **scan**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **scan**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -359,7 +363,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Implementation of
 
@@ -367,13 +371,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:80](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L80)
+[src/drivers/aws/AwsSQSServiceClient.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L85)
 
 ___
 
 ### send
 
-▸ **send**(`input`): `Promise`<`SendMessageResult`\>
+▸ **send**(`input`): `Promise`\<`SendMessageResult`\>
 
 #### Parameters
 
@@ -383,17 +387,17 @@ ___
 
 #### Returns
 
-`Promise`<`SendMessageResult`\>
+`Promise`\<`SendMessageResult`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L120)
+[src/drivers/aws/AwsSQSServiceClient.ts:128](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L128)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -403,7 +407,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -411,17 +415,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L36)
 
 ___
 
 ### testSub
 
-▸ `Protected` **testSub**(): `Promise`<`void`\>
+▸ **testSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -429,4 +433,4 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSQSServiceClient.ts#L53)
+[src/drivers/aws/AwsSQSServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSQSServiceClient.ts#L58)

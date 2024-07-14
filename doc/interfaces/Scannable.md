@@ -21,7 +21,7 @@
 
 ### scan
 
-▸ **scan**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **scan**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -31,8 +31,8 @@
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L14)
+[src/drivers/BaseDriver.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L7)

@@ -50,7 +50,7 @@
 
 ### constructor
 
-• **new AwsS3ServiceClient**(`conRes`, `config`)
+• **new AwsS3ServiceClient**(`conRes`, `config`): [`AwsS3ServiceClient`](AwsS3ServiceClient.md)
 
 #### Parameters
 
@@ -59,13 +59,17 @@
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 | `config` | [`ClientConfigType`](../modules.md#clientconfigtype) |
 
+#### Returns
+
+[`AwsS3ServiceClient`](AwsS3ServiceClient.md)
+
 #### Overrides
 
 [AwsServiceClient](AwsServiceClient.md).[constructor](AwsServiceClient.md#constructor)
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L47)
+[src/drivers/aws/AwsS3ServiceClient.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L45)
 
 ## Properties
 
@@ -79,7 +83,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -93,7 +97,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L11)
 
 ___
 
@@ -107,7 +111,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ___
 
@@ -117,17 +121,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L45)
+[src/drivers/aws/AwsS3ServiceClient.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L43)
 
 ## Methods
 
 ### closeSub
 
-▸ `Protected` **closeSub**(): `Promise`<`void`\>
+▸ **closeSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -135,17 +139,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:436](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L436)
+[src/drivers/aws/AwsS3ServiceClient.ts:434](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L434)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -153,17 +157,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L17)
 
 ___
 
 ### connectSub
 
-▸ **connectSub**(): `Promise`<`string`\>
+▸ **connectSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -171,13 +175,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L51)
+[src/drivers/aws/AwsS3ServiceClient.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L49)
 
 ___
 
 ### createBucket
 
-▸ **createBucket**(`«destructured»`): `Promise`<`void`\>
+▸ **createBucket**(`«destructured»`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -188,21 +192,21 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:355](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L355)
+[src/drivers/aws/AwsS3ServiceClient.ts:353](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L353)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -210,13 +214,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L59)
+[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L59)
 
 ___
 
 ### getHeadObject
 
-▸ **getHeadObject**(`«destructured»`): `Promise`<`HeadObjectCommandOutput`\>
+▸ **getHeadObject**(`«destructured»`): `Promise`\<`HeadObjectCommandOutput`\>
 
 #### Parameters
 
@@ -228,31 +232,31 @@ ___
 
 #### Returns
 
-`Promise`<`HeadObjectCommandOutput`\>
+`Promise`\<`HeadObjectCommandOutput`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:341](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L341)
+[src/drivers/aws/AwsS3ServiceClient.ts:339](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L339)
 
 ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`<[`AwsDatabase`](AwsDatabase.md)\>
+▸ **getInfomationSchemas**(): `Promise`\<[`AwsDatabase`](AwsDatabase.md)\>
 
 #### Returns
 
-`Promise`<[`AwsDatabase`](AwsDatabase.md)\>
+`Promise`\<[`AwsDatabase`](AwsDatabase.md)\>
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L309)
+[src/drivers/aws/AwsS3ServiceClient.ts:307](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L307)
 
 ___
 
 ### getServiceName
 
-▸ `Protected` **getServiceName**(): `string`
+▸ **getServiceName**(): `string`
 
 #### Returns
 
@@ -264,13 +268,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:440](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L440)
+[src/drivers/aws/AwsS3ServiceClient.ts:438](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L438)
 
 ___
 
 ### getSignedUrl
 
-▸ **getSignedUrl**(`«destructured»`): `Promise`<`string`\>
+▸ **getSignedUrl**(`«destructured»`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -283,17 +287,17 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L69)
+[src/drivers/aws/AwsS3ServiceClient.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L67)
 
 ___
 
 ### getValueByKey
 
-▸ **getValueByKey**(`«destructured»`): `Promise`<`GetObjectCommandOutput`\>
+▸ **getValueByKey**(`«destructured»`): `Promise`\<`GetObjectCommandOutput`\>
 
 #### Parameters
 
@@ -305,11 +309,11 @@ ___
 
 #### Returns
 
-`Promise`<`GetObjectCommandOutput`\>
+`Promise`\<`GetObjectCommandOutput`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:359](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L359)
+[src/drivers/aws/AwsS3ServiceClient.ts:357](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L357)
 
 ___
 
@@ -327,13 +331,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L55)
+[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L55)
 
 ___
 
 ### listObjects
 
-▸ **listObjects**(`«destructured»`): `Promise`<[`DbKey`](DbKey.md)<[`S3KeyParams`](../modules.md#s3keyparams)\>[]\>
+▸ **listObjects**(`«destructured»`): `Promise`\<[`DbKey`](DbKey.md)\<[`S3KeyParams`](../modules.md#s3keyparams)\>[]\>
 
 #### Parameters
 
@@ -351,17 +355,17 @@ ___
 
 #### Returns
 
-`Promise`<[`DbKey`](DbKey.md)<[`S3KeyParams`](../modules.md#s3keyparams)\>[]\>
+`Promise`\<[`DbKey`](DbKey.md)\<[`S3KeyParams`](../modules.md#s3keyparams)\>[]\>
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:90](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L90)
+[src/drivers/aws/AwsS3ServiceClient.ts:88](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L88)
 
 ___
 
 ### putObject
 
-▸ **putObject**(`«destructured»`): `Promise`<`void`\>
+▸ **putObject**(`«destructured»`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -376,17 +380,17 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:376](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L376)
+[src/drivers/aws/AwsS3ServiceClient.ts:374](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L374)
 
 ___
 
 ### removeAllObjects
 
-▸ **removeAllObjects**(`«destructured»`): `Promise`<`void`\>
+▸ **removeAllObjects**(`«destructured»`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -397,17 +401,17 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:405](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L405)
+[src/drivers/aws/AwsS3ServiceClient.ts:403](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L403)
 
 ___
 
 ### removeBucket
 
-▸ **removeBucket**(`«destructured»`): `Promise`<`void`\>
+▸ **removeBucket**(`«destructured»`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -418,17 +422,17 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:400](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L400)
+[src/drivers/aws/AwsS3ServiceClient.ts:398](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L398)
 
 ___
 
 ### scan
 
-▸ **scan**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **scan**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -438,7 +442,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Implementation of
 
@@ -446,13 +450,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L210)
+[src/drivers/aws/AwsS3ServiceClient.ts:208](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L208)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -462,7 +466,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -470,17 +474,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L36)
 
 ___
 
 ### testSub
 
-▸ `Protected` **testSub**(): `Promise`<`void`\>
+▸ **testSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -488,4 +492,4 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsS3ServiceClient.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsS3ServiceClient.ts#L63)
+[src/drivers/aws/AwsS3ServiceClient.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsS3ServiceClient.ts#L61)

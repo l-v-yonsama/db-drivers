@@ -41,7 +41,7 @@
 
 ### constructor
 
-• **new AwsServiceClient**(`conRes`, `config`)
+• **new AwsServiceClient**(`conRes`, `config`): [`AwsServiceClient`](AwsServiceClient.md)
 
 #### Parameters
 
@@ -50,9 +50,13 @@
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 | `config` | [`ClientConfigType`](../modules.md#clientconfigtype) |
 
+#### Returns
+
+[`AwsServiceClient`](AwsServiceClient.md)
+
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L11)
 
 ## Properties
 
@@ -62,7 +66,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -72,7 +76,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L11)
 
 ___
 
@@ -82,69 +86,69 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ## Methods
 
 ### closeSub
 
-▸ `Protected` `Abstract` **closeSub**(): `Promise`<`void`\>
+▸ **closeSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L85)
+[src/drivers/aws/AwsServiceClient.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L85)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L17)
 
 ___
 
 ### connectSub
 
-▸ `Protected` `Abstract` **connectSub**(): `Promise`<`string`\>
+▸ **connectSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L83)
+[src/drivers/aws/AwsServiceClient.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L83)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L59)
+[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L59)
 
 ___
 
 ### getServiceName
 
-▸ `Protected` `Abstract` **getServiceName**(): `string`
+▸ **getServiceName**(): `string`
 
 #### Returns
 
@@ -152,7 +156,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L86)
+[src/drivers/aws/AwsServiceClient.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L86)
 
 ___
 
@@ -166,13 +170,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L55)
+[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L55)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -182,22 +186,22 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L36)
 
 ___
 
 ### testSub
 
-▸ `Protected` `Abstract` **testSub**(): `Promise`<`void`\>
+▸ **testSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L84)
+[src/drivers/aws/AwsServiceClient.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L84)

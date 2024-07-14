@@ -1,9 +1,9 @@
 import {
-  DBDriverResolver,
   ConnectionSetting,
+  DBDriverResolver,
   DBType,
-  KeycloakDriver,
   KeycloakDatabase,
+  KeycloakDriver,
 } from '../../../src';
 
 describe('KeycloakDriver', () => {

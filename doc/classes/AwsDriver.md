@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- [`BaseDriver`](BaseDriver.md)<[`AwsDatabase`](AwsDatabase.md)\>
+- [`BaseDriver`](BaseDriver.md)\<[`AwsDatabase`](AwsDatabase.md)\>
 
   ↳ **`AwsDriver`**
 
@@ -30,7 +30,6 @@
 - [closeSub](AwsDriver.md#closesub)
 - [connect](AwsDriver.md#connect)
 - [connectSub](AwsDriver.md#connectsub)
-- [connectToSshServer](AwsDriver.md#connecttosshserver)
 - [createClientConfig](AwsDriver.md#createclientconfig)
 - [createDBError](AwsDriver.md#createdberror)
 - [disconnect](AwsDriver.md#disconnect)
@@ -52,7 +51,7 @@
 
 ### constructor
 
-• **new AwsDriver**(`conRes`)
+• **new AwsDriver**(`conRes`): [`AwsDriver`](AwsDriver.md)
 
 #### Parameters
 
@@ -60,13 +59,17 @@
 | :------ | :------ |
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 
+#### Returns
+
+[`AwsDriver`](AwsDriver.md)
+
 #### Overrides
 
 [BaseDriver](BaseDriver.md).[constructor](BaseDriver.md#constructor)
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L37)
+[src/drivers/AwsDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L37)
 
 ## Properties
 
@@ -76,7 +79,7 @@
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L34)
+[src/drivers/AwsDriver.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L34)
 
 ___
 
@@ -90,7 +93,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L51)
+[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L44)
 
 ___
 
@@ -104,7 +107,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L50)
+[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L43)
 
 ___
 
@@ -114,7 +117,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L35)
+[src/drivers/AwsDriver.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L35)
 
 ___
 
@@ -124,7 +127,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L32)
+[src/drivers/AwsDriver.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L32)
 
 ___
 
@@ -134,7 +137,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L33)
+[src/drivers/AwsDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L33)
 
 ___
 
@@ -148,7 +151,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L46)
 
 ___
 
@@ -162,17 +165,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L52)
+[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L45)
 
 ## Methods
 
 ### closeSub
 
-▸ **closeSub**(): `Promise`<`string`\>
+▸ **closeSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -180,17 +183,17 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L218)
+[src/drivers/AwsDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L218)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -198,17 +201,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L159)
+[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L152)
 
 ___
 
 ### connectSub
 
-▸ **connectSub**(): `Promise`<`string`\>
+▸ **connectSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -216,31 +219,13 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:115](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L115)
-
-___
-
-### connectToSshServer
-
-▸ **connectToSshServer**(): `Promise`<`string`\>
-
-#### Returns
-
-`Promise`<`string`\>
-
-#### Inherited from
-
-[BaseDriver](BaseDriver.md).[connectToSshServer](BaseDriver.md#connecttosshserver)
-
-#### Defined in
-
-[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L133)
+[src/drivers/AwsDriver.ts:115](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L115)
 
 ___
 
 ### createClientConfig
 
-▸ `Protected` **createClientConfig**(): [`ClientConfigType`](../modules.md#clientconfigtype)
+▸ **createClientConfig**(): [`ClientConfigType`](../modules.md#clientconfigtype)
 
 #### Returns
 
@@ -248,7 +233,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L41)
+[src/drivers/AwsDriver.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L41)
 
 ___
 
@@ -273,17 +258,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L225)
+[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L218)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -291,13 +276,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L178)
+[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L171)
 
 ___
 
 ### flow
 
-▸ **flow**<`T`\>(`f`): `Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+▸ **flow**\<`T`\>(`f`): `Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Type parameters
 
@@ -309,11 +294,11 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `f` | (`driver`: [`AwsDriver`](AwsDriver.md)) => `Promise`<`T`\> |
+| `f` | (`driver`: `this`) => `Promise`\<`T`\> |
 
 #### Returns
 
-`Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+`Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Inherited from
 
@@ -321,25 +306,25 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L101)
+[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L94)
 
 ___
 
 ### getClientByResourceType
 
-▸ **getClientByResourceType**<`T`\>(`resourceType`): `T`
+▸ **getClientByResourceType**\<`T`\>(`resourceType`): `T`
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`AwsServiceClient`](AwsServiceClient.md)<`T`\> = [`AwsServiceClient`](AwsServiceClient.md) |
+| `T` | extends [`AwsServiceClient`](AwsServiceClient.md)\<`T`\> = [`AwsServiceClient`](AwsServiceClient.md) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `resourceType` | [`ResourceType`](../modules.md#resourcetype-1) |
+| `resourceType` | [`ResourceType`](../modules.md#resourcetype) |
 
 #### Returns
 
@@ -347,25 +332,25 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:77](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L77)
+[src/drivers/AwsDriver.ts:77](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L77)
 
 ___
 
 ### getClientByServiceType
 
-▸ **getClientByServiceType**<`T`\>(`serviceType`): `T`
+▸ **getClientByServiceType**\<`T`\>(`serviceType`): `T`
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`AwsServiceClient`](AwsServiceClient.md)<`T`\> = [`AwsServiceClient`](AwsServiceClient.md) |
+| `T` | extends [`AwsServiceClient`](AwsServiceClient.md)\<`T`\> = [`AwsServiceClient`](AwsServiceClient.md) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `serviceType` | [`AwsServiceType`](../modules.md#awsservicetype-1) |
+| `serviceType` | [`AwsServiceType`](../modules.md#awsservicetype) |
 
 #### Returns
 
@@ -373,7 +358,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L56)
+[src/drivers/AwsDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L56)
 
 ___
 
@@ -391,13 +376,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L63)
+[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L56)
 
 ___
 
 ### getDbDatabase
 
-▸ `Protected` **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
+▸ **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
 
 #### Returns
 
@@ -409,17 +394,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L219)
+[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L212)
 
 ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`<[`AwsDatabase`](AwsDatabase.md)[]\>
+▸ **getInfomationSchemas**(): `Promise`\<[`AwsDatabase`](AwsDatabase.md)[]\>
 
 #### Returns
 
-`Promise`<[`AwsDatabase`](AwsDatabase.md)[]\>
+`Promise`\<[`AwsDatabase`](AwsDatabase.md)[]\>
 
 #### Inherited from
 
@@ -427,17 +412,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L204)
+[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L197)
 
 ___
 
 ### getInfomationSchemasSub
 
-▸ **getInfomationSchemasSub**(): `Promise`<[`AwsDatabase`](AwsDatabase.md)[]\>
+▸ **getInfomationSchemasSub**(): `Promise`\<[`AwsDatabase`](AwsDatabase.md)[]\>
 
 #### Returns
 
-`Promise`<[`AwsDatabase`](AwsDatabase.md)[]\>
+`Promise`\<[`AwsDatabase`](AwsDatabase.md)[]\>
 
 #### Overrides
 
@@ -445,7 +430,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L164)
+[src/drivers/AwsDriver.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L164)
 
 ___
 
@@ -463,7 +448,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L53)
 
 ___
 
@@ -481,7 +466,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -499,7 +484,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L71)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -523,7 +508,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L74)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L67)
 
 ___
 
@@ -547,13 +532,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L85)
+[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L78)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -563,7 +548,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -571,4 +556,4 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:183](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L183)
+[src/drivers/AwsDriver.ts:183](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L183)

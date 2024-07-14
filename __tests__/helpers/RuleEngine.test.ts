@@ -1,4 +1,13 @@
 import {
+  GeneralColumnType,
+  RdhKey,
+  ResultSetDataBuilder,
+  RowHelper,
+  RuleAnnotation,
+  TableRule,
+} from '@l-v-yonsama/rdh';
+import dayjs from 'dayjs';
+import {
   AnyConditions,
   ConditionProperties,
   TopLevelCondition,
@@ -6,19 +15,12 @@ import {
 import {
   ConnectionSetting,
   DBType,
-  GeneralColumnType,
+  getRecordRuleResults,
   MySQLDriver,
-  RdhHelper,
-  RdhKey,
-  ResultSetDataBuilder,
-  RowHelper,
-  RuleAnnotation,
   runRuleEngine,
   stringConditionToJsonCondition,
-  TableRule,
 } from '../../src';
 import { init } from '../setup/mysql';
-import dayjs from 'dayjs';
 
 describe('ResourceHelper', () => {
   let driver: MySQLDriver;
@@ -249,7 +251,7 @@ describe('ResourceHelper', () => {
         );
         expect(ruleAnnotation9.values.name).toBe('S4, D1 combination');
 
-        const rReulst = RdhHelper.getRecordRuleResults(rdh);
+        const rReulst = getRecordRuleResults(rdh);
         const n1n2Result = rReulst.details.find(
           (it) => it.ruleDetail.ruleName === 'N1, N2 combination',
         );

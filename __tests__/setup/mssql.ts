@@ -1,5 +1,5 @@
-import * as mssql from 'mssql';
 import { promises as fs } from 'fs';
+import * as mssql from 'mssql';
 import * as path from 'path';
 import { DbResource, fromJson, parseCsvFromFile } from '../../src';
 
@@ -72,10 +72,10 @@ export async function init0(): Promise<void> {
 
     // await q('CREATE DATABASE testdb');
     await q('USE testdb');
-    // await q('ALTER LOGIN testuser WITH DEFAULT_DATABASE=testdb');
     // await q(
-    //     `CREATE LOGIN testuser WITH PASSWORD = 'Pass123zxcv!', DEFAULT_DATABASE = testdb`,
-    //   );
+    //   `CREATE LOGIN testuser WITH PASSWORD = 'Pass123zxcv!', DEFAULT_DATABASE = testdb`,
+    // );
+    // await q('ALTER LOGIN testuser WITH DEFAULT_DATABASE=testdb');
     const countSchema0 = await cq(
       `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.SCHEMATA WHERE CATALOG_NAME='testdb' AND SCHEMA_NAME='schema0'`,
     );

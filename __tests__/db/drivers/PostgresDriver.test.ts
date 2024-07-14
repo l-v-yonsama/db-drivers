@@ -1,14 +1,13 @@
+import { GeneralColumnType, sleep } from '@l-v-yonsama/rdh';
 import {
-  PostgresDriver,
+  ConnectionSetting,
+  DbColumn,
   DbSchema,
   DbTable,
-  DbColumn,
   DBType,
-  GeneralColumnType,
-  RdsDatabase,
-  ConnectionSetting,
-  sleep,
+  PostgresDriver,
   RDSBaseDriver,
+  RdsDatabase,
 } from '../../../src';
 import { init } from '../../setup/postgres';
 

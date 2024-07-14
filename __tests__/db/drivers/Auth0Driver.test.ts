@@ -1,12 +1,12 @@
+import { Client, Organization } from 'auth0';
 import 'dotenv/config';
 import {
-  DBDriverResolver,
-  ConnectionSetting,
-  DBType,
-  Auth0Driver,
   Auth0Database,
+  Auth0Driver,
+  ConnectionSetting,
+  DBDriverResolver,
+  DBType,
 } from '../../../src';
-import { Client, Organization } from 'auth0';
 
 const domain = process.env.TEST_AUTH0_DOMAIN ?? '';
 const clientId = process.env.TEST_AUTH0_CLIENT_ID ?? '';

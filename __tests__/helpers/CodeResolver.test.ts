@@ -1,11 +1,9 @@
 import {
   CodeResolvedAnnotation,
-  ConnectionSetting,
-  DBType,
-  MySQLDriver,
+  resolveCodeLabel,
   RowHelper,
-} from '../../src';
-import { resolveCodeLabel } from '../../src/helpers/CodeResolver';
+} from '@l-v-yonsama/rdh';
+import { ConnectionSetting, DBType, MySQLDriver } from '../../src';
 import { init } from '../setup/mysql';
 
 describe('ResourceHelper', () => {

@@ -16,8 +16,8 @@ import {
 } from '@aws-sdk/client-ses';
 import { AwsDatabase } from '../../resource';
 import { AwsServiceType, ConnectionSetting } from '../../types';
-import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
+import { AwsServiceClient } from './AwsServiceClient';
 
 export class AwsSESServiceClient extends AwsServiceClient {
   sesClient: SESClient;

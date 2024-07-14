@@ -1,14 +1,16 @@
 import {
   createRdhKey,
   eolToSpace,
-  getProposals,
-  getResourcePositions,
   isNumericLike,
   isTextLike,
+  RdhKey,
+} from '@l-v-yonsama/rdh';
+import {
+  getProposals,
+  getResourcePositions,
   normalizeQuery,
   parseQuery,
   ProposalKind,
-  RdhKey,
   RdsDatabase,
   toInsertStatement,
   toViewDataNormalizedQuery,

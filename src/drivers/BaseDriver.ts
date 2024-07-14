@@ -1,13 +1,6 @@
-import * as tunnel from 'tunnel-ssh';
-import { getPort } from 'get-port-please';
-import * as fs from 'fs';
+import { ResultSetData } from '@l-v-yonsama/rdh';
 import { DbDatabase, SchemaAndTableHints } from '../resource';
-import {
-  ConnectionSetting,
-  GeneralResult,
-  ScanParams,
-  ResultSetData,
-} from '../types';
+import { ConnectionSetting, GeneralResult, ScanParams } from '../types';
 import { DBError } from './DBError';
 
 export interface Scannable {
@@ -130,40 +123,40 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
     };
   }
 
-  async connectToSshServer(): Promise<string> {
-    this.sshLocalPort = await getPort({ portRange: [13000, 15100] });
-    // log.info(LOG_PREFIX, 'SSH Local host port is ', this.sshLocalPort)
-    return new Promise<string>((resolve, reject) => {
-      const setting = Object.assign({}, this.conRes.ssh, {
-        localHost: '127.0.0.1',
-        localPort: this.sshLocalPort,
-      });
-      if (setting.authMethod === 'privateKey') {
-        setting.privateKey = fs.readFileSync(setting.privateKeyPath, 'utf8');
-      }
+  // async connectToSshServer(): Promise<string> {
+  //   this.sshLocalPort = await getPort({ portRange: [13000, 15100] });
+  //   // log.info(LOG_PREFIX, 'SSH Local host port is ', this.sshLocalPort)
+  //   return new Promise<string>((resolve, reject) => {
+  //     const setting = Object.assign({}, this.conRes.ssh, {
+  //       localHost: '127.0.0.1',
+  //       localPort: this.sshLocalPort,
+  //     });
+  //     if (setting.authMethod === 'privateKey') {
+  //       setting.privateKey = fs.readFileSync(setting.privateKeyPath, 'utf8');
+  //     }
 
-      this.sshServer = tunnel(setting, function (err: Error) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve('');
-        }
-      });
-      // Use a listener to handle errors outside the callback
-      this.sshServer.on('error', function (err: Error) {
-        console.error('Something bad happened:', err);
-      });
-    });
-  }
+  //     this.sshServer = tunnel(setting, function (err: Error) {
+  //       if (err) {
+  //         reject(err);
+  //       } else {
+  //         resolve('');
+  //       }
+  //     });
+  //     // Use a listener to handle errors outside the callback
+  //     this.sshServer.on('error', function (err: Error) {
+  //       console.error('Something bad happened:', err);
+  //     });
+  //   });
+  // }
 
   async connect(): Promise<string> {
     let errorReason = '';
     try {
       this.initBaseStatus();
       if (this.conRes) {
-        if (this.isNeedsSsh()) {
-          await this.connectToSshServer();
-        }
+        // if (this.isNeedsSsh()) {
+        //   await this.connectToSshServer();
+        // }
         errorReason = await this.connectSub();
       } else {
         errorReason = 'Connection property is nothing';

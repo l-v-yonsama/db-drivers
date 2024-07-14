@@ -1,8 +1,8 @@
+import { ResultSetDataBuilder, createRdhKey } from '@l-v-yonsama/rdh';
+import { Options, parse } from 'csv-parse';
 import * as fs from 'fs';
-import { ResultSetDataBuilder, createRdhKey } from '../resource';
-import { parse, Options } from 'csv-parse';
-import { finished } from 'stream/promises';
 import { Readable } from 'stream';
+import { finished } from 'stream/promises';
 
 export type CsvParseOptions = {
   /**

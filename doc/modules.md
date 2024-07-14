@@ -52,12 +52,9 @@
 - [MySQLDriver](classes/MySQLDriver.md)
 - [PostgresDriver](classes/PostgresDriver.md)
 - [RDSBaseDriver](classes/RDSBaseDriver.md)
-- [RdhHelper](classes/RdhHelper.md)
 - [RdsDatabase](classes/RdsDatabase.md)
 - [RedisDatabase](classes/RedisDatabase.md)
 - [RedisDriver](classes/RedisDriver.md)
-- [ResultSetDataBuilder](classes/ResultSetDataBuilder.md)
-- [RowHelper](classes/RowHelper.md)
 - [SQLServerDriver](classes/SQLServerDriver.md)
 
 ### Interfaces
@@ -93,91 +90,54 @@
 
 ### Type Aliases
 
-- [AddAnnotation](modules.md#addannotation)
 - [AllSubDbResource](modules.md#allsubdbresource)
-- [AnnotationType](modules.md#annotationtype)
-- [ApplicableResources](modules.md#applicableresources)
 - [AwsRegion](modules.md#awsregion)
 - [AwsSQSAttributes](modules.md#awssqsattributes)
 - [AwsServiceType](modules.md#awsservicetype)
 - [AwsSetting](modules.md#awssetting)
-- [BaseCellAnnotation](modules.md#basecellannotation)
 - [BindOptions](modules.md#bindoptions)
 - [BindParamPosition](modules.md#bindparamposition)
-- [CellAnnotation](modules.md#cellannotation)
-- [ChangeInNumbersAnnotation](modules.md#changeinnumbersannotation)
 - [ClientConfigType](modules.md#clientconfigtype)
-- [CodeItem](modules.md#codeitem)
-- [CodeItemDetail](modules.md#codeitemdetail)
-- [CodeResolvedAnnotation](modules.md#coderesolvedannotation)
-- [CompareKey](modules.md#comparekey)
-- [ConditionPropertyParam](modules.md#conditionpropertyparam)
 - [ConnectionParam](modules.md#connectionparam)
 - [ConnectionSetting](modules.md#connectionsetting)
-- [ContentTypeInfo](modules.md#contenttypeinfo)
 - [CsvParseOptions](modules.md#csvparseoptions)
 - [DBType](modules.md#dbtype)
 - [DbDatabase](modules.md#dbdatabase)
-- [DeleteAnnotation](modules.md#deleteannotation)
-- [DiffResult](modules.md#diffresult)
-- [DiffToUndoChangesResult](modules.md#difftoundochangesresult)
-- [FileAnnotation](modules.md#fileannotation)
 - [FirebaseSetting](modules.md#firebasesetting)
 - [ForeignKeyConstraint](modules.md#foreignkeyconstraint)
 - [ForeignKeyConstraintDetail](modules.md#foreignkeyconstraintdetail)
-- [GeneralColumnType](modules.md#generalcolumntype)
 - [IamResourceType](modules.md#iamresourcetype)
 - [IamSolutionSetting](modules.md#iamsolutionsetting)
 - [KeycloakErrorResponse](modules.md#keycloakerrorresponse)
 - [KeycloakInternalServerErrorResponse](modules.md#keycloakinternalservererrorresponse)
 - [KeywordParamWithLimit](modules.md#keywordparamwithlimit)
-- [LintAnnotation](modules.md#lintannotation)
 - [LogMessageParams](modules.md#logmessageparams)
-- [MergedCell](modules.md#mergedcell)
 - [Proposal](modules.md#proposal)
 - [ProposalParams](modules.md#proposalparams)
 - [QNames](modules.md#qnames)
 - [QStatement](modules.md#qstatement)
-- [QueryConditions](modules.md#queryconditions)
 - [QueryParams](modules.md#queryparams)
 - [QueryWithBindsResult](modules.md#querywithbindsresult)
-- [RdhKey](modules.md#rdhkey)
-- [RdhMeta](modules.md#rdhmeta)
-- [RdhRow](modules.md#rdhrow)
-- [RdhRowMeta](modules.md#rdhrowmeta)
-- [RdhSummary](modules.md#rdhsummary)
 - [RealmParam](modules.md#realmparam)
-- [RecordRuleValidationResult](modules.md#recordrulevalidationresult)
-- [RecordRuleValidationResultDetail](modules.md#recordrulevalidationresultdetail)
 - [RedisKeyParams](modules.md#rediskeyparams)
 - [RedisKeyType](modules.md#rediskeytype)
 - [ResourcePosition](modules.md#resourceposition)
 - [ResourcePositionParams](modules.md#resourcepositionparams)
 - [ResourceType](modules.md#resourcetype)
 - [ResultColumn](modules.md#resultcolumn)
-- [ResultSetData](modules.md#resultsetdata)
-- [RuleAnnotation](modules.md#ruleannotation)
 - [S3KeyParams](modules.md#s3keyparams)
 - [SQLServerSetting](modules.md#sqlserversetting)
 - [SQSMessageParams](modules.md#sqsmessageparams)
-- [SampleClassPair](modules.md#sampleclasspair)
-- [SampleGroupByClass](modules.md#samplegroupbyclass)
 - [ScanParams](modules.md#scanparams)
 - [SshSetting](modules.md#sshsetting)
 - [SslSetting](modules.md#sslsetting)
-- [StyleAnnotation](modules.md#styleannotation)
 - [SupplyCredentialType](modules.md#supplycredentialtype)
-- [TableRule](modules.md#tablerule)
-- [TableRuleDetail](modules.md#tableruledetail)
-- [ToStringParam](modules.md#tostringparam)
 - [ToViewDataQueryParams](modules.md#toviewdataqueryparams)
 - [TransactionControlType](modules.md#transactioncontroltype)
 - [UniqueKeyConstraint](modules.md#uniquekeyconstraint)
-- [UpdateAnnotation](modules.md#updateannotation)
 
 ### Variables
 
-- [AnnotationTypeConst](modules.md#annotationtypeconst)
 - [AwsRegion](modules.md#awsregion-1)
 - [AwsRegionValues](modules.md#awsregionvalues)
 - [AwsServiceType](modules.md#awsservicetype-1)
@@ -185,7 +145,6 @@
 - [DBType](modules.md#dbtype-1)
 - [DBTypeValues](modules.md#dbtypevalues)
 - [FUNCTIONS](modules.md#functions)
-- [GeneralColumnType](modules.md#generalcolumntype-1)
 - [RESERVED\_WORDS](modules.md#reserved_words)
 - [RedisKeyType](modules.md#rediskeytype-1)
 - [RedisKeyTypeValues](modules.md#rediskeytypevalues)
@@ -195,85 +154,43 @@
 
 ### Functions
 
-- [abbr](modules.md#abbr)
-- [castTo](modules.md#castto)
 - [conditionsToString](modules.md#conditionstostring)
-- [containsIgnoreCase](modules.md#containsignorecase)
-- [createRdhKey](modules.md#createrdhkey)
 - [createUndoChangeSQL](modules.md#createundochangesql)
 - [decodeJwt](modules.md#decodejwt)
-- [diff](modules.md#diff)
-- [diffToUndoChanges](modules.md#difftoundochanges)
-- [displayGeneralColumnType](modules.md#displaygeneralcolumntype)
-- [eolToSpace](modules.md#eoltospace)
-- [equalsIgnoreCase](modules.md#equalsignorecase)
-- [escapeHtml](modules.md#escapehtml)
 - [fromJson](modules.md#fromjson)
 - [getProposals](modules.md#getproposals)
+- [getRecordRuleResults](modules.md#getrecordruleresults)
 - [getResourcePositions](modules.md#getresourcepositions)
-- [getUniqObjectKeys](modules.md#getuniqobjectkeys)
 - [isAllConditions](modules.md#isallconditions)
 - [isAnyConditions](modules.md#isanyconditions)
-- [isArray](modules.md#isarray)
 - [isAws](modules.md#isaws)
-- [isBinaryLike](modules.md#isbinarylike)
-- [isBooleanLike](modules.md#isbooleanlike)
-- [isDateTimeOrDate](modules.md#isdatetimeordate)
-- [isDateTimeOrDateOrTime](modules.md#isdatetimeordateortime)
-- [isEnumOrSet](modules.md#isenumorset)
-- [isGeometryLike](modules.md#isgeometrylike)
-- [isJsonLike](modules.md#isjsonlike)
-- [isNotSupportDiffType](modules.md#isnotsupportdifftype)
-- [isNumericLike](modules.md#isnumericlike)
+- [isConditionReference](modules.md#isconditionreference)
+- [isNotConditions](modules.md#isnotconditions)
 - [isRDSType](modules.md#isrdstype)
-- [isResultSetData](modules.md#isresultsetdata)
-- [isResultSetDataBuilder](modules.md#isresultsetdatabuilder)
 - [isScannable](modules.md#isscannable)
-- [isTextLike](modules.md#istextlike)
-- [isTime](modules.md#istime)
 - [isTopLevelCondition](modules.md#istoplevelcondition)
-- [isUUIDType](modules.md#isuuidtype)
 - [normalizePositionedParametersQuery](modules.md#normalizepositionedparametersquery)
 - [normalizeQuery](modules.md#normalizequery)
 - [normalizeSimpleParametersQuery](modules.md#normalizesimpleparametersquery)
 - [operatorToLabelString](modules.md#operatortolabelstring)
 - [operatorToSQLString](modules.md#operatortosqlstring)
-- [parseColumnType](modules.md#parsecolumntype)
 - [parseContentType](modules.md#parsecontenttype)
 - [parseCsvFromFile](modules.md#parsecsvfromfile)
 - [parseCsvFromString](modules.md#parsecsvfromstring)
-- [parseFaIconType](modules.md#parsefaicontype)
 - [parseQuery](modules.md#parsequery)
 - [prettyFileSize](modules.md#prettyfilesize)
 - [prettyTime](modules.md#prettytime)
-- [resolveCodeLabel](modules.md#resolvecodelabel)
 - [runRuleEngine](modules.md#runruleengine)
-- [sleep](modules.md#sleep)
 - [stringConditionToJsonCondition](modules.md#stringconditiontojsoncondition)
-- [toBoolean](modules.md#toboolean)
 - [toCountRecordsQuery](modules.md#tocountrecordsquery)
-- [toDate](modules.md#todate)
 - [toDeleteStatement](modules.md#todeletestatement)
 - [toInsertStatement](modules.md#toinsertstatement)
-- [toLines](modules.md#tolines)
-- [toNum](modules.md#tonum)
 - [toSafeQueryForPgsqlAst](modules.md#tosafequeryforpgsqlast)
-- [toTime](modules.md#totime)
 - [toUpdateStatement](modules.md#toupdatestatement)
 - [toViewDataNormalizedQuery](modules.md#toviewdatanormalizedquery)
 - [toViewDataQuery](modules.md#toviewdataquery)
 
 ## Type Aliases
-
-### AddAnnotation
-
-Ƭ **AddAnnotation**: [`BaseCellAnnotation`](modules.md#basecellannotation)<``"Add"``\>
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L37)
-
-___
 
 ### AllSubDbResource
 
@@ -281,38 +198,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:122](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L122)
-
-___
-
-### AnnotationType
-
-Ƭ **AnnotationType**: typeof [`AnnotationTypeConst`](modules.md#annotationtypeconst)[keyof typeof [`AnnotationTypeConst`](modules.md#annotationtypeconst)]
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:16](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L16)
-
-___
-
-### ApplicableResources
-
-Ƭ **ApplicableResources**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `column` | { `pattern`: `string` ; `regex`: `boolean`  } |
-| `column.pattern` | `string` |
-| `column.regex` | `boolean` |
-| `table?` | { `pattern`: `string` ; `regex`: `boolean`  } |
-| `table.pattern` | `string` |
-| `table.regex` | `boolean` |
-
-#### Defined in
-
-[src/types/resource/CodeResolverTypes.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/CodeResolverTypes.ts#L8)
+[src/resource/DbResource.ts:126](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L126)
 
 ___
 
@@ -322,9 +208,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsRegion.ts#L1)
+[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsRegion.ts#L1)
 
-[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsRegion.ts#L44)
+[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsRegion.ts#L44)
 
 ___
 
@@ -360,7 +246,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSQSAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsSQSAttributes.ts#L1)
+[src/types/resource/AwsSQSAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsSQSAttributes.ts#L1)
 
 ___
 
@@ -370,9 +256,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsServiceType.ts#L1)
+[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsServiceType.ts#L1)
 
-[src/types/resource/AwsServiceType.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsServiceType.ts#L7)
+[src/types/resource/AwsServiceType.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsServiceType.ts#L7)
 
 ___
 
@@ -387,36 +273,12 @@ ___
 | `profile?` | `string` | The configuration profile to use. |
 | `region?` | `string` | - |
 | `s3ForcePathStyle?` | `boolean` | - |
-| `services` | [`AwsServiceType`](modules.md#awsservicetype-1)[] | - |
-| `supplyCredentialType` | [`SupplyCredentialType`](modules.md#supplycredentialtype-1) | - |
+| `services` | [`AwsServiceType`](modules.md#awsservicetype)[] | - |
+| `supplyCredentialType` | [`SupplyCredentialType`](modules.md#supplycredentialtype) | - |
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ConnectionSetting.ts#L24)
-
-___
-
-### BaseCellAnnotation
-
-Ƭ **BaseCellAnnotation**<`T`, `U`\>: `Object`
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | [`AnnotationType`](modules.md#annotationtype) |
-| `U` | `any` |
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `type` | `T` |
-| `values?` | `U` |
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L30)
+[src/types/resource/ConnectionSetting.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ConnectionSetting.ts#L24)
 
 ___
 
@@ -434,7 +296,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L20)
+[src/types/helpers/index.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L20)
 
 ___
 
@@ -452,27 +314,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L72)
-
-___
-
-### CellAnnotation
-
-Ƭ **CellAnnotation**: [`DeleteAnnotation`](modules.md#deleteannotation) \| [`AddAnnotation`](modules.md#addannotation) \| [`UpdateAnnotation`](modules.md#updateannotation) \| [`RuleAnnotation`](modules.md#ruleannotation) \| [`LintAnnotation`](modules.md#lintannotation) \| [`StyleAnnotation`](modules.md#styleannotation) \| [`CodeResolvedAnnotation`](modules.md#coderesolvedannotation) \| [`FileAnnotation`](modules.md#fileannotation) \| [`ChangeInNumbersAnnotation`](modules.md#changeinnumbersannotation)
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L19)
-
-___
-
-### ChangeInNumbersAnnotation
-
-Ƭ **ChangeInNumbersAnnotation**: [`BaseCellAnnotation`](modules.md#basecellannotation)<``"Cin"``, { `value`: `number`  }\>
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L94)
+[src/types/helpers/index.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L72)
 
 ___
 
@@ -490,91 +332,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/AwsDriver.ts#L25)
-
-___
-
-### CodeItem
-
-Ƭ **CodeItem**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `description?` | `string` |
-| `details` | [`CodeItemDetail`](modules.md#codeitemdetail)[] |
-| `resource` | [`ApplicableResources`](modules.md#applicableresources) |
-| `title` | `string` |
-
-#### Defined in
-
-[src/types/resource/CodeResolverTypes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/CodeResolverTypes.ts#L1)
-
-___
-
-### CodeItemDetail
-
-Ƭ **CodeItemDetail**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `code` | `string` |
-| `label` | `string` |
-
-#### Defined in
-
-[src/types/resource/CodeResolverTypes.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/CodeResolverTypes.ts#L19)
-
-___
-
-### CodeResolvedAnnotation
-
-Ƭ **CodeResolvedAnnotation**: [`BaseCellAnnotation`](modules.md#basecellannotation)<``"Cod"``, { `isUndefined`: `boolean` ; `label`: `string`  }\>
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L55)
-
-___
-
-### CompareKey
-
-Ƭ **CompareKey**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `kind` | ``"custom"`` \| ``"uniq"`` \| ``"primary"`` |
-| `names` | `string`[] |
-
-#### Defined in
-
-[src/types/resource/CompareKey.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/CompareKey.ts#L1)
-
-___
-
-### ConditionPropertyParam
-
-Ƭ **ConditionPropertyParam**: `Object`
-
-#### Index signature
-
-▪ [key: `string`]: `any`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `valColumn` | `string` |
-| `valType` | ``"static"`` \| ``"column"`` |
-
-#### Defined in
-
-[src/types/resource/Rules.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Rules.ts#L17)
+[src/drivers/AwsDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/AwsDriver.ts#L25)
 
 ___
 
@@ -590,7 +348,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L43)
+[src/drivers/Auth0Driver.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L36)
 
 ___
 
@@ -606,7 +364,7 @@ ___
 | `awsSetting?` | [`AwsSetting`](modules.md#awssetting) | - |
 | `database?` | `string` | - |
 | `databaseVersion?` | `number` | - |
-| `dbType` | [`DBType`](modules.md#dbtype-1) | - |
+| `dbType` | [`DBType`](modules.md#dbtype) | - |
 | `ds?` | `string` | - |
 | `firebase?` | [`FirebaseSetting`](modules.md#firebasesetting) | - |
 | `host?` | `string` | - |
@@ -624,27 +382,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ConnectionSetting.ts#L56)
-
-___
-
-### ContentTypeInfo
-
-Ƭ **ContentTypeInfo**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `contentType` | `string` |
-| `fileName` | `string` |
-| `isTextValue` | `boolean` |
-| `renderType` | ``"Image"`` \| ``"Text"`` \| ``"Video"`` \| ``"Audio"`` \| ``"Font"`` \| ``"Unknown"`` |
-| `shortLang?` | `string` |
-
-#### Defined in
-
-[src/types/resource/ContentTypeInfo.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ContentTypeInfo.ts#L1)
+[src/types/resource/ConnectionSetting.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ConnectionSetting.ts#L56)
 
 ___
 
@@ -668,7 +406,7 @@ ___
 
 #### Defined in
 
-[src/utils/csv.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/csv.ts#L7)
+[src/utils/csv.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/utils/csv.ts#L7)
 
 ___
 
@@ -678,9 +416,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/DBType.ts#L1)
+[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/DBType.ts#L1)
 
-[src/types/resource/DBType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/DBType.ts#L11)
+[src/types/resource/DBType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/DBType.ts#L11)
 
 ___
 
@@ -690,67 +428,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:115](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L115)
-
-___
-
-### DeleteAnnotation
-
-Ƭ **DeleteAnnotation**: [`BaseCellAnnotation`](modules.md#basecellannotation)<``"Del"``\>
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L35)
-
-___
-
-### DiffResult
-
-Ƭ **DiffResult**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `deleted` | `number` |
-| `inserted` | `number` |
-| `message` | `string` |
-| `ok` | `boolean` |
-| `updated` | `number` |
-
-#### Defined in
-
-[src/types/helpers/index.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L78)
-
-___
-
-### DiffToUndoChangesResult
-
-Ƭ **DiffToUndoChangesResult**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `message` | `string` |
-| `ok` | `boolean` |
-| `toBeDeleted` | { `conditions`: { `[key: string]`: `any`;  }  }[] |
-| `toBeInserted` | { `values`: { `[key: string]`: `any`;  }  }[] |
-| `toBeUpdated` | { `conditions`: { `[key: string]`: `any`;  } ; `values`: { `[key: string]`: `any`;  }  }[] |
-
-#### Defined in
-
-[src/types/helpers/index.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L86)
-
-___
-
-### FileAnnotation
-
-Ƭ **FileAnnotation**: [`BaseCellAnnotation`](modules.md#basecellannotation)<``"Fil"``, { `contentTypeInfo`: [`ContentTypeInfo`](modules.md#contenttypeinfo) ; `downloadUrl?`: `string` ; `encoding?`: `string` ; `lastModified`: `Date` ; `name`: `string` ; `size`: `number`  }\>
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L82)
+[src/resource/DbResource.ts:119](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L119)
 
 ___
 
@@ -770,7 +448,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ConnectionSetting.ts#L43)
+[src/types/resource/ConnectionSetting.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ConnectionSetting.ts#L43)
 
 ___
 
@@ -782,12 +460,12 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `referenceTo?` | { `[columnName: string]`: [`ForeignKeyConstraintDetail`](modules.md#foreignkeyconstraintdetail);  } |
-| `referencedFrom?` | { `[columnName: string]`: [`ForeignKeyConstraintDetail`](modules.md#foreignkeyconstraintdetail);  } |
+| `referenceTo?` | \{ `[columnName: string]`: [`ForeignKeyConstraintDetail`](modules.md#foreignkeyconstraintdetail);  } |
+| `referencedFrom?` | \{ `[columnName: string]`: [`ForeignKeyConstraintDetail`](modules.md#foreignkeyconstraintdetail);  } |
 
 #### Defined in
 
-[src/types/resource/ForeignKeyConstraint.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ForeignKeyConstraint.ts#L7)
+[src/types/resource/ForeignKeyConstraint.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ForeignKeyConstraint.ts#L7)
 
 ___
 
@@ -805,19 +483,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ForeignKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ForeignKeyConstraint.ts#L1)
-
-___
-
-### GeneralColumnType
-
-Ƭ **GeneralColumnType**: typeof [`GeneralColumnType`](modules.md#generalcolumntype-1)[keyof typeof [`GeneralColumnType`](modules.md#generalcolumntype-1)]
-
-#### Defined in
-
-[src/types/resource/GeneralColumnType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/GeneralColumnType.ts#L1)
-
-[src/types/resource/GeneralColumnType.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/GeneralColumnType.ts#L75)
+[src/types/resource/ForeignKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ForeignKeyConstraint.ts#L1)
 
 ___
 
@@ -827,7 +493,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:141](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L141)
+[src/resource/DbResource.ts:145](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L145)
 
 ___
 
@@ -847,7 +513,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ConnectionSetting.ts#L35)
+[src/types/resource/ConnectionSetting.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ConnectionSetting.ts#L35)
 
 ___
 
@@ -864,7 +530,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/drivers/Keycloak.ts#L5)
+[src/types/drivers/Keycloak.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/drivers/Keycloak.ts#L5)
 
 ___
 
@@ -880,7 +546,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/drivers/Keycloak.ts#L10)
+[src/types/drivers/Keycloak.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/drivers/Keycloak.ts#L10)
 
 ___
 
@@ -897,17 +563,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/Auth0Driver.ts#L47)
-
-___
-
-### LintAnnotation
-
-Ƭ **LintAnnotation**: [`BaseCellAnnotation`](modules.md#basecellannotation)<``"Lnt"``, { `fix`: `string` ; `message`: `string` ; `ruleId`: `string`  }\>
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L63)
+[src/drivers/Auth0Driver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/Auth0Driver.ts#L40)
 
 ___
 
@@ -923,26 +579,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:782](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L782)
-
-___
-
-### MergedCell
-
-Ƭ **MergedCell**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `col` | `number` |
-| `colspan` | `number` |
-| `row` | `number` |
-| `rowspan` | `number` |
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L47)
+[src/resource/DbResource.ts:786](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L786)
 
 ___
 
@@ -961,7 +598,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L44)
+[src/types/helpers/index.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L44)
 
 ___
 
@@ -981,7 +618,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L51)
+[src/types/helpers/index.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L51)
 
 ___
 
@@ -998,7 +635,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L5)
+[src/types/helpers/index.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L5)
 
 ___
 
@@ -1015,23 +652,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L10)
-
-___
-
-### QueryConditions
-
-Ƭ **QueryConditions**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `binds?` | `string`[] |
-
-#### Defined in
-
-[src/types/drivers/QueryConditions.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/drivers/QueryConditions.ts#L1)
+[src/types/helpers/index.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L10)
 
 ___
 
@@ -1043,13 +664,13 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `conditions?` | [`QueryConditions`](modules.md#queryconditions) |
-| `meta?` | [`RdhMeta`](modules.md#rdhmeta) |
+| `conditions?` | `QueryConditions` |
+| `meta?` | `RdhMeta` |
 | `sql` | `string` |
 
 #### Defined in
 
-[src/types/drivers/QueryParams.ts:4](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/drivers/QueryParams.ts#L4)
+[src/types/drivers/QueryParams.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/drivers/QueryParams.ts#L3)
 
 ___
 
@@ -1066,112 +687,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L15)
-
-___
-
-### RdhKey
-
-Ƭ **RdhKey**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `align?` | ``"left"`` \| ``"center"`` \| ``"right"`` |
-| `comment` | `string` |
-| `meta?` | { `[key: string]`: `any`; `is_hyperlink?`: `boolean` ; `is_image?`: `boolean`  } |
-| `meta.is_hyperlink?` | `boolean` |
-| `meta.is_image?` | `boolean` |
-| `name` | `string` |
-| `required?` | `boolean` |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-| `width?` | `number` |
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L54)
-
-___
-
-### RdhMeta
-
-Ƭ **RdhMeta**: `Object`
-
-#### Index signature
-
-▪ [key: `string`]: `any`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `codeItems?` | [`CodeItem`](modules.md#codeitem)[] |
-| `comment?` | `string` |
-| `compareKeys?` | [`CompareKey`](modules.md#comparekey)[] |
-| `connectionName?` | `string` |
-| `editable?` | `boolean` |
-| `ruleViolationSummary?` | { `[ruleName: string]`: `number`;  } |
-| `schemaName?` | `string` |
-| `tableName?` | `string` |
-| `tableRule?` | [`TableRule`](modules.md#tablerule) |
-| `type?` | `string` |
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L8)
-
-___
-
-### RdhRow
-
-Ƭ **RdhRow**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `meta` | [`RdhRowMeta`](modules.md#rdhrowmeta) |
-| `values` | { `[key: string]`: `any`;  } |
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L70)
-
-___
-
-### RdhRowMeta
-
-Ƭ **RdhRowMeta**: `Object`
-
-#### Index signature
-
-▪ [key: `string`]: [`CellAnnotation`](modules.md#cellannotation)[]
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L68)
-
-___
-
-### RdhSummary
-
-Ƭ **RdhSummary**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `affectedRows?` | `number` |
-| `changedRows?` | `number` |
-| `elapsedTimeMilli` | `number` |
-| `info` | `string` |
-| `insertId?` | `number` |
-| `selectedRows?` | `number` |
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L75)
+[src/types/helpers/index.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L15)
 
 ___
 
@@ -1187,42 +703,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/drivers/Keycloak.ts#L1)
-
-___
-
-### RecordRuleValidationResult
-
-Ƭ **RecordRuleValidationResult**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `details` | [`RecordRuleValidationResultDetail`](modules.md#recordrulevalidationresultdetail)[] |
-| `tableName` | `string` |
-
-#### Defined in
-
-[src/types/resource/Rules.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Rules.ts#L23)
-
-___
-
-### RecordRuleValidationResultDetail
-
-Ƭ **RecordRuleValidationResultDetail**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `conditionText` | `string` |
-| `errorRows` | { `conditionValues`: { `[key: string]`: `any`;  } ; `rowNo`: `number`  }[] |
-| `ruleDetail` | [`TableRuleDetail`](modules.md#tableruledetail) |
-
-#### Defined in
-
-[src/types/resource/Rules.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Rules.ts#L28)
+[src/types/drivers/Keycloak.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/drivers/Keycloak.ts#L1)
 
 ___
 
@@ -1236,12 +717,12 @@ ___
 | :------ | :------ |
 | `base64?` | `string` |
 | `ttl` | `number` |
-| `type` | [`RedisKeyType`](modules.md#rediskeytype-1) |
+| `type` | [`RedisKeyType`](modules.md#rediskeytype) |
 | `val?` | `any` |
 
 #### Defined in
 
-[src/resource/DbResource.ts:729](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L729)
+[src/resource/DbResource.ts:733](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L733)
 
 ___
 
@@ -1251,9 +732,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/RedisKeyType.ts#L1)
+[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/RedisKeyType.ts#L1)
 
-[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/RedisKeyType.ts#L9)
+[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/RedisKeyType.ts#L9)
 
 ___
 
@@ -1273,7 +754,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L59)
+[src/types/helpers/index.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L59)
 
 ___
 
@@ -1290,7 +771,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L67)
+[src/types/helpers/index.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L67)
 
 ___
 
@@ -1300,9 +781,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResourceType.ts#L1)
+[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ResourceType.ts#L1)
 
-[src/types/resource/ResourceType.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResourceType.ts#L30)
+[src/types/resource/ResourceType.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ResourceType.ts#L30)
 
 ___
 
@@ -1328,42 +809,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/SQLServer.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/drivers/SQLServer.ts#L3)
-
-___
-
-### ResultSetData
-
-Ƭ **ResultSetData**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `created` | `Date` |
-| `keys` | [`RdhKey`](modules.md#rdhkey)[] |
-| `mergeCells?` | [`MergedCell`](modules.md#mergedcell)[] |
-| `meta` | [`RdhMeta`](modules.md#rdhmeta) |
-| `queryConditions?` | [`QueryConditions`](modules.md#queryconditions) |
-| `rows` | [`RdhRow`](modules.md#rdhrow)[] |
-| `shuffledIndexes?` | `number`[] |
-| `shuffledNextCounter?` | `number` |
-| `sqlStatement?` | `string` |
-| `summary?` | [`RdhSummary`](modules.md#rdhsummary) |
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L84)
-
-___
-
-### RuleAnnotation
-
-Ƭ **RuleAnnotation**: [`BaseCellAnnotation`](modules.md#basecellannotation)<``"Rul"``, { `conditionValues`: { `[key: string]`: `any`;  } ; `message`: `string` ; `name`: `string`  }\>
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L46)
+[src/types/drivers/SQLServer.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/drivers/SQLServer.ts#L3)
 
 ___
 
@@ -1392,7 +838,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:736](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L736)
+[src/resource/DbResource.ts:740](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L740)
 
 ___
 
@@ -1409,7 +855,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ConnectionSetting.ts#L51)
+[src/types/resource/ConnectionSetting.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ConnectionSetting.ts#L51)
 
 ___
 
@@ -1429,43 +875,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:774](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L774)
-
-___
-
-### SampleClassPair
-
-Ƭ **SampleClassPair**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `clazzValue` | `any` |
-| `sampleValues` | `any`[] |
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L35)
-
-___
-
-### SampleGroupByClass
-
-Ƭ **SampleGroupByClass**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `clazzKey` | `string` |
-| `is_shuffled` | `boolean` |
-| `pairs` | [`SampleClassPair`](modules.md#sampleclasspair)[] |
-| `sampleKeys` | `string`[] |
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L40)
+[src/resource/DbResource.ts:778](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L778)
 
 ___
 
@@ -1484,13 +894,13 @@ ___
 | `parentTarget?` | `string` | - |
 | `startTime?` | `number` | - |
 | `target` | `string` | Specify target(Bucket, DB index or Queue url) Redis: DB index AWS S3: Bucket name AWS SQS: Queue url |
-| `targetResourceType?` | [`ResourceType`](modules.md#resourcetype-1) | - |
-| `withValue?` | { `limitSize`: `number`  } | - |
+| `targetResourceType?` | [`ResourceType`](modules.md#resourcetype) | - |
+| `withValue?` | \{ `limitSize`: `number`  } | - |
 | `withValue.limitSize` | `number` | - |
 
 #### Defined in
 
-[src/types/drivers/ScanParams.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/drivers/ScanParams.ts#L3)
+[src/types/drivers/ScanParams.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/drivers/ScanParams.ts#L3)
 
 ___
 
@@ -1516,7 +926,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ConnectionSetting.ts#L5)
+[src/types/resource/ConnectionSetting.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ConnectionSetting.ts#L5)
 
 ___
 
@@ -1532,17 +942,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ConnectionSetting.ts#L20)
-
-___
-
-### StyleAnnotation
-
-Ƭ **StyleAnnotation**: [`BaseCellAnnotation`](modules.md#basecellannotation)<``"Stl"``, { `a?`: { `h?`: `string` ; `v?`: `string`  } ; `b?`: `string` ; `f?`: { `n`: `string` ; `s`: `number`  } ; `fmt?`: `string`  }\>
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L72)
+[src/types/resource/ConnectionSetting.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ConnectionSetting.ts#L20)
 
 ___
 
@@ -1552,69 +952,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsSupplyCredentialType.ts#L1)
+[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsSupplyCredentialType.ts#L1)
 
-[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsSupplyCredentialType.ts#L15)
-
-___
-
-### TableRule
-
-Ƭ **TableRule**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `details` | [`TableRuleDetail`](modules.md#tableruledetail)[] |
-| `table` | `string` |
-
-#### Defined in
-
-[src/types/resource/Rules.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Rules.ts#L3)
-
-___
-
-### TableRuleDetail
-
-Ƭ **TableRuleDetail**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `conditions` | `TopLevelCondition` |
-| `error` | { `column`: `string` ; `limit`: `number`  } |
-| `error.column` | `string` |
-| `error.limit` | `number` |
-| `ruleName` | `string` |
-
-#### Defined in
-
-[src/types/resource/Rules.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Rules.ts#L8)
-
-___
-
-### ToStringParam
-
-Ƭ **ToStringParam**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `keyNames?` | `string`[] |
-| `maxCellValueLength?` | `number` |
-| `maxPrintLines?` | `number` |
-| `withCodeLabel?` | `boolean` |
-| `withComment?` | `boolean` |
-| `withRowNo?` | `boolean` |
-| `withRuleViolation?` | `boolean` |
-| `withType?` | `boolean` |
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L24)
+[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsSupplyCredentialType.ts#L15)
 
 ___
 
@@ -1635,7 +975,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/helpers/index.ts#L26)
+[src/types/helpers/index.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/helpers/index.ts#L26)
 
 ___
 
@@ -1645,7 +985,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/TransactionControlType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/drivers/TransactionControlType.ts#L1)
+[src/types/drivers/TransactionControlType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/drivers/TransactionControlType.ts#L1)
 
 ___
 
@@ -1662,44 +1002,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/UniqueKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/UniqueKeyConstraint.ts#L1)
-
-___
-
-### UpdateAnnotation
-
-Ƭ **UpdateAnnotation**: [`BaseCellAnnotation`](modules.md#basecellannotation)<``"Upd"``, { `otherValue`: `any`  }\>
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L39)
+[src/types/resource/UniqueKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/UniqueKeyConstraint.ts#L1)
 
 ## Variables
-
-### AnnotationTypeConst
-
-• `Const` **AnnotationTypeConst**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `Add` | ``"Add"`` |
-| `CIN` | ``"Cin"`` |
-| `Cod` | ``"Cod"`` |
-| `Del` | ``"Del"`` |
-| `Err` | ``"Err"`` |
-| `Fil` | ``"Fil"`` |
-| `Lnt` | ``"Lnt"`` |
-| `Rul` | ``"Rul"`` |
-| `Stl` | ``"Stl"`` |
-| `Upd` | ``"Upd"`` |
-
-#### Defined in
-
-[src/types/resource/Annonations.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/Annonations.ts#L3)
-
-___
 
 ### AwsRegion
 
@@ -1739,9 +1044,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsRegion.ts#L1)
+[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsRegion.ts#L1)
 
-[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsRegion.ts#L44)
+[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsRegion.ts#L44)
 
 ___
 
@@ -1751,7 +1056,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsRegion.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsRegion.ts#L46)
+[src/types/resource/AwsRegion.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsRegion.ts#L46)
 
 ___
 
@@ -1770,9 +1075,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsServiceType.ts#L1)
+[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsServiceType.ts#L1)
 
-[src/types/resource/AwsServiceType.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsServiceType.ts#L7)
+[src/types/resource/AwsServiceType.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsServiceType.ts#L7)
 
 ___
 
@@ -1782,7 +1087,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsServiceType.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsServiceType.ts#L10)
+[src/types/resource/AwsServiceType.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsServiceType.ts#L10)
 
 ___
 
@@ -1804,9 +1109,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/DBType.ts#L1)
+[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/DBType.ts#L1)
 
-[src/types/resource/DBType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/DBType.ts#L11)
+[src/types/resource/DBType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/DBType.ts#L11)
 
 ___
 
@@ -1816,7 +1121,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/DBType.ts:13](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/DBType.ts#L13)
+[src/types/resource/DBType.ts:13](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/DBType.ts#L13)
 
 ___
 
@@ -1826,95 +1131,7 @@ ___
 
 #### Defined in
 
-[src/helpers/constant.ts:228](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/constant.ts#L228)
-
-___
-
-### GeneralColumnType
-
-• `Const` **GeneralColumnType**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `ARRAY` | ``"array"`` |
-| `BIGINT` | ``"bigint"`` |
-| `BINARY` | ``"binary"`` |
-| `BIT` | ``"bit"`` |
-| `BLOB` | ``"blob"`` |
-| `BOOLEAN` | ``"boolean"`` |
-| `BOX` | ``"box"`` |
-| `BYTEA` | ``"bytea"`` |
-| `CHAR` | ``"char"`` |
-| `CIDR` | ``"cidr"`` |
-| `CIRCLE` | ``"circle"`` |
-| `CLOB` | ``"clob"`` |
-| `DATE` | ``"date"`` |
-| `DECIMAL` | ``"decimal"`` |
-| `DOUBLE_PRECISION` | ``"double_precision"`` |
-| `ENUM` | ``"enum"`` |
-| `FLOAT` | ``"float"`` |
-| `GEOMETRY` | ``"geometry"`` |
-| `INET` | ``"inet"`` |
-| `INTEGER` | ``"integer"`` |
-| `INTERVAL` | ``"interval"`` |
-| `JSON` | ``"json"`` |
-| `JSONB` | ``"jsonb"`` |
-| `LINE` | ``"line"`` |
-| `LONG` | ``"long"`` |
-| `LONGBLOB` | ``"longblob"`` |
-| `LONGLONG` | ``"longlong"`` |
-| `LONGTEXT` | ``"longtext"`` |
-| `LSEG` | ``"lseg"`` |
-| `MACADDR` | ``"macaddr"`` |
-| `MEDIUMBLOB` | ``"mediumblob"`` |
-| `MEDIUMINT` | ``"mediumint"`` |
-| `MEDIUMTEXT` | ``"mediumtext"`` |
-| `MONEY` | ``"money"`` |
-| `NAME` | ``"name"`` |
-| `NUMERIC` | ``"numeric"`` |
-| `OBJECT` | ``"object"`` |
-| `OID` | ``"oid"`` |
-| `PATH` | ``"path"`` |
-| `PG_DEPENDENCIES` | ``"pg_dependencies"`` |
-| `PG_LSN` | ``"pg_lsn"`` |
-| `PG_NDISTINCT` | ``"pg_ndistinct"`` |
-| `PG_NODE_TREE` | ``"pg_node_tree"`` |
-| `POINT` | ``"point"`` |
-| `POLYGON` | ``"polygon"`` |
-| `REAL` | ``"real"`` |
-| `REGPROC` | ``"regproc"`` |
-| `REGTYPE` | ``"regtype"`` |
-| `SERIAL` | ``"serial"`` |
-| `SET` | ``"set"`` |
-| `SMALLINT` | ``"smallint"`` |
-| `TEXT` | ``"text"`` |
-| `TIME` | ``"time"`` |
-| `TIMESTAMP` | ``"timestamp"`` |
-| `TIMESTAMP_WITH_TIME_ZONE` | ``"timestamp_with_time_zone"`` |
-| `TIME_WITH_TIME_ZONE` | ``"time_with_time_zone"`` |
-| `TINYBLOB` | ``"tinyblob"`` |
-| `TINYINT` | ``"tinyint"`` |
-| `TINYTEXT` | ``"tinytext"`` |
-| `TSQUERY` | ``"tsquery"`` |
-| `TSVECTOR` | ``"tsvector"`` |
-| `TXID_SNAPSHOT` | ``"txid_snapshot"`` |
-| `UNKNOWN` | ``"unknown"`` |
-| `UUID` | ``"uuid"`` |
-| `VARBINARY` | ``"varbinary"`` |
-| `VARBIT` | ``"varbit"`` |
-| `VARCHAR` | ``"varchar"`` |
-| `VARIANT` | ``"variant"`` |
-| `XID` | ``"xid"`` |
-| `XML` | ``"xml"`` |
-| `YEAR` | ``"year"`` |
-
-#### Defined in
-
-[src/types/resource/GeneralColumnType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/GeneralColumnType.ts#L1)
-
-[src/types/resource/GeneralColumnType.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/GeneralColumnType.ts#L75)
+[src/helpers/constant.ts:228](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/constant.ts#L228)
 
 ___
 
@@ -1924,7 +1141,7 @@ ___
 
 #### Defined in
 
-[src/helpers/constant.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/constant.ts#L1)
+[src/helpers/constant.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/constant.ts#L1)
 
 ___
 
@@ -1945,19 +1162,19 @@ ___
 
 #### Defined in
 
-[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/RedisKeyType.ts#L1)
+[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/RedisKeyType.ts#L1)
 
-[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/RedisKeyType.ts#L9)
+[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/RedisKeyType.ts#L9)
 
 ___
 
 ### RedisKeyTypeValues
 
-• `Const` **RedisKeyTypeValues**: (``"string"`` \| ``"set"`` \| ``"unknown"`` \| ``"list"`` \| ``"zset"`` \| ``"hash"``)[]
+• `Const` **RedisKeyTypeValues**: (``"string"`` \| ``"list"`` \| ``"set"`` \| ``"zset"`` \| ``"hash"`` \| ``"unknown"``)[]
 
 #### Defined in
 
-[src/types/resource/RedisKeyType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/RedisKeyType.ts#L11)
+[src/types/resource/RedisKeyType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/RedisKeyType.ts#L11)
 
 ___
 
@@ -1994,9 +1211,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResourceType.ts#L1)
+[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ResourceType.ts#L1)
 
-[src/types/resource/ResourceType.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResourceType.ts#L30)
+[src/types/resource/ResourceType.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/ResourceType.ts#L30)
 
 ___
 
@@ -2006,7 +1223,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSupplyCredentialType.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsSupplyCredentialType.ts#L18)
+[src/types/resource/AwsSupplyCredentialType.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsSupplyCredentialType.ts#L18)
 
 ___
 
@@ -2024,58 +1241,11 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsSupplyCredentialType.ts#L1)
+[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsSupplyCredentialType.ts#L1)
 
-[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/AwsSupplyCredentialType.ts#L15)
+[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/types/resource/AwsSupplyCredentialType.ts#L15)
 
 ## Functions
-
-### abbr
-
-▸ **abbr**(`s`, `len?`): `string`
-
-#### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `s` | `string` | `undefined` |
-| `len` | `number` | `10` |
-
-#### Returns
-
-`string`
-
-#### Defined in
-
-[src/utils/strings.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/strings.ts#L15)
-
-___
-
-### castTo
-
-▸ **castTo**<`T`\>(`o`): `T`
-
-#### Type parameters
-
-| Name |
-| :------ |
-| `T` |
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `o` | `unknown` |
-
-#### Returns
-
-`T`
-
-#### Defined in
-
-[src/utils/base.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L25)
-
-___
 
 ### conditionsToString
 
@@ -2086,7 +1256,7 @@ ___
 | Name | Type | Default value |
 | :------ | :------ | :------ |
 | `condition` | `TopLevelCondition` | `undefined` |
-| `keys` | [`RdhKey`](modules.md#rdhkey)[] | `undefined` |
+| `keys` | `RdhKey`[] | `undefined` |
 | `indent` | `string` | `''` |
 
 #### Returns
@@ -2095,57 +1265,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:238](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/RuleEngine.ts#L238)
-
-___
-
-### containsIgnoreCase
-
-▸ **containsIgnoreCase**(`keyword`, `list`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `keyword` | `string` |
-| `list` | `string`[] |
-
-#### Returns
-
-`boolean`
-
-#### Defined in
-
-[src/utils/strings.ts:31](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/strings.ts#L31)
-
-___
-
-### createRdhKey
-
-▸ **createRdhKey**(`«destructured»`): [`RdhKey`](modules.md#rdhkey)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `«destructured»` | `Object` |
-| › `align?` | ``"left"`` \| ``"center"`` \| ``"right"`` |
-| › `comment?` | `string` |
-| › `meta?` | `Object` |
-| › `meta.is_hyperlink?` | `boolean` |
-| › `meta.is_image?` | `boolean` |
-| › `name` | `string` |
-| › `required?` | `boolean` |
-| › `type?` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-| › `width?` | `number` |
-
-#### Returns
-
-[`RdhKey`](modules.md#rdhkey)
-
-#### Defined in
-
-[src/resource/ResultSetDataBuilder.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/ResultSetDataBuilder.ts#L40)
+[src/helpers/RuleEngine.ts:251](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L251)
 
 ___
 
@@ -2159,8 +1279,8 @@ ___
 | :------ | :------ |
 | `«destructured»` | `Object` |
 | › `bindOption` | [`BindOptions`](modules.md#bindoptions) |
-| › `columns` | [`RdhKey`](modules.md#rdhkey)[] |
-| › `diffResult` | [`DiffToUndoChangesResult`](modules.md#difftoundochangesresult) |
+| › `columns` | `RdhKey`[] |
+| › `diffResult` | `DiffToUndoChangesResult` |
 | › `quote?` | `boolean` |
 | › `schemaName?` | `string` |
 | › `tableName` | `string` |
@@ -2171,7 +1291,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L50)
+[src/helpers/SQLHelper.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L48)
 
 ___
 
@@ -2196,142 +1316,19 @@ ___
 
 #### Defined in
 
-[src/utils/strings.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/strings.ts#L53)
-
-___
-
-### diff
-
-▸ **diff**(`rdh1`, `rdh2`): [`DiffResult`](modules.md#diffresult)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `rdh1` | [`ResultSetData`](modules.md#resultsetdata) |
-| `rdh2` | [`ResultSetData`](modules.md#resultsetdata) |
-
-#### Returns
-
-[`DiffResult`](modules.md#diffresult)
-
-#### Defined in
-
-[src/helpers/ResourceHelper.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/ResourceHelper.ts#L18)
-
-___
-
-### diffToUndoChanges
-
-▸ **diffToUndoChanges**(`rdh1`, `rdh2`): [`DiffToUndoChangesResult`](modules.md#difftoundochangesresult)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `rdh1` | [`ResultSetData`](modules.md#resultsetdata) |
-| `rdh2` | [`ResultSetData`](modules.md#resultsetdata) |
-
-#### Returns
-
-[`DiffToUndoChangesResult`](modules.md#difftoundochangesresult)
-
-#### Defined in
-
-[src/helpers/ResourceHelper.ts:124](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/ResourceHelper.ts#L124)
-
-___
-
-### displayGeneralColumnType
-
-▸ **displayGeneralColumnType**(`columnType`): `string`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `columnType` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-
-#### Returns
-
-`string`
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L3)
-
-___
-
-### eolToSpace
-
-▸ **eolToSpace**(`s`): `string`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `s` | `string` |
-
-#### Returns
-
-`string`
-
-#### Defined in
-
-[src/utils/strings.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/strings.ts#L7)
-
-___
-
-### equalsIgnoreCase
-
-▸ **equalsIgnoreCase**(`s1`, `s2`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `s1` | `string` |
-| `s2` | `string` |
-
-#### Returns
-
-`boolean`
-
-#### Defined in
-
-[src/utils/strings.ts:27](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/strings.ts#L27)
-
-___
-
-### escapeHtml
-
-▸ **escapeHtml**(`s`): `string`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `s` | `string` |
-
-#### Returns
-
-`string`
-
-#### Defined in
-
-[src/utils/strings.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/strings.ts#L61)
+src/utils/jwt.ts:3
 
 ___
 
 ### fromJson
 
-▸ **fromJson**<`T`\>(`json`): `T`
+▸ **fromJson**\<`T`\>(`json`): `T`
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`DbResource`](classes/DbResource.md)<[`AllSubDbResource`](modules.md#allsubdbresource), `T`\> = [`DbResource`](classes/DbResource.md)<[`AllSubDbResource`](modules.md#allsubdbresource)\> |
+| `T` | extends [`DbResource`](classes/DbResource.md)\<[`AllSubDbResource`](modules.md#allsubdbresource), `T`\> = [`DbResource`](classes/DbResource.md)\<[`AllSubDbResource`](modules.md#allsubdbresource)\> |
 
 #### Parameters
 
@@ -2345,7 +1342,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L35)
+[src/resource/DbResource.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L39)
 
 ___
 
@@ -2365,7 +1362,27 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:811](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L811)
+[src/helpers/SQLHelper.ts:809](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L809)
+
+___
+
+### getRecordRuleResults
+
+▸ **getRecordRuleResults**(`rdh`): `RecordRuleValidationResult`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `rdh` | `ResultSetData` |
+
+#### Returns
+
+`RecordRuleValidationResult`
+
+#### Defined in
+
+src/helpers/RdhRecordRuleHelper.ts:10
 
 ___
 
@@ -2385,27 +1402,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:865](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L865)
-
-___
-
-### getUniqObjectKeys
-
-▸ **getUniqObjectKeys**(`list`): `string`[]
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `list` | `any`[] |
-
-#### Returns
-
-`string`[]
-
-#### Defined in
-
-[src/utils/base.ts:129](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L129)
+[src/helpers/SQLHelper.ts:863](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L863)
 
 ___
 
@@ -2425,7 +1422,7 @@ item is AllConditions
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/RuleEngine.ts#L21)
+[src/helpers/RuleEngine.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L23)
 
 ___
 
@@ -2445,27 +1442,7 @@ item is AnyConditions
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/RuleEngine.ts#L25)
-
-___
-
-### isArray
-
-▸ **isArray**(`type`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-
-#### Returns
-
-`boolean`
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:182](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L182)
+[src/helpers/RuleEngine.ts:27](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L27)
 
 ___
 
@@ -2477,7 +1454,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `dbType` | [`DBType`](modules.md#dbtype-1) |
+| `dbType` | [`DBType`](modules.md#dbtype) |
 
 #### Returns
 
@@ -2485,207 +1462,47 @@ ___
 
 #### Defined in
 
-[src/utils/dbType.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/dbType.ts#L3)
+[src/utils/dbType.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/utils/dbType.ts#L3)
 
 ___
 
-### isBinaryLike
+### isConditionReference
 
-▸ **isBinaryLike**(`type`): `boolean`
-
-Tests whether type is BYTEA,BLOB,MEDIUMBLOB,LONGBLOB OR BINARY
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) | GeneralColumnType |
-
-#### Returns
-
-`boolean`
-
-true:BYTEA,BLOB,MEDIUMBLOB,LONGBLOB OR BINARY
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L84)
-
-___
-
-### isBooleanLike
-
-▸ **isBooleanLike**(`type`): `boolean`
-
-Tests whether type is BOOLEAN or BIT
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) | GeneralColumnType |
-
-#### Returns
-
-`boolean`
-
-true:BOOLEAN or BIT
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:176](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L176)
-
-___
-
-### isDateTimeOrDate
-
-▸ **isDateTimeOrDate**(`type`): `boolean`
-
-Tests whether type is DATE,TIMESTAMP OR TIMESTAMP_WITH_TIME_ZONE
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) | GeneralColumnType |
-
-#### Returns
-
-`boolean`
-
-true:DATE,TIMESTAMP OR TIMESTAMP_WITH_TIME_ZONE
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:123](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L123)
-
-___
-
-### isDateTimeOrDateOrTime
-
-▸ **isDateTimeOrDateOrTime**(`type`): `boolean`
-
-Tests whether type is TIME,TIME_WITH_TIME_ZONE,DATE,TIMESTAMP OR TIMESTAMP_WITH_TIME_ZONE
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) | GeneralColumnType |
-
-#### Returns
-
-`boolean`
-
-true:TIME,TIME_WITH_TIME_ZONE,DATE,TIMESTAMP OR TIMESTAMP_WITH_TIME_ZONE
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:138](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L138)
-
-___
-
-### isEnumOrSet
-
-▸ **isEnumOrSet**(`type`): `boolean`
+▸ **isConditionReference**(`item`): item is ConditionReference
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
+| `item` | `any` |
 
 #### Returns
 
-`boolean`
+item is ConditionReference
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:179](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L179)
+[src/helpers/RuleEngine.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L33)
 
 ___
 
-### isGeometryLike
+### isNotConditions
 
-▸ **isGeometryLike**(`type`): `boolean`
+▸ **isNotConditions**(`item`): item is NotConditions
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
+| `item` | `any` |
 
 #### Returns
 
-`boolean`
+item is NotConditions
 
 #### Defined in
 
-[src/resource/GeneralColumnUtil.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L98)
-
-___
-
-### isJsonLike
-
-▸ **isJsonLike**(`type`): `boolean`
-
-Tests whether type is JSON or JSONB
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) | GeneralColumnType |
-
-#### Returns
-
-`boolean`
-
-true:JSON or JSONB
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:168](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L168)
-
-___
-
-### isNotSupportDiffType
-
-▸ **isNotSupportDiffType**(`type`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-
-#### Returns
-
-`boolean`
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:108](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L108)
-
-___
-
-### isNumericLike
-
-▸ **isNumericLike**(`type`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-
-#### Returns
-
-`boolean`
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L44)
+[src/helpers/RuleEngine.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L30)
 
 ___
 
@@ -2697,7 +1514,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `dbType` | [`DBType`](modules.md#dbtype-1) |
+| `dbType` | [`DBType`](modules.md#dbtype) |
 
 #### Returns
 
@@ -2705,47 +1522,7 @@ ___
 
 #### Defined in
 
-[src/utils/dbType.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/dbType.ts#L5)
-
-___
-
-### isResultSetData
-
-▸ **isResultSetData**(`item`): item is ResultSetData
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `item` | `any` |
-
-#### Returns
-
-item is ResultSetData
-
-#### Defined in
-
-[src/types/resource/ResultSetDataType.ts:97](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/types/resource/ResultSetDataType.ts#L97)
-
-___
-
-### isResultSetDataBuilder
-
-▸ **isResultSetDataBuilder**(`item`): item is ResultSetDataBuilder
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `item` | `any` |
-
-#### Returns
-
-item is ResultSetDataBuilder
-
-#### Defined in
-
-[src/resource/ResultSetDataBuilder.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/ResultSetDataBuilder.ts#L78)
+[src/utils/dbType.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/utils/dbType.ts#L5)
 
 ___
 
@@ -2765,47 +1542,7 @@ arg is Scannable
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L17)
-
-___
-
-### isTextLike
-
-▸ **isTextLike**(`type`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-
-#### Returns
-
-`boolean`
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:66](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L66)
-
-___
-
-### isTime
-
-▸ **isTime**(`type`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-
-#### Returns
-
-`boolean`
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:150](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L150)
+[src/drivers/BaseDriver.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L10)
 
 ___
 
@@ -2825,27 +1562,7 @@ item is TopLevelCondition
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/RuleEngine.ts#L28)
-
-___
-
-### isUUIDType
-
-▸ **isUUIDType**(`type`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-
-#### Returns
-
-`boolean`
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L159)
+[src/helpers/RuleEngine.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L36)
 
 ___
 
@@ -2872,7 +1589,7 @@ positionals parameters (i.e. $1, $2, etc...)
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:627](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L627)
+[src/helpers/SQLHelper.ts:625](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L625)
 
 ___
 
@@ -2896,7 +1613,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:600](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L600)
+[src/helpers/SQLHelper.ts:598](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L598)
 
 ___
 
@@ -2922,7 +1639,7 @@ simple parameters (i.e. ?, ?, etc...)
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:751](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L751)
+[src/helpers/SQLHelper.ts:749](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L749)
 
 ___
 
@@ -2942,7 +1659,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:230](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/RuleEngine.ts#L230)
+[src/helpers/RuleEngine.ts:243](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L243)
 
 ___
 
@@ -2962,33 +1679,13 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:234](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/RuleEngine.ts#L234)
-
-___
-
-### parseColumnType
-
-▸ **parseColumnType**(`s`): [`GeneralColumnType`](modules.md#generalcolumntype-1)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `s` | `string` |
-
-#### Returns
-
-[`GeneralColumnType`](modules.md#generalcolumntype-1)
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L9)
+[src/helpers/RuleEngine.ts:247](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L247)
 
 ___
 
 ### parseContentType
 
-▸ **parseContentType**(`params`): [`ContentTypeInfo`](modules.md#contenttypeinfo)
+▸ **parseContentType**(`params`): `ContentTypeInfo`
 
 #### Parameters
 
@@ -3000,17 +1697,17 @@ ___
 
 #### Returns
 
-[`ContentTypeInfo`](modules.md#contenttypeinfo)
+`ContentTypeInfo`
 
 #### Defined in
 
-[src/utils/base.ts:141](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L141)
+[src/utils/base.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/utils/base.ts#L24)
 
 ___
 
 ### parseCsvFromFile
 
-▸ **parseCsvFromFile**(`filePath`, `options?`): `Promise`<[`ResultSetDataBuilder`](classes/ResultSetDataBuilder.md)\>
+▸ **parseCsvFromFile**(`filePath`, `options?`): `Promise`\<`ResultSetDataBuilder`\>
 
 #### Parameters
 
@@ -3021,17 +1718,17 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetDataBuilder`](classes/ResultSetDataBuilder.md)\>
+`Promise`\<`ResultSetDataBuilder`\>
 
 #### Defined in
 
-[src/utils/csv.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/csv.ts#L52)
+[src/utils/csv.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/utils/csv.ts#L52)
 
 ___
 
 ### parseCsvFromString
 
-▸ **parseCsvFromString**(`csvString`, `options?`): `Promise`<[`ResultSetDataBuilder`](classes/ResultSetDataBuilder.md)\>
+▸ **parseCsvFromString**(`csvString`, `options?`): `Promise`\<`ResultSetDataBuilder`\>
 
 #### Parameters
 
@@ -3042,31 +1739,11 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetDataBuilder`](classes/ResultSetDataBuilder.md)\>
+`Promise`\<`ResultSetDataBuilder`\>
 
 #### Defined in
 
-[src/utils/csv.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/csv.ts#L61)
-
-___
-
-### parseFaIconType
-
-▸ **parseFaIconType**(`type`): `string`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `type` | [`GeneralColumnType`](modules.md#generalcolumntype-1) |
-
-#### Returns
-
-`string`
-
-#### Defined in
-
-[src/resource/GeneralColumnUtil.ts:186](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/GeneralColumnUtil.ts#L186)
+[src/utils/csv.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/utils/csv.ts#L61)
 
 ___
 
@@ -3091,7 +1768,7 @@ parse result
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:580](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L580)
+[src/helpers/SQLHelper.ts:578](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L578)
 
 ___
 
@@ -3111,7 +1788,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:259](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L259)
+[src/utils/base.ts:142](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/utils/base.ts#L142)
 
 ___
 
@@ -3131,43 +1808,23 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:266](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L266)
-
-___
-
-### resolveCodeLabel
-
-▸ **resolveCodeLabel**(`rdh`): `Promise`<`boolean`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `rdh` | [`ResultSetData`](modules.md#resultsetdata) |
-
-#### Returns
-
-`Promise`<`boolean`\>
-
-#### Defined in
-
-[src/helpers/CodeResolver.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/CodeResolver.ts#L5)
+[src/utils/base.ts:149](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/utils/base.ts#L149)
 
 ___
 
 ### runRuleEngine
 
-▸ **runRuleEngine**(`rdh`): `Promise`<`boolean`\>
+▸ **runRuleEngine**(`rdh`): `Promise`\<`boolean`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `rdh` | [`ResultSetData`](modules.md#resultsetdata) |
+| `rdh` | `ResultSetData` |
 
 #### Returns
 
-`Promise`<`boolean`\>
+`Promise`\<`boolean`\>
 
 **`Ref`**
 
@@ -3175,27 +1832,7 @@ https://github.com/CacheControl/json-rules-engine/blob/beb656df2502c8716ffab9dc3
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/RuleEngine.ts#L58)
-
-___
-
-### sleep
-
-▸ **sleep**(`ms`): `Promise`<`void`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `ms` | `number` |
-
-#### Returns
-
-`Promise`<`void`\>
-
-#### Defined in
-
-[src/utils/base.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L29)
+[src/helpers/RuleEngine.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L71)
 
 ___
 
@@ -3208,7 +1845,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `condition` | `TopLevelCondition` |
-| `keys` | [`RdhKey`](modules.md#rdhkey)[] |
+| `keys` | `RdhKey`[] |
 
 #### Returns
 
@@ -3216,27 +1853,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:175](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/RuleEngine.ts#L175)
-
-___
-
-### toBoolean
-
-▸ **toBoolean**(`s`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `s` | `string` \| `boolean` \| `Buffer` |
-
-#### Returns
-
-`boolean`
-
-#### Defined in
-
-[src/utils/base.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L50)
+[src/helpers/RuleEngine.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/RuleEngine.ts#L188)
 
 ___
 
@@ -3256,32 +1873,12 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `binds` | { `[key: string]`: `any`;  } |
+| `binds` | \{ `[key: string]`: `any`;  } |
 | `query` | `string` |
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:374](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L374)
-
-___
-
-### toDate
-
-▸ **toDate**(`s`): `Date`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `s` | `string` \| `number` \| `Date` |
-
-#### Returns
-
-`Date`
-
-#### Defined in
-
-[src/utils/base.ts:73](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L73)
+[src/helpers/SQLHelper.ts:372](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L372)
 
 ___
 
@@ -3295,7 +1892,7 @@ ___
 | :------ | :------ |
 | `«destructured»` | `Object` |
 | › `bindOption` | [`BindOptions`](modules.md#bindoptions) |
-| › `columns` | [`RdhKey`](modules.md#rdhkey)[] |
+| › `columns` | `RdhKey`[] |
 | › `conditions` | `Object` |
 | › `quote?` | `boolean` |
 | › `schemaName?` | `string` |
@@ -3307,7 +1904,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L312)
+[src/helpers/SQLHelper.ts:310](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L310)
 
 ___
 
@@ -3321,7 +1918,7 @@ ___
 | :------ | :------ |
 | `«destructured»` | `Object` |
 | › `bindOption` | [`BindOptions`](modules.md#bindoptions) |
-| › `columns` | [`RdhKey`](modules.md#rdhkey)[] |
+| › `columns` | `RdhKey`[] |
 | › `compactSql?` | `boolean` |
 | › `quote?` | `boolean` |
 | › `schemaName?` | `string` |
@@ -3336,47 +1933,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L118)
-
-___
-
-### toLines
-
-▸ **toLines**(`s`): `string`[]
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `s` | `string` |
-
-#### Returns
-
-`string`[]
-
-#### Defined in
-
-[src/utils/strings.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/strings.ts#L3)
-
-___
-
-### toNum
-
-▸ **toNum**(`s`): `number`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `s` | `string` \| `number` |
-
-#### Returns
-
-`number`
-
-#### Defined in
-
-[src/utils/base.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L32)
+[src/helpers/SQLHelper.ts:116](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L116)
 
 ___
 
@@ -3400,27 +1957,7 @@ set global general_log = on; => set general_log TO 1;
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:542](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L542)
-
-___
-
-### toTime
-
-▸ **toTime**(`s`): `string`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `s` | `string` |
-
-#### Returns
-
-`string`
-
-#### Defined in
-
-[src/utils/base.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/utils/base.ts#L113)
+[src/helpers/SQLHelper.ts:540](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L540)
 
 ___
 
@@ -3434,7 +1971,7 @@ ___
 | :------ | :------ |
 | `«destructured»` | `Object` |
 | › `bindOption` | [`BindOptions`](modules.md#bindoptions) |
-| › `columns` | [`RdhKey`](modules.md#rdhkey)[] |
+| › `columns` | `RdhKey`[] |
 | › `conditions` | `Object` |
 | › `quote?` | `boolean` |
 | › `schemaName?` | `string` |
@@ -3447,7 +1984,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:223](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L223)
+[src/helpers/SQLHelper.ts:221](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L221)
 
 ___
 
@@ -3459,7 +1996,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `params` | [`ToViewDataQueryParams`](modules.md#toviewdataqueryparams) & { `toPositionalCharacter?`: `string` ; `toPositionedParameter?`: `boolean`  } |
+| `params` | [`ToViewDataQueryParams`](modules.md#toviewdataqueryparams) & \{ `toPositionalCharacter?`: `string` ; `toPositionedParameter?`: `boolean`  } |
 
 #### Returns
 
@@ -3467,7 +2004,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:398](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L398)
+[src/helpers/SQLHelper.ts:396](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L396)
 
 ___
 
@@ -3487,9 +2024,9 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `binds` | { `[key: string]`: `any`;  } |
+| `binds` | \{ `[key: string]`: `any`;  } |
 | `query` | `string` |
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:386](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/helpers/SQLHelper.ts#L386)
+[src/helpers/SQLHelper.ts:384](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/helpers/SQLHelper.ts#L384)

@@ -1,13 +1,13 @@
 import {
-  AwsRegion,
+  AwsDatabase,
   AwsDriver,
+  AwsRegion,
+  AwsServiceType,
   DBDriverResolver,
   DbS3Bucket,
   DbS3Owner,
   DBType,
-  AwsDatabase,
   SupplyCredentialType,
-  AwsServiceType,
 } from '../../../src';
 
 const connectOption = {

@@ -1,16 +1,15 @@
+import { GeneralColumnType, sleep } from '@l-v-yonsama/rdh';
 import {
-  SQLServerDriver,
+  ConnectionSetting,
+  DbColumn,
   DbSchema,
   DbTable,
-  DbColumn,
   DBType,
-  RdsDatabase,
-  ConnectionSetting,
-  sleep,
   RDSBaseDriver,
-  GeneralColumnType,
+  RdsDatabase,
+  SQLServerDriver,
 } from '../../../src';
-import { init0, init } from '../../setup/mssql';
+import { init, init0 } from '../../setup/mssql';
 
 const baseConnectOption = {
   host: '127.0.0.1',
@@ -196,9 +195,7 @@ describe('SQLServerDriver', () => {
   describe('count', () => {
     it('should return number of rows', async () => {
       if (!driver.isConnected) {
-        console.log('at count do connect ');
         await driver.connect();
-        console.log('at count after driver.isConnected=', driver.isConnected);
       }
       const count = await driver.count({ table: 'EMP' });
       expect(count).toEqual(6);

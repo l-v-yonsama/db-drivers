@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)<[`DbColumn`](DbColumn.md)\>
+- [`DbResource`](DbResource.md)\<[`DbColumn`](DbColumn.md)\>
 
   ↳ **`DbTable`**
 
@@ -45,7 +45,7 @@
 
 ### constructor
 
-• **new DbTable**(`name`, `tableType`, `comment?`)
+• **new DbTable**(`name`, `tableType`, `comment?`): [`DbTable`](DbTable.md)
 
 #### Parameters
 
@@ -55,13 +55,17 @@
 | `tableType` | `any` |
 | `comment?` | `string` |
 
+#### Returns
+
+[`DbTable`](DbTable.md)
+
 #### Overrides
 
 [DbResource](DbResource.md).[constructor](DbResource.md#constructor)
 
 #### Defined in
 
-[src/resource/DbResource.ts:629](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L629)
+[src/resource/DbResource.ts:633](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L633)
 
 ## Properties
 
@@ -75,7 +79,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:147](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L147)
+[src/resource/DbResource.ts:151](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L151)
 
 ___
 
@@ -89,7 +93,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:146](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L146)
+[src/resource/DbResource.ts:150](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L150)
 
 ___
 
@@ -99,7 +103,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:626](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L626)
+[src/resource/DbResource.ts:630](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L630)
 
 ___
 
@@ -113,7 +117,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:143](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L143)
+[src/resource/DbResource.ts:147](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L147)
 
 ___
 
@@ -127,7 +131,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:149](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L149)
+[src/resource/DbResource.ts:153](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L153)
 
 ___
 
@@ -145,7 +149,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:148](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L148)
+[src/resource/DbResource.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L152)
 
 ___
 
@@ -159,13 +163,13 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:145](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L145)
+[src/resource/DbResource.ts:149](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L149)
 
 ___
 
 ### resourceType
 
-• `Readonly` **resourceType**: [`ResourceType`](../modules.md#resourcetype-1)
+• `Readonly` **resourceType**: [`ResourceType`](../modules.md#resourcetype)
 
 #### Inherited from
 
@@ -173,7 +177,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:144](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L144)
+[src/resource/DbResource.ts:148](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L148)
 
 ___
 
@@ -183,7 +187,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:625](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L625)
+[src/resource/DbResource.ts:629](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L629)
 
 ___
 
@@ -193,7 +197,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:627](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L627)
+[src/resource/DbResource.ts:631](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L631)
 
 ## Methods
 
@@ -217,7 +221,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L164)
+[src/resource/DbResource.ts:168](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L168)
 
 ___
 
@@ -235,19 +239,19 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:173](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L173)
+[src/resource/DbResource.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L177)
 
 ___
 
 ### findChildren
 
-▸ **findChildren**<`U`\>(`«destructured»`): `U`[]
+▸ **findChildren**\<`U`\>(`«destructured»`): `U`[]
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `U` | extends [`DbResource`](DbResource.md)<[`AllSubDbResource`](../modules.md#allsubdbresource), `U`\> = [`AllSubDbResource`](../modules.md#allsubdbresource) |
+| `U` | extends [`DbResource`](DbResource.md)\<[`AllSubDbResource`](../modules.md#allsubdbresource), `U`\> = [`AllSubDbResource`](../modules.md#allsubdbresource) |
 
 #### Parameters
 
@@ -256,7 +260,7 @@ ___
 | `«destructured»` | `Object` |
 | › `keyword?` | `string` \| `RegExp` |
 | › `recursively?` | `boolean` |
-| › `resourceType` | [`ResourceType`](../modules.md#resourcetype-1) |
+| › `resourceType` | [`ResourceType`](../modules.md#resourcetype) |
 
 #### Returns
 
@@ -268,7 +272,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:185](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L185)
+[src/resource/DbResource.ts:189](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L189)
 
 ___
 
@@ -293,13 +297,13 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L177)
+[src/resource/DbResource.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L181)
 
 ___
 
 ### getCompareKeys
 
-▸ **getCompareKeys**(`availableColumnNames?`): [`CompareKey`](../modules.md#comparekey)[]
+▸ **getCompareKeys**(`availableColumnNames?`): `CompareKey`[]
 
 #### Parameters
 
@@ -309,11 +313,11 @@ ___
 
 #### Returns
 
-[`CompareKey`](../modules.md#comparekey)[]
+`CompareKey`[]
 
 #### Defined in
 
-[src/resource/DbResource.ts:636](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L636)
+[src/resource/DbResource.ts:640](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L640)
 
 ___
 
@@ -327,7 +331,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:684](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L684)
+[src/resource/DbResource.ts:688](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L688)
 
 ___
 
@@ -345,7 +349,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:698](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L698)
+[src/resource/DbResource.ts:702](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L702)
 
 ___
 
@@ -359,7 +363,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:690](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L690)
+[src/resource/DbResource.ts:694](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L694)
 
 ___
 
@@ -377,7 +381,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:169](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L169)
+[src/resource/DbResource.ts:173](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L173)
 
 ___
 
@@ -401,7 +405,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:228](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L228)
+[src/resource/DbResource.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L232)
 
 ___
 
@@ -419,4 +423,4 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:694](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/resource/DbResource.ts#L694)
+[src/resource/DbResource.ts:698](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/resource/DbResource.ts#L698)

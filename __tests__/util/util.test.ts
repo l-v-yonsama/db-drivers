@@ -1,10 +1,10 @@
+import { promises as fs } from 'fs';
+import * as path from 'path';
 import {
   parseContentType,
   parseCsvFromFile,
   parseCsvFromString,
 } from '../../src';
-import * as path from 'path';
-import { promises as fs } from 'fs';
 
 const dataFolder = path.join('__tests__', 'data');
 

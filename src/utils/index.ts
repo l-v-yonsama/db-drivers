@@ -1,16 +1,4 @@
 export * from './base';
-export * from './dbType';
-export * from './strings';
 export * from './csv';
-
-export default function isDate(value: unknown): value is Date {
-  if (value == null) {
-    return false;
-  }
-
-  return (
-    value instanceof Date ||
-    (typeof value === 'object' &&
-      Object.prototype.toString.call(value) === '[object Date]')
-  );
-}
+export * from './dbType';
+export * from './jwt';

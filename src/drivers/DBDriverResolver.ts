@@ -1,20 +1,20 @@
 import ShortUniqueId from 'short-unique-id';
-import { BaseDriver } from './BaseDriver';
 import {
   ConnectionSetting,
   DBType,
   GeneralResult,
   TransactionControlType,
 } from '../types';
+import { isRDSType } from '../utils';
+import { Auth0Driver } from './Auth0Driver';
+import { AwsDriver } from './AwsDriver';
+import { BaseDriver } from './BaseDriver';
+import { KeycloakDriver } from './KeycloakDriver';
 import { MySQLDriver } from './MySQLDriver';
 import { PostgresDriver } from './PostgresDriver';
-import { RedisDriver } from './RedisDriver';
-import { AwsDriver } from './AwsDriver';
 import { RDSBaseDriver } from './RDSBaseDriver';
-import { KeycloakDriver } from './KeycloakDriver';
-import { Auth0Driver } from './Auth0Driver';
+import { RedisDriver } from './RedisDriver';
 import { SQLServerDriver } from './SQLServerDriver';
-import { isRDSType } from '../utils';
 
 const uid = new ShortUniqueId();
 

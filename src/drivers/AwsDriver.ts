@@ -1,26 +1,26 @@
 /* eslint-disable no-async-promise-executor */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { BaseDriver } from './BaseDriver';
-import { AwsDatabase } from '../resource';
 import {
-  AwsCredentialIdentityProvider,
   AwsCredentialIdentity,
+  AwsCredentialIdentityProvider,
 } from '@aws-sdk/types';
+import { AwsDatabase } from '../resource';
+import { BaseDriver } from './BaseDriver';
 
 import { fromEnv, fromIni } from '@aws-sdk/credential-providers';
 
-import { AwsSESServiceClient } from './aws/AwsSESServiceClient';
-import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
-import { AwsCloudwatchServiceClient } from './aws/AwsCloudwatchServiceClient';
-import { AwsS3ServiceClient } from './aws/AwsS3ServiceClient';
-import { AwsServiceClient } from './aws/AwsServiceClient';
 import {
   AwsServiceType,
   ConnectionSetting,
   ResourceType,
   SupplyCredentialType,
 } from '../types';
+import { AwsCloudwatchServiceClient } from './aws/AwsCloudwatchServiceClient';
+import { AwsS3ServiceClient } from './aws/AwsS3ServiceClient';
+import { AwsServiceClient } from './aws/AwsServiceClient';
+import { AwsSESServiceClient } from './aws/AwsSESServiceClient';
+import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
 
 export type ClientConfigType = {
   region?: string;

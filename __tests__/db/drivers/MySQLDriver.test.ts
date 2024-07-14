@@ -1,14 +1,13 @@
+import { GeneralColumnType, sleep } from '@l-v-yonsama/rdh';
 import {
-  MySQLDriver,
+  ConnectionSetting,
+  DbColumn,
   DbSchema,
   DbTable,
-  DbColumn,
   DBType,
-  RdsDatabase,
-  ConnectionSetting,
-  sleep,
+  MySQLDriver,
   RDSBaseDriver,
-  GeneralColumnType,
+  RdsDatabase,
 } from '../../../src';
 import { init } from '../../setup/mysql';
 

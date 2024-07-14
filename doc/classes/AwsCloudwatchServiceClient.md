@@ -48,7 +48,7 @@
 
 ### constructor
 
-• **new AwsCloudwatchServiceClient**(`conRes`, `config`)
+• **new AwsCloudwatchServiceClient**(`conRes`, `config`): [`AwsCloudwatchServiceClient`](AwsCloudwatchServiceClient.md)
 
 #### Parameters
 
@@ -57,13 +57,17 @@
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 | `config` | [`ClientConfigType`](../modules.md#clientconfigtype) |
 
+#### Returns
+
+[`AwsCloudwatchServiceClient`](AwsCloudwatchServiceClient.md)
+
 #### Overrides
 
 [AwsServiceClient](AwsServiceClient.md).[constructor](AwsServiceClient.md#constructor)
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L44)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L44)
 
 ## Properties
 
@@ -77,7 +81,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -91,7 +95,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L11)
 
 ___
 
@@ -105,7 +109,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ___
 
@@ -115,17 +119,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L42)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L42)
 
 ## Methods
 
 ### closeSub
 
-▸ `Protected` **closeSub**(): `Promise`<`void`\>
+▸ **closeSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -133,17 +137,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L312)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L312)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -151,17 +155,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L17)
 
 ___
 
 ### connectSub
 
-▸ **connectSub**(): `Promise`<`string`\>
+▸ **connectSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -169,17 +173,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L48)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L48)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -187,27 +191,27 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L59)
+[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L59)
 
 ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`<[`AwsDatabase`](AwsDatabase.md)\>
+▸ **getInfomationSchemas**(): `Promise`\<[`AwsDatabase`](AwsDatabase.md)\>
 
 #### Returns
 
-`Promise`<[`AwsDatabase`](AwsDatabase.md)\>
+`Promise`\<[`AwsDatabase`](AwsDatabase.md)\>
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:234](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L234)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:234](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L234)
 
 ___
 
 ### getLogEvents
 
-▸ **getLogEvents**(`params`): `Promise`<`OutputLogEvent`[]\>
+▸ **getLogEvents**(`params`): `Promise`\<`OutputLogEvent`[]\>
 
 #### Parameters
 
@@ -221,17 +225,17 @@ ___
 
 #### Returns
 
-`Promise`<`OutputLogEvent`[]\>
+`Promise`\<`OutputLogEvent`[]\>
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L63)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L63)
 
 ___
 
 ### getLogStreams
 
-▸ **getLogStreams**(`«destructured»`): `Promise`<`LogStream`[]\>
+▸ **getLogStreams**(`«destructured»`): `Promise`\<`LogStream`[]\>
 
 #### Parameters
 
@@ -242,31 +246,31 @@ ___
 
 #### Returns
 
-`Promise`<`LogStream`[]\>
+`Promise`\<`LogStream`[]\>
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:263](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L263)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:263](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L263)
 
 ___
 
 ### getQueries
 
-▸ **getQueries**(): `Promise`<`QueryDefinition`[]\>
+▸ **getQueries**(): `Promise`\<`QueryDefinition`[]\>
 
 #### Returns
 
-`Promise`<`QueryDefinition`[]\>
+`Promise`\<`QueryDefinition`[]\>
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:293](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L293)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:293](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L293)
 
 ___
 
 ### getServiceName
 
-▸ `Protected` **getServiceName**(): `string`
+▸ **getServiceName**(): `string`
 
 #### Returns
 
@@ -278,7 +282,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:316](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L316)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:316](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L316)
 
 ___
 
@@ -296,13 +300,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L55)
+[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L55)
 
 ___
 
 ### query
 
-▸ **query**(`params`): `Promise`<`GetQueryResultsCommandOutput`\>
+▸ **query**(`params`): `Promise`\<`GetQueryResultsCommandOutput`\>
 
 #### Parameters
 
@@ -312,17 +316,17 @@ ___
 
 #### Returns
 
-`Promise`<`GetQueryResultsCommandOutput`\>
+`Promise`\<`GetQueryResultsCommandOutput`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L98)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L98)
 
 ___
 
 ### scan
 
-▸ **scan**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **scan**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -332,7 +336,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Implementation of
 
@@ -340,13 +344,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:128](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L128)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:128](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L128)
 
 ___
 
 ### scanLogGroup
 
-▸ **scanLogGroup**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **scanLogGroup**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -356,17 +360,17 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:137](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L137)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:137](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L137)
 
 ___
 
 ### scanLogStream
 
-▸ **scanLogStream**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **scanLogStream**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -376,17 +380,17 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L196)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L196)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -396,7 +400,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -404,17 +408,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L36)
 
 ___
 
 ### testSub
 
-▸ `Protected` **testSub**(): `Promise`<`void`\>
+▸ **testSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -422,4 +426,4 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsCloudwatchServiceClient.ts#L53)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsCloudwatchServiceClient.ts#L53)

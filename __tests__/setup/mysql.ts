@@ -1,7 +1,7 @@
-import * as mysql from 'mysql2/promise';
 import { promises as fs } from 'fs';
-import * as path from 'path';
+import * as mysql from 'mysql2/promise';
 import { ResultSetHeader } from 'mysql2/promise';
+import * as path from 'path';
 import { DbResource, fromJson } from '../../src';
 
 const baseConnectOption = {

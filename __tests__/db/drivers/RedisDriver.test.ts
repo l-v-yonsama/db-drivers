@@ -1,10 +1,10 @@
 import { Redis, RedisOptions } from 'ioredis';
 import {
-  RedisDriver,
-  RedisDatabase,
-  DBDriverResolver,
   ConnectionSetting,
+  DBDriverResolver,
   DBType,
+  RedisDatabase,
+  RedisDriver,
   RedisKeyType,
 } from '../../../src';
 

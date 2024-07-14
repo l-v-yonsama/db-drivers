@@ -8,6 +8,7 @@ import {
   GetQueueAttributesCommand,
   ListQueuesCommand,
   PurgeQueueCommand,
+  QueueAttributeName,
   ReceiveMessageCommand,
   ReceiveMessageCommandInput,
   SQSClient,
@@ -15,28 +16,32 @@ import {
   SendMessageCommandInput,
   SendMessageResult,
 } from '@aws-sdk/client-sqs';
+import {
+  GeneralColumnType,
+  ResultSetData,
+  ResultSetDataBuilder,
+  createRdhKey,
+  toBoolean,
+  toDate,
+  toNum,
+} from '@l-v-yonsama/rdh';
+import { plural } from 'pluralize';
 import * as url from 'url';
 import {
   AwsDatabase,
   DbKey,
   DbSQSQueue,
-  ResultSetDataBuilder,
   SQSMessageParams,
-  createRdhKey,
 } from '../../resource';
 import {
   AwsSQSAttributes,
   AwsServiceType,
   ConnectionSetting,
-  GeneralColumnType,
-  ResultSetData,
   ScanParams,
 } from '../../types';
-import { AwsServiceClient } from './AwsServiceClient';
 import { ClientConfigType } from '../AwsDriver';
-import { toBoolean, toDate, toNum } from '../../utils';
 import { Scannable } from '../BaseDriver';
-import { plural } from 'pluralize';
+import { AwsServiceClient } from './AwsServiceClient';
 
 export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
   sqsClient: SQSClient;
@@ -83,7 +88,10 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
     let keys = await this.receiveMessages({
       QueueUrl: target,
       MaxNumberOfMessages: limit,
-      AttributeNames: ['SentTimestamp', 'ApproximateFirstReceiveTimestamp'],
+      MessageSystemAttributeNames: [
+        'SentTimestamp',
+        'ApproximateFirstReceiveTimestamp',
+      ],
     });
 
     if (keyword) {
@@ -196,7 +204,7 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
     attributes,
   }: {
     name: string;
-    attributes?: AwsSQSAttributes;
+    attributes?: Partial<Record<QueueAttributeName, string>>;
   }): Promise<string> {
     const { QueueUrl } = await this.sqsClient.send(
       new CreateQueueCommand({ QueueName: name, Attributes: attributes }),

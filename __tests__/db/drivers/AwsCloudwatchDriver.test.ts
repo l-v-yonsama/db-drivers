@@ -1,21 +1,21 @@
 import {
   CloudWatchLogsClient,
+  CreateLogGroupCommand,
   CreateLogStreamCommand,
   DeleteLogGroupCommand,
   DescribeLogGroupsCommand,
-  CreateLogGroupCommand,
 } from '@aws-sdk/client-cloudwatch-logs';
 import {
-  AwsRegion,
-  DBDriverResolver,
-  ConnectionSetting,
-  DBType,
-  AwsDriver,
-  DbLogGroup,
   AwsDatabase,
+  AwsDriver,
+  AwsRegion,
+  AwsServiceType,
+  ConnectionSetting,
+  DBDriverResolver,
+  DbLogGroup,
+  DBType,
   ResourceType,
   SupplyCredentialType,
-  AwsServiceType,
 } from '../../../src';
 
 const connectOption = {

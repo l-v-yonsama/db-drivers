@@ -42,7 +42,7 @@
 
 ### constructor
 
-• **new AwsSESServiceClient**(`conRes`, `config`)
+• **new AwsSESServiceClient**(`conRes`, `config`): [`AwsSESServiceClient`](AwsSESServiceClient.md)
 
 #### Parameters
 
@@ -51,13 +51,17 @@
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 | `config` | [`ClientConfigType`](../modules.md#clientconfigtype) |
 
+#### Returns
+
+[`AwsSESServiceClient`](AwsSESServiceClient.md)
+
 #### Overrides
 
 [AwsServiceClient](AwsServiceClient.md).[constructor](AwsServiceClient.md#constructor)
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L25)
+[src/drivers/aws/AwsSESServiceClient.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L25)
 
 ## Properties
 
@@ -71,7 +75,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -85,7 +89,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L11)
 
 ___
 
@@ -99,7 +103,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ___
 
@@ -109,17 +113,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L23)
+[src/drivers/aws/AwsSESServiceClient.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L23)
 
 ## Methods
 
 ### closeSub
 
-▸ `Protected` **closeSub**(): `Promise`<`void`\>
+▸ **closeSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -127,17 +131,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L96)
+[src/drivers/aws/AwsSESServiceClient.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L96)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -145,17 +149,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L17)
 
 ___
 
 ### connectSub
 
-▸ `Protected` **connectSub**(): `Promise`<`string`\>
+▸ **connectSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -163,17 +167,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L29)
+[src/drivers/aws/AwsSESServiceClient.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L29)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -181,55 +185,55 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L59)
+[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L59)
 
 ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`<[`AwsDatabase`](AwsDatabase.md)\>
+▸ **getInfomationSchemas**(): `Promise`\<[`AwsDatabase`](AwsDatabase.md)\>
 
 #### Returns
 
-`Promise`<[`AwsDatabase`](AwsDatabase.md)\>
+`Promise`\<[`AwsDatabase`](AwsDatabase.md)\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L85)
+[src/drivers/aws/AwsSESServiceClient.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L85)
 
 ___
 
 ### getSendQuota
 
-▸ **getSendQuota**(): `Promise`<`GetSendQuotaCommandOutput`\>
+▸ **getSendQuota**(): `Promise`\<`GetSendQuotaCommandOutput`\>
 
 #### Returns
 
-`Promise`<`GetSendQuotaCommandOutput`\>
+`Promise`\<`GetSendQuotaCommandOutput`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:77](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L77)
+[src/drivers/aws/AwsSESServiceClient.ts:77](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L77)
 
 ___
 
 ### getSendStatistics
 
-▸ **getSendStatistics**(): `Promise`<`GetSendStatisticsCommandOutput`\>
+▸ **getSendStatistics**(): `Promise`\<`GetSendStatisticsCommandOutput`\>
 
 #### Returns
 
-`Promise`<`GetSendStatisticsCommandOutput`\>
+`Promise`\<`GetSendStatisticsCommandOutput`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:81](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L81)
+[src/drivers/aws/AwsSESServiceClient.ts:81](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L81)
 
 ___
 
 ### getServiceName
 
-▸ `Protected` **getServiceName**(): `string`
+▸ **getServiceName**(): `string`
 
 #### Returns
 
@@ -241,7 +245,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L100)
+[src/drivers/aws/AwsSESServiceClient.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L100)
 
 ___
 
@@ -259,13 +263,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L55)
+[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L55)
 
 ___
 
 ### listIdentities
 
-▸ **listIdentities**(`identityType`): `Promise`<`string`[]\>
+▸ **listIdentities**(`identityType`): `Promise`\<`string`[]\>
 
 #### Parameters
 
@@ -275,17 +279,17 @@ ___
 
 #### Returns
 
-`Promise`<`string`[]\>
+`Promise`\<`string`[]\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L40)
+[src/drivers/aws/AwsSESServiceClient.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L40)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -295,7 +299,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -303,17 +307,17 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsServiceClient.ts#L36)
 
 ___
 
 ### testSub
 
-▸ `Protected` **testSub**(): `Promise`<`void`\>
+▸ **testSub**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Overrides
 
@@ -321,13 +325,13 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L34)
+[src/drivers/aws/AwsSESServiceClient.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L34)
 
 ___
 
 ### verifyDomainIdentity
 
-▸ **verifyDomainIdentity**(`domain`): `Promise`<`VerifyDomainIdentityCommandOutput`\>
+▸ **verifyDomainIdentity**(`domain`): `Promise`\<`VerifyDomainIdentityCommandOutput`\>
 
 #### Parameters
 
@@ -337,17 +341,17 @@ ___
 
 #### Returns
 
-`Promise`<`VerifyDomainIdentityCommandOutput`\>
+`Promise`\<`VerifyDomainIdentityCommandOutput`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L67)
+[src/drivers/aws/AwsSESServiceClient.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L67)
 
 ___
 
 ### verifyEmailAddress
 
-▸ **verifyEmailAddress**(`emailAddress`): `Promise`<`VerifyEmailAddressCommandOutput`\>
+▸ **verifyEmailAddress**(`emailAddress`): `Promise`\<`VerifyEmailAddressCommandOutput`\>
 
 #### Parameters
 
@@ -357,8 +361,8 @@ ___
 
 #### Returns
 
-`Promise`<`VerifyEmailAddressCommandOutput`\>
+`Promise`\<`VerifyEmailAddressCommandOutput`\>
 
 #### Defined in
 
-[src/drivers/aws/AwsSESServiceClient.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/aws/AwsSESServiceClient.ts#L57)
+[src/drivers/aws/AwsSESServiceClient.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/aws/AwsSESServiceClient.ts#L57)

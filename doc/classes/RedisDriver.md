@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- [`BaseDriver`](BaseDriver.md)<[`RedisDatabase`](RedisDatabase.md)\>
+- [`BaseDriver`](BaseDriver.md)\<[`RedisDatabase`](RedisDatabase.md)\>
 
   ↳ **`RedisDriver`**
 
@@ -31,7 +31,6 @@
 - [closeSub](RedisDriver.md#closesub)
 - [connect](RedisDriver.md#connect)
 - [connectSub](RedisDriver.md#connectsub)
-- [connectToSshServer](RedisDriver.md#connecttosshserver)
 - [createDBError](RedisDriver.md#createdberror)
 - [delete](RedisDriver.md#delete)
 - [disconnect](RedisDriver.md#disconnect)
@@ -56,7 +55,7 @@
 
 ### constructor
 
-• **new RedisDriver**(`conRes`)
+• **new RedisDriver**(`conRes`): [`RedisDriver`](RedisDriver.md)
 
 #### Parameters
 
@@ -64,13 +63,17 @@
 | :------ | :------ |
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 
+#### Returns
+
+[`RedisDriver`](RedisDriver.md)
+
 #### Overrides
 
 [BaseDriver](BaseDriver.md).[constructor](BaseDriver.md#constructor)
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:27](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L27)
+[src/drivers/RedisDriver.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L21)
 
 ## Properties
 
@@ -80,7 +83,7 @@
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L25)
+[src/drivers/RedisDriver.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L19)
 
 ___
 
@@ -94,7 +97,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L51)
+[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L44)
 
 ___
 
@@ -108,7 +111,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L50)
+[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L43)
 
 ___
 
@@ -122,7 +125,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L46)
 
 ___
 
@@ -136,17 +139,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L52)
+[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L45)
 
 ## Methods
 
 ### closeSub
 
-▸ **closeSub**(): `Promise`<`string`\>
+▸ **closeSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -154,17 +157,17 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:241](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L241)
+[src/drivers/RedisDriver.ts:235](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L235)
 
 ___
 
 ### connect
 
-▸ **connect**(): `Promise`<`string`\>
+▸ **connect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -172,17 +175,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:159](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L159)
+[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L152)
 
 ___
 
 ### connectSub
 
-▸ **connectSub**(): `Promise`<`string`\>
+▸ **connectSub**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -190,25 +193,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:31](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L31)
-
-___
-
-### connectToSshServer
-
-▸ **connectToSshServer**(): `Promise`<`string`\>
-
-#### Returns
-
-`Promise`<`string`\>
-
-#### Inherited from
-
-[BaseDriver](BaseDriver.md).[connectToSshServer](BaseDriver.md#connecttosshserver)
-
-#### Defined in
-
-[src/drivers/BaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L133)
+[src/drivers/RedisDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L25)
 
 ___
 
@@ -233,13 +218,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L225)
+[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L218)
 
 ___
 
 ### delete
 
-▸ **delete**(`key`): `Promise`<`void`\>
+▸ **delete**(`key`): `Promise`\<`void`\>
 
 #### Parameters
 
@@ -249,21 +234,21 @@ ___
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:97](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L97)
+[src/drivers/RedisDriver.ts:91](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L91)
 
 ___
 
 ### disconnect
 
-▸ **disconnect**(): `Promise`<`string`\>
+▸ **disconnect**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Inherited from
 
@@ -271,13 +256,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:178](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L178)
+[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L171)
 
 ___
 
 ### flow
 
-▸ **flow**<`T`\>(`f`): `Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+▸ **flow**\<`T`\>(`f`): `Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Type parameters
 
@@ -289,11 +274,11 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `f` | (`driver`: [`RedisDriver`](RedisDriver.md)) => `Promise`<`T`\> |
+| `f` | (`driver`: `this`) => `Promise`\<`T`\> |
 
 #### Returns
 
-`Promise`<[`GeneralResult`](GeneralResult.md)<`T`\>\>
+`Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
 
 #### Inherited from
 
@@ -301,35 +286,35 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L101)
+[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L94)
 
 ___
 
 ### flushAll
 
-▸ **flushAll**(): `Promise`<`void`\>
+▸ **flushAll**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L89)
+[src/drivers/RedisDriver.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L83)
 
 ___
 
 ### flushDb
 
-▸ **flushDb**(): `Promise`<`void`\>
+▸ **flushDb**(): `Promise`\<`void`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:93](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L93)
+[src/drivers/RedisDriver.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L87)
 
 ___
 
@@ -347,13 +332,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L63)
+[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L56)
 
 ___
 
 ### getDbDatabase
 
-▸ `Protected` **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
+▸ **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
 
 #### Returns
 
@@ -365,17 +350,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L219)
+[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L212)
 
 ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`<[`RedisDatabase`](RedisDatabase.md)[]\>
+▸ **getInfomationSchemas**(): `Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
 
 #### Returns
 
-`Promise`<[`RedisDatabase`](RedisDatabase.md)[]\>
+`Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
 
 #### Inherited from
 
@@ -383,17 +368,17 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L204)
+[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L197)
 
 ___
 
 ### getInfomationSchemasSub
 
-▸ **getInfomationSchemasSub**(): `Promise`<[`RedisDatabase`](RedisDatabase.md)[]\>
+▸ **getInfomationSchemasSub**(): `Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
 
 #### Returns
 
-`Promise`<[`RedisDatabase`](RedisDatabase.md)[]\>
+`Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
 
 #### Overrides
 
@@ -401,7 +386,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:216](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L216)
+[src/drivers/RedisDriver.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L210)
 
 ___
 
@@ -419,13 +404,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L53)
 
 ___
 
 ### getValueByKey
 
-▸ **getValueByKey**(`client`, `key`, `type`): `Promise`<`any`\>
+▸ **getValueByKey**(`client`, `key`, `type`): `Promise`\<`any`\>
 
 #### Parameters
 
@@ -433,15 +418,15 @@ ___
 | :------ | :------ |
 | `client` | `Redis` |
 | `key` | `string` |
-| `type` | [`RedisKeyType`](../modules.md#rediskeytype-1) |
+| `type` | [`RedisKeyType`](../modules.md#rediskeytype) |
 
 #### Returns
 
-`Promise`<`any`\>
+`Promise`\<`any`\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:195](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L195)
+[src/drivers/RedisDriver.ts:189](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L189)
 
 ___
 
@@ -459,7 +444,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -477,7 +462,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L71)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -501,7 +486,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L74)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L67)
 
 ___
 
@@ -525,13 +510,13 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/BaseDriver.ts#L85)
+[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/BaseDriver.ts#L78)
 
 ___
 
 ### scan
 
-▸ **scan**(`params`): `Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+▸ **scan**(`params`): `Promise`\<`ResultSetData`\>
 
 #### Parameters
 
@@ -541,7 +526,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResultSetData`](../modules.md#resultsetdata)\>
+`Promise`\<`ResultSetData`\>
 
 #### Implementation of
 
@@ -549,13 +534,13 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:145](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L145)
+[src/drivers/RedisDriver.ts:139](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L139)
 
 ___
 
 ### scanStream
 
-▸ **scanStream**(`params`): `Promise`<[`DbKey`](DbKey.md)<[`RedisKeyParams`](../modules.md#rediskeyparams)\>[]\>
+▸ **scanStream**(`params`): `Promise`\<[`DbKey`](DbKey.md)\<[`RedisKeyParams`](../modules.md#rediskeyparams)\>[]\>
 
 #### Parameters
 
@@ -565,17 +550,17 @@ ___
 
 #### Returns
 
-`Promise`<[`DbKey`](DbKey.md)<[`RedisKeyParams`](../modules.md#rediskeyparams)\>[]\>
+`Promise`\<[`DbKey`](DbKey.md)\<[`RedisKeyParams`](../modules.md#rediskeyparams)\>[]\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L101)
+[src/drivers/RedisDriver.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L95)
 
 ___
 
 ### test
 
-▸ **test**(`with_connect?`): `Promise`<`string`\>
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -585,7 +570,7 @@ ___
 
 #### Returns
 
-`Promise`<`string`\>
+`Promise`\<`string`\>
 
 #### Overrides
 
@@ -593,4 +578,4 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/ffedad0/src/drivers/RedisDriver.ts#L70)
+[src/drivers/RedisDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5477f1117668fd2bd16a5f134944299a9bc475af/src/drivers/RedisDriver.ts#L64)
