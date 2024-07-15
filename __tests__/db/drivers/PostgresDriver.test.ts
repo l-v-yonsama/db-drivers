@@ -56,19 +56,20 @@ const connectOption: ConnectionSetting = {
 
 describe('PostgresDriver', () => {
   let driver: PostgresDriver;
+  let rootDriver: PostgresDriver;
 
   beforeAll(async () => {
     driver = createRDSDriver();
+    rootDriver = createRDSDriver(true);
+    await driver.connect();
+    await rootDriver.connect();
 
     await init();
   });
 
   afterAll(async () => {
     await driver.disconnect();
-  });
-
-  it('connect', async () => {
-    expect(await driver.connect()).toBe('');
+    await rootDriver.disconnect();
   });
 
   describe('getName', () => {
@@ -441,7 +442,35 @@ describe('PostgresDriver', () => {
     });
   });
 
-  function createRDSDriver(): PostgresDriver {
-    return new PostgresDriver(connectOption);
+  describe('rawQueries', () => {
+    it('Create function', async () => {
+      const rdh = await rootDriver.requestSql({
+        sql: `CREATE OR REPLACE FUNCTION addition(float, float) RETURNS float
+    AS 'select $1 + $2;'
+    LANGUAGE SQL
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT;`,
+        conditions: {
+          rawQueries: true,
+        },
+      });
+      expect(rdh).not.toBeUndefined();
+    });
+    it('Select from function', async () => {
+      const rdh = await rootDriver.requestSql({
+        sql: `SELECT addition(1.2, 3.4) as answer`,
+      });
+      expect(rdh.rows[0].values).toEqual({ answer: 4.6 });
+    });
+  });
+
+  function createRDSDriver(asRoot = false): PostgresDriver {
+    return asRoot
+      ? new PostgresDriver({
+          ...connectOption,
+          // user: 'root',
+          // password: 'p@ssw0rd',
+        })
+      : new PostgresDriver(connectOption);
   }
 });

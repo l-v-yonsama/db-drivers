@@ -40,6 +40,7 @@ export async function init(): Promise<void> {
   const con = await mysql.createConnection(baseConnectOption);
 
   try {
+    await con.query(`GRANT ALL PRIVILEGES ON testdb.* TO 'testuser'@'%'`);
     await con.execute('DROP TABLE IF EXISTS testdb.testtable');
     await con.execute<ResultSetHeader>(CREATE_TABLE_STATEMENT);
 

@@ -203,6 +203,9 @@ export class SQLServerDriver extends RDSBaseDriver {
     if (!this.con) {
       throw new Error('No connection');
     }
+    if (!this.con.connected) {
+      throw new Error('Not connected');
+    }
 
     const binds = conditions?.binds ?? [];
     const startTime = new Date().getTime();

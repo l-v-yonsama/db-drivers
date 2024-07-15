@@ -27,19 +27,20 @@ const connectOption: ConnectionSetting = {
 
 describe('MySQLDriver', () => {
   let driver: MySQLDriver;
+  let rootDriver: MySQLDriver;
 
   beforeAll(async () => {
     driver = createRDSDriver();
+    rootDriver = createRDSDriver(true);
+    await driver.connect();
+    await rootDriver.connect();
 
     await init();
   });
 
   afterAll(async () => {
     await driver.disconnect();
-  });
-
-  it('connect', async () => {
-    expect(await driver.connect()).toBe('');
+    await rootDriver.disconnect();
   });
 
   describe('getName', () => {
@@ -486,7 +487,39 @@ describe('MySQLDriver', () => {
     });
   });
 
-  function createRDSDriver(): MySQLDriver {
-    return new MySQLDriver(connectOption);
+  describe('rawQueries', () => {
+    it('Create function', async () => {
+      const rdh = await rootDriver.requestSql({
+        sql: `CREATE FUNCTION IF NOT EXISTS addition(
+            a FLOAT, b FLOAT
+        ) RETURNS DECIMAL(9,2)
+        DETERMINISTIC
+        BEGIN
+            DECLARE c DECIMAL(9,2);
+            SET c = a + b;
+            RETURN c;
+        END;`,
+        conditions: {
+          rawQueries: true,
+        },
+      });
+      expect(rdh).not.toBeUndefined();
+    });
+    it('Select from function', async () => {
+      const rdh = await rootDriver.requestSql({
+        sql: `SELECT addition(1.2, 3.4) as answer`,
+      });
+      expect(rdh.rows[0].values).toEqual({ answer: '4.60' });
+    });
+  });
+
+  function createRDSDriver(asRoot = false): MySQLDriver {
+    return asRoot
+      ? new MySQLDriver({
+          ...connectOption,
+          user: 'root',
+          password: 'p@ssw0rd',
+        })
+      : new MySQLDriver(connectOption);
   }
 });

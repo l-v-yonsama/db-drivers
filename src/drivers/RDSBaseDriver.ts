@@ -68,9 +68,15 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   }
 
   async requestSql(params: QueryParams): Promise<ResultSetData> {
-    const { sql } = params;
-    const ast = parseQuery(sql);
-    const dbTable = this.getDbTable(ast);
+    const { sql, conditions } = params;
+
+    let ast: QStatement | undefined = undefined;
+    let dbTable: DbTable | undefined = undefined;
+
+    if (conditions?.rawQueries !== true) {
+      ast = parseQuery(sql);
+      dbTable = this.getDbTable(ast);
+    }
 
     const rdb = await this.requestSqlSub({
       ...params,

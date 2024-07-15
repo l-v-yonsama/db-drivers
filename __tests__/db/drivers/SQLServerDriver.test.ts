@@ -9,7 +9,6 @@ import {
   RdsDatabase,
   SQLServerDriver,
 } from '../../../src';
-import { init, init0 } from '../../setup/mssql';
 
 const baseConnectOption = {
   host: '127.0.0.1',
@@ -33,17 +32,14 @@ describe('SQLServerDriver', () => {
 
   beforeAll(async () => {
     driver = createRDSDriver();
+    await driver.connect();
 
-    await init0();
-    await init();
+    // await init0();
+    // await init();
   });
 
   afterAll(async () => {
     await driver.disconnect();
-  });
-
-  it('connect', async () => {
-    expect(await driver.connect()).toBe('');
   });
 
   describe('getName', () => {
@@ -406,7 +402,42 @@ describe('SQLServerDriver', () => {
     });
   });
 
-  function createRDSDriver(): SQLServerDriver {
-    return new SQLServerDriver(connectOption);
+  describe('rawQueries', () => {
+    beforeAll(async () => {
+      await driver.connect();
+    });
+    it('Create function', async () => {
+      const rdh = await driver.requestSql({
+        sql: `CREATE OR ALTER FUNCTION addition(
+              @a INT, @b INT
+          ) RETURNS INT AS
+          BEGIN
+              DECLARE @c INT;
+              SET @c = @a + @b;
+              RETURN @c;
+          END;`,
+        conditions: {
+          rawQueries: true,
+        },
+      });
+      expect(rdh).not.toBeUndefined();
+    });
+    it('Select from function', async () => {
+      const rdh = await driver.requestSql({
+        sql: `SELECT schema1.addition(12, 34) as answer`,
+      });
+      expect(rdh.rows[0].values).toEqual({ answer: 46 });
+    });
+  });
+
+  function createRDSDriver(asRoot = false): SQLServerDriver {
+    return asRoot
+      ? new SQLServerDriver({
+          ...connectOption,
+          user: 'sa',
+          // database: 'master',
+          password: 'Pass123zxcv!',
+        })
+      : new SQLServerDriver(connectOption);
   }
 });

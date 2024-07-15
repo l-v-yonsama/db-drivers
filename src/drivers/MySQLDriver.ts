@@ -120,11 +120,16 @@ export class MySQLDriver extends RDSBaseDriver {
     const { sql, conditions, dbTable, meta } = params;
     let rdb: ResultSetDataBuilder;
 
-    if (sql.trim().match(/set\s+global\s+.+/i)) {
-      // This query will crash current node process.
-      // RangeError [ERR_OUT_OF_RANGE]: The value of "offset" is out of range. It must be >= 0 and <= 9. Received 11
-      throw new Error('Setting global system variables is not supported');
-    }
+    // if (
+    //   sql.trim().match(/set\s+global\s+.+/i) &&
+    //   conditions.rawQueries !== true
+    // ) {
+    //   // This query will crash current node process.
+    //   // RangeError [ERR_OUT_OF_RANGE]: The value of "offset" is out of range. It must be >= 0 and <= 9. Received 11
+    //   throw new Error(
+    //     'Setting global system variables is not supported.\nYou want to run this query, Set raw queries=CHECKED on metadata setting.',
+    //   );
+    // }
 
     if (!this.con) {
       throw new Error('No connection');
@@ -132,7 +137,12 @@ export class MySQLDriver extends RDSBaseDriver {
 
     const binds = conditions?.binds ?? [];
     const startTime = new Date().getTime();
-    const [rows, fields] = await this.con.execute(sql, binds);
+    // const [rows, fields] = conditions?.rawQueries
+    //   ? await this.con.query(sql)
+    //   : await this.con.execute(sql, binds);
+
+    const [rows, fields] = await this.con.query(sql, binds);
+
     const elapsedTimeMilli = new Date().getTime() - startTime;
 
     if (fields === undefined) {
