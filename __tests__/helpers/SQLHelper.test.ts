@@ -8,6 +8,7 @@ import {
 import {
   getProposals,
   getResourcePositions,
+  hasSetVariableClause,
   normalizeQuery,
   parseQuery,
   ProposalKind,
@@ -911,6 +912,37 @@ describe('SQLHelper', () => {
 
         expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
       });
+    });
+  });
+
+  describe('hasSetVariableClause', () => {
+    it('true; pattern1', () => {
+      const sql = `SET @ind_rate = 83.52;\n
+SELECT CarName, FORMAT(Price * @ind_rate, 2) "Rupees" FROM cars`;
+
+      expect(hasSetVariableClause(sql)).toBe(true);
+    });
+    it('true; pattern2', () => {
+      const sql = `SET var ind_rate = 83.52;\n
+SELECT CarName, FORMAT(Price * @ind_rate, 2) "Rupees" FROM cars`;
+
+      expect(hasSetVariableClause(sql)).toBe(true);
+    });
+    it('false; pattern1', () => {
+      const sql = `SELECT CarName, FORMAT(Price * :ind_rate, 2) "Rupees" FROM cars`;
+      expect(hasSetVariableClause(sql)).toBe(false);
+    });
+    it('false; pattern2', () => {
+      const sql = `SET GLOBAL max_connections = 1000`;
+      expect(hasSetVariableClause(sql)).toBe(false);
+    });
+    it('false; pattern3', () => {
+      const sql = `SET @@PERSIST.max_connections = 1000;`;
+      expect(hasSetVariableClause(sql)).toBe(false);
+    });
+    it('false; pattern4', () => {
+      const sql = `SET @@SESSION.sql_mode = 'TRADITIONAL';`;
+      expect(hasSetVariableClause(sql)).toBe(false);
     });
   });
 });

@@ -569,6 +569,16 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
   return replacedSql.replace(FUNCTION_MATCHER, '1');
 };
 
+export const hasSetVariableClause = (sql: string): boolean => {
+  if (sql.match(/\bSET\s+(VAR|VARIABLE)\s+\w+\s*=\s*['"\w]+;?/gi)) {
+    return true;
+  }
+  if (sql.match(/\bSET\s+@\w+\s*=\s*['"\w]+;?/gi)) {
+    return true;
+  }
+  return false;
+};
+
 /**
  * Parse query
  * All parse results are in lowercase.

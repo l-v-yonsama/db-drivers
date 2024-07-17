@@ -6,7 +6,14 @@ import {
   ResultSetDataBuilder,
 } from '@l-v-yonsama/rdh';
 import { EnumValues } from 'enum-values';
-import { config, connect, ConnectionPool, Request, Transaction } from 'mssql';
+import mssql, {
+  config,
+  connect,
+  ConnectionPool,
+  Request,
+  Transaction,
+} from 'mssql';
+
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
@@ -15,6 +22,8 @@ import {
   SQLServerColumnType,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
+
+type MSSql = typeof mssql;
 
 const EXPLAIN_COLUMNS: RdhKey[] = [
   createRdhKey({
@@ -618,7 +627,28 @@ export class SQLServerDriver extends RDSBaseDriver {
       },
     };
 
-    const con = await connect(options);
+    let con: ConnectionPool;
+    if (this.conRes.sqlServer?.windowsAuthentication) {
+      // https://learn.microsoft.com/ja-jp/sql/connect/odbc/linux-mac/install-microsoft-odbc-driver-sql-server-macos?view=sql-server-ver16
+      // Set to true if using Windows Authentication
+      options.options.trustedConnection = true;
+      // Set to true if using self-signed certificates
+      options.options.trustServerCertificate = true;
+
+      // Required if using Windows Authentication
+      options.driver = 'msnodesqlv8';
+
+      // The normal mssql lib doesn't work on Windows and even importing this
+      // mssql/msnodesqlv8 library on MacOS will fail. So we have to conditionally
+      // import it.
+      const _mssqlV8 = (await import('mssql/msnodesqlv8.js').then(
+        (m) => m.default,
+      )) as MSSql;
+      con = await _mssqlV8.connect(options);
+    } else {
+      con = await connect(options);
+    }
+
     this.tran = undefined;
     this.req = undefined;
     return con;

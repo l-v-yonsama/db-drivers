@@ -59,12 +59,16 @@ export async function init0(): Promise<void> {
   const con = await mssql.connect(baseConnectOption0);
 
   try {
-    const q = async (sql: string) => con.request().query(sql);
+    const q = async (sql: string): Promise<mssql.IResult<any>> =>
+      con.request().query(sql);
     const cq = async (sql: string): Promise<number> => {
       const r = await con.request().query(sql);
       return r.recordset[0].count;
     };
-    const pq = async (sql: string, binds: any[]) => {
+    const pq = async (
+      sql: string,
+      binds: any[],
+    ): Promise<mssql.IResult<any>> => {
       const req = con.request();
       binds.forEach((it, idx) => req.input(`${idx + 1}`, it));
       return await req.query(sql);
@@ -128,8 +132,9 @@ export async function init0(): Promise<void> {
 
 export async function init(): Promise<void> {
   const con = await mssql.connect(baseConnectOption);
-  const q = async (sql: string) => con.request().query(sql);
-  const pq = async (sql: string, binds: any[]) => {
+  const q = async (sql: string): Promise<mssql.IResult<any>> =>
+    con.request().query(sql);
+  const pq = async (sql: string, binds: any[]): Promise<mssql.IResult<any>> => {
     const req = con.request();
     binds.forEach((it, idx) => req.input(`${idx + 1}`, it));
     return await req.query(sql);

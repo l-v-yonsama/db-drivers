@@ -50,6 +50,7 @@ export type FirebaseSetting = {
 
 export type SQLServerSetting = {
   encrypt?: boolean;
+  windowsAuthentication?: boolean;
   onlyDefaultSchema?: boolean;
 };
 
