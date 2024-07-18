@@ -7,5 +7,6 @@ export * from './DBType';
 export * from './ForeignKeyConstraint';
 export * from './RedisKeyType';
 export * from './ResourceType';
+export * from './SQLServerAuthenticationType';
 export * from './SQLServerColumnType';
 export * from './UniqueKeyConstraint';

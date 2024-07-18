@@ -6,24 +6,17 @@ import {
   ResultSetDataBuilder,
 } from '@l-v-yonsama/rdh';
 import { EnumValues } from 'enum-values';
-import mssql, {
-  config,
-  connect,
-  ConnectionPool,
-  Request,
-  Transaction,
-} from 'mssql';
+import { config, connect, ConnectionPool, Request, Transaction } from 'mssql';
 
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
   QueryParams,
   ResultColumn,
+  SQLServerAuthenticationType,
   SQLServerColumnType,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
-
-type MSSql = typeof mssql;
 
 const EXPLAIN_COLUMNS: RdhKey[] = [
   createRdhKey({
@@ -610,11 +603,20 @@ export class SQLServerDriver extends RDSBaseDriver {
   }
 
   private async createConnection(): Promise<ConnectionPool> {
+    const options = this.createConnectOptions();
+    console.log('options=', options);
+
+    const con = await connect(options);
+
+    this.tran = undefined;
+    this.req = undefined;
+    return con;
+  }
+
+  private createConnectOptions(): config {
+    const { sqlServer } = this.conRes;
     const options: config = {
-      port: this.conRes.port,
       server: this.conRes.host,
-      user: this.conRes.user,
-      password: this.conRes.password,
       database: this.conRes.database,
       pool: {
         min: 1,
@@ -622,35 +624,75 @@ export class SQLServerDriver extends RDSBaseDriver {
       },
       options: {
         // If you are on Microsoft Azure, you need encryption:
-        encrypt: this.conRes.sqlServer?.encrypt ?? false,
+        encrypt: sqlServer?.encrypt ?? false,
         // database: 'your_database'  //update me
       },
     };
 
-    let con: ConnectionPool;
-    if (this.conRes.sqlServer?.windowsAuthentication) {
-      // https://learn.microsoft.com/ja-jp/sql/connect/odbc/linux-mac/install-microsoft-odbc-driver-sql-server-macos?view=sql-server-ver16
-      // Set to true if using Windows Authentication
-      options.options.trustedConnection = true;
-      // Set to true if using self-signed certificates
-      options.options.trustServerCertificate = true;
+    const authType =
+      sqlServer?.authenticationType ?? SQLServerAuthenticationType.default;
 
-      // Required if using Windows Authentication
-      options.driver = 'msnodesqlv8';
-
-      // The normal mssql lib doesn't work on Windows and even importing this
-      // mssql/msnodesqlv8 library on MacOS will fail. So we have to conditionally
-      // import it.
-      const _mssqlV8 = (await import('mssql/msnodesqlv8.js').then(
-        (m) => m.default,
-      )) as MSSql;
-      con = await _mssqlV8.connect(options);
-    } else {
-      con = await connect(options);
+    switch (authType) {
+      case SQLServerAuthenticationType.default: {
+        return {
+          ...options,
+          port: this.conRes.port,
+          user: this.conRes.user,
+          password: this.conRes.password,
+        };
+      }
+      case SQLServerAuthenticationType.azureActiveDirectoryDefault:
+      case SQLServerAuthenticationType.azureActiveDirectoryMsiVm: {
+        const opt: config = {
+          ...options,
+          authentication: {
+            type: authType,
+            options: {},
+          },
+        };
+        if (sqlServer?.clientId) {
+          opt.authentication.options['clientId'] = sqlServer.clientId;
+        }
+        return opt;
+      }
+      case SQLServerAuthenticationType.azureActiveDirectoryPassword: {
+        return {
+          ...options,
+          authentication: {
+            type: authType,
+            options: {
+              clientId: sqlServer.clientId,
+              tenantId: sqlServer.tenantId,
+              userName: this.conRes.user,
+              password: this.conRes.password,
+            },
+          },
+        };
+      }
+      case SQLServerAuthenticationType.azureActiveDirectoryServicePrincipalSecret: {
+        return {
+          ...options,
+          authentication: {
+            type: authType,
+            options: {
+              clientId: sqlServer.clientId,
+              tenantId: sqlServer.tenantId,
+              clientSecret: sqlServer.clientSecret,
+            },
+          },
+        };
+      }
+      case SQLServerAuthenticationType.azureActiveDirectoryAccessToken: {
+        return {
+          ...options,
+          authentication: {
+            type: authType,
+            options: {
+              token: sqlServer.token,
+            },
+          },
+        };
+      }
     }
-
-    this.tran = undefined;
-    this.req = undefined;
-    return con;
   }
 }

@@ -1,6 +1,7 @@
 import { AwsServiceType } from './AwsServiceType';
 import { SupplyCredentialType } from './AwsSupplyCredentialType';
 import { DBType } from './DBType';
+import { SQLServerAuthenticationType } from './SQLServerAuthenticationType';
 
 export type SshSetting = {
   use: boolean;
@@ -50,8 +51,15 @@ export type FirebaseSetting = {
 
 export type SQLServerSetting = {
   encrypt?: boolean;
-  windowsAuthentication?: boolean;
+  authenticationType?: SQLServerAuthenticationType;
   onlyDefaultSchema?: boolean;
+  clientId?: string;
+  tenantId?: string;
+  /**
+   * The created `client secret` for this registered Azure application
+   */
+  clientSecret?: string;
+  token?: string;
 };
 
 export type ConnectionSetting = {
