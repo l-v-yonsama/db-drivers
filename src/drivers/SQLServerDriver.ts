@@ -6,7 +6,13 @@ import {
   ResultSetDataBuilder,
 } from '@l-v-yonsama/rdh';
 import { EnumValues } from 'enum-values';
-import { config, connect, ConnectionPool, Request, Transaction } from 'mssql';
+import mssql, {
+  config,
+  connect,
+  ConnectionPool,
+  Request,
+  Transaction,
+} from 'mssql';
 
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
@@ -17,6 +23,8 @@ import {
   SQLServerColumnType,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
+
+type MSSql = typeof mssql;
 
 const EXPLAIN_COLUMNS: RdhKey[] = [
   createRdhKey({
@@ -603,10 +611,39 @@ export class SQLServerDriver extends RDSBaseDriver {
   }
 
   private async createConnection(): Promise<ConnectionPool> {
-    const options = this.createConnectOptions();
-    console.log('options=', options);
+    const authenticationType =
+      this.conRes.sqlServer?.authenticationType ??
+      SQLServerAuthenticationType.default;
 
-    const con = await connect(options);
+    let con: ConnectionPool;
+    if (
+      authenticationType ===
+        SQLServerAuthenticationType.windowsAuthentication ||
+      authenticationType === SQLServerAuthenticationType.useConnectStringV8
+    ) {
+      // The normal mssql lib doesn't work on Windows and even importing this
+      // mssql/msnodesqlv8 library on MacOS will fail. So we have to conditionally
+      // import it.
+      const _mssqlV8 = (await import('mssql/msnodesqlv8.js').then(
+        (m) => m.default,
+      )) as MSSql;
+      if (
+        authenticationType === SQLServerAuthenticationType.windowsAuthentication
+      ) {
+        con = await _mssqlV8.connect(this.createConnectOptions());
+      } else {
+        con = await _mssqlV8.connect(
+          this.conRes.sqlServer?.connectString ?? '',
+        );
+      }
+    } else {
+      if (authenticationType === SQLServerAuthenticationType.useConnectString) {
+        con = await connect(this.conRes.sqlServer?.connectString ?? '');
+      } else {
+        const options = this.createConnectOptions();
+        con = await connect(options);
+      }
+    }
 
     this.tran = undefined;
     this.req = undefined;
@@ -640,6 +677,17 @@ export class SQLServerDriver extends RDSBaseDriver {
           user: this.conRes.user,
           password: this.conRes.password,
         };
+      }
+      case SQLServerAuthenticationType.windowsAuthentication: {
+        // https://learn.microsoft.com/ja-jp/sql/connect/odbc/linux-mac/install-microsoft-odbc-driver-sql-server-macos?view=sql-server-ver16
+        // Set to true if using Windows Authentication
+        options.options.trustedConnection = true;
+        // Set to true if using self-signed certificates
+        options.options.trustServerCertificate = true;
+
+        // Required if using Windows Authentication
+        options.driver = 'msnodesqlv8';
+        return options;
       }
       case SQLServerAuthenticationType.azureActiveDirectoryDefault:
       case SQLServerAuthenticationType.azureActiveDirectoryMsiVm: {
@@ -682,17 +730,7 @@ export class SQLServerDriver extends RDSBaseDriver {
           },
         };
       }
-      case SQLServerAuthenticationType.azureActiveDirectoryAccessToken: {
-        return {
-          ...options,
-          authentication: {
-            type: authType,
-            options: {
-              token: sqlServer.token,
-            },
-          },
-        };
-      }
     }
+    throw new Error('Not supported' + authType);
   }
 }

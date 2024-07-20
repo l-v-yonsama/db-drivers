@@ -60,6 +60,7 @@ export type SQLServerSetting = {
    */
   clientSecret?: string;
   token?: string;
+  connectString?: string;
 };
 
 export type ConnectionSetting = {

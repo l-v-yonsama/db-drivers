@@ -33,7 +33,6 @@ describe('SQLServerDriver', () => {
   beforeAll(async () => {
     driver = createRDSDriver();
     await driver.connect();
-
     // await init0();
     // await init();
   });
