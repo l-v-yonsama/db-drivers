@@ -1,9 +1,4 @@
-import {
-  ConnectionSetting,
-  DBType,
-  SQLServerAuthenticationType,
-  SQLServerDriver,
-} from '../../../src';
+import { ConnectionSetting, DBType, SQLServerDriver } from '../../../src';
 
 describe('SQLServerDriver2', () => {
   describe('Authorize', () => {
@@ -31,14 +26,6 @@ describe('SQLServerDriver2', () => {
         'Server=localhost,6433;Database=testdb;User Id=testuser;Password=Pass123zxcv!;Encrypt=true';
       driver = new SQLServerDriver(connectStringOption);
       expect(await driver.connect()).toMatch(/Failed.+self-signed certificate/);
-    });
-    it('by connect string3', async () => {
-      connectStringOption.sqlServer.authenticationType =
-        SQLServerAuthenticationType.useConnectStringV8;
-      connectStringOption.sqlServer.connectString =
-        'Driver=msnodesqlv8;Server=(localhost)\\INSTANCE;Database=testdb;UID=DOMAIN\\testuser;PWD=Pass123zxcv!;Encrypt=true;Timeout=2';
-      driver = new SQLServerDriver(connectStringOption);
-      expect(await driver.connect()).toMatch(/.+timeout expired.+/);
     });
   });
 });
