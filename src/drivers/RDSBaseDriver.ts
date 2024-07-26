@@ -76,6 +76,12 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     if (conditions?.rawQueries !== true) {
       ast = parseQuery(sql);
       dbTable = this.getDbTable(ast);
+      if (ast?.ast?.type) {
+        if (!params.meta) {
+          params.meta = {};
+        }
+        params.meta.type = ast?.ast?.type;
+      }
     }
 
     const rdb = await this.requestSqlSub({

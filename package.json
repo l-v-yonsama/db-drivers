@@ -1,12 +1,13 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
   },
   "devDependencies": {
     "@types/auth0": "^3.3.9",
+    "@types/better-sqlite3": "^7.6.11",
     "@types/bytes": "^3.1.1",
     "@types/humanize-duration": "^3.27.2",
     "@types/jest": "~29.2",
@@ -25,6 +26,7 @@
     "prettier": "~2.8",
     "rimraf": "~3.0",
     "ts-jest": "~29.0",
+    "tslib": "^2.6.3",
     "tsutils": "~3.21",
     "typedoc": "^0.25.1",
     "typedoc-plugin-markdown": "^3.16.0",
@@ -56,6 +58,7 @@
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
     "test:driver:mssql": "npm run clean && jest __tests__/db/drivers/SQLServerDriver.test.ts",
     "test:driver:postgres": "npm run clean && jest __tests__/db/drivers/PostgresDriver.test.ts",
+    "test:driver:sqlite": "npm run clean && jest __tests__/db/drivers/SQLiteDriver.test.ts",
     "test:driver:redis": "npm run clean && jest __tests__/db/drivers/RedisDriver.test.ts",
     "test:driver:auth0": "npm run clean && jest __tests__/db/drivers/Auth0Driver.test.ts",
     "test:driver:keycloak": "npm run clean && jest __tests__/db/drivers/KeycloakDriver.test.ts",
@@ -80,9 +83,10 @@
     "@aws-sdk/client-sqs": "^3.398.0",
     "@aws-sdk/credential-providers": "^3.279.0",
     "@aws-sdk/s3-request-presigner": "^3.427.0",
-    "@l-v-yonsama/rdh": "^0.1.1",
+    "@l-v-yonsama/rdh": "^0.1.2",
     "auth0": "^3.7.1",
     "axios": "^1.6.0",
+    "better-sqlite3": "^11.1.2",
     "bytes": "^3.1.2",
     "csv-parse": "^5.5.3",
     "dayjs": "^1.11.7",
@@ -99,8 +103,7 @@
     "pg": "^8.9.0",
     "pgsql-ast-parser": "^11.0.1",
     "pluralize": "^8.0.0",
-    "short-unique-id": "^4.4.4",
-    "tslib": "~2.4"
+    "short-unique-id": "^4.4.4"
   },
   "volta": {
     "node": "18.12.1"

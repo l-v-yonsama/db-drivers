@@ -1,79 +1,72 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / SQLServerDriver
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / SQLiteDriver
 
-# Class: SQLServerDriver
+# Class: SQLiteDriver
 
 ## Hierarchy
 
 - [`RDSBaseDriver`](RDSBaseDriver.md)
 
-  ↳ **`SQLServerDriver`**
+  ↳ **`SQLiteDriver`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](SQLServerDriver.md#constructor)
+- [constructor](SQLiteDriver.md#constructor)
 
 ### Properties
 
-- [conRes](SQLServerDriver.md#conres)
-- [isConnected](SQLServerDriver.md#isconnected)
-- [sshLocalPort](SQLServerDriver.md#sshlocalport)
-- [sshServer](SQLServerDriver.md#sshserver)
+- [conRes](SQLiteDriver.md#conres)
+- [isConnected](SQLiteDriver.md#isconnected)
+- [sshLocalPort](SQLiteDriver.md#sshlocalport)
+- [sshServer](SQLiteDriver.md#sshserver)
 
 ### Methods
 
-- [begin](SQLServerDriver.md#begin)
-- [closeSub](SQLServerDriver.md#closesub)
-- [commit](SQLServerDriver.md#commit)
-- [connect](SQLServerDriver.md#connect)
-- [connectSub](SQLServerDriver.md#connectsub)
-- [connectWithTest](SQLServerDriver.md#connectwithtest)
-- [count](SQLServerDriver.md#count)
-- [countSql](SQLServerDriver.md#countsql)
-- [createDBError](SQLServerDriver.md#createdberror)
-- [disconnect](SQLServerDriver.md#disconnect)
-- [explainAnalyzeSql](SQLServerDriver.md#explainanalyzesql)
-- [explainAnalyzeSqlSub](SQLServerDriver.md#explainanalyzesqlsub)
-- [explainSql](SQLServerDriver.md#explainsql)
-- [explainSqlSub](SQLServerDriver.md#explainsqlsub)
-- [fieldInfo2Key](SQLServerDriver.md#fieldinfo2key)
-- [flow](SQLServerDriver.md#flow)
-- [flowTransaction](SQLServerDriver.md#flowtransaction)
-- [getConnectionRes](SQLServerDriver.md#getconnectionres)
-- [getCurrentSchema](SQLServerDriver.md#getcurrentschema)
-- [getDbDatabase](SQLServerDriver.md#getdbdatabase)
-- [getInfomationSchemas](SQLServerDriver.md#getinfomationschemas)
-- [getInfomationSchemasSub](SQLServerDriver.md#getinfomationschemassub)
-- [getName](SQLServerDriver.md#getname)
-- [getPositionalCharacter](SQLServerDriver.md#getpositionalcharacter)
-- [getRdsDatabase](SQLServerDriver.md#getrdsdatabase)
-- [getSchemas](SQLServerDriver.md#getschemas)
-- [getTables](SQLServerDriver.md#gettables)
-- [getTestSqlStatement](SQLServerDriver.md#gettestsqlstatement)
-- [initBaseStatus](SQLServerDriver.md#initbasestatus)
-- [isLimitAsTop](SQLServerDriver.md#islimitastop)
-- [isNeedsSsh](SQLServerDriver.md#isneedsssh)
-- [isPositionedParameterAvailable](SQLServerDriver.md#ispositionedparameteravailable)
-- [isQuery](SQLServerDriver.md#isquery)
-- [kill](SQLServerDriver.md#kill)
-- [parseSchemaAndTableHints](SQLServerDriver.md#parseschemaandtablehints)
-- [requestSql](SQLServerDriver.md#requestsql)
-- [requestSqlSub](SQLServerDriver.md#requestsqlsub)
-- [resetDefaultSchema](SQLServerDriver.md#resetdefaultschema)
-- [rollback](SQLServerDriver.md#rollback)
-- [setAutoCommit](SQLServerDriver.md#setautocommit)
-- [setColumns](SQLServerDriver.md#setcolumns)
-- [setForinKeys](SQLServerDriver.md#setforinkeys)
-- [setRdhMetaAndStatement](SQLServerDriver.md#setrdhmetaandstatement)
-- [setUniqueKeys](SQLServerDriver.md#setuniquekeys)
-- [test](SQLServerDriver.md#test)
+- [begin](SQLiteDriver.md#begin)
+- [closeSub](SQLiteDriver.md#closesub)
+- [commit](SQLiteDriver.md#commit)
+- [connect](SQLiteDriver.md#connect)
+- [connectSub](SQLiteDriver.md#connectsub)
+- [connectWithTest](SQLiteDriver.md#connectwithtest)
+- [count](SQLiteDriver.md#count)
+- [countSql](SQLiteDriver.md#countsql)
+- [createDBError](SQLiteDriver.md#createdberror)
+- [disconnect](SQLiteDriver.md#disconnect)
+- [explainAnalyzeSql](SQLiteDriver.md#explainanalyzesql)
+- [explainAnalyzeSqlSub](SQLiteDriver.md#explainanalyzesqlsub)
+- [explainSql](SQLiteDriver.md#explainsql)
+- [explainSqlSub](SQLiteDriver.md#explainsqlsub)
+- [flow](SQLiteDriver.md#flow)
+- [flowTransaction](SQLiteDriver.md#flowtransaction)
+- [getConnectionRes](SQLiteDriver.md#getconnectionres)
+- [getDbDatabase](SQLiteDriver.md#getdbdatabase)
+- [getInfomationSchemas](SQLiteDriver.md#getinfomationschemas)
+- [getInfomationSchemasSub](SQLiteDriver.md#getinfomationschemassub)
+- [getName](SQLiteDriver.md#getname)
+- [getPositionalCharacter](SQLiteDriver.md#getpositionalcharacter)
+- [getRdsDatabase](SQLiteDriver.md#getrdsdatabase)
+- [getTestSqlStatement](SQLiteDriver.md#gettestsqlstatement)
+- [initBaseStatus](SQLiteDriver.md#initbasestatus)
+- [isLimitAsTop](SQLiteDriver.md#islimitastop)
+- [isNeedsSsh](SQLiteDriver.md#isneedsssh)
+- [isPositionedParameterAvailable](SQLiteDriver.md#ispositionedparameteravailable)
+- [isQuery](SQLiteDriver.md#isquery)
+- [kill](SQLiteDriver.md#kill)
+- [parseSchemaAndTableHints](SQLiteDriver.md#parseschemaandtablehints)
+- [requestSql](SQLiteDriver.md#requestsql)
+- [requestSqlSub](SQLiteDriver.md#requestsqlsub)
+- [resetDefaultSchema](SQLiteDriver.md#resetdefaultschema)
+- [rollback](SQLiteDriver.md#rollback)
+- [setAutoCommit](SQLiteDriver.md#setautocommit)
+- [setRdhMetaAndStatement](SQLiteDriver.md#setrdhmetaandstatement)
+- [test](SQLiteDriver.md#test)
 
 ## Constructors
 
 ### constructor
 
-• **new SQLServerDriver**(`conRes`): [`SQLServerDriver`](SQLServerDriver.md)
+• **new SQLiteDriver**(`conRes`): [`SQLiteDriver`](SQLiteDriver.md)
 
 #### Parameters
 
@@ -83,7 +76,7 @@
 
 #### Returns
 
-[`SQLServerDriver`](SQLServerDriver.md)
+[`SQLiteDriver`](SQLiteDriver.md)
 
 #### Overrides
 
@@ -91,7 +84,7 @@
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L101)
+src/drivers/SQLiteDriver.ts:32
 
 ## Properties
 
@@ -165,7 +158,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:105](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L105)
+src/drivers/SQLiteDriver.ts:36
 
 ___
 
@@ -183,7 +176,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:590](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L590)
+src/drivers/SQLiteDriver.ts:397
 
 ___
 
@@ -201,7 +194,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:110](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L110)
+src/drivers/SQLiteDriver.ts:40
 
 ___
 
@@ -261,7 +254,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:160](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L160)
+src/drivers/SQLiteDriver.ts:50
 
 ___
 
@@ -400,7 +393,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:293](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L293)
+src/drivers/SQLiteDriver.ts:25
 
 ___
 
@@ -448,29 +441,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:265](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L265)
-
-___
-
-### fieldInfo2Key
-
-▸ **fieldInfo2Key**(`fieldInfo`, `useTableColumnType`, `table?`): `RdhKey`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `fieldInfo` | [`ResultColumn`](../modules.md#resultcolumn) |
-| `useTableColumnType` | `boolean` |
-| `table?` | [`DbTable`](DbTable.md) |
-
-#### Returns
-
-`RdhKey`
-
-#### Defined in
-
-[src/drivers/SQLServerDriver.ts:131](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L131)
+src/drivers/SQLiteDriver.ts:153
 
 ___
 
@@ -554,20 +525,6 @@ ___
 
 ___
 
-### getCurrentSchema
-
-▸ **getCurrentSchema**(): `Promise`\<`string`\>
-
-#### Returns
-
-`Promise`\<`string`\>
-
-#### Defined in
-
-[src/drivers/SQLServerDriver.ts:330](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L330)
-
-___
-
 ### getDbDatabase
 
 ▸ **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
@@ -618,7 +575,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:299](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L299)
+src/drivers/SQLiteDriver.ts:173
 
 ___
 
@@ -654,7 +611,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:582](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L582)
+src/drivers/SQLiteDriver.ts:389
 
 ___
 
@@ -676,46 +633,6 @@ ___
 
 ___
 
-### getSchemas
-
-▸ **getSchemas**(`dbDatabase`): `Promise`\<[`DbSchema`](DbSchema.md)[]\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `dbDatabase` | [`RdsDatabase`](RdsDatabase.md) |
-
-#### Returns
-
-`Promise`\<[`DbSchema`](DbSchema.md)[]\>
-
-#### Defined in
-
-[src/drivers/SQLServerDriver.ts:336](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L336)
-
-___
-
-### getTables
-
-▸ **getTables**(`dbSchema`): `Promise`\<[`DbTable`](DbTable.md)[]\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `dbSchema` | [`DbSchema`](DbSchema.md) |
-
-#### Returns
-
-`Promise`\<[`DbTable`](DbTable.md)[]\>
-
-#### Defined in
-
-[src/drivers/SQLServerDriver.ts:355](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L355)
-
-___
-
 ### getTestSqlStatement
 
 ▸ **getTestSqlStatement**(): `string`
@@ -730,7 +647,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:195](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L195)
+src/drivers/SQLiteDriver.ts:68
 
 ___
 
@@ -766,7 +683,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:586](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L586)
+src/drivers/SQLiteDriver.ts:393
 
 ___
 
@@ -802,7 +719,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:578](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L578)
+src/drivers/SQLiteDriver.ts:385
 
 ___
 
@@ -844,7 +761,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:179](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L179)
+src/drivers/SQLiteDriver.ts:61
 
 ___
 
@@ -916,7 +833,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:199](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L199)
+src/drivers/SQLiteDriver.ts:96
 
 ___
 
@@ -959,7 +876,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L118)
+src/drivers/SQLiteDriver.ts:44
 
 ___
 
@@ -983,47 +900,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:127](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L127)
-
-___
-
-### setColumns
-
-▸ **setColumns**(`dbSchema`): `Promise`\<`void`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `dbSchema` | [`DbSchema`](DbSchema.md) |
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Defined in
-
-[src/drivers/SQLServerDriver.ts:389](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L389)
-
-___
-
-### setForinKeys
-
-▸ **setForinKeys**(`dbSchema`): `Promise`\<`void`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `dbSchema` | [`DbSchema`](DbSchema.md) |
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Defined in
-
-[src/drivers/SQLServerDriver.ts:512](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L512)
+src/drivers/SQLiteDriver.ts:48
 
 ___
 
@@ -1052,26 +929,6 @@ ___
 #### Defined in
 
 [src/drivers/RDSBaseDriver.ts:176](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/RDSBaseDriver.ts#L176)
-
-___
-
-### setUniqueKeys
-
-▸ **setUniqueKeys**(`dbSchema`): `Promise`\<`void`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `dbSchema` | [`DbSchema`](DbSchema.md) |
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Defined in
-
-[src/drivers/SQLServerDriver.ts:471](https://github.com/l-v-yonsama/db-drivers/blob/a55354dc956019a7f37d30687cafd9f3885b2d97/src/drivers/SQLServerDriver.ts#L471)
 
 ___
 
