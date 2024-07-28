@@ -57,6 +57,10 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
 
   abstract getPositionalCharacter(): string | undefined;
 
+  isSchemaSpecificationSvailable(): boolean {
+    return true;
+  }
+
   abstract isLimitAsTop(): boolean;
 
   protected getRdsDatabase(): RdsDatabase | undefined {

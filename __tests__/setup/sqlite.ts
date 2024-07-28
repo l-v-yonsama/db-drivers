@@ -1,31 +1,34 @@
-import Sqlite from 'better-sqlite3';
 import * as path from 'path';
+import { DBType, SQLiteDriver } from '../../src';
 
 const databaseFile = path.join('__tests__', 'data', 'sqlite.db');
 
 export async function init(): Promise<void> {
-  const db = new Sqlite(databaseFile);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = true');
+  const driver = new SQLiteDriver({
+    database: databaseFile,
+    dbType: DBType.SQLite,
+    name: 'sqlite',
+  });
+  await driver.connect();
 
   try {
-    db.prepare('DROP TABLE IF EXISTS testtable').run();
-    db.prepare(CREATE_TABLE_STATEMENT).run();
+    await driver.requestSql({ sql: 'DROP TABLE IF EXISTS testtable' });
+    await driver.requestSql({ sql: CREATE_TABLE_STATEMENT });
 
     const dt = new Date(2023, 10, 11, 12, 13, 14, 0);
     for (let i = 1; i <= 10; i++) {
       const binds = [
-        12.3456 + i,
+        (12.3456 + i).toString(),
         'No' + i,
         new Date().toISOString(),
         new Date().toISOString(),
         null,
       ];
-      db.prepare(INSERT_STATEMENT).run(...binds);
+      await driver.requestSql({ sql: INSERT_STATEMENT, conditions: { binds } });
     }
 
-    db.prepare('DROP TABLE IF EXISTS diff').run();
-    db.prepare(CREATE_TABLE_STATEMENT2).run();
+    await driver.requestSql({ sql: 'DROP TABLE IF EXISTS diff' });
+    await driver.requestSql({ sql: CREATE_TABLE_STATEMENT2 });
     for (let i = 1; i <= 10; i++) {
       const binds = [
         `Uchida${i}`,
@@ -34,21 +37,32 @@ export async function init(): Promise<void> {
         `note${i}`,
         new Date(2023, 10, i).toISOString(),
       ];
-      db.prepare(INSERT_STATEMENT2).run(...binds);
+      await driver.requestSql({
+        sql: INSERT_STATEMENT2,
+        conditions: { binds },
+      });
     }
 
-    db.prepare('DROP TABLE IF EXISTS diff2').run();
-    db.prepare(CREATE_DIFF2_TABLE_STATEMENT).run();
+    await driver.requestSql({ sql: 'DROP TABLE IF EXISTS diff2' });
+    await driver.requestSql({ sql: CREATE_DIFF2_TABLE_STATEMENT });
 
-    db.prepare('DROP TABLE IF EXISTS  DEPT').run();
-    db.prepare(CREATE_TABLE_ORA_DEPT).run();
-    db.prepare('DROP TABLE IF EXISTS EMP').run();
-    db.prepare(CREATE_TABLE_ORA_EMP).run();
+    await driver.requestSql({ sql: 'DROP TABLE IF EXISTS  DEPT' });
+    await driver.requestSql({ sql: CREATE_TABLE_ORA_DEPT });
+    await driver.requestSql({ sql: 'DROP TABLE IF EXISTS EMP' });
+    await driver.requestSql({ sql: CREATE_TABLE_ORA_EMP });
 
-    db.prepare(`INSERT INTO  DEPT VALUES(10, 'ACCOUNTING', 'NEW YORK')`).run();
-    db.prepare(`INSERT INTO DEPT VALUES(20, 'RESEARCH', 'DALLAS')`).run();
-    db.prepare(`INSERT INTO DEPT VALUES(30, 'SALES', 'CHICAGO')`).run();
-    db.prepare(`INSERT INTO DEPT VALUES(40, 'OPERATIONS', 'BOSTON')`).run();
+    await driver.requestSql({
+      sql: `INSERT INTO  DEPT VALUES(10, 'ACCOUNTING', 'NEW YORK')`,
+    });
+    await driver.requestSql({
+      sql: `INSERT INTO DEPT VALUES(20, 'RESEARCH', 'DALLAS')`,
+    });
+    await driver.requestSql({
+      sql: `INSERT INTO DEPT VALUES(30, 'SALES', 'CHICAGO')`,
+    });
+    await driver.requestSql({
+      sql: `INSERT INTO DEPT VALUES(40, 'OPERATIONS', 'BOSTON')`,
+    });
 
     const empValues = [
       [7839, 'KING', 0, 'PRESIDENT', null, 5000, 10],
@@ -60,47 +74,50 @@ export async function init(): Promise<void> {
     ];
 
     for (const ev of empValues) {
-      db.prepare(
-        `INSERT INTO EMP 
+      await driver.requestSql({
+        sql: `INSERT INTO EMP 
       (EMPNO,ENAME,SEX,JOB,MGR,SAL, DEPTNO) 
       VALUES(?,?,?,?,?,?,?)`,
-      ).run(...ev);
+        conditions: { binds: ev as any },
+      });
     }
 
-    db.prepare('DROP TABLE IF EXISTS order_detail').run();
-    db.prepare('DROP TABLE IF EXISTS order0').run();
-    db.prepare('DROP TABLE IF EXISTS customer').run();
-    db.prepare(CREATE_CUSTOMER_TABLE_STATEMENT).run();
-    db.prepare(CREATE_ORDER_TABLE_STATEMENT).run();
-    db.prepare(CREATE_ORDER_DETAIL_TABLE_STATEMENT).run();
+    await driver.requestSql({ sql: 'DROP TABLE IF EXISTS order_detail' });
+    await driver.requestSql({ sql: 'DROP TABLE IF EXISTS order0' });
+    await driver.requestSql({ sql: 'DROP TABLE IF EXISTS customer' });
+    await driver.requestSql({ sql: CREATE_CUSTOMER_TABLE_STATEMENT });
+    await driver.requestSql({ sql: CREATE_ORDER_TABLE_STATEMENT });
+    await driver.requestSql({ sql: CREATE_ORDER_DETAIL_TABLE_STATEMENT });
     for (let i = 1; i <= 10; i++) {
       const binds = [i, `0120-11-121${i % 10}`];
-      db.prepare(`INSERT INTO customer (customer_no, tel) VALUES (?, ?)`).run(
-        ...binds,
-      );
+      await driver.requestSql({
+        sql: `INSERT INTO customer (customer_no, tel) VALUES (?, ?)`,
+        conditions: { binds: binds as any },
+      });
 
       const binds2 = [i, i, dt.toISOString(), i * 100];
-      db.prepare(
-        `INSERT INTO order0 (order_no0, customer_no, order_date, amount) 
+      await driver.requestSql({
+        sql: `INSERT INTO order0 (order_no0, customer_no, order_date, amount) 
           VALUES (?, ?, ?, ?)`,
-      ).run(...binds2);
+        conditions: { binds: binds2 as any },
+      });
 
       const binds3 = [i, i, i * 10, i * 100];
-      db.prepare(
-        `INSERT INTO order_detail (order_no, detail_no, item_no, amount) 
+      await driver.requestSql({
+        sql: `INSERT INTO order_detail (order_no, detail_no, item_no, amount) 
           VALUES (?, ?, ?, ?)`,
-      ).run(...binds3);
+        conditions: { binds: binds3 as any },
+      });
     }
   } finally {
-    if (db) {
-      db.close();
-    }
+    await driver.disconnect();
   }
 }
 
 const CREATE_TABLE_STATEMENT = `
+
 CREATE TABLE testtable (
-  ID INTEGER PRIMARY KEY AUTOINCREMENT,
+  ID INTEGER PRIMARY KEY AUTOINCREMENT, 
   f1 REAL ,
   s1 TEXT NOT NULL,
   d1 DATE,
@@ -129,7 +146,7 @@ CREATE TABLE diff2 (
   full_name VARCHAR(128) ,
   note VARCHAR(128),
   birthday DATE,
-  PRIMARY KEY (id, note)
+  PRIMARY KEY (id, note),
   UNIQUE (last_name, first_name, note)
 
 )

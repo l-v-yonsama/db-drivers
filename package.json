@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.4.8",
+  "version": "0.4.10",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -46,7 +46,7 @@
     "examples:mysql": "npm run build && node built/src/examples/mysql.js",
     "examples:mssql": "npm run build && node built/src/examples/mssql.js",
     "examples:mssql2": "npm run build && node built/src/examples/mssql2.js",
-    "examples:mssql3": "npm run build && node built/src/examples/mssql3.js",
+    "examples:sqlite": "npm run build && node built/src/examples/sqlite.js",
     "examples:postgres": "npm run build && node built/src/examples/postgres.js",
     "examples:rules": "npm run build && node built/src/examples/rules.js",
     "examples:aws": "npm run build && node built/src/examples/aws.js",
@@ -83,10 +83,9 @@
     "@aws-sdk/client-sqs": "^3.398.0",
     "@aws-sdk/credential-providers": "^3.279.0",
     "@aws-sdk/s3-request-presigner": "^3.427.0",
-    "@l-v-yonsama/rdh": "^0.1.2",
+    "@l-v-yonsama/rdh": "^0.1.4",
     "auth0": "^3.7.1",
     "axios": "^1.6.0",
-    "better-sqlite3": "^11.1.2",
     "bytes": "^3.1.2",
     "csv-parse": "^5.5.3",
     "dayjs": "^1.11.7",
@@ -103,7 +102,8 @@
     "pg": "^8.9.0",
     "pgsql-ast-parser": "^11.0.1",
     "pluralize": "^8.0.0",
-    "short-unique-id": "^4.4.4"
+    "short-unique-id": "^4.4.4",
+    "sqlite3": "^5.1.7"
   },
   "volta": {
     "node": "18.12.1"

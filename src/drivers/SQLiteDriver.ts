@@ -4,21 +4,17 @@ import {
   isBinaryLike,
   isTextLike,
   parseColumnType as parseGeneralColumnType,
-  RdhKey,
   ResultSetDataBuilder,
 } from '@l-v-yonsama/rdh';
-import Sqlite, { type Database } from 'better-sqlite3';
+import Sqlite, { Statement, type Database } from 'sqlite3';
 import { parseQuery } from '../helpers';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import { ConnectionSetting, QueryParams } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 
-type SQLiteColumnInfo = {
-  name: string;
-  column: string;
-  table: string;
-  database: string;
-  type: string;
+type RunResult = {
+  changes: number;
+  lastInsertRowid: number;
 };
 
 export class SQLiteDriver extends RDSBaseDriver {
@@ -28,23 +24,25 @@ export class SQLiteDriver extends RDSBaseDriver {
     throw new Error('SQLite does not support explain analyze');
   }
   private db: Database | undefined;
+  private statement: Statement | undefined;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
   }
 
   async begin(): Promise<void> {
-    await this.db.prepare('BEGIN').run();
+    await this.runWithFinalyze('BEGIN');
   }
 
   async commit(): Promise<void> {
-    await this.db.prepare('COMMIT').run();
+    await this.runWithFinalyze('COMMIT');
   }
 
   async rollback(): Promise<void> {
-    await this.db.prepare('ROLLBACK').run();
+    await this.runWithFinalyze('ROLLBACK');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   async setAutoCommit(value: boolean): Promise<void> {}
 
   async connectWithTest(): Promise<string> {
@@ -59,10 +57,15 @@ export class SQLiteDriver extends RDSBaseDriver {
   }
 
   async kill(): Promise<string> {
-    // https://github.com/kysely-org/kysely/issues/783
-    throw new Error(
-      'Not supported in SQLiteDriver.\nhttps://github.com/kysely-org/kysely/issues/783',
-    );
+    try {
+      this.db?.interrupt();
+      return '';
+    } catch (e) {
+      if (e instanceof Error) {
+        return e.message;
+      }
+      return e + '';
+    }
   }
 
   protected getTestSqlStatement(): string {
@@ -70,27 +73,29 @@ export class SQLiteDriver extends RDSBaseDriver {
   }
 
   private fieldInfo2Key(
-    fieldInfo: SQLiteColumnInfo,
+    name: string,
+    v: any,
     useTableColumnType: boolean,
     table?: DbTable,
-  ): RdhKey {
-    const tableColumn = table?.children?.find(
-      (it) => it.name === fieldInfo.name,
-    );
-
-    const key = createRdhKey({
-      name: fieldInfo.name,
-      type: this.parseColumnType(fieldInfo.type),
-      comment: tableColumn?.comment ?? '',
-      required: tableColumn?.nullable === false,
-    });
+  ): GeneralColumnType {
+    const tableColumn = table?.children?.find((it) => it.name === name);
 
     // Correspondence to ENUM type returned as text type
     if (useTableColumnType && tableColumn) {
-      key.type = tableColumn.colType;
+      return tableColumn.colType;
     }
 
-    return key;
+    if (v instanceof Buffer) {
+      return GeneralColumnType.BLOB;
+    } else if (typeof v === 'number') {
+      if (Number.isInteger(v)) {
+        return GeneralColumnType.INTEGER;
+      }
+      return GeneralColumnType.REAL;
+    } else if (typeof v === 'string') {
+      return GeneralColumnType.TEXT;
+    }
+    return GeneralColumnType.UNKNOWN;
   }
 
   async requestSqlSub(
@@ -106,48 +111,76 @@ export class SQLiteDriver extends RDSBaseDriver {
     const binds = conditions?.binds ?? [];
     const startTime = new Date().getTime();
 
-    const statement = this.db.prepare(sql);
     if (meta?.type === 'select') {
-      const results = statement.all(...binds);
-      const fields = statement.columns();
-      const elapsedTimeMilli = new Date().getTime() - startTime;
+      const statement = await this.createStatement(sql, binds);
+      return new Promise((resolve, reject) => {
+        try {
+          statement.all((err, rows) => {
+            statement.finalize();
+            if (err) {
+              reject(err);
+              return;
+            }
 
-      rdb = new ResultSetDataBuilder(
-        fields === undefined
-          ? []
-          : fields.map((f) =>
-              this.fieldInfo2Key(f, meta?.editable === true, dbTable),
-            ),
-      );
-      results.forEach((result: any) => {
-        rdb.addRow(result);
-      });
-
-      rdb.setSummary({
-        elapsedTimeMilli,
-        selectedRows: rdb.rs.rows.length,
+            const elapsedTimeMilli = new Date().getTime() - startTime;
+            const fields = Object.keys(rows[0]);
+            const fieldTypeMap = new Map<string, GeneralColumnType>();
+            rdb = new ResultSetDataBuilder(fields.map((it) => '' + it));
+            rows.forEach((row, idx) => {
+              if (fields.length !== fieldTypeMap.size && idx < 30) {
+                fields
+                  .filter((f) => !fieldTypeMap.has(f))
+                  .forEach((it) => {
+                    const v = row[it];
+                    if (v !== null && v !== undefined) {
+                      fieldTypeMap.set(
+                        it,
+                        this.fieldInfo2Key(
+                          it,
+                          v,
+                          meta?.editable === true,
+                          dbTable,
+                        ),
+                      );
+                    }
+                  });
+              }
+              rdb.addRow(row);
+            });
+            fieldTypeMap.forEach((type, name) => {
+              rdb.updateKeyType(name, type);
+            });
+            rdb.setSummary({
+              elapsedTimeMilli,
+              selectedRows: rdb.rs.rows.length,
+            });
+            resolve(rdb);
+          });
+        } catch (e) {
+          reject(e);
+        }
       });
     } else {
-      const { changes, lastInsertRowid } = statement.run(...binds);
+      const r = await this.runWithFinalyze(sql, binds);
       const elapsedTimeMilli = new Date().getTime() - startTime;
       rdb = new ResultSetDataBuilder([
-        createRdhKey({ name: 'affectedRows', type: GeneralColumnType.INTEGER }),
+        createRdhKey({
+          name: 'affectedRows',
+          type: GeneralColumnType.INTEGER,
+        }),
         createRdhKey({ name: 'insertId', type: GeneralColumnType.INTEGER }),
       ]);
-
       rdb.addRow({
-        affectedRows: changes,
-        insertId: lastInsertRowid,
+        affectedRows: r.changes,
+        insertId: r.lastInsertRowid,
       });
-
       rdb.setSummary({
         elapsedTimeMilli,
-        affectedRows: changes,
-        insertId: lastInsertRowid as number,
+        affectedRows: r.changes,
+        insertId: r.lastInsertRowid,
       });
+      return rdb;
     }
-
-    return rdb;
   }
 
   async explainSqlSub(
@@ -180,61 +213,51 @@ export class SQLiteDriver extends RDSBaseDriver {
     dbDatabase.addChild(defaultSchema);
 
     let beforeTableRes: DbTable | undefined = undefined;
-    this.db
-      .prepare(
-        `
-SELECT
-  m.name AS tableName, 
-  p.name AS colName,
-  p.type AS colType,
-  p.pk AS colIsPk,
-  p.dflt_value AS colDefaultVal,
-  p.[notnull] AS colIsNotNull,
-  m.sql
-FROM sqlite_master m
-LEFT OUTER JOIN pragma_table_info((m.name)) p
-  ON m.name <> p.name
-WHERE m.type = 'table'
-ORDER BY m.name, p.cid`,
-      )
-      .all()
-      .forEach(
-        (it: {
-          tableName: string;
-          colName: string;
-          colType: string;
-          colIsPk: number;
-          colDefaultVal: any;
-          colIsNotNull: number;
-          sql: string;
-        }) => {
-          if (
-            beforeTableRes === undefined ||
-            beforeTableRes.name !== it.tableName
-          ) {
-            beforeTableRes = new DbTable(it.tableName, 'TABLE');
-            defaultSchema.addChild(beforeTableRes);
-          }
-          const colType = this.parseColumnType(it.colType);
-          const nullable = it.colIsNotNull === 0;
-          const key = it.colIsPk > 0 ? 'PRI' : '';
-          let extra = '';
-          if (
-            it.colIsPk === 1 &&
-            colType === GeneralColumnType.INTEGER &&
-            it.sql.toLocaleLowerCase().includes('autoincrement')
-          ) {
-            extra = 'auto_increment';
-          }
-          const colRes = new DbColumn(it.colName, colType, {
-            nullable,
-            key,
-            default: it.colDefaultVal,
-            extra,
-          });
-          beforeTableRes.addChild(colRes);
-        },
-      );
+    const tableRs = await this.requestSql({
+      sql: `
+  SELECT
+    m.name AS tableName,
+    p.name AS colName,
+    p.type AS colType,
+    p.pk AS colIsPk,
+    p.dflt_value AS colDefaultVal,
+    p.[notnull] AS colIsNotNull,
+    m.sql
+  FROM sqlite_master m
+  LEFT OUTER JOIN pragma_table_info((m.name)) p
+    ON m.name <> p.name
+  WHERE m.type = 'table'
+  ORDER BY m.name, p.cid`,
+    });
+
+    tableRs.rows.forEach((row) => {
+      const { values: it } = row;
+      if (
+        beforeTableRes === undefined ||
+        beforeTableRes.name !== it.tableName
+      ) {
+        beforeTableRes = new DbTable(it.tableName, 'TABLE');
+        defaultSchema.addChild(beforeTableRes);
+      }
+      const colType = this.parseColumnType(it.colType);
+      const nullable = it.colIsNotNull === 0;
+      const key = it.colIsPk > 0 ? 'PRI' : '';
+      let extra = '';
+      if (
+        it.colIsPk === 1 &&
+        colType === GeneralColumnType.INTEGER &&
+        it.sql.toLocaleLowerCase().includes('autoincrement')
+      ) {
+        extra = 'auto_increment';
+      }
+      const colRes = new DbColumn(it.colName, colType, {
+        nullable,
+        key,
+        default: it.colDefaultVal,
+        extra,
+      });
+      beforeTableRes.addChild(colRes);
+    });
 
     await this.setForinKeys(defaultSchema);
     await this.setUniqueKeys(defaultSchema);
@@ -242,111 +265,102 @@ ORDER BY m.name, p.cid`,
   }
 
   private async setForinKeys(dbSchema: DbSchema): Promise<void> {
-    this.db
-      .prepare(
-        `
-    SELECT 
+    const rdh = await this.requestSql({
+      sql: `
+    SELECT
         m.tbl_name as table_name,
         p.[from] as column_name,
         p.[table] as referenced_table_name,
         p.[to] as referenced_column_name
-    FROM sqlite_master AS m,
-        pragma_foreign_key_list(m.name) AS p ON m.name != p."table"
+    FROM sqlite_master AS m
+    INNER JOIN pragma_foreign_key_list(m.name) AS p ON m.name != p."table"
         `,
-      )
-      .all()
-      .forEach(
-        (it: {
-          table_name: string;
-          column_name: string;
-          referenced_table_name: string;
-          referenced_column_name: string;
-        }) => {
-          const tableName = it['table_name']; // order_detail
-          const columnName = it['column_name'];
-          const referencedTableName = it['referenced_table_name']; // order
-          const referencedColumnName = it['referenced_column_name'];
-          // FROM order.customer_no -> TO customer.customer_no
-          // FROM order_detail.order_no -> TO order.order_no
-          const tableRes = dbSchema.getChildByName(tableName);
-          if (tableRes) {
-            if (tableRes.getChildByName(columnName)) {
-              if (tableRes.foreignKeys === undefined) {
-                tableRes.foreignKeys = {};
-              }
-              if (tableRes.foreignKeys.referenceTo === undefined) {
-                tableRes.foreignKeys.referenceTo = {};
-              }
-              tableRes.foreignKeys.referenceTo[columnName] = {
-                tableName: referencedTableName, // customer
-                columnName: referencedColumnName,
-                constraintName: '',
-              };
-            }
-          }
+    });
 
-          // TO customer.customer_no <- FROM order.customer_no
-          // TO order.order_no <- FROM order_detail.order_no
-          const tableRes2 = dbSchema.getChildByName(referencedTableName);
-          if (tableRes2) {
-            if (tableRes2.getChildByName(referencedColumnName)) {
-              if (tableRes2.foreignKeys === undefined) {
-                tableRes2.foreignKeys = {};
-              }
-              if (tableRes2.foreignKeys.referencedFrom === undefined) {
-                tableRes2.foreignKeys.referencedFrom = {};
-              }
-              tableRes2.foreignKeys.referencedFrom[referencedColumnName] = {
-                tableName: tableName, // order_detail
-                columnName: columnName,
-                constraintName: '',
-              };
-            }
+    rdh.rows.forEach((row) => {
+      const { values: it } = row;
+      const tableName = it['table_name']; // order_detail
+      const columnName = it['column_name'];
+      const referencedTableName = it['referenced_table_name']; // order
+      const referencedColumnName = it['referenced_column_name'];
+      // FROM order.customer_no -> TO customer.customer_no
+      // FROM order_detail.order_no -> TO order.order_no
+      const tableRes = dbSchema.getChildByName(tableName);
+      if (tableRes) {
+        if (tableRes.getChildByName(columnName)) {
+          if (tableRes.foreignKeys === undefined) {
+            tableRes.foreignKeys = {};
           }
-        },
-      );
+          if (tableRes.foreignKeys.referenceTo === undefined) {
+            tableRes.foreignKeys.referenceTo = {};
+          }
+          tableRes.foreignKeys.referenceTo[columnName] = {
+            tableName: referencedTableName, // customer
+            columnName: referencedColumnName,
+            constraintName: '',
+          };
+        }
+      }
+
+      // TO customer.customer_no <- FROM order.customer_no
+      // TO order.order_no <- FROM order_detail.order_no
+      const tableRes2 = dbSchema.getChildByName(referencedTableName);
+      if (tableRes2) {
+        if (tableRes2.getChildByName(referencedColumnName)) {
+          if (tableRes2.foreignKeys === undefined) {
+            tableRes2.foreignKeys = {};
+          }
+          if (tableRes2.foreignKeys.referencedFrom === undefined) {
+            tableRes2.foreignKeys.referencedFrom = {};
+          }
+          tableRes2.foreignKeys.referencedFrom[referencedColumnName] = {
+            tableName: tableName, // order_detail
+            columnName: columnName,
+            constraintName: '',
+          };
+        }
+      }
+    });
   }
 
   private async setUniqueKeys(dbSchema: DbSchema): Promise<void> {
-    this.db
-      .prepare(
-        `
-    SELECT 
-        m.tbl_name as tableName,
-        il.name as keyName,
-        group_concat(ii.name) as columnNames
-    FROM sqlite_master AS m,
-        pragma_index_list(m.name) AS il,
-        pragma_index_info(il.name) AS ii
-    WHERE 
-        m.type = 'table'
-        AND il.origin='u'
-    GROUP by m.tbl_name,il.name
-    ORDER BY m.tbl_name,il.name
-        `,
-      )
-      .all()
-      .forEach(
-        (it: { tableName: string; keyName: string; columnNames: string }) => {
-          const tableRes = dbSchema.getChildByName(it.tableName);
-          if (tableRes) {
-            if (tableRes.uniqueKeys === undefined) {
-              tableRes.uniqueKeys = [];
-            }
-            const constraint = {
-              name: it.keyName,
-              columns: it.columnNames.split(','),
-            };
-            tableRes.uniqueKeys.push(constraint);
-            constraint.columns.forEach((columnName) => {
-              const colRes = tableRes.getChildByName(columnName);
-              if (colRes) {
-                (colRes as any)['uniqKey'] = true;
-              }
-            });
+    const rdh = await this.requestSql({
+      sql: `
+      SELECT
+          m.tbl_name as tableName,
+          il.name as keyName,
+          group_concat(ii.name) as columnNames
+      FROM sqlite_master AS m,
+          pragma_index_list(m.name) AS il,
+          pragma_index_info(il.name) AS ii
+      WHERE
+          m.type = 'table'
+          AND il.origin='u'
+      GROUP by m.tbl_name,il.name
+      ORDER BY m.tbl_name,il.name
+          `,
+    });
+
+    rdh.rows.forEach((row) => {
+      const { values: it } = row;
+      const tableRes = dbSchema.getChildByName(it.tableName);
+      if (tableRes) {
+        if (tableRes.uniqueKeys === undefined) {
+          tableRes.uniqueKeys = [];
+        }
+        const constraint = {
+          name: it.keyName,
+          columns: it.columnNames.split(','),
+        };
+        tableRes.uniqueKeys.push(constraint);
+        constraint.columns.forEach((columnName) => {
+          const colRes = tableRes.getChildByName(columnName);
+          if (colRes) {
+            (colRes as any)['uniqKey'] = true;
           }
-        },
-      );
+        });
+      }
+    });
   }
 
   private parseColumnType(typeString: string): GeneralColumnType {
@@ -359,9 +373,9 @@ ORDER BY m.name, p.cid`,
       case 'text':
         return GeneralColumnType.TEXT;
       case 'date':
-        return GeneralColumnType.DATE;
+        return GeneralColumnType.TEXT;
       case 'datetime':
-        return GeneralColumnType.TIMESTAMP;
+        return GeneralColumnType.TEXT;
       case 'real':
         return GeneralColumnType.REAL;
       case 'integer':
@@ -394,6 +408,10 @@ ORDER BY m.name, p.cid`,
     return false;
   }
 
+  isSchemaSpecificationSvailable(): boolean {
+    return false;
+  }
+
   async closeSub(): Promise<string> {
     try {
       if (this.db) {
@@ -408,8 +426,50 @@ ORDER BY m.name, p.cid`,
 
   private async createConnection(): Promise<void> {
     const { database } = this.conRes;
-    this.db = new Sqlite(database);
-    this.db.pragma('journal_mode = WAL');
-    this.db.pragma('foreign_keys = true');
+    this.db = new (Sqlite.verbose().Database)(database);
+    this.db.configure('busyTimeout', 2000);
+
+    await this.pragma('journal_mode = WAL');
+    await this.pragma('foreign_keys = true');
+  }
+
+  private async pragma(query: string): Promise<void> {
+    await this.runWithFinalyze(`PRAGMA ${query}`);
+  }
+
+  private async runWithFinalyze(
+    query: string,
+    binds?: any[],
+  ): Promise<RunResult> {
+    const statement = await this.createStatement(query, binds);
+    return new Promise<RunResult>((resolve, reject) => {
+      statement.run(function (err) {
+        const { changes, lastInsertRowid } = this;
+        statement.finalize();
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ changes, lastInsertRowid });
+        }
+      });
+    });
+  }
+
+  private async createStatement(
+    sql: string,
+    binds?: any[],
+  ): Promise<Statement> {
+    return new Promise<Statement>((resolve, reject) => {
+      const statement = this.db.prepare(sql, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          if (binds) {
+            statement.bind(...binds);
+          }
+          resolve(statement);
+        }
+      });
+    });
   }
 }
