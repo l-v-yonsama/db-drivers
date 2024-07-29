@@ -34,3 +34,7 @@ src/examples/
 test.sh
 .env
 docker/data
+
+sqlite.db
+sqlite.db-shm
+sqlite.db-wal

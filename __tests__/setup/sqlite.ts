@@ -22,9 +22,12 @@ export async function init(): Promise<void> {
         'No' + i,
         new Date().toISOString(),
         new Date().toISOString(),
-        null,
+        Buffer.from([0x0, 0x1, 0x2, 0xf0]),
       ];
-      await driver.requestSql({ sql: INSERT_STATEMENT, conditions: { binds } });
+      await driver.requestSql({
+        sql: INSERT_STATEMENT,
+        conditions: { binds: binds as any },
+      });
     }
 
     await driver.requestSql({ sql: 'DROP TABLE IF EXISTS diff' });
