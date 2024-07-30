@@ -9,5 +9,4 @@ export * from './MySQLDriver';
 export * from './PostgresDriver';
 export * from './RDSBaseDriver';
 export * from './RedisDriver';
-export * from './SQLiteDriver';
 export * from './SQLServerDriver';

@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -46,7 +46,6 @@
     "examples:mysql": "npm run build && node built/src/examples/mysql.js",
     "examples:mssql": "npm run build && node built/src/examples/mssql.js",
     "examples:mssql2": "npm run build && node built/src/examples/mssql2.js",
-    "examples:sqlite": "npm run build && node built/src/examples/sqlite.js",
     "examples:postgres": "npm run build && node built/src/examples/postgres.js",
     "examples:rules": "npm run build && node built/src/examples/rules.js",
     "examples:aws": "npm run build && node built/src/examples/aws.js",
@@ -58,7 +57,6 @@
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
     "test:driver:mssql": "npm run clean && jest __tests__/db/drivers/SQLServerDriver.test.ts",
     "test:driver:postgres": "npm run clean && jest __tests__/db/drivers/PostgresDriver.test.ts",
-    "test:driver:sqlite": "npm run clean && jest __tests__/db/drivers/SQLiteDriver.test.ts",
     "test:driver:redis": "npm run clean && jest __tests__/db/drivers/RedisDriver.test.ts",
     "test:driver:auth0": "npm run clean && jest __tests__/db/drivers/Auth0Driver.test.ts",
     "test:driver:keycloak": "npm run clean && jest __tests__/db/drivers/KeycloakDriver.test.ts",
@@ -102,8 +100,7 @@
     "pg": "^8.9.0",
     "pgsql-ast-parser": "^11.0.1",
     "pluralize": "^8.0.0",
-    "short-unique-id": "^4.4.4",
-    "sqlite3": "^5.1.7"
+    "short-unique-id": "^4.4.4"
   },
   "volta": {
     "node": "18.12.1"

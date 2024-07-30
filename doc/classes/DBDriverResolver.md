@@ -27,7 +27,7 @@
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:134](https://github.com/l-v-yonsama/db-drivers/blob/65cc6ed2f5b4ab39bdd13b785cb7d5f6ac854526/src/drivers/DBDriverResolver.ts#L134)
+[src/drivers/DBDriverResolver.ts:130](https://github.com/l-v-yonsama/db-drivers/blob/5b07754aec5ab1ee49952d553b019dc09014695b/src/drivers/DBDriverResolver.ts#L130)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/65cc6ed2f5b4ab39bdd13b785cb7d5f6ac854526/src/drivers/DBDriverResolver.ts#L55)
+[src/drivers/DBDriverResolver.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/5b07754aec5ab1ee49952d553b019dc09014695b/src/drivers/DBDriverResolver.ts#L54)
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/65cc6ed2f5b4ab39bdd13b785cb7d5f6ac854526/src/drivers/DBDriverResolver.ts#L48)
+[src/drivers/DBDriverResolver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/5b07754aec5ab1ee49952d553b019dc09014695b/src/drivers/DBDriverResolver.ts#L47)
 
 ___
 
@@ -109,7 +109,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:117](https://github.com/l-v-yonsama/db-drivers/blob/65cc6ed2f5b4ab39bdd13b785cb7d5f6ac854526/src/drivers/DBDriverResolver.ts#L117)
+[src/drivers/DBDriverResolver.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/5b07754aec5ab1ee49952d553b019dc09014695b/src/drivers/DBDriverResolver.ts#L113)
 
 ___
 
@@ -129,7 +129,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/65cc6ed2f5b4ab39bdd13b785cb7d5f6ac854526/src/drivers/DBDriverResolver.ts#L39)
+[src/drivers/DBDriverResolver.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/5b07754aec5ab1ee49952d553b019dc09014695b/src/drivers/DBDriverResolver.ts#L38)
 
 ___
 
@@ -149,7 +149,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:130](https://github.com/l-v-yonsama/db-drivers/blob/65cc6ed2f5b4ab39bdd13b785cb7d5f6ac854526/src/drivers/DBDriverResolver.ts#L130)
+[src/drivers/DBDriverResolver.ts:126](https://github.com/l-v-yonsama/db-drivers/blob/5b07754aec5ab1ee49952d553b019dc09014695b/src/drivers/DBDriverResolver.ts#L126)
 
 ___
 
@@ -177,7 +177,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:107](https://github.com/l-v-yonsama/db-drivers/blob/65cc6ed2f5b4ab39bdd13b785cb7d5f6ac854526/src/drivers/DBDriverResolver.ts#L107)
+[src/drivers/DBDriverResolver.ts:103](https://github.com/l-v-yonsama/db-drivers/blob/5b07754aec5ab1ee49952d553b019dc09014695b/src/drivers/DBDriverResolver.ts#L103)
 
 ___
 
@@ -191,4 +191,4 @@ ___
 
 #### Defined in
 
-[src/drivers/DBDriverResolver.ts:27](https://github.com/l-v-yonsama/db-drivers/blob/65cc6ed2f5b4ab39bdd13b785cb7d5f6ac854526/src/drivers/DBDriverResolver.ts#L27)
+[src/drivers/DBDriverResolver.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/5b07754aec5ab1ee49952d553b019dc09014695b/src/drivers/DBDriverResolver.ts#L26)
