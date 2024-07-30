@@ -570,6 +570,8 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
   // Unexpected kw_authorization token: "authorization".
   replacedSql = replacedSql.replace(/\b(authorization)/i, '$1_1');
 
+  replacedSql = replacedSql.replace(/^[ \r\n]+/, '');
+
   return replacedSql.replace(FUNCTION_MATCHER, '1');
 };
 
@@ -591,6 +593,14 @@ export const hasSetVariableClause = (sql: string): boolean => {
  */
 export const parseQuery = (sql: string): QStatement | undefined => {
   const replacedSql = toSafeQueryForPgsqlAst(sql);
+  if (replacedSql.toLocaleLowerCase().startsWith('pragma')) {
+    return {
+      ast: {
+        type: 'pragma',
+      } as any,
+      names: undefined,
+    };
+  }
   try {
     const result = parse(replacedSql, { locationTracking: true });
     if (result && result.length) {
@@ -601,6 +611,30 @@ export const parseQuery = (sql: string): QStatement | undefined => {
       };
     }
   } catch (_) {
+    const getAstType = (): Statement['type'] | null => {
+      const rsql = replacedSql.toLocaleLowerCase();
+      if (rsql.match(/select\\s+/)) {
+        return 'select';
+      } else if (rsql.match(/insert\\s+into/)) {
+        return 'insert';
+      } else if (rsql.match(/update\\s+/)) {
+        return 'update';
+      } else if (rsql.match(/delete\\s+/)) {
+        return 'delete';
+      }
+      return null;
+    };
+
+    const astType = getAstType();
+    if (!astType) {
+      return {
+        ast: {
+          type: astType,
+        } as any,
+        names: undefined,
+      };
+    }
+
     console.log('sql=', sql);
     console.log('replacedSql=', replacedSql);
     console.error(_);

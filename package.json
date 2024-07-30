@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.4.12",
+  "version": "0.4.13",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -17,6 +17,7 @@
     "@types/node": "~18",
     "@types/pg": "^8.6.6",
     "@types/pluralize": "^0.0.29",
+    "@types/sql.js": "^1.4.9",
     "@typescript-eslint/eslint-plugin": "~5.44",
     "@typescript-eslint/parser": "~5.44",
     "eslint": "~8.28",
@@ -57,6 +58,7 @@
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
     "test:driver:mssql": "npm run clean && jest __tests__/db/drivers/SQLServerDriver.test.ts",
     "test:driver:postgres": "npm run clean && jest __tests__/db/drivers/PostgresDriver.test.ts",
+    "test:driver:sqlite": "npm run clean && jest __tests__/db/drivers/SQLiteDriver.test.ts",
     "test:driver:redis": "npm run clean && jest __tests__/db/drivers/RedisDriver.test.ts",
     "test:driver:auth0": "npm run clean && jest __tests__/db/drivers/Auth0Driver.test.ts",
     "test:driver:keycloak": "npm run clean && jest __tests__/db/drivers/KeycloakDriver.test.ts",
@@ -100,7 +102,8 @@
     "pg": "^8.9.0",
     "pgsql-ast-parser": "^11.0.1",
     "pluralize": "^8.0.0",
-    "short-unique-id": "^4.4.4"
+    "short-unique-id": "^4.4.4",
+    "sql.js": "^1.10.3"
   },
   "volta": {
     "node": "18.12.1"

@@ -15,6 +15,7 @@ import { PostgresDriver } from './PostgresDriver';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { RedisDriver } from './RedisDriver';
 import { SQLServerDriver } from './SQLServerDriver';
+import { SQLiteDriver } from './SQLiteDriver';
 
 const uid = new ShortUniqueId();
 
@@ -70,6 +71,9 @@ export class DBDriverResolver {
         break;
       case DBType.SQLServer:
         driver = new SQLServerDriver(conRes);
+        break;
+      case DBType.SQLite:
+        driver = new SQLiteDriver(conRes);
         break;
       case DBType.Redis:
         driver = new RedisDriver(conRes);
