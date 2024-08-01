@@ -74,17 +74,17 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   async requestSql(params: QueryParams): Promise<ResultSetData> {
     const { sql, conditions } = params;
 
-    let ast: QStatement | undefined = undefined;
+    let qst: QStatement | undefined = undefined;
     let dbTable: DbTable | undefined = undefined;
 
     if (conditions?.rawQueries !== true) {
-      ast = parseQuery(sql);
-      dbTable = this.getDbTable(ast);
-      if (ast?.ast?.type) {
+      qst = parseQuery(sql);
+      dbTable = this.getDbTable(qst);
+      if (qst?.ast?.type) {
         if (!params.meta) {
           params.meta = {};
         }
-        params.meta.type = ast?.ast?.type;
+        params.meta.type = qst?.ast?.type;
       }
     }
 
@@ -92,7 +92,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       ...params,
       dbTable,
     });
-    this.setRdhMetaAndStatement(params, rdb, ast?.ast?.type, ast, dbTable);
+    this.setRdhMetaAndStatement(params, rdb, qst?.ast?.type, qst, dbTable);
 
     return rdb.build();
   }

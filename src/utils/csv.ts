@@ -95,6 +95,7 @@ const parseCsvFromReadable = async (
 
   if (options.cast) {
     rdb.resetKeyTypeByRows();
+    rdb.normalizeValuesByTypes();
   }
 
   return rdb;

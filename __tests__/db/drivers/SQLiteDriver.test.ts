@@ -1,4 +1,4 @@
-import { GeneralColumnType } from '@l-v-yonsama/rdh';
+import { GeneralColumnType, sleep } from '@l-v-yonsama/rdh';
 import path from 'path';
 import {
   ConnectionSetting,
@@ -26,7 +26,7 @@ const LONG_TIME_QUERY = `WITH RECURSIVE r(i) AS (
   SELECT i FROM r
   LIMIT 6500000
 )
-SELECT i FROM r WHERE i = 1`;
+SELECT i FROM r WHERE i <= 100`;
 
 describe('SQLiteDriver', () => {
   let driver: RDSBaseDriver;
@@ -187,6 +187,21 @@ describe('SQLiteDriver', () => {
       const query = 'SELECT * FROM EMP';
       const rdh = await driver.requestSql({ sql: query });
       expect(rdh.rows.length).toBe(6);
+    });
+    it('should return 0 records', async () => {
+      const query = 'SELECT * FROM EMP WHERE 1=2';
+      const rdh = await driver.requestSql({ sql: query });
+      expect(rdh.rows.length).toBe(0);
+    });
+    it('should return pragma command list', async () => {
+      const query = 'Pragma pragma_list';
+      const rdh = await driver.requestSql({ sql: query });
+      expect(rdh.rows.length).toBeGreaterThan(0);
+    });
+    it('should return pragma exec result', async () => {
+      const query = 'Pragma busy_timeout=5000';
+      const rdh = await driver.requestSql({ sql: query });
+      expect(rdh.summary.affectedRows).toBe(0);
     });
     it('should throw Error', async () => {
       const query = 'SELECT * FROM EMP2';
@@ -398,23 +413,23 @@ describe('SQLiteDriver', () => {
     });
   });
 
-  // describe('kill', () => {
-  //   it('should fail', async () => {
-  //     const result = await Promise.allSettled([
-  //       driver.requestSql({
-  //         sql: LONG_TIME_QUERY,
-  //       }),
-  //       (async (): Promise<string> => {
-  //         await sleep(50);
-  //         return await driver.kill();
-  //       })(),
-  //     ]);
-  //     expect(result[0].status).toBe('rejected');
-  //     const firstResult = result[0] as PromiseRejectedResult;
-  //     expect(firstResult.reason.toString()).toMatch(/.+SQLITE_INTERRUPT.+/);
-  //     expect(result[1].status).toBe('fulfilled');
-  //   }, 6000);
-  // });
+  describe('kill', () => {
+    it('should fail', async () => {
+      const result = await Promise.allSettled([
+        driver.requestSql({
+          sql: LONG_TIME_QUERY,
+        }),
+        (async (): Promise<string> => {
+          await sleep(50);
+          return await driver.kill();
+        })(),
+      ]);
+      expect(result[0].status).toBe('rejected');
+      const firstResult = result[0] as PromiseRejectedResult;
+      expect(firstResult.reason.toString()).toMatch(/.*SQLITE_INTERRUPT.*/);
+      expect(result[1].status).toBe('fulfilled');
+    }, 6000);
+  });
 
   function createRDSDriver(): RDSBaseDriver {
     return new SQLiteDriver(connectOption);

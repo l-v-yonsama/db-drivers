@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.4.13",
+  "version": "0.5.5",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -83,7 +83,7 @@
     "@aws-sdk/client-sqs": "^3.398.0",
     "@aws-sdk/credential-providers": "^3.279.0",
     "@aws-sdk/s3-request-presigner": "^3.427.0",
-    "@l-v-yonsama/rdh": "^0.1.5",
+    "@l-v-yonsama/rdh": "^0.1.9",
     "auth0": "^3.7.1",
     "axios": "^1.6.0",
     "bytes": "^3.1.2",

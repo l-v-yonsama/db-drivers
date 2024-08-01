@@ -161,9 +161,9 @@ export const toInsertStatement = ({
 
     if (specifyValuesWithBindParameters) {
       const value = toBindValue(colType, values[key]);
-      if (value === null) {
-        return;
-      }
+      // if (value === null) {
+      //   return;
+      // }
       binds.push(value);
       placeHolders.push(
         toPositionedParameter === true ? `${pChar}${index + 1}` : '?',
@@ -604,9 +604,13 @@ export const parseQuery = (sql: string): QStatement | undefined => {
   try {
     const result = parse(replacedSql, { locationTracking: true });
     if (result && result.length) {
+      let ast = result[0];
+      if (ast.type === 'with recursive' || ast.type === 'with') {
+        ast = ast.in;
+      }
       const names = getQNames(result[0], replacedSql);
       return {
-        ast: result[0],
+        ast,
         names,
       };
     }

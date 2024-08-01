@@ -5,6 +5,7 @@ import {
   isTextLike,
   parseColumnType as parseGeneralColumnType,
   ResultSetDataBuilder,
+  sleep,
 } from '@l-v-yonsama/rdh';
 import * as fs from 'fs';
 import initSql, { BindParams, type Database } from 'sql.js/dist/sql-wasm.js';
@@ -25,6 +26,7 @@ export class SQLiteDriver extends RDSBaseDriver {
     throw new Error('SQLite does not support explain analyze');
   }
   private db: Database | undefined;
+  private interrupted = false;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -57,42 +59,31 @@ export class SQLiteDriver extends RDSBaseDriver {
   }
 
   async kill(): Promise<string> {
-    throw new Error('Not supported at SQLiteDriver.');
+    this.interrupted = true;
+    return '';
   }
 
   protected getTestSqlStatement(): string {
     return 'SELECT 1';
   }
 
-  private fieldInfo2Key(
-    name: string,
-    v: any,
-    useTableColumnType: boolean,
-    table?: DbTable,
-  ): GeneralColumnType {
-    const tableColumn = table?.children?.find((it) => it.name === name);
-
-    // Correspondence to ENUM type returned as text type
-    if (useTableColumnType && tableColumn) {
-      return tableColumn.colType;
+  private isQueryType(type: string, sql: string): boolean {
+    if (type === 'select' || type === 'show') {
+      return true;
     }
-
-    if (v instanceof Buffer) {
-      return GeneralColumnType.BLOB;
-    } else if (typeof v === 'number') {
-      if (Number.isInteger(v)) {
-        return GeneralColumnType.INTEGER;
+    if (type === 'pragma') {
+      if (/\s*pragma [a-zA-Z0-9-_.()]+\s*=\s*.+/i.test(sql)) {
+        return false;
       }
-      return GeneralColumnType.REAL;
-    } else if (typeof v === 'string') {
-      return GeneralColumnType.TEXT;
+      return true;
     }
-    return GeneralColumnType.UNKNOWN;
+    return false;
   }
 
   async requestSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
+    this.interrupted = false;
     const { sql, conditions, dbTable, meta } = params;
     let rdb: ResultSetDataBuilder;
 
@@ -103,44 +94,53 @@ export class SQLiteDriver extends RDSBaseDriver {
     const binds = conditions?.binds ?? [];
     const startTime = new Date().getTime();
 
-    if (meta?.type === 'select') {
-      const r = this.db.exec(sql, binds);
-      if (r.length <= 0) {
-        throw new Error('No records');
+    if (this.isQueryType(meta.type, sql)) {
+      const st = this.db.prepare(sql, binds);
+      const fields = st.getColumnNames();
+      if (meta.editable && dbTable) {
+        rdb = new ResultSetDataBuilder(
+          fields.map((it) => {
+            const col = dbTable.getChildByName(it);
+            return createRdhKey({
+              name: it,
+              type: col?.colType,
+              required: col?.nullable === false,
+              comment: col?.comment,
+            });
+          }),
+        );
+      } else {
+        rdb = new ResultSetDataBuilder(fields.map((it) => it));
       }
-      const elapsedTimeMilli = new Date().getTime() - startTime;
-      r[0].values.forEach((row) => {
-        const fields = r[0].columns;
-        const fieldTypeMap = new Map<string, GeneralColumnType>();
-        if (rdb === undefined) {
-          rdb = new ResultSetDataBuilder(fields.map((it) => '' + it));
+
+      while (st.step()) {
+        if (rdb.rs.rows.length % 2000 === 0) {
+          await sleep(5);
         }
-        const rowObj: any = {};
-        fields.forEach((fieldName, idx) => {
-          const v = row[idx];
-          rowObj[fieldName] = v;
-          if (fields.length !== fieldTypeMap.size) {
-            fields
-              .filter((f) => !fieldTypeMap.has(f))
-              .forEach((it) => {
-                if (v !== null && v !== undefined) {
-                  fieldTypeMap.set(
-                    it,
-                    this.fieldInfo2Key(it, v, meta?.editable === true, dbTable),
-                  );
-                }
-              });
+        if (this.interrupted) {
+          this.interrupted = false;
+          st.free();
+          st.freemem();
+          throw new Error('SQLITE_INTERRUPT');
+        }
+        const values = st.getAsObject();
+        fields.forEach((it) => {
+          const v = values[it];
+          if (v && v instanceof Uint8Array) {
+            values[it] = Buffer.from(v);
           }
         });
-        rdb.addRow(rowObj);
-        fieldTypeMap.forEach((type, name) => {
-          rdb.updateKeyType(name, type);
-        });
-        rdb.setSummary({
-          elapsedTimeMilli,
-          selectedRows: rdb.rs.rows.length,
-        });
+
+        rdb.addRow(values);
+      }
+      const elapsedTimeMilli = new Date().getTime() - startTime;
+      rdb.resetKeyTypeByRows();
+      rdb.setSummary({
+        elapsedTimeMilli,
+        selectedRows: rdb.rs.rows.length,
       });
+      st.free();
+      st.freemem();
     } else {
       const { affectedRows, insertId } = await this.exec(
         sql,
@@ -404,6 +404,7 @@ export class SQLiteDriver extends RDSBaseDriver {
         fs.writeFileSync(database, Buffer.from(this.db.export()));
         await this.db.close();
         this.db = undefined;
+        this.interrupted = false;
       }
       return '';
     } catch (e) {
@@ -412,6 +413,7 @@ export class SQLiteDriver extends RDSBaseDriver {
   }
 
   private async createConnection(): Promise<void> {
+    this.interrupted = false;
     const { database } = this.conRes;
     const buff = fs.existsSync(database)
       ? await fs.promises.readFile(database)
@@ -419,8 +421,16 @@ export class SQLiteDriver extends RDSBaseDriver {
     const sqlite = await initSql();
     this.db = new sqlite.Database(buff);
 
-    await this.pragma('journal_mode = WAL');
-    await this.pragma('foreign_keys = true');
+    await this.requestSql({
+      sql: 'pragma journal_mode = WAL',
+      conditions: { rawQueries: true },
+      meta: { type: 'pragma' },
+    });
+    await this.requestSql({
+      sql: 'pragma foreign_keys = true',
+      conditions: { rawQueries: true },
+      meta: { type: 'pragma' },
+    });
   }
 
   private async exec(
@@ -432,16 +442,16 @@ export class SQLiteDriver extends RDSBaseDriver {
     const affectedRows = this.db.getRowsModified();
     let insertId: number | undefined;
     if (withInsertId) {
-      const r = await this.db.exec('SELECT last_insert_rowid() as lastId;');
+      if (this.interrupted) {
+        this.interrupted = false;
+        throw new Error('SQLITE_INTERRUPT');
+      }
+      const r = this.db.exec('SELECT last_insert_rowid() as lastId;');
       insertId = r?.[0]?.values[0][0] as number;
     }
     return {
       affectedRows,
       insertId,
     };
-  }
-
-  private async pragma(query: string): Promise<void> {
-    await this.exec(`PRAGMA ${query}`, false);
   }
 }
