@@ -422,11 +422,6 @@ export class SQLiteDriver extends RDSBaseDriver {
     this.db = new sqlite.Database(buff);
 
     await this.requestSql({
-      sql: 'pragma journal_mode = WAL',
-      conditions: { rawQueries: true },
-      meta: { type: 'pragma' },
-    });
-    await this.requestSql({
       sql: 'pragma foreign_keys = true',
       conditions: { rawQueries: true },
       meta: { type: 'pragma' },
