@@ -13,6 +13,7 @@ import {
   parseQuery,
   ProposalKind,
   RdsDatabase,
+  separateMultipleQueries,
   toInsertStatement,
   toViewDataNormalizedQuery,
   toViewDataQuery,
@@ -943,6 +944,104 @@ SELECT CarName, FORMAT(Price * @ind_rate, 2) "Rupees" FROM cars`;
     it('false; pattern4', () => {
       const sql = `SET @@SESSION.sql_mode = 'TRADITIONAL';`;
       expect(hasSetVariableClause(sql)).toBe(false);
+    });
+  });
+
+  describe('separateMultipleQueries', () => {
+    it('true; pattern1 single query', () => {
+      const text = `SELECT * FROM users`;
+      const queries = separateMultipleQueries(text);
+      expect(queries).toHaveLength(1);
+      expect(queries[0]).toBe('SELECT * FROM users');
+    });
+    it('true; pattern2 single query with semicolon', () => {
+      const text = `SELECT * FROM users;`;
+      const queries = separateMultipleQueries(text);
+      expect(queries).toHaveLength(1);
+      expect(queries[0]).toBe('SELECT * FROM users');
+    });
+    it('true; pattern3', () => {
+      const text = `
+SELECT * FROM users;
+-- Comment about next
+UPDATE users\nSET name = 'Alice' WHERE id = 2;
+INSERT INTO users (name) VALUES ('Bob'); -- Insert Bob
+/* Multi-line
+comment */
+DROP TABLE test; // Drop the test table
+`;
+      const queries = separateMultipleQueries(text);
+      expect(queries).toHaveLength(5);
+      expect(queries[0]).toBe('SELECT * FROM users');
+      expect(queries[1]).toBe(
+        "-- Comment about next\nUPDATE users\nSET name = 'Alice' WHERE id = 2",
+      );
+      expect(queries[2]).toBe("INSERT INTO users (name) VALUES ('Bob')");
+      expect(queries[3]).toBe(
+        '-- Insert Bob\n/* Multi-line\ncomment */\nDROP TABLE test',
+      );
+      expect(queries[4]).toBe('// Drop the test table');
+    });
+    it('true; pattern4', () => {
+      const text = `
+CREATE TABLE DEPT(
+  DEPTNO NUMBER(2) CONSTRAINT PK_DEPT PRIMARY KEY,
+  DNAME VARCHAR2(14) ,
+  LOC VARCHAR2(13)
+);
+
+CREATE TABLE EMP(
+  EMPNO NUMBER(4) CONSTRAINT PK_EMP PRIMARY KEY,
+  ENAME VARCHAR2(10),
+  JOB VARCHAR2(9),
+  MGR NUMBER(4),
+  HIREDATE DATE,
+  SAL NUMBER(7,2),
+  COMM NUMBER(7,2),
+  DEPTNO NUMBER(2) CONSTRAINT FK_DEPTNO REFERENCES DEPT
+);
+INSERT INTO DEPT VALUES
+  (10,'ACCOUNTING','NEW YORK');
+INSERT INTO EMP VALUES
+  (7369,'SMITH','CLERK',7902,'1980-12-12',800,NULL,20);
+COMMIT;
+EXIT
+`;
+      const queries = separateMultipleQueries(text);
+
+      expect(queries).toHaveLength(6);
+      expect(queries[0]).toBe(
+        'CREATE TABLE DEPT(\n  DEPTNO NUMBER(2) CONSTRAINT PK_DEPT PRIMARY KEY,\n  DNAME VARCHAR2(14) ,\n  LOC VARCHAR2(13)\n)',
+      );
+      expect(queries[1]).toBe(
+        `CREATE TABLE EMP(
+  EMPNO NUMBER(4) CONSTRAINT PK_EMP PRIMARY KEY,
+  ENAME VARCHAR2(10),
+  JOB VARCHAR2(9),
+  MGR NUMBER(4),
+  HIREDATE DATE,
+  SAL NUMBER(7,2),
+  COMM NUMBER(7,2),
+  DEPTNO NUMBER(2) CONSTRAINT FK_DEPTNO REFERENCES DEPT
+)`,
+      );
+      expect(queries[2]).toBe(
+        "INSERT INTO DEPT VALUES\n  (10,'ACCOUNTING','NEW YORK')",
+      );
+      expect(queries[3]).toBe(
+        "INSERT INTO EMP VALUES\n  (7369,'SMITH','CLERK',7902,'1980-12-12',800,NULL,20)",
+      );
+      expect(queries[4]).toBe('COMMIT');
+      expect(queries[5]).toBe('EXIT');
+    });
+    it('pattern5', () => {
+      const text =
+        "select * from table1 where col1 = 'ab\\'c;de'; select * from table2;";
+      const queries = separateMultipleQueries(text);
+      console.log(queries);
+      expect(queries).toHaveLength(2);
+      expect(queries[0]).toBe("select * from table1 where col1 = 'ab\\'c;de'");
+      expect(queries[1]).toBe('select * from table2');
     });
   });
 });

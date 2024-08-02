@@ -1375,3 +1375,36 @@ const toGeneralQuery = ({
     binds: params.bindParams,
   };
 };
+
+export const separateMultipleQueries = (text: string): string[] => {
+  const quotePattern1 = /('(.*?)(?<!\\)')/; // Handles single, double quotes
+  const quotePattern2 = /("(.*?)(?<!\\)")/; // Handles single, double quotes
+  const commentPattern = /--.*?(?=[\r\n]|$)|\/\*[\s\S]*?\*\//; // Handles single line and multi-line comments
+  const delimiterPattern = /;/;
+
+  const queries: string[] = [];
+  let currentToken: string[] = [];
+
+  // Aggregate regex pattern
+  const pattern = new RegExp(
+    `(${quotePattern1.source}|${quotePattern2.source}|${commentPattern.source}|${delimiterPattern.source}|[\r\n]+|.)`,
+    'g',
+  );
+
+  text.match(pattern)?.forEach((token) => {
+    if (token === ';') {
+      if (currentToken.length > 0) {
+        queries.push(currentToken.join('').trim());
+        currentToken = [];
+      }
+    } else {
+      currentToken.push(token);
+    }
+  });
+
+  if (currentToken.length > 0) {
+    queries.push(currentToken.join('').trim());
+  }
+
+  return queries;
+};
