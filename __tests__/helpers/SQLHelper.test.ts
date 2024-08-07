@@ -1036,9 +1036,8 @@ EXIT
     });
     it('pattern5', () => {
       const text =
-        "select * from table1 where col1 = 'ab\\'c;de'; select * from table2;";
+        "select * from table1 where col1 = 'ab\\'c;de'; select * from table2;\n\n";
       const queries = separateMultipleQueries(text);
-      console.log(queries);
       expect(queries).toHaveLength(2);
       expect(queries[0]).toBe("select * from table1 where col1 = 'ab\\'c;de'");
       expect(queries[1]).toBe('select * from table2');

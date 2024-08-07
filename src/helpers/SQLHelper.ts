@@ -1406,5 +1406,5 @@ export const separateMultipleQueries = (text: string): string[] => {
     queries.push(currentToken.join('').trim());
   }
 
-  return queries;
+  return queries.filter((it) => it.replace(/[\r\n]+/g, ' ').trim().length > 0);
 };

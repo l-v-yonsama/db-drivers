@@ -335,8 +335,8 @@ export class SQLServerDriver extends RDSBaseDriver {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getSchemas(dbDatabase: RdsDatabase): Promise<Array<DbSchema>> {
     const rdh = await this.requestSql({
-      sql: `SELECT SCHEMA_NAME as name, DEFAULT_CHARACTER_SET_NAME  
-      FROM INFORMATION_SCHEMA.SCHEMATA 
+      sql: `SELECT SCHEMA_NAME as name, DEFAULT_CHARACTER_SET_NAME
+      FROM INFORMATION_SCHEMA.SCHEMATA
       WHERE CATALOG_NAME = '${dbDatabase.name}'
         AND SCHEMA_NAME NOT IN ('guest', 'INFORMATION_SCHEMA', 'sys',
           'db_owner',           'db_accessadmin', 'db_securityadmin',   'db_ddladmin',
@@ -355,7 +355,7 @@ export class SQLServerDriver extends RDSBaseDriver {
   async getTables(dbSchema: DbSchema): Promise<Array<DbTable>> {
     const rdh = await this.requestSql({
       sql: `SELECT
-      m.TABLE_NAME as name, 
+      m.TABLE_NAME as name,
       CASE m.TABLE_TYPE
         WHEN 'BASE TABLE' THEN 'TABLE'
         WHEN 'VIEW' THEN 'VIEW'
@@ -370,7 +370,7 @@ export class SQLServerDriver extends RDSBaseDriver {
       FROM sys.tables t
       INNER JOIN sys.schemas s ON (t.schema_id = s.schema_id)
       INNER JOIN sys.extended_properties ep
-        ON ( ep.major_id = t.object_id AND ep.minor_id = 0 AND  ep.name = 'MS_Description')   
+        ON ( ep.major_id = t.object_id AND ep.minor_id = 0 AND  ep.name = 'MS_Description')
       WHERE s.name = '${dbSchema.name}'
     ) s ON (m.TABLE_SCHEMA=s.schema_name AND m.TABLE_NAME = s.table_name)
     WHERE m.TABLE_SCHEMA = '${dbSchema.name}'`,
@@ -412,12 +412,12 @@ export class SQLServerDriver extends RDSBaseDriver {
         FROM sys.extended_properties sep
         INNER join sys.objects so On sep.major_id = so.object_id
         INNER join sys.columns sc On (so.object_id = sc.object_id and sep.minor_id = sc.column_id)
-        WHERE 
-          sep.name = 'MS_Description' and so.type = 'U' 
-          AND schema_name(so.schema_id) = '${dbSchema.name}'  
+        WHERE
+          sep.name = 'MS_Description' and so.type = 'U'
+          AND schema_name(so.schema_id) = '${dbSchema.name}'
       ) s ON (m.TABLE_SCHEMA = s.schema_name AND m.TABLE_NAME = s.table_name AND m.COLUMN_NAME = s.column_name)
       WHERE
-        m.TABLE_SCHEMA = '${dbSchema.name}'  
+        m.TABLE_SCHEMA = '${dbSchema.name}'
       ORDER BY
         m.ORDINAL_POSITION`,
     });
@@ -470,7 +470,7 @@ export class SQLServerDriver extends RDSBaseDriver {
 
   async setUniqueKeys(dbSchema: DbSchema): Promise<void> {
     const rdh = await this.requestSql({
-      sql: `SELECT T.TABLE_NAME as table_name, STRING_AGG( CONVERT(VARCHAR(max), C.COLUMN_NAME), ',') AS columns, T.CONSTRAINT_NAME as index_name 
+      sql: `SELECT T.TABLE_NAME as table_name, STRING_AGG( CONVERT(VARCHAR(max), C.COLUMN_NAME), ',') AS columns, T.CONSTRAINT_NAME as index_name
       FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T
       JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME
       WHERE
