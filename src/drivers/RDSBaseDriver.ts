@@ -129,7 +129,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder>;
 
-  abstract getLocks(): Promise<ResultSetData>;
+  abstract getLocks(dbName: string): Promise<ResultSetData>;
 
   async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
     const { sql } = params;

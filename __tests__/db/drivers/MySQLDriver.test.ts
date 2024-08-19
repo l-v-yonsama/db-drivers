@@ -544,7 +544,7 @@ describe('MySQLDriver', () => {
       await driver2.begin();
       await driver1.requestSql({ sql: sql1 });
       driver2.requestSql({ sql: sql2 });
-      const result3 = await driver3.getLocks();
+      const result3 = await driver3.getLocks('testDb');
       console.log(ResultSetDataBuilder.from(result3).toString());
       await driver1.rollback();
       await driver2.kill();

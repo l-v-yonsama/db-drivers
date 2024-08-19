@@ -59,11 +59,16 @@ export async function init0(): Promise<void> {
   const con = await mssql.connect(baseConnectOption0);
 
   try {
-    const q = async (sql: string): Promise<mssql.IResult<any>> =>
-      con.request().query(sql);
+    const q = async (sql: string): Promise<mssql.IResult<any>> => {
+      console.log('Exec sql: ', sql);
+      return await con.request().query(sql);
+    };
     const cq = async (sql: string): Promise<number> => {
+      console.log('Exec sql: ', sql);
       const r = await con.request().query(sql);
-      return r.recordset[0].count;
+      const c = await r.recordset[0].count;
+      console.log('Count: ', c);
+      return c;
     };
     const pq = async (
       sql: string,
@@ -74,12 +79,14 @@ export async function init0(): Promise<void> {
       return await req.query(sql);
     };
 
-    // await q('CREATE DATABASE testdb');
+    await q('DROP DATABASE testdb');
+    await q('CREATE DATABASE testdb');
     await q('USE testdb');
-    // await q(
-    //   `CREATE LOGIN testuser WITH PASSWORD = 'Pass123zxcv!', DEFAULT_DATABASE = testdb`,
-    // );
-    // await q('ALTER LOGIN testuser WITH DEFAULT_DATABASE=testdb');
+    await q('DROP LOGIN testuser');
+    await q(
+      `CREATE LOGIN testuser WITH PASSWORD = 'Pass123zxcv!', DEFAULT_DATABASE = testdb`,
+    );
+    await q('ALTER LOGIN testuser WITH DEFAULT_DATABASE=testdb');
     const countSchema0 = await cq(
       `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.SCHEMATA WHERE CATALOG_NAME='testdb' AND SCHEMA_NAME='schema0'`,
     );
@@ -93,14 +100,14 @@ export async function init0(): Promise<void> {
       await q('CREATE SCHEMA schema1');
     }
 
-    const countUser = await cq(
-      `SELECT COUNT(*) as count
-      FROM master.sys.server_principals
-      WHERE default_database_name ='testdb' AND name ='testuser'`,
-    );
-    if (countUser > 0) {
-      await q(`DROP USER testuser`);
-    }
+    // const countUser = await cq(
+    //   `SELECT COUNT(*) as count
+    //   FROM master.sys.server_principals
+    //   WHERE default_database_name ='testdb' AND name ='testuser'`,
+    // );
+    // if (countUser > 0) {
+    //   await q(`DROP USER testuser`);
+    // }
     await q(
       `CREATE USER testuser FOR LOGIN testuser WITH DEFAULT_SCHEMA=schema1`,
     );
@@ -132,8 +139,10 @@ export async function init0(): Promise<void> {
 
 export async function init(): Promise<void> {
   const con = await mssql.connect(baseConnectOption);
-  const q = async (sql: string): Promise<mssql.IResult<any>> =>
-    con.request().query(sql);
+  const q = async (sql: string): Promise<mssql.IResult<any>> => {
+    console.log('Exec sql: ', sql);
+    return await con.request().query(sql);
+  };
   const pq = async (sql: string, binds: any[]): Promise<mssql.IResult<any>> => {
     const req = con.request();
     binds.forEach((it, idx) => req.input(`${idx + 1}`, it));
@@ -220,8 +229,8 @@ export async function init(): Promise<void> {
 
     for (const ev of empValues) {
       await pq(
-        `INSERT INTO EMP 
-      (EMPNO,ENAME,SEX,JOB,MGR,SAL, DEPTNO) 
+        `INSERT INTO EMP
+      (EMPNO,ENAME,SEX,JOB,MGR,SAL, DEPTNO)
       VALUES(@1,@2,@3,@4,@5,@6,@7)`,
         ev,
       );
@@ -254,14 +263,14 @@ export async function init(): Promise<void> {
 
       const binds2 = [no, customerNo, dt, no * 100];
       await pq(
-        `INSERT INTO schema0.order1 (order_no, customer_no, order_date, amount) 
+        `INSERT INTO schema0.order1 (order_no, customer_no, order_date, amount)
           VALUES (@1, @2, @3, @4)`,
         binds2,
       );
 
       const binds3 = [no, no, no * 10, no * 100];
       await pq(
-        `INSERT INTO schema0.order_detail (order_no, detail_no, item_no, amount) 
+        `INSERT INTO schema0.order_detail (order_no, detail_no, item_no, amount)
           VALUES (@1, @2, @3, @4)`,
         binds3,
       );
@@ -286,7 +295,7 @@ export async function init(): Promise<void> {
           values['variety'],
         ];
         await pq(
-          `INSERT INTO iris (sepal_length, sepal_width,petal_length, petal_width,variety) 
+          `INSERT INTO iris (sepal_length, sepal_width,petal_length, petal_width,variety)
             VALUES (@1, @2, @3, @4, @5)`,
           binds,
         );
@@ -313,7 +322,7 @@ export async function init(): Promise<void> {
           values['play'] === 'yes',
         ];
         await pq(
-          `INSERT INTO weather (create_date,outlook, temperature,humidity, windy,play) 
+          `INSERT INTO weather (create_date,outlook, temperature,humidity, windy,play)
             VALUES (@1, @2, @3, @4, @5, @6)`,
           binds,
         );
@@ -566,10 +575,10 @@ CREATE TABLE testtable (
   f2 FLOAT,
   f3 REAL,
   d1 DATE,
-  d2 TIME, 
+  d2 TIME,
   d3 DATETIME,
   s1 CHAR(10),
-  s2 VARCHAR(10), 
+  s2 VARCHAR(10),
   s3b TEXT,
   s3c NTEXT,
   s5 BINARY(10),
@@ -579,7 +588,7 @@ CREATE TABLE testtable (
 `;
 
 const INSERT_STATEMENT = `INSERT INTO testtable (
-  n0, n1, n2, n4, 
+  n0, n1, n2, n4,
   f1, f2, f3,
   d1, d2, d3,
   s1, s2, s3b, s3c, s5, s6,
@@ -674,26 +683,26 @@ const CREATE_ORDER_DETAIL_TABLE_STATEMENT = `CREATE TABLE schema0.order_detail (
 `;
 
 const CREATE_IRIS_TABLE_STATEMENT = `CREATE TABLE iris (
-  sepal_length NUMERIC(7,1), 
+  sepal_length NUMERIC(7,1),
   sepal_width NUMERIC(7,1),
-  petal_length NUMERIC(7,1), 
+  petal_length NUMERIC(7,1),
   petal_width NUMERIC(7,1),
   variety varchar(255)
 )`;
 
 const CREATE_WEATHER_TABLE_STATEMENT = `CREATE TABLE weather (
   create_date DATE,
-  outlook text, 
+  outlook text,
   temperature NUMERIC(7,1),
-  humidity text, 
+  humidity text,
   windy BIT,
   play BIT
 )`;
 
 const CREATE_CITY_TABLE_STATEMENT = `CREATE TABLE city (
   id int PRIMARY KEY,
-  name char(35), 
+  name char(35),
   country_code char(3),
-  district char(20), 
+  district char(20),
   population int
 )`;

@@ -262,7 +262,7 @@ export class MySQLDriver extends RDSBaseDriver {
     return rdb.rs.rows[0].values.version;
   }
 
-  async getLocks(): Promise<ResultSetData> {
+  async getLocks(dbName: string): Promise<ResultSetData> {
     let sql = '';
     const version = await this.getVersion();
     if (version.startsWith('8.')) {
@@ -286,8 +286,12 @@ export class MySQLDriver extends RDSBaseDriver {
         FROM
             performance_schema.threads t
         JOIN
-            performance_schema.data_locks l ON t.THREAD_ID = l.THREAD_ID;
+            performance_schema.data_locks l ON t.THREAD_ID = l.THREAD_ID
+        WHERE
+            LOWER(t.PROCESSLIST_DB) = LOWER('${dbName}');
       `;
+
+      return await this.requestSql({ sql, conditions: { binds: [dbName] } });
     } else {
       sql = `
         SELECT
@@ -298,15 +302,16 @@ export class MySQLDriver extends RDSBaseDriver {
             l.lock_type  ,
             l.lock_mode  ,
             l.lock_table  ,
-            l.lock_index
+            l.lock_index,
+            l.lock_data
         FROM
             information_schema.innodb_trx r
         JOIN
             information_schema.innodb_locks l ON r.trx_id = l.lock_trx_id;
       `;
-    }
 
-    return await this.requestSql({ sql });
+      return await this.requestSql({ sql });
+    }
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {

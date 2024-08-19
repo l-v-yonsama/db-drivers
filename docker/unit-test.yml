@@ -21,6 +21,20 @@ services:
       MYSQL_USER: testuser
       MYSQL_PASSWORD: testpass
 
+  mysql5:
+    image: mysql:5.7.27
+    platform: linux/amd64
+    command: mysqld --character-set-server=utf8mb4
+    container_name: mysql5_container
+    ports:
+      - 6011:3306
+    environment:
+      TZ: 'Asia/Tokyo'
+      MYSQL_ROOT_PASSWORD: p@ssw0rd
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+
   postgres:
     image: postgres:14
     container_name: postgres_container

@@ -189,7 +189,7 @@ export class SQLiteDriver extends RDSBaseDriver {
     return rdb;
   }
 
-  getLocks(): Promise<ResultSetData> {
+  getLocks(dbName: string): Promise<ResultSetData> {
     throw new Error('SQLite does not support getLocks');
   }
 

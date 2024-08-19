@@ -297,11 +297,11 @@ export class SQLServerDriver extends RDSBaseDriver {
     throw new Error('SQL Server does not support explain analyze');
   }
 
-  async getLocks(): Promise<ResultSetData> {
+  async getLocks(dbName: string): Promise<ResultSetData> {
     const sql = `SELECT
     r.request_session_id AS 'session_id',
     r.resource_type,
-    r.resource_database_id AS 'database_id',
+    DB_NAME(r.resource_database_id) AS 'database',
     r.resource_associated_entity_id AS 'associated_entity_id',
     r.request_mode,
     r.request_status,
@@ -311,9 +311,11 @@ FROM
 JOIN
     sys.dm_exec_requests e ON r.request_session_id = e.session_id
 CROSS APPLY
-    sys.dm_exec_sql_text(e.sql_handle) t`;
+    sys.dm_exec_sql_text(e.sql_handle) t
+WHERE
+    LOWER(DB_NAME(r.resource_database_id)) = LOWER($1)`;
 
-    return await this.requestSql({ sql });
+    return await this.requestSql({ sql, conditions: { binds: [dbName] } });
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {

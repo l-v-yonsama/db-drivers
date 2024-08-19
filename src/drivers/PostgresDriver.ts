@@ -223,7 +223,7 @@ export class PostgresDriver extends RDSBaseDriver {
     return rdb;
   }
 
-  async getLocks(): Promise<ResultSetData> {
+  async getLocks(dbName: string): Promise<ResultSetData> {
     const sql = `SELECT
     A.pid,
     A.application_name AS "app",
@@ -231,6 +231,7 @@ export class PostgresDriver extends RDSBaseDriver {
     A.client_addr,
     A.state,
     A.query,
+    D.datname AS "database",
     C.relname AS "object_name",
     L.locktype AS "lock_type",
     L.mode AS "lock_mode",
@@ -238,10 +239,12 @@ export class PostgresDriver extends RDSBaseDriver {
 FROM pg_stat_activity A
 INNER JOIN pg_locks L ON A.pid = L.pid
 LEFT join pg_class C ON L.relation = C.oid
+LEFT join pg_database D ON L.database = D.oid
 WHERE L.pid <> pg_backend_pid()  -- このクエリ実行自体は対象外
+AND ( LOWER(D.datname) = LOWER($1) OR L.database IS NULL)
 `;
 
-    return await this.requestSql({ sql });
+    return await this.requestSql({ sql, conditions: { binds: [dbName] } });
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
