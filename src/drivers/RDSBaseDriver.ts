@@ -129,6 +129,8 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder>;
 
+  abstract getLocks(): Promise<ResultSetData>;
+
   async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
     const { sql } = params;
     const ast = parseQuery(sql);

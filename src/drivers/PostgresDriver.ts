@@ -3,6 +3,7 @@
 import {
   GeneralColumnType,
   RdhKey,
+  ResultSetData,
   ResultSetDataBuilder,
   createRdhKey,
   parseColumnType,
@@ -222,6 +223,27 @@ export class PostgresDriver extends RDSBaseDriver {
     return rdb;
   }
 
+  async getLocks(): Promise<ResultSetData> {
+    const sql = `SELECT
+    A.pid,
+    A.application_name AS "app",
+    A.usename AS "user",
+    A.client_addr,
+    A.state,
+    A.query,
+    C.relname AS "object_name",
+    L.locktype AS "lock_type",
+    L.mode AS "lock_mode",
+    L.granted
+FROM pg_stat_activity A
+INNER JOIN pg_locks L ON A.pid = L.pid
+LEFT join pg_class C ON L.relation = C.oid
+WHERE L.pid <> pg_backend_pid()  -- このクエリ実行自体は対象外
+`;
+
+    return await this.requestSql({ sql });
+  }
+
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
     const dbResources = new Array<RdsDatabase>();
     const db_list = await this.asyncGetDatabases(this.conRes.database);
@@ -297,8 +319,8 @@ export class PostgresDriver extends RDSBaseDriver {
     });
 
     rdh = await this.requestSql({
-      sql: `select quote_ident(viewname) as qname, definition from pg_catalog.pg_views 
-      where schemaname = '${dbSchema.name}' 
+      sql: `select quote_ident(viewname) as qname, definition from pg_catalog.pg_views
+      where schemaname = '${dbSchema.name}'
       order by viewname`,
     });
 
@@ -461,7 +483,7 @@ export class PostgresDriver extends RDSBaseDriver {
     const binds = [dbSchema.name.toLowerCase()];
 
     const rdh = await this.requestSql({
-      sql: `select 
+      sql: `select
       c.conname as constraint_name,
       t.relname as table_name,
       pg_get_constraintdef(c.oid) as add_constraint_ddl

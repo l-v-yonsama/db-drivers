@@ -4,6 +4,7 @@ import {
   isBinaryLike,
   isTextLike,
   parseColumnType as parseGeneralColumnType,
+  ResultSetData,
   ResultSetDataBuilder,
   sleep,
 } from '@l-v-yonsama/rdh';
@@ -186,6 +187,10 @@ export class SQLiteDriver extends RDSBaseDriver {
     const rdb = await this.requestSqlSub(explainParams);
 
     return rdb;
+  }
+
+  getLocks(): Promise<ResultSetData> {
+    throw new Error('SQLite does not support getLocks');
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {

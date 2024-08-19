@@ -1,4 +1,8 @@
-import { GeneralColumnType, sleep } from '@l-v-yonsama/rdh';
+import {
+  GeneralColumnType,
+  ResultSetDataBuilder,
+  sleep,
+} from '@l-v-yonsama/rdh';
 import {
   ConnectionSetting,
   DbColumn,
@@ -461,6 +465,45 @@ describe('PostgresDriver', () => {
         sql: `SELECT addition(1.2, 3.4) as answer`,
       });
       expect(rdh.rows[0].values).toEqual({ answer: 4.6 });
+    });
+  });
+
+  describe('locks', () => {
+    let driver1: RDSBaseDriver;
+    let driver2: RDSBaseDriver;
+    let driver3: RDSBaseDriver;
+
+    beforeEach(async () => {
+      driver1 = createRDSDriver();
+      driver2 = createRDSDriver();
+      driver3 = createRDSDriver(true);
+      await driver1.connect();
+      await driver2.connect();
+      await driver3.connect();
+    });
+
+    afterEach(async () => {
+      await driver1.disconnect();
+      await driver2.disconnect();
+      await driver3.disconnect();
+    });
+
+    it('should have object names', async () => {
+      const sql1 = 'SELECT * FROM EMP WHERE EMPNO = 7839 FOR UPDATE';
+      const sql2 = 'UPDATE EMP SET SAL=SAL+1 WHERE EMPNO = 7839';
+      await driver1.begin();
+      await driver2.begin();
+      await driver1.requestSql({ sql: sql1 });
+
+      driver2.requestSql({ sql: sql2 });
+      const result3 = await driver3.getLocks();
+      console.log(ResultSetDataBuilder.from(result3).toMarkdown());
+      await driver1.rollback();
+      await driver2.kill();
+      const objectNames = result3.rows
+        .filter((it) => it.values['lock_mode'] === 'RowShareLock')
+        .map((it) => it.values['object_name']);
+      expect(objectNames).toEqual(expect.arrayContaining(['emp', 'emp_pkey']));
     });
   });
 

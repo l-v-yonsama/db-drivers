@@ -1,6 +1,7 @@
 import {
   GeneralColumnType,
   RdhKey,
+  ResultSetData,
   ResultSetDataBuilder,
   createRdhKey,
   parseColumnType,
@@ -255,6 +256,59 @@ export class MySQLDriver extends RDSBaseDriver {
     return rdb;
   }
 
+  async getVersion(): Promise<string> {
+    const sql = 'SELECT VERSION() as version';
+    const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
+    return rdb.rs.rows[0].values.version;
+  }
+
+  async getLocks(): Promise<ResultSetData> {
+    let sql = '';
+    const version = await this.getVersion();
+    if (version.startsWith('8.')) {
+      sql = `
+        SELECT
+            t.THREAD_ID AS 'thread_id',
+            t.PROCESSLIST_ID AS 'processlist_id',
+            t.PROCESSLIST_USER AS 'user',
+            t.PROCESSLIST_HOST AS 'host',
+            t.PROCESSLIST_DB AS 'db',
+            t.PROCESSLIST_COMMAND AS 'command',
+            t.PROCESSLIST_TIME AS 'time',
+            t.PROCESSLIST_STATE AS 'state',
+            t.PROCESSLIST_INFO AS 'query',
+            l.OBJECT_SCHEMA AS 'object_schema',
+            l.OBJECT_NAME AS 'object_name',
+            l.LOCK_TYPE AS 'lock_type',
+            l.LOCK_MODE AS 'lock_mode',
+            l.LOCK_STATUS AS 'lock_status',
+            l.LOCK_DATA AS 'lock_data'
+        FROM
+            performance_schema.threads t
+        JOIN
+            performance_schema.data_locks l ON t.THREAD_ID = l.THREAD_ID;
+      `;
+    } else {
+      sql = `
+        SELECT
+            r.trx_id,
+            r.trx_state,
+            r.trx_started,
+            r.trx_query AS 'query',
+            l.lock_type  ,
+            l.lock_mode  ,
+            l.lock_table  ,
+            l.lock_index
+        FROM
+            information_schema.innodb_trx r
+        JOIN
+            information_schema.innodb_locks l ON r.trx_id = l.lock_trx_id;
+      `;
+    }
+
+    return await this.requestSql({ sql });
+  }
+
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
     const dbResources = new Array<RdsDatabase>();
     const dbDatabase = new RdsDatabase(this.conRes.database);
@@ -316,7 +370,7 @@ export class MySQLDriver extends RDSBaseDriver {
   async setColumns(dbSchema: DbSchema): Promise<void> {
     const binds = [dbSchema.name];
     const rdh = await this.requestSql({
-      sql: `SELECT 
+      sql: `SELECT
             TABLE_NAME as tname,
             COLUMN_NAME as name,
             DATA_TYPE as col_type,
@@ -359,8 +413,8 @@ export class MySQLDriver extends RDSBaseDriver {
     const binds = [dbSchema.name.toLowerCase()];
 
     const rdh = await this.requestSql({
-      sql: `select stat.table_name as table_name, 
-      stat.index_name as index_name, 
+      sql: `select stat.table_name as table_name,
+      stat.index_name as index_name,
       group_concat(stat.column_name order by stat.seq_in_index separator ',') as columns
   from information_schema.statistics stat
   join information_schema.table_constraints tco on (stat.table_schema = tco.table_schema
@@ -411,7 +465,7 @@ export class MySQLDriver extends RDSBaseDriver {
     const binds = [dbSchema.name.toLowerCase()];
 
     const rdh = await this.requestSql({
-      sql: `SELECT 
+      sql: `SELECT
       usg.table_name as table_name,
       usg.column_name as column_name,
       usg.referenced_table_name as referenced_table_name,
