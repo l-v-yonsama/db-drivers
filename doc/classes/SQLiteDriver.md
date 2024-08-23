@@ -47,6 +47,7 @@
 - [getName](SQLiteDriver.md#getname)
 - [getPositionalCharacter](SQLiteDriver.md#getpositionalcharacter)
 - [getRdsDatabase](SQLiteDriver.md#getrdsdatabase)
+- [getSessions](SQLiteDriver.md#getsessions)
 - [getTestSqlStatement](SQLiteDriver.md#gettestsqlstatement)
 - [initBaseStatus](SQLiteDriver.md#initbasestatus)
 - [isLimitAsTop](SQLiteDriver.md#islimitastop)
@@ -86,7 +87,7 @@
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L32)
+[src/drivers/SQLiteDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L33)
 
 ## Properties
 
@@ -100,7 +101,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L44)
+[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L44)
 
 ___
 
@@ -114,7 +115,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L43)
+[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L43)
 
 ___
 
@@ -128,7 +129,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L46)
+[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L46)
 
 ___
 
@@ -142,7 +143,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L45)
+[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L45)
 
 ## Methods
 
@@ -160,7 +161,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L36)
+[src/drivers/SQLiteDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L37)
 
 ___
 
@@ -178,7 +179,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:405](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L405)
+[src/drivers/SQLiteDriver.ts:418](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L418)
 
 ___
 
@@ -196,7 +197,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L40)
+[src/drivers/SQLiteDriver.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L41)
 
 ___
 
@@ -214,7 +215,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L152)
+[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L152)
 
 ___
 
@@ -238,7 +239,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:255](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L255)
+[src/drivers/RDSBaseDriver.ts:261](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L261)
 
 ___
 
@@ -256,7 +257,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L51)
+[src/drivers/SQLiteDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L52)
 
 ___
 
@@ -280,7 +281,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L46)
+[src/drivers/RDSBaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L51)
 
 ___
 
@@ -304,7 +305,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L100)
+[src/drivers/RDSBaseDriver.ts:105](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L105)
 
 ___
 
@@ -329,7 +330,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L218)
+[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L218)
 
 ___
 
@@ -347,7 +348,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L171)
+[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L171)
 
 ___
 
@@ -371,7 +372,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:134](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L134)
+[src/drivers/RDSBaseDriver.ts:140](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L140)
 
 ___
 
@@ -395,7 +396,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L24)
+[src/drivers/SQLiteDriver.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L24)
 
 ___
 
@@ -419,7 +420,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L113)
+[src/drivers/RDSBaseDriver.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L118)
 
 ___
 
@@ -443,7 +444,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:172](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L172)
+[src/drivers/SQLiteDriver.ts:179](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L179)
 
 ___
 
@@ -473,7 +474,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L94)
+[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L94)
 
 ___
 
@@ -505,7 +506,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:268](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L268)
+[src/drivers/RDSBaseDriver.ts:274](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L274)
 
 ___
 
@@ -523,7 +524,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L56)
+[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L56)
 
 ___
 
@@ -541,7 +542,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L212)
+[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L212)
 
 ___
 
@@ -559,7 +560,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L197)
+[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L197)
 
 ___
 
@@ -577,7 +578,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L196)
+[src/drivers/SQLiteDriver.ts:209](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L209)
 
 ___
 
@@ -601,7 +602,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:192](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L192)
+[src/drivers/SQLiteDriver.ts:200](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L200)
 
 ___
 
@@ -619,7 +620,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L53)
 
 ___
 
@@ -637,7 +638,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:393](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L393)
+[src/drivers/SQLiteDriver.ts:406](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L406)
 
 ___
 
@@ -655,7 +656,31 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:66](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L66)
+[src/drivers/RDSBaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L71)
+
+___
+
+### getSessions
+
+▸ **getSessions**(`dbName`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dbName` | `string` |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Overrides
+
+[RDSBaseDriver](RDSBaseDriver.md).[getSessions](RDSBaseDriver.md#getsessions)
+
+#### Defined in
+
+[src/drivers/SQLiteDriver.ts:205](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L205)
 
 ___
 
@@ -673,7 +698,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L67)
+[src/drivers/SQLiteDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L74)
 
 ___
 
@@ -691,7 +716,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -709,7 +734,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:397](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L397)
+[src/drivers/SQLiteDriver.ts:410](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L410)
 
 ___
 
@@ -727,7 +752,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L64)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -745,7 +770,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:389](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L389)
+[src/drivers/SQLiteDriver.ts:402](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L402)
 
 ___
 
@@ -769,7 +794,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L67)
 
 ___
 
@@ -787,13 +812,22 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:401](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L401)
+[src/drivers/SQLiteDriver.ts:414](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L414)
 
 ___
 
 ### kill
 
-▸ **kill**(): `Promise`\<`string`\>
+▸ **kill**(`sesssionOrPid?`): `Promise`\<`string`\>
+
+Terminate (kill) a specific session.
+If sesssionOrPid is not specified, cancel the running request.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sesssionOrPid?` | `number` |
 
 #### Returns
 
@@ -805,7 +839,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L62)
+[src/drivers/SQLiteDriver.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L69)
 
 ___
 
@@ -829,7 +863,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L78)
+[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L78)
 
 ___
 
@@ -853,7 +887,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L74)
+[src/drivers/RDSBaseDriver.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L79)
 
 ___
 
@@ -877,7 +911,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L84)
+[src/drivers/SQLiteDriver.ts:91](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L91)
 
 ___
 
@@ -902,7 +936,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:221](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L221)
+[src/drivers/RDSBaseDriver.ts:227](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L227)
 
 ___
 
@@ -920,7 +954,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L44)
+[src/drivers/SQLiteDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L45)
 
 ___
 
@@ -944,7 +978,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/SQLiteDriver.ts#L49)
+[src/drivers/SQLiteDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/SQLiteDriver.ts#L50)
 
 ___
 
@@ -972,7 +1006,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:182](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L182)
+[src/drivers/RDSBaseDriver.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L188)
 
 ___
 
@@ -996,4 +1030,4 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L28)
+[src/drivers/RDSBaseDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L33)

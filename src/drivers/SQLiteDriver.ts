@@ -22,6 +22,7 @@ type ExecResult = {
 
 export class SQLiteDriver extends RDSBaseDriver {
   explainAnalyzeSqlSub(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
     throw new Error('SQLite does not support explain analyze');
@@ -59,7 +60,13 @@ export class SQLiteDriver extends RDSBaseDriver {
     return errorMessage;
   }
 
-  async kill(): Promise<string> {
+  /**
+   * Terminate (kill) a specific session.
+   * If sesssionOrPid is not specified, cancel the running request.
+   * @param sesssionOrPid
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async kill(sesssionOrPid?: number): Promise<string> {
     this.interrupted = true;
     return '';
   }
@@ -189,8 +196,14 @@ export class SQLiteDriver extends RDSBaseDriver {
     return rdb;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getLocks(dbName: string): Promise<ResultSetData> {
     throw new Error('SQLite does not support getLocks');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getSessions(dbName: string): Promise<ResultSetData> {
+    throw new Error('SQLite does not support getSessions');
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {

@@ -79,7 +79,7 @@ export async function init0(): Promise<void> {
       return await req.query(sql);
     };
 
-    await q('DROP DATABASE testdb');
+    // await q('DROP DATABASE testdb');
     await q('CREATE DATABASE testdb');
     await q('USE testdb');
     await q('DROP LOGIN testuser');
@@ -130,6 +130,10 @@ export async function init0(): Promise<void> {
       await q(`GRANT ${command} ON SCHEMA::schema0 TO testuser`);
       await q(`GRANT ${command} ON SCHEMA::schema1 TO testuser`);
     }
+
+    await q('USE master');
+    await q(`GRANT VIEW SERVER PERFORMANCE STATE to testuser`);
+
   } finally {
     if (con) {
       await con.close();

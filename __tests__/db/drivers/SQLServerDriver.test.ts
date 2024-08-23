@@ -1,4 +1,8 @@
-import { GeneralColumnType, sleep } from '@l-v-yonsama/rdh';
+import {
+  GeneralColumnType,
+  ResultSetDataBuilder,
+  sleep,
+} from '@l-v-yonsama/rdh';
 import {
   ConnectionSetting,
   DbColumn,
@@ -9,6 +13,8 @@ import {
   RdsDatabase,
   SQLServerDriver,
 } from '../../../src';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { init, init0 } from '../../setup/mssql';
 
 const baseConnectOption = {
   host: '127.0.0.1',
@@ -429,13 +435,106 @@ describe('SQLServerDriver', () => {
     });
   });
 
+  describe('locks', () => {
+    let driver1: RDSBaseDriver;
+    let driver2: RDSBaseDriver;
+    let driver3: RDSBaseDriver;
+
+    beforeEach(async () => {
+      driver1 = createRDSDriver();
+      driver2 = createRDSDriver();
+      driver3 = createRDSDriver();
+      await driver1.connect();
+      await driver2.connect();
+      await driver3.connect();
+    });
+
+    afterEach(async () => {
+      await driver1.disconnect();
+      await driver2.disconnect();
+      await driver3.disconnect();
+    }, 10000);
+
+    it('should have status', async () => {
+      const sql1 = 'UPDATE EMP SET SAL=SAL WHERE EMPNO = 7839';
+      const sql2 = 'UPDATE EMP SET SAL=SAL+1 WHERE EMPNO = 7839';
+
+      await driver1.begin();
+      await driver2.begin();
+
+      await driver1.requestSql({ sql: sql1 });
+      setTimeout(async () => {
+        const result3 = await driver3.getLocks('testDb');
+        const lockStatus = result3.rows
+          .filter(
+            (it) =>
+              it.values['request_mode'] === 'X' ||
+              it.values['request_mode'] === 'IX',
+          )
+          .map((it) => it.values['request_status']);
+        expect(lockStatus).toEqual(expect.arrayContaining(['GRANT', 'WAIT']));
+        await driver1.rollback();
+      }, 200);
+      await driver2.requestSql({ sql: sql2 });
+
+      await driver2.rollback();
+    });
+  });
+
+  describe('sessions', () => {
+    let driver1: RDSBaseDriver;
+    let driver2: RDSBaseDriver;
+    let driver3: RDSBaseDriver;
+
+    beforeEach(async () => {
+      driver1 = createRDSDriver();
+      driver2 = createRDSDriver();
+      driver3 = createRDSDriver();
+      await driver1.connect();
+      await driver2.connect();
+      await driver3.connect();
+    });
+
+    afterEach(async () => {
+      await driver1.disconnect();
+      await driver2.disconnect();
+      await driver3.disconnect();
+    }, 10000);
+
+    it('should have status', async () => {
+      const sql1 = 'UPDATE EMP SET SAL=SAL WHERE EMPNO = 7839';
+      const sql2 = 'UPDATE EMP SET SAL=SAL+1 WHERE EMPNO = 7839';
+      await driver1.begin();
+      await driver2.begin();
+      await driver1.requestSql({ sql: sql1 });
+      setTimeout(async () => {
+        const result3Before = await driver3.getSessions('testDb');
+
+        const sessionIdsBefore = result3Before.rows
+          .filter(
+            (it) =>
+              (it.values['query'] + '').indexOf(
+                'UPDATE [EMP] set [SAL] = [SAL]+@1',
+              ) >= 0,
+          )
+          .map((it) => it.values['session_id']);
+        expect(sessionIdsBefore).toHaveLength(1);
+        await driver1.rollback();
+      }, 200);
+
+      await driver2.requestSql({ sql: sql2 });
+      await driver2.rollback();
+    });
+  });
+
   function createRDSDriver(asRoot = false): SQLServerDriver {
     return asRoot
       ? new SQLServerDriver({
           ...connectOption,
           user: 'sa',
-          // database: 'master',
+          database: 'master',
           password: 'Pass123zxcv!',
+          name: 'mssqlRoot',
         })
       : new SQLServerDriver(connectOption);
   }

@@ -113,15 +113,25 @@ export class PostgresDriver extends RDSBaseDriver {
     return errorReason;
   }
 
-  async kill(): Promise<string> {
+  /**
+   * Terminate (kill) a specific session.
+   * If sesssionOrPid is not specified, cancel the running request.
+   * @param sesssionOrPid
+   */
+  async kill(sesssionOrPid?: number): Promise<string> {
     let extraPool: pg.Pool | undefined;
     let message = '';
     try {
-      if (this.pid === undefined) {
-        return message;
+      if (sesssionOrPid) {
+        extraPool = this.createPool();
+        await extraPool.query('SELECT pg_cancel_backend($1)', [sesssionOrPid]);
+      } else {
+        if (this.pid === undefined) {
+          return message;
+        }
+        extraPool = this.createPool();
+        await extraPool.query('SELECT pg_cancel_backend($1)', [this.pid]);
       }
-      extraPool = this.createPool();
-      await extraPool.query('SELECT pg_cancel_backend($1)', [this.pid]);
     } catch (e) {
       message = e.message;
     }
@@ -231,7 +241,7 @@ export class PostgresDriver extends RDSBaseDriver {
     A.client_addr,
     A.state,
     A.query,
-    D.datname AS "database",
+    A.datname AS "database",
     C.relname AS "object_name",
     L.locktype AS "lock_type",
     L.mode AS "lock_mode",
@@ -239,9 +249,27 @@ export class PostgresDriver extends RDSBaseDriver {
 FROM pg_stat_activity A
 INNER JOIN pg_locks L ON A.pid = L.pid
 LEFT join pg_class C ON L.relation = C.oid
-LEFT join pg_database D ON L.database = D.oid
 WHERE L.pid <> pg_backend_pid()  -- このクエリ実行自体は対象外
-AND ( LOWER(D.datname) = LOWER($1) OR L.database IS NULL)
+AND ( LOWER(A.datname) = LOWER($1) OR A.datname IS NULL)
+`;
+
+    return await this.requestSql({ sql, conditions: { binds: [dbName] } });
+  }
+
+  async getSessions(dbName: string): Promise<ResultSetData> {
+    const sql = `SELECT 
+    A.pid,
+    A.datname AS "database",
+    A.application_name AS "app",
+    A.usename AS "user",
+    A.client_addr,
+    A.state,
+    backend_start AS start_time,
+    A.query
+    FROM pg_stat_activity A
+WHERE A.pid <> pg_backend_pid()  -- このクエリ実行自体は対象外
+AND ( LOWER(A.datname) = LOWER($1) OR A.datname IS NULL)
+ORDER BY A.pid DESC
 `;
 
     return await this.requestSql({ sql, conditions: { binds: [dbName] } });

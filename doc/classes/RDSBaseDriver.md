@@ -55,6 +55,7 @@
 - [getName](RDSBaseDriver.md#getname)
 - [getPositionalCharacter](RDSBaseDriver.md#getpositionalcharacter)
 - [getRdsDatabase](RDSBaseDriver.md#getrdsdatabase)
+- [getSessions](RDSBaseDriver.md#getsessions)
 - [getTestSqlStatement](RDSBaseDriver.md#gettestsqlstatement)
 - [initBaseStatus](RDSBaseDriver.md#initbasestatus)
 - [isLimitAsTop](RDSBaseDriver.md#islimitastop)
@@ -94,7 +95,7 @@
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L20)
+[src/drivers/RDSBaseDriver.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L20)
 
 ## Properties
 
@@ -108,7 +109,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L44)
+[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L44)
 
 ___
 
@@ -122,7 +123,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L43)
+[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L43)
 
 ___
 
@@ -136,7 +137,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L46)
+[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L46)
 
 ___
 
@@ -150,7 +151,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L45)
+[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L45)
 
 ## Methods
 
@@ -164,7 +165,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:249](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L249)
+[src/drivers/RDSBaseDriver.ts:255](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L255)
 
 ___
 
@@ -182,7 +183,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L196)
+[src/drivers/BaseDriver.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L196)
 
 ___
 
@@ -196,7 +197,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:250](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L250)
+[src/drivers/RDSBaseDriver.ts:256](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L256)
 
 ___
 
@@ -214,7 +215,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L152)
+[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L152)
 
 ___
 
@@ -238,7 +239,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:255](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L255)
+[src/drivers/RDSBaseDriver.ts:261](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L261)
 
 ___
 
@@ -252,7 +253,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:253](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L253)
+[src/drivers/RDSBaseDriver.ts:259](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L259)
 
 ___
 
@@ -272,7 +273,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L46)
+[src/drivers/RDSBaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L51)
 
 ___
 
@@ -292,7 +293,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L100)
+[src/drivers/RDSBaseDriver.ts:105](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L105)
 
 ___
 
@@ -317,7 +318,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L218)
+[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L218)
 
 ___
 
@@ -335,7 +336,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L171)
+[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L171)
 
 ___
 
@@ -355,7 +356,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:134](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L134)
+[src/drivers/RDSBaseDriver.ts:140](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L140)
 
 ___
 
@@ -375,7 +376,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:149](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L149)
+[src/drivers/RDSBaseDriver.ts:155](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L155)
 
 ___
 
@@ -395,7 +396,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L113)
+[src/drivers/RDSBaseDriver.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L118)
 
 ___
 
@@ -415,7 +416,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:128](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L128)
+[src/drivers/RDSBaseDriver.ts:133](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L133)
 
 ___
 
@@ -445,7 +446,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L94)
+[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L94)
 
 ___
 
@@ -473,7 +474,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:268](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L268)
+[src/drivers/RDSBaseDriver.ts:274](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L274)
 
 ___
 
@@ -491,7 +492,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L56)
+[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L56)
 
 ___
 
@@ -509,7 +510,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L212)
+[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L212)
 
 ___
 
@@ -527,7 +528,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L197)
+[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L197)
 
 ___
 
@@ -545,7 +546,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L210)
+[src/drivers/BaseDriver.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L210)
 
 ___
 
@@ -565,7 +566,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:132](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L132)
+[src/drivers/RDSBaseDriver.ts:137](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L137)
 
 ___
 
@@ -583,7 +584,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L53)
 
 ___
 
@@ -597,7 +598,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L58)
+[src/drivers/RDSBaseDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L63)
 
 ___
 
@@ -611,7 +612,27 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:66](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L66)
+[src/drivers/RDSBaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L71)
+
+___
+
+### getSessions
+
+▸ **getSessions**(`dbName`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dbName` | `string` |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Defined in
+
+[src/drivers/RDSBaseDriver.ts:138](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L138)
 
 ___
 
@@ -625,7 +646,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L24)
+[src/drivers/RDSBaseDriver.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L24)
 
 ___
 
@@ -643,7 +664,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -657,7 +678,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L64)
+[src/drivers/RDSBaseDriver.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L69)
 
 ___
 
@@ -675,7 +696,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L64)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -689,7 +710,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L56)
+[src/drivers/RDSBaseDriver.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L61)
 
 ___
 
@@ -713,7 +734,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L67)
 
 ___
 
@@ -727,13 +748,22 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L60)
+[src/drivers/RDSBaseDriver.ts:65](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L65)
 
 ___
 
 ### kill
 
-▸ **kill**(): `Promise`\<`string`\>
+▸ **kill**(`sesssionOrPid?`): `Promise`\<`string`\>
+
+Terminate (kill) a specific session.
+If sesssionOrPid is not specified, cancel the running request.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sesssionOrPid?` | `number` |
 
 #### Returns
 
@@ -741,7 +771,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L26)
+[src/drivers/RDSBaseDriver.ts:31](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L31)
 
 ___
 
@@ -765,7 +795,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L78)
+[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L78)
 
 ___
 
@@ -785,7 +815,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L74)
+[src/drivers/RDSBaseDriver.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L79)
 
 ___
 
@@ -805,7 +835,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:109](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L109)
+[src/drivers/RDSBaseDriver.ts:114](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L114)
 
 ___
 
@@ -826,7 +856,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:221](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L221)
+[src/drivers/RDSBaseDriver.ts:227](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L227)
 
 ___
 
@@ -840,7 +870,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:251](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L251)
+[src/drivers/RDSBaseDriver.ts:257](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L257)
 
 ___
 
@@ -860,7 +890,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:252](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L252)
+[src/drivers/RDSBaseDriver.ts:258](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L258)
 
 ___
 
@@ -884,7 +914,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:182](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L182)
+[src/drivers/RDSBaseDriver.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L188)
 
 ___
 
@@ -908,4 +938,4 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L28)
+[src/drivers/RDSBaseDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L33)

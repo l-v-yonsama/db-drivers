@@ -23,7 +23,12 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
 
   protected abstract getTestSqlStatement(): string;
 
-  abstract kill(): Promise<string>;
+  /**
+   * Terminate (kill) a specific session.
+   * If sesssionOrPid is not specified, cancel the running request.
+   * @param sesssionOrPid
+   */
+  abstract kill(sesssionOrPid?: number): Promise<string>;
 
   async test(with_connect = false): Promise<string> {
     let errorReason = '';
@@ -130,6 +135,7 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   ): Promise<ResultSetDataBuilder>;
 
   abstract getLocks(dbName: string): Promise<ResultSetData>;
+  abstract getSessions(dbName: string): Promise<ResultSetData>;
 
   async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
     const { sql } = params;

@@ -497,13 +497,61 @@ describe('PostgresDriver', () => {
 
       driver2.requestSql({ sql: sql2 });
       const result3 = await driver3.getLocks('testDb');
-      console.log(ResultSetDataBuilder.from(result3).toMarkdown());
       await driver1.rollback();
       await driver2.kill();
       const objectNames = result3.rows
         .filter((it) => it.values['lock_mode'] === 'RowShareLock')
         .map((it) => it.values['object_name']);
       expect(objectNames).toEqual(expect.arrayContaining(['emp', 'emp_pkey']));
+    });
+  });
+
+  describe('sessions', () => {
+    let driver1: RDSBaseDriver;
+    let driver2: RDSBaseDriver;
+    let driver3: RDSBaseDriver;
+
+    beforeEach(async () => {
+      driver1 = createRDSDriver();
+      driver2 = createRDSDriver();
+      driver3 = createRDSDriver();
+      await driver1.connect();
+      await driver2.connect();
+      await driver3.connect();
+    });
+
+    afterEach(async () => {
+      await driver1.disconnect();
+      await driver2.disconnect();
+      await driver3.disconnect();
+    }, 10000);
+
+    it('should have status', async () => {
+      const sql1 = 'DELETE FROM EMP WHERE EMPNO = 7839';
+      const sql2 = 'UPDATE EMP SET SAL=SAL+1 WHERE EMPNO = 7839';
+      await driver1.begin();
+      await driver2.begin();
+      await driver1.requestSql({ sql: sql1 });
+      setTimeout(async () => {
+        const result3Before = await driver3.getSessions('testDb');
+        const sessionIdsBefore = result3Before.rows
+          .filter((it) => it.values['query'] === sql2)
+          .map((it) => it.values['pid']);
+        expect(sessionIdsBefore).toHaveLength(1);
+
+        const killResult = await driver3.kill(sessionIdsBefore[0]);
+        expect(killResult).toBe('');
+        const result3After = await driver3.getSessions('testDb');
+        const sessionIdsAfter = result3After.rows
+          .filter((it) => it.values['query'] === sql2)
+          .map((it) => it.values['pid']);
+        expect(sessionIdsAfter).toHaveLength(0);
+        await driver1.rollback();
+      }, 50);
+
+      await expect(driver2.requestSql({ sql: sql2 })).rejects.toThrow(
+        'canceling statement due to user request',
+      );
     });
   });
 

@@ -92,16 +92,25 @@ export class MySQLDriver extends RDSBaseDriver {
     return errorMessage;
   }
 
-  async kill(): Promise<string> {
+  /**
+   * Terminate (kill) a specific session.
+   * If sesssionOrPid is not specified, cancel the running request.
+   * @param sesssionOrPid
+   */
+  async kill(sesssionOrPid?: number): Promise<string> {
     let extraCon: mysql.Connection | undefined;
     let message = '';
     try {
       if (!this.con) {
         return message;
       }
-      const { threadId } = this.con;
       extraCon = await this.createConnection();
-      await extraCon.query(`KILL ${threadId}`);
+      if (sesssionOrPid) {
+        await extraCon.query(`KILL ${sesssionOrPid}`);
+      } else {
+        const { threadId } = this.con;
+        await extraCon.query(`KILL ${threadId}`);
+      }
     } catch (e) {
       message = e.message;
     }
@@ -288,7 +297,7 @@ export class MySQLDriver extends RDSBaseDriver {
         JOIN
             performance_schema.data_locks l ON t.THREAD_ID = l.THREAD_ID
         WHERE
-            LOWER(t.PROCESSLIST_DB) = LOWER('${dbName}');
+            LOWER(t.PROCESSLIST_DB) = LOWER(?);
       `;
 
       return await this.requestSql({ sql, conditions: { binds: [dbName] } });
@@ -312,6 +321,24 @@ export class MySQLDriver extends RDSBaseDriver {
 
       return await this.requestSql({ sql });
     }
+  }
+
+  async getSessions(dbName: string): Promise<ResultSetData> {
+    const sql = `SELECT 
+    ID AS session_id,
+    USER AS user,
+    HOST AS host,
+    DB AS "database",
+    COMMAND AS command,
+    TIME AS time,
+    STATE AS state,
+    INFO AS query
+FROM 
+    information_schema.PROCESSLIST
+WHERE LOWER(DB) = LOWER(?) AND ID != CONNECTION_ID()
+ORDER BY ID DESC`;
+
+    return await this.requestSql({ sql, conditions: { binds: [dbName] } });
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {

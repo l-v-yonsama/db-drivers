@@ -49,6 +49,7 @@
 - [getPositionalCharacter](MySQLDriver.md#getpositionalcharacter)
 - [getRdsDatabase](MySQLDriver.md#getrdsdatabase)
 - [getSchemas](MySQLDriver.md#getschemas)
+- [getSessions](MySQLDriver.md#getsessions)
 - [getTables](MySQLDriver.md#gettables)
 - [getTestSqlStatement](MySQLDriver.md#gettestsqlstatement)
 - [getVersion](MySQLDriver.md#getversion)
@@ -93,7 +94,7 @@
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L21)
+[src/drivers/MySQLDriver.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L21)
 
 ## Properties
 
@@ -107,7 +108,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L44)
+[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L44)
 
 ___
 
@@ -121,7 +122,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L43)
+[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L43)
 
 ___
 
@@ -135,7 +136,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L46)
+[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L46)
 
 ___
 
@@ -149,7 +150,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L45)
+[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L45)
 
 ## Methods
 
@@ -167,7 +168,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L25)
+[src/drivers/MySQLDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L25)
 
 ___
 
@@ -185,7 +186,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:547](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L547)
+[src/drivers/MySQLDriver.ts:574](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L574)
 
 ___
 
@@ -203,7 +204,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L29)
+[src/drivers/MySQLDriver.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L29)
 
 ___
 
@@ -221,7 +222,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L152)
+[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L152)
 
 ___
 
@@ -245,7 +246,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:255](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L255)
+[src/drivers/RDSBaseDriver.ts:261](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L261)
 
 ___
 
@@ -263,7 +264,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L75)
+[src/drivers/MySQLDriver.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L75)
 
 ___
 
@@ -287,7 +288,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L46)
+[src/drivers/RDSBaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L51)
 
 ___
 
@@ -311,7 +312,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L100)
+[src/drivers/RDSBaseDriver.ts:105](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L105)
 
 ___
 
@@ -336,7 +337,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L218)
+[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L218)
 
 ___
 
@@ -354,7 +355,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L171)
+[src/drivers/BaseDriver.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L171)
 
 ___
 
@@ -378,7 +379,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:134](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L134)
+[src/drivers/RDSBaseDriver.ts:140](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L140)
 
 ___
 
@@ -402,7 +403,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:244](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L244)
+[src/drivers/MySQLDriver.ts:253](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L253)
 
 ___
 
@@ -426,7 +427,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:113](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L113)
+[src/drivers/RDSBaseDriver.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L118)
 
 ___
 
@@ -450,7 +451,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:216](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L216)
+[src/drivers/MySQLDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L225)
 
 ___
 
@@ -472,7 +473,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L46)
+[src/drivers/MySQLDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L46)
 
 ___
 
@@ -502,7 +503,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L94)
+[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L94)
 
 ___
 
@@ -534,7 +535,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:268](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L268)
+[src/drivers/RDSBaseDriver.ts:274](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L274)
 
 ___
 
@@ -552,7 +553,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L56)
+[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L56)
 
 ___
 
@@ -570,7 +571,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L212)
+[src/drivers/BaseDriver.ts:212](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L212)
 
 ___
 
@@ -588,7 +589,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L197)
+[src/drivers/BaseDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L197)
 
 ___
 
@@ -606,7 +607,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:317](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L317)
+[src/drivers/MySQLDriver.ts:344](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L344)
 
 ___
 
@@ -630,7 +631,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:265](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L265)
+[src/drivers/MySQLDriver.ts:274](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L274)
 
 ___
 
@@ -648,7 +649,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L53)
 
 ___
 
@@ -666,7 +667,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:539](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L539)
+[src/drivers/MySQLDriver.ts:566](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L566)
 
 ___
 
@@ -684,7 +685,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:66](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L66)
+[src/drivers/RDSBaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L71)
 
 ___
 
@@ -704,7 +705,31 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:340](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L340)
+[src/drivers/MySQLDriver.ts:367](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L367)
+
+___
+
+### getSessions
+
+▸ **getSessions**(`dbName`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dbName` | `string` |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Overrides
+
+[RDSBaseDriver](RDSBaseDriver.md).[getSessions](RDSBaseDriver.md#getsessions)
+
+#### Defined in
+
+[src/drivers/MySQLDriver.ts:326](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L326)
 
 ___
 
@@ -724,7 +749,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:354](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L354)
+[src/drivers/MySQLDriver.ts:381](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L381)
 
 ___
 
@@ -742,7 +767,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:114](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L114)
+[src/drivers/MySQLDriver.ts:123](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L123)
 
 ___
 
@@ -756,7 +781,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:259](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L259)
+[src/drivers/MySQLDriver.ts:268](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L268)
 
 ___
 
@@ -774,7 +799,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -792,7 +817,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:543](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L543)
+[src/drivers/MySQLDriver.ts:570](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L570)
 
 ___
 
@@ -810,7 +835,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L64)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -828,7 +853,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:535](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L535)
+[src/drivers/MySQLDriver.ts:562](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L562)
 
 ___
 
@@ -852,7 +877,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L67)
 
 ___
 
@@ -870,13 +895,22 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L60)
+[src/drivers/RDSBaseDriver.ts:65](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L65)
 
 ___
 
 ### kill
 
-▸ **kill**(): `Promise`\<`string`\>
+▸ **kill**(`sesssionOrPid?`): `Promise`\<`string`\>
+
+Terminate (kill) a specific session.
+If sesssionOrPid is not specified, cancel the running request.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sesssionOrPid?` | `number` |
 
 #### Returns
 
@@ -888,7 +922,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L95)
+[src/drivers/MySQLDriver.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L100)
 
 ___
 
@@ -912,7 +946,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/BaseDriver.ts#L78)
+[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/BaseDriver.ts#L78)
 
 ___
 
@@ -936,7 +970,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L74)
+[src/drivers/RDSBaseDriver.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L79)
 
 ___
 
@@ -960,7 +994,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L118)
+[src/drivers/MySQLDriver.ts:127](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L127)
 
 ___
 
@@ -985,7 +1019,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:221](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L221)
+[src/drivers/RDSBaseDriver.ts:227](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L227)
 
 ___
 
@@ -1003,7 +1037,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L33)
+[src/drivers/MySQLDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L33)
 
 ___
 
@@ -1027,7 +1061,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L37)
+[src/drivers/MySQLDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L37)
 
 ___
 
@@ -1047,7 +1081,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:375](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L375)
+[src/drivers/MySQLDriver.ts:402](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L402)
 
 ___
 
@@ -1067,7 +1101,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:469](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L469)
+[src/drivers/MySQLDriver.ts:496](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L496)
 
 ___
 
@@ -1095,7 +1129,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:182](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L182)
+[src/drivers/RDSBaseDriver.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L188)
 
 ___
 
@@ -1115,7 +1149,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MySQLDriver.ts:417](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/MySQLDriver.ts#L417)
+[src/drivers/MySQLDriver.ts:444](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/MySQLDriver.ts#L444)
 
 ___
 
@@ -1139,4 +1173,4 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/caafbc82044a48e5029109abf0c09e5b0c5e8885/src/drivers/RDSBaseDriver.ts#L28)
+[src/drivers/RDSBaseDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/drivers/RDSBaseDriver.ts#L33)

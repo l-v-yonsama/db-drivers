@@ -110,7 +110,9 @@ export class SQLServerDriver extends RDSBaseDriver {
 
   async commit(): Promise<void> {
     try {
-      await this.tran?.commit();
+      if (this.tran) {
+        await this.tran?.commit();
+      }
     } finally {
       this.tran = undefined;
     }
@@ -118,13 +120,15 @@ export class SQLServerDriver extends RDSBaseDriver {
 
   async rollback(): Promise<void> {
     try {
-      await this.tran?.rollback();
+      if (this.tran) {
+        await this.tran?.rollback();
+      }
     } finally {
       this.tran = undefined;
     }
-    this.tran = undefined;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async setAutoCommit(value: boolean): Promise<void> {
     // do nothing.
   }
@@ -177,17 +181,60 @@ export class SQLServerDriver extends RDSBaseDriver {
     return errorMessage;
   }
 
-  async kill(): Promise<string> {
+  /**
+   * Terminate (kill) a specific session.
+   * If sesssionOrPid is not specified, cancel the running request.
+   * @param sesssionOrPid
+   */
+  async kill(sesssionOrPid?: number): Promise<string> {
     let message = '';
-    try {
-      if (!this.con && !this.req) {
-        return message;
+    if (sesssionOrPid) {
+      const authenticationType =
+        this.conRes.sqlServer?.authenticationType ??
+        SQLServerAuthenticationType.default;
+
+      let extraCon: ConnectionPool;
+
+      try {
+        if (
+          authenticationType === SQLServerAuthenticationType.useConnectString
+        ) {
+          extraCon = await connect(this.conRes.sqlServer?.connectString ?? '');
+        } else {
+          const options = this.createConnectOptions();
+          extraCon = await connect(options);
+        }
+        console.log('do kill1 L207', sesssionOrPid);
+        const req = extraCon.request();
+        console.log('do kill2 L207', sesssionOrPid);
+        req.input('1', sesssionOrPid);
+        await req.query(`KILL @1`);
+        console.log('do kill3 L207', sesssionOrPid);
+      } catch (e) {
+        message = e.message;
+      } finally {
+        if (extraCon) {
+          await extraCon.close();
+        }
       }
-      this.req.cancel();
-    } catch (e) {
-      message = e.message;
-    } finally {
-      this.req = undefined;
+    } else {
+      try {
+        if (!this.con && !this.req) {
+          return message;
+        }
+        if (this.req) {
+          this.req.cancel();
+        }
+      } catch (e) {
+        message = e.message;
+      } finally {
+        this.req = undefined;
+      }
+      try {
+        await this.rollback();
+      } catch (e) {
+        message = e.message;
+      }
     }
 
     return message;
@@ -225,6 +272,7 @@ export class SQLServerDriver extends RDSBaseDriver {
     // Return row results as a an array instead of a keyed object. Also adds columns array
     this.req.arrayRowMode = true;
     const result = await this.req.query(sql);
+    this.req = undefined;
     const elapsedTimeMilli = new Date().getTime() - startTime;
     const columns: ResultColumn[] | undefined = result['columns']?.[0];
 
@@ -292,6 +340,7 @@ export class SQLServerDriver extends RDSBaseDriver {
   }
 
   async explainAnalyzeSqlSub(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
     throw new Error('SQL Server does not support explain analyze');
@@ -312,14 +361,44 @@ JOIN
     sys.dm_exec_requests e ON r.request_session_id = e.session_id
 CROSS APPLY
     sys.dm_exec_sql_text(e.sql_handle) t
-WHERE
-    LOWER(DB_NAME(r.resource_database_id)) = LOWER($1)`;
+ WHERE
+    LOWER(DB_NAME(r.resource_database_id)) = LOWER(@1)`;
+
+    return await this.requestSql({ sql, conditions: { binds: [dbName] } });
+  }
+
+  async getSessions(dbName: string): Promise<ResultSetData> {
+    const sql = `SELECT 
+    s.session_id,
+    s.login_time,
+    s.host_name,
+    s.program_name,
+    s.login_name,
+    s.nt_domain,
+    s.status,
+    s.cpu_time,
+    s.memory_usage,
+    s.total_elapsed_time,
+    s.last_request_start_time,
+    s.reads,
+    s.writes,
+    db.name as database_name,
+    c.connection_id,
+    (
+      select text 
+      from sys.dm_exec_sql_text(c.most_recent_sql_handle)
+    ) as query
+FROM sys.dm_exec_sessions s
+LEFT OUTER JOIN sys.dm_exec_connections c ON c.session_id=s.session_id
+LEFT OUTER JOIN sys.sysdatabases db on db.dbid=s.database_id
+WHERE LOWER(DB_NAME(s.database_id)) = LOWER(@1) AND s.session_id != @@SPID
+ORDER BY s.session_id DESC
+`;
 
     return await this.requestSql({ sql, conditions: { binds: [dbName] } });
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
-    const st = new Date().getTime();
     const dbResources = new Array<RdsDatabase>();
     const dbDatabase = new RdsDatabase(this.conRes.database);
     dbResources.push(dbDatabase);
@@ -375,6 +454,7 @@ WHERE
   }
 
   async getTables(dbSchema: DbSchema): Promise<Array<DbTable>> {
+    const binds = [dbSchema.name];
     const rdh = await this.requestSql({
       sql: `SELECT
       m.TABLE_NAME as name,
@@ -393,9 +473,10 @@ WHERE
       INNER JOIN sys.schemas s ON (t.schema_id = s.schema_id)
       INNER JOIN sys.extended_properties ep
         ON ( ep.major_id = t.object_id AND ep.minor_id = 0 AND  ep.name = 'MS_Description')
-      WHERE s.name = '${dbSchema.name}'
+      WHERE s.name = @1
     ) s ON (m.TABLE_SCHEMA=s.schema_name AND m.TABLE_NAME = s.table_name)
-    WHERE m.TABLE_SCHEMA = '${dbSchema.name}'`,
+    WHERE m.TABLE_SCHEMA = @1`,
+      conditions: { binds },
     });
 
     return rdh.rows.map((r) => {
@@ -436,12 +517,13 @@ WHERE
         INNER join sys.columns sc On (so.object_id = sc.object_id and sep.minor_id = sc.column_id)
         WHERE
           sep.name = 'MS_Description' and so.type = 'U'
-          AND schema_name(so.schema_id) = '${dbSchema.name}'
+          AND schema_name(so.schema_id) = @1
       ) s ON (m.TABLE_SCHEMA = s.schema_name AND m.TABLE_NAME = s.table_name AND m.COLUMN_NAME = s.column_name)
       WHERE
-        m.TABLE_SCHEMA = '${dbSchema.name}'
+        m.TABLE_SCHEMA = @1
       ORDER BY
         m.ORDINAL_POSITION`,
+      conditions: { binds },
     });
 
     const constraint = await this.requestSql({
@@ -449,7 +531,8 @@ WHERE
     FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T
     JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME
     WHERE
-      T.TABLE_SCHEMA = '${dbSchema.name}' AND T.CONSTRAINT_TYPE IN ('PRIMARY KEY','UNIQUE')`,
+      T.TABLE_SCHEMA = @1 AND T.CONSTRAINT_TYPE IN ('PRIMARY KEY','UNIQUE')`,
+      conditions: { binds },
     });
 
     rdh.rows.forEach((r) => {
@@ -491,14 +574,16 @@ WHERE
   }
 
   async setUniqueKeys(dbSchema: DbSchema): Promise<void> {
+    const binds = [dbSchema.name];
     const rdh = await this.requestSql({
       sql: `SELECT T.TABLE_NAME as table_name, STRING_AGG( CONVERT(VARCHAR(max), C.COLUMN_NAME), ',') AS columns, T.CONSTRAINT_NAME as index_name
       FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T
       JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME
       WHERE
-        LOWER(T.TABLE_SCHEMA)='${dbSchema.name.toLowerCase()}'
+        LOWER(T.TABLE_SCHEMA)=LOWER(@1)
         AND T.CONSTRAINT_TYPE = 'UNIQUE'
       GROUP BY T.TABLE_NAME, T.CONSTRAINT_NAME `,
+      conditions: { binds },
     });
 
     rdh.rows.forEach((row) => {
@@ -532,6 +617,7 @@ WHERE
   //  order        customer_no customer              customer_no            order_ibfk_1
   //  order_detail order_no    order                 order_no               order_detail_ibfk_1
   async setForinKeys(dbSchema: DbSchema): Promise<void> {
+    const binds = [dbSchema.name];
     const rdh = await this.requestSql({
       sql: `SELECT
       C.TABLE_NAME as table_name,
@@ -547,7 +633,8 @@ WHERE
     INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU2 ON (C2.CONSTRAINT_SCHEMA = KCU2.CONSTRAINT_SCHEMA AND C2.CONSTRAINT_NAME = KCU2.CONSTRAINT_NAME AND KCU.ORDINAL_POSITION = KCU2.ORDINAL_POSITION)
     WHERE
       C.CONSTRAINT_TYPE = 'FOREIGN KEY'
-      AND LOWER(C.CONSTRAINT_SCHEMA) = '${dbSchema.name.toLowerCase()}'`,
+      AND LOWER(C.CONSTRAINT_SCHEMA) = LOWER(@1)`,
+      conditions: { binds },
     });
 
     rdh.rows.forEach((row) => {
@@ -615,8 +702,10 @@ WHERE
         await this.con.close();
         this.con = undefined;
       }
+
       return '';
     } catch (e) {
+      console.error(e);
       return e.message;
     } finally {
       this.tran = undefined;
@@ -651,7 +740,7 @@ WHERE
       connectionTimeout: 10000,
       pool: {
         min: 1,
-        max: 1,
+        max: 3,
       },
       options: {
         // If you are on Microsoft Azure, you need encryption:
