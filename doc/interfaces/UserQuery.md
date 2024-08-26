@@ -41,7 +41,7 @@ UserBaseQuery.email
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:354](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/types/drivers/Keycloak.ts#L354)
+[src/types/drivers/Keycloak.ts:354](https://github.com/l-v-yonsama/db-drivers/blob/8a6ac8fc7b670ba9ab4cc0cf2f458615d3a44507/src/types/drivers/Keycloak.ts#L354)
 
 ___
 
@@ -51,7 +51,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:360](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/types/drivers/Keycloak.ts#L360)
+[src/types/drivers/Keycloak.ts:360](https://github.com/l-v-yonsama/db-drivers/blob/8a6ac8fc7b670ba9ab4cc0cf2f458615d3a44507/src/types/drivers/Keycloak.ts#L360)
 
 ___
 
@@ -65,7 +65,7 @@ PaginationQuery.first
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:350](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/types/drivers/Keycloak.ts#L350)
+[src/types/drivers/Keycloak.ts:350](https://github.com/l-v-yonsama/db-drivers/blob/8a6ac8fc7b670ba9ab4cc0cf2f458615d3a44507/src/types/drivers/Keycloak.ts#L350)
 
 ___
 
@@ -79,7 +79,7 @@ UserBaseQuery.firstName
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:355](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/types/drivers/Keycloak.ts#L355)
+[src/types/drivers/Keycloak.ts:355](https://github.com/l-v-yonsama/db-drivers/blob/8a6ac8fc7b670ba9ab4cc0cf2f458615d3a44507/src/types/drivers/Keycloak.ts#L355)
 
 ___
 
@@ -93,7 +93,7 @@ UserBaseQuery.lastName
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:356](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/types/drivers/Keycloak.ts#L356)
+[src/types/drivers/Keycloak.ts:356](https://github.com/l-v-yonsama/db-drivers/blob/8a6ac8fc7b670ba9ab4cc0cf2f458615d3a44507/src/types/drivers/Keycloak.ts#L356)
 
 ___
 
@@ -107,7 +107,7 @@ PaginationQuery.max
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:351](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/types/drivers/Keycloak.ts#L351)
+[src/types/drivers/Keycloak.ts:351](https://github.com/l-v-yonsama/db-drivers/blob/8a6ac8fc7b670ba9ab4cc0cf2f458615d3a44507/src/types/drivers/Keycloak.ts#L351)
 
 ___
 
@@ -121,7 +121,7 @@ SearchQuery.search
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:347](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/types/drivers/Keycloak.ts#L347)
+[src/types/drivers/Keycloak.ts:347](https://github.com/l-v-yonsama/db-drivers/blob/8a6ac8fc7b670ba9ab4cc0cf2f458615d3a44507/src/types/drivers/Keycloak.ts#L347)
 
 ___
 
@@ -135,4 +135,4 @@ UserBaseQuery.username
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:357](https://github.com/l-v-yonsama/db-drivers/blob/5e07a2a8db210268220a8900c4a67f54efd9527c/src/types/drivers/Keycloak.ts#L357)
+[src/types/drivers/Keycloak.ts:357](https://github.com/l-v-yonsama/db-drivers/blob/8a6ac8fc7b670ba9ab4cc0cf2f458615d3a44507/src/types/drivers/Keycloak.ts#L357)

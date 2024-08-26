@@ -189,6 +189,9 @@ export class SQLServerDriver extends RDSBaseDriver {
   async kill(sesssionOrPid?: number): Promise<string> {
     let message = '';
     if (sesssionOrPid) {
+      if (typeof sesssionOrPid !== 'number') {
+        return 'Invalid session id';
+      }
       const authenticationType =
         this.conRes.sqlServer?.authenticationType ??
         SQLServerAuthenticationType.default;
@@ -204,12 +207,12 @@ export class SQLServerDriver extends RDSBaseDriver {
           const options = this.createConnectOptions();
           extraCon = await connect(options);
         }
-        console.log('do kill1 L207', sesssionOrPid);
         const req = extraCon.request();
-        console.log('do kill2 L207', sesssionOrPid);
-        req.input('1', sesssionOrPid);
-        await req.query(`KILL @1`);
-        console.log('do kill3 L207', sesssionOrPid);
+        // Incorrect syntax near '@1'.
+        // req.input('1', sesssionOrPid);
+        // await req.query(`KILL @1`);
+
+        await req.query(`KILL ${sesssionOrPid}`);
       } catch (e) {
         message = e.message;
       } finally {
