@@ -748,7 +748,8 @@ ORDER BY s.session_id DESC
       options: {
         // If you are on Microsoft Azure, you need encryption:
         encrypt: sqlServer?.encrypt ?? false,
-        // database: 'your_database'  //update me
+        //
+        trustServerCertificate: sqlServer?.trustServerCertificate ?? false,
       },
     };
 
