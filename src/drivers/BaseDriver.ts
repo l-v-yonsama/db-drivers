@@ -162,6 +162,7 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
         errorReason = 'Connection property is nothing';
       }
     } catch (e) {
+      console.error(e);
       errorReason = e.message;
     }
     this.isConnected = errorReason === '';

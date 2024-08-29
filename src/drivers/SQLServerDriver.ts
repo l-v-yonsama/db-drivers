@@ -168,7 +168,6 @@ export class SQLServerDriver extends RDSBaseDriver {
     try {
       errorMessage = await this.test();
     } catch (e) {
-      console.error(e);
       errorMessage = e.message;
     }
     try {
