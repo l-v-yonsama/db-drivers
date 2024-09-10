@@ -7,11 +7,16 @@ import {
   ResultSetDataBuilder,
   createRdhKey,
   parseColumnType,
+  toNum,
 } from '@l-v-yonsama/rdh';
 import { EnumValues } from 'enum-values';
 import { PoolConfig, default as pg } from 'pg';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
-import { ConnectionSetting, QueryParams } from '../types';
+import {
+  ConnectionSetting,
+  QueryParams,
+  TransactionIsolationLevel,
+} from '../types';
 import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 import { RDSBaseDriver } from './RDSBaseDriver';
 
@@ -25,7 +30,14 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   async begin(): Promise<void> {
-    await this.client.query('BEGIN');
+    const { transactionIsolationLevel } = this.conRes;
+    if (transactionIsolationLevel) {
+      await this.client.query(
+        `BEGIN TRANSACTION ISOLATION LEVEL ${transactionIsolationLevel}`,
+      );
+    } else {
+      await this.client.query('BEGIN');
+    }
   }
 
   async commit(): Promise<void> {
@@ -40,6 +52,38 @@ export class PostgresDriver extends RDSBaseDriver {
     // set autocommit = ON;  -->> do nothing.
     // set autocommit = OFF;  -->> use flowTransaction.
     // see. https://node-postgres.com/features/transactions
+  }
+
+  async getLockWaitTimeout(): Promise<number> {
+    const { rows } = await this.client.query('show lock_timeout');
+    if (rows.length) {
+      const s = rows[0]['lock_timeout'] as string;
+      if (s.endsWith('ms')) {
+        return toNum(s.substring(0, s.length - 2));
+      } else if (s.endsWith('s')) {
+        return toNum(s.substring(0, s.length - 1)) * 1000;
+      }
+      if (s.match(/^[0-9]+$/)) {
+        return toNum(s);
+      }
+      throw new Error('Unknown format ' + s);
+    }
+    throw new Error('Missing lock_wait_timeout');
+  }
+
+  private async setLockWaitTimeout(ms: number): Promise<void> {
+    await this.client.query(`SET lock_timeout = '${ms}ms'`);
+  }
+
+  async getTransactionIsolationLevel(): Promise<TransactionIsolationLevel> {
+    const { rows } = await this.client.query(
+      `SHOW TRANSACTION ISOLATION LEVEL`,
+    );
+    if (rows.length && rows[0]['transaction_isolation']) {
+      const s = rows[0]['transaction_isolation'] as string;
+      return s.toUpperCase().replace('-', ' ') as TransactionIsolationLevel;
+    }
+    throw new Error('Missing transaction_isolation');
   }
 
   //      name: 'name',
@@ -104,6 +148,9 @@ export class PostgresDriver extends RDSBaseDriver {
       if (this.conRes.timezone) {
         // e.g. SET TIME ZONE 'UTC'
         await this.client.query(`SET TIME ZONE '${this.conRes.timezone}'`);
+      }
+      if (this.conRes.lockWaitTimeoutMs) {
+        await this.setLockWaitTimeout(this.conRes.lockWaitTimeoutMs);
       }
     } catch (e) {
       console.error(e);
@@ -231,6 +278,12 @@ export class PostgresDriver extends RDSBaseDriver {
     rdb.updateKeyAlign('EXPLAIN', 'left');
 
     return rdb;
+  }
+
+  async getVersion(): Promise<string> {
+    const sql = 'SHOW server_version as version';
+    const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
+    return rdb.rs.rows[0].values.version;
   }
 
   async getLocks(dbName: string): Promise<ResultSetData> {
@@ -629,6 +682,12 @@ ORDER BY A.pid DESC
         database: this.conRes.database,
       },
     );
+
+    if (this.conRes.queryTimeoutMs) {
+      // https://github.com/brianc/node-postgres/issues/3219
+      // options.query_timeout = this.conRes.queryTimeoutMs;
+      options.statement_timeout = this.conRes.queryTimeoutMs;
+    }
 
     if (this.conRes.ssl?.use) {
       options.ssl = {

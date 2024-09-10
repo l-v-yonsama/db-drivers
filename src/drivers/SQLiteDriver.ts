@@ -12,7 +12,11 @@ import * as fs from 'fs';
 import initSql, { BindParams, type Database } from 'sql.js/dist/sql-wasm.js';
 import { parseQuery } from '../helpers';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
-import { ConnectionSetting, QueryParams } from '../types';
+import {
+  ConnectionSetting,
+  QueryParams,
+  TransactionIsolationLevel,
+} from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 
 type ExecResult = {
@@ -196,6 +200,12 @@ export class SQLiteDriver extends RDSBaseDriver {
     return rdb;
   }
 
+  async getVersion(): Promise<string> {
+    const sql = 'SELECT sqlite_version() AS version';
+    const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
+    return rdb.rs.rows[0].values.version;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getLocks(dbName: string): Promise<ResultSetData> {
     throw new Error('SQLite does not support getLocks');
@@ -204,6 +214,10 @@ export class SQLiteDriver extends RDSBaseDriver {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getSessions(dbName: string): Promise<ResultSetData> {
     throw new Error('SQLite does not support getSessions');
+  }
+
+  getTransactionIsolationLevel(): Promise<TransactionIsolationLevel> {
+    throw new Error('SQLite does not support getTransactionIsolationLevel');
   }
 
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {

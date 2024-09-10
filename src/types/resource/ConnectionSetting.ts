@@ -69,6 +69,42 @@ export type SQLServerSetting = {
   connectString?: string;
 };
 
+export type TransactionIsolationLevel =
+  /**
+   * READ UNCOMMITTED
+   * コミットされていない変更を他のトランザクションから参照できる設定
+   * ダーティリード、ファジーリード、ファントムリードが全て発生
+   */
+  | 'READ UNCOMMITTED'
+  /**
+   * READ COMMITTED
+   * コミットされた変更を他のトランザクションから参照できる設定
+   * Oracle、PostgreSQL、SQL Serverでのデフォルトのトランザクション分離レベル
+   * ファジーリード、ファントムリードが発生
+   */
+  | 'READ COMMITTED'
+  /**
+   * REPEATABLE READ
+   * コミットされた追加・削除を他のトランザクションから参照できる設定
+   * MySQLのデフォルトのトランザクション分離レベル
+   * ファントムリードが発生
+   * MySQL(InnoDB)はREPEATABLE READでもファントムリードが発生しない
+   */
+  | 'REPEATABLE READ'
+  /**
+   * SERIALIZABLE
+   * 強制的にトランザクションを順序付けて処理する一番高いトランザクション分離レベル
+   */
+  | 'SERIALIZABLE'
+  /**
+   * Only SQL-SERVER
+   */
+  | 'UNSPECIFIED'
+  /**
+   * Only SQL-SERVER
+   */
+  | 'SNAPSHOT';
+
 export type ConnectionSetting = {
   id?: string;
   dbType: DBType;
@@ -92,4 +128,7 @@ export type ConnectionSetting = {
    * The timezone used to store local dates.
    */
   timezone?: string;
+  transactionIsolationLevel?: TransactionIsolationLevel;
+  queryTimeoutMs?: number;
+  lockWaitTimeoutMs?: number;
 };

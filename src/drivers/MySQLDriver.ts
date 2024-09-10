@@ -6,12 +6,17 @@ import {
   createRdhKey,
   parseColumnType,
   toBoolean,
+  toNum,
 } from '@l-v-yonsama/rdh';
 import { EnumValues } from 'enum-values';
 import * as mysql from 'mysql2/promise';
 import { ResultSetHeader } from 'mysql2/promise';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
-import { ConnectionSetting, QueryParams } from '../types';
+import {
+  ConnectionSetting,
+  QueryParams,
+  TransactionIsolationLevel,
+} from '../types';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
 import { RDSBaseDriver } from './RDSBaseDriver';
 
@@ -41,6 +46,54 @@ export class MySQLDriver extends RDSBaseDriver {
     //   const result = (rows as any[])[0]['@@session.autocommit'];
     //   console.log('@@session.autocommit = ', result);
     // }
+  }
+
+  async getLockWaitTimeout(): Promise<number> {
+    if (!this.con) {
+      throw new Error('No connection');
+    }
+    const [rows] = await this.con.execute<mysql.RowDataPacket[]>(
+      `SHOW VARIABLES LIKE 'innodb_lock_wait_timeout'`,
+    );
+    if (rows.length) {
+      return toNum(rows[0]['Value']);
+    }
+    throw new Error('Missing innodb_lock_wait_timeout');
+  }
+
+  private async setLockWaitTimeout(ms: number): Promise<void> {
+    await this.con?.execute(
+      `SET innodb_lock_wait_timeout = ${Math.round(ms / 1000)}`,
+    );
+  }
+
+  private async setMaxExecutionTime(ms: number): Promise<void> {
+    await this.con?.execute(`SET SESSION max_execution_time = ${ms}`);
+  }
+
+  async getTransactionIsolationLevel(): Promise<TransactionIsolationLevel> {
+    if (!this.con) {
+      throw new Error('No connection');
+    }
+    let sql = '';
+    const version = await this.getMajorVersion();
+    if (version >= 8) {
+      sql = `SELECT @@session.transaction_isolation as isolation_lv`;
+    } else {
+      sql = `SELECT @@tx_isolation as isolation_lv`;
+    }
+    const [rows] = await this.con.execute<mysql.RowDataPacket[]>(sql);
+    if (rows.length && rows[0]['isolation_lv']) {
+      const s = rows[0]['isolation_lv'] as string;
+      return s.toUpperCase().replace('-', ' ') as TransactionIsolationLevel;
+    }
+    throw new Error('Missing transaction_isolation');
+  }
+
+  async setTransactionIsolationLevel(
+    value: TransactionIsolationLevel,
+  ): Promise<void> {
+    await this.con?.execute(`SET SESSION TRANSACTION ISOLATION LEVEL ${value}`);
   }
 
   fieldInfo2Key(
@@ -84,6 +137,17 @@ export class MySQLDriver extends RDSBaseDriver {
       if (this.conRes.timezone) {
         // e.g. SET TIME ZONE '+00:00'
         await this.con.query(`SET time_zone = ?`, [this.conRes.timezone]);
+      }
+      if (this.conRes.queryTimeoutMs !== undefined) {
+        await this.setMaxExecutionTime(this.conRes.queryTimeoutMs);
+      }
+      if (this.conRes.lockWaitTimeoutMs !== undefined) {
+        await this.setLockWaitTimeout(this.conRes.lockWaitTimeoutMs);
+      }
+      if (this.conRes.transactionIsolationLevel) {
+        await this.setTransactionIsolationLevel(
+          this.conRes.transactionIsolationLevel,
+        );
       }
     } catch (e) {
       console.error(e);
@@ -273,8 +337,8 @@ export class MySQLDriver extends RDSBaseDriver {
 
   async getLocks(dbName: string): Promise<ResultSetData> {
     let sql = '';
-    const version = await this.getVersion();
-    if (version.startsWith('8.')) {
+    const version = await this.getMajorVersion();
+    if (version >= 8) {
       sql = `
         SELECT
             t.THREAD_ID AS 'thread_id',

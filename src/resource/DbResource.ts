@@ -22,6 +22,7 @@ import {
   SQLServerSetting,
   SshSetting,
   SslSetting,
+  TransactionIsolationLevel,
   UniqueKeyConstraint,
 } from '../types';
 
@@ -265,6 +266,10 @@ export class DbConnection
   public iamSolution?: IamSolutionSetting;
   public firebase?: FirebaseSetting;
   public sqlServer?: SQLServerSetting;
+  public timezone?: string;
+  public transactionIsolationLevel?: TransactionIsolationLevel;
+  public queryTimeoutMs?: number;
+  public lockWaitTimeoutMs?: number;
 
   constructor(prop: any) {
     super(ResourceType.Connection, prop.name);
@@ -284,6 +289,10 @@ export class DbConnection
     this.iamSolution = prop.iamSolution;
     this.firebase = prop.firebase;
     this.sqlServer = prop.sqlServer;
+    this.timezone = prop.timezone;
+    this.transactionIsolationLevel = prop.transactionIsolationLevel;
+    this.queryTimeoutMs = prop.queryTimeoutMs;
+    this.lockWaitTimeoutMs = prop.lockWaitTimeoutMs;
     this.isConnected = false;
     this.isInProgress = false;
   }

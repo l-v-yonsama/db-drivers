@@ -5,9 +5,17 @@ import {
   RdhKey,
   ResultSetData,
   ResultSetDataBuilder,
+  toNum,
 } from '@l-v-yonsama/rdh';
 import { EnumValues } from 'enum-values';
-import { config, connect, ConnectionPool, Request, Transaction } from 'mssql';
+import {
+  config,
+  connect,
+  ConnectionPool,
+  Request,
+  Transaction,
+  ISOLATION_LEVEL,
+} from 'mssql';
 
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
@@ -16,6 +24,7 @@ import {
   ResultColumn,
   SQLServerAuthenticationType,
   SQLServerColumnType,
+  TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 
@@ -105,7 +114,31 @@ export class SQLServerDriver extends RDSBaseDriver {
 
   async begin(): Promise<void> {
     this.tran = this.con.transaction();
-    await this.tran.begin();
+    const { transactionIsolationLevel } = this.conRes;
+    if (transactionIsolationLevel) {
+      switch (transactionIsolationLevel) {
+        case 'READ UNCOMMITTED':
+          await this.tran.begin(ISOLATION_LEVEL.READ_UNCOMMITTED);
+          break;
+        case 'READ COMMITTED':
+          await this.tran.begin(ISOLATION_LEVEL.READ_COMMITTED);
+          break;
+        case 'REPEATABLE READ':
+          await this.tran.begin(ISOLATION_LEVEL.REPEATABLE_READ);
+          break;
+        case 'SERIALIZABLE':
+          await this.tran.begin(ISOLATION_LEVEL.SERIALIZABLE);
+          break;
+        default:
+          await this.tran.begin();
+          break;
+      }
+    } else {
+      await this.tran.begin();
+    }
+    if (this.conRes.lockWaitTimeoutMs) {
+      await this.setLockWaitTimeout(this.conRes.lockWaitTimeoutMs);
+    }
   }
 
   async commit(): Promise<void> {
@@ -131,6 +164,34 @@ export class SQLServerDriver extends RDSBaseDriver {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async setAutoCommit(value: boolean): Promise<void> {
     // do nothing.
+  }
+
+  async getLockWaitTimeout(): Promise<number> {
+    const sql = `SELECT @@LOCK_TIMEOUT AS lock_timeout`;
+    const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
+    return toNum(rdb.rs.rows[0].values.lock_timeout);
+  }
+
+  private async setLockWaitTimeout(ms: number): Promise<void> {
+    const req = this.con.request();
+    await req.batch(`SET LOCK_TIMEOUT ${ms}`);
+  }
+
+  async getTransactionIsolationLevel(): Promise<TransactionIsolationLevel> {
+    const sql = `SELECT CASE transaction_isolation_level 
+    WHEN 0 THEN 'UNSPECIFIED' 
+    WHEN 1 THEN 'READ UNCOMMITTED' 
+    WHEN 2 THEN 'READ COMMITTED' 
+    WHEN 3 THEN 'REPEATABLE READ' 
+    WHEN 4 THEN 'SERIALIZABLE' 
+    WHEN 5 THEN 'SNAPSHOT' END AS transaction_isolation 
+FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
+    const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
+    if (rdb.rs.rows.length && rdb.rs.rows[0].values['transaction_isolation']) {
+      const s = rdb.rs.rows[0].values['transaction_isolation'] as string;
+      return s.toUpperCase().replace('-', ' ') as TransactionIsolationLevel;
+    }
+    throw new Error('Missing transaction_isolation');
   }
 
   fieldInfo2Key(
@@ -175,6 +236,10 @@ export class SQLServerDriver extends RDSBaseDriver {
       //   // e.g. SET TIME ZONE '+00:00'
       //   await this.con.query(`SET time_zone = ?`, [this.conRes.timezone]);
       // }
+      //
+      if (this.conRes.lockWaitTimeoutMs) {
+        await this.setLockWaitTimeout(this.conRes.lockWaitTimeoutMs);
+      }
     } catch (e) {
       errorMessage = e.message;
     }
@@ -347,6 +412,12 @@ export class SQLServerDriver extends RDSBaseDriver {
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
     throw new Error('SQL Server does not support explain analyze');
+  }
+
+  async getVersion(): Promise<string> {
+    const sql = `SELECT SERVERPROPERTY('productversion') as version`;
+    const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
+    return rdb.rs.rows[0].values.version;
   }
 
   async getLocks(dbName: string): Promise<ResultSetData> {
@@ -736,7 +807,8 @@ ORDER BY s.session_id DESC
   }
 
   private createConnectOptions(): config {
-    const { sqlServer } = this.conRes;
+    const { sqlServer, transactionIsolationLevel, queryTimeoutMs } =
+      this.conRes;
     const options: config = {
       server: this.conRes.host,
       database: this.conRes.database,
@@ -752,6 +824,30 @@ ORDER BY s.session_id DESC
         trustServerCertificate: sqlServer?.trustServerCertificate ?? false,
       },
     };
+    if (transactionIsolationLevel) {
+      switch (transactionIsolationLevel) {
+        case 'READ UNCOMMITTED':
+          options.options.connectionIsolationLevel =
+            ISOLATION_LEVEL.READ_UNCOMMITTED;
+          break;
+        case 'READ COMMITTED':
+          options.options.connectionIsolationLevel =
+            ISOLATION_LEVEL.READ_COMMITTED;
+          break;
+        case 'REPEATABLE READ':
+          options.options.connectionIsolationLevel =
+            ISOLATION_LEVEL.REPEATABLE_READ;
+          break;
+        case 'SERIALIZABLE':
+          options.options.connectionIsolationLevel =
+            ISOLATION_LEVEL.SERIALIZABLE;
+          break;
+      }
+    }
+
+    if (queryTimeoutMs) {
+      options.requestTimeout = queryTimeoutMs;
+    }
 
     const authType =
       sqlServer?.authenticationType ?? SQLServerAuthenticationType.default;

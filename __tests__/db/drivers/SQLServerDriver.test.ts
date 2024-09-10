@@ -1,8 +1,4 @@
-import {
-  GeneralColumnType,
-  ResultSetDataBuilder,
-  sleep,
-} from '@l-v-yonsama/rdh';
+import { GeneralColumnType, sleep, toNum } from '@l-v-yonsama/rdh';
 import {
   ConnectionSetting,
   DbColumn,
@@ -12,6 +8,7 @@ import {
   RDSBaseDriver,
   RdsDatabase,
   SQLServerDriver,
+  TransactionIsolationLevel,
 } from '../../../src';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { init, init0 } from '../../setup/mssql';
@@ -31,10 +28,12 @@ const connectOption: ConnectionSetting = {
     encrypt: false,
     // defaultSchema: 'dbo',
   },
+  lockWaitTimeoutMs: 1000,
+  queryTimeoutMs: 2000,
 };
 
 describe('SQLServerDriver', () => {
-  let driver: SQLServerDriver;
+  let driver: RDSBaseDriver;
 
   beforeAll(async () => {
     driver = createRDSDriver();
@@ -203,8 +202,23 @@ describe('SQLServerDriver', () => {
     });
   });
 
+  describe('Timeout', () => {
+    it('should cause query timeout', async () => {
+      const driver = createRDSDriver({ queryTimeoutMs: 500 });
+      await driver.connect();
+      await expect(
+        driver.requestSql({
+          sql: "WAITFOR DELAY '00:00:04'",
+        }),
+      ).rejects.toThrow('Timeout: Request failed to complete in 2000ms');
+      await driver.disconnect();
+    });
+  });
+
   describe('kill', () => {
     it('should success', async () => {
+      const driver = createRDSDriver();
+      await driver.connect();
       const result = await Promise.allSettled([
         (async (): Promise<string> => {
           const r = await driver.requestSql({
@@ -217,6 +231,7 @@ describe('SQLServerDriver', () => {
           return await driver.kill();
         })(),
       ]);
+      await driver.disconnect();
       expect(result[0].status).toEqual('rejected');
       const reason = (result[0] as PromiseRejectedResult).reason as Error;
       expect(reason.message.includes('Canceled.')).toBe(true);
@@ -456,28 +471,143 @@ describe('SQLServerDriver', () => {
     }, 10000);
 
     it('should have status', async () => {
-      const sql1 = 'UPDATE EMP SET SAL=SAL WHERE EMPNO = 7839';
+      const sql1 = 'TRUNCATE TABLE EMP';
       const sql2 = 'UPDATE EMP SET SAL=SAL+1 WHERE EMPNO = 7839';
 
       await driver1.begin();
       await driver2.begin();
 
       await driver1.requestSql({ sql: sql1 });
-      setTimeout(async () => {
-        const result3 = await driver3.getLocks('testDb');
-        const lockStatus = result3.rows
-          .filter(
-            (it) =>
-              it.values['request_mode'] === 'X' ||
-              it.values['request_mode'] === 'IX',
-          )
-          .map((it) => it.values['request_status']);
-        expect(lockStatus).toEqual(expect.arrayContaining(['GRANT', 'WAIT']));
-        await driver1.rollback();
-      }, 200);
-      await driver2.requestSql({ sql: sql2 });
+      await expect(driver2.requestSql({ sql: sql2 })).rejects.toThrow(
+        'Lock request time out period exceeded.',
+      );
 
+      await driver1.rollback();
       await driver2.rollback();
+    });
+  });
+
+  type LockTestRecord = {
+    id: number;
+    title: string;
+    n: number;
+  };
+
+  describe('transaction isolation', () => {
+    let driver1: RDSBaseDriver;
+    let driver2: RDSBaseDriver;
+
+    beforeEach(async () => {
+      const driver = createRDSDriver();
+      await driver.connect();
+      // init
+      await driver.requestSql({ sql: `DELETE FROM lock_test` });
+      for (const n of [1, 5, 10]) {
+        await driver.requestSql({
+          sql: `INSERT INTO lock_test (id,title,n) VALUES(${n}, 'T${n}', ${
+            n * 10
+          })`,
+        });
+      }
+      await driver.disconnect();
+    });
+
+    const resetDrivers = async (
+      transactionIsolationLevel: TransactionIsolationLevel,
+    ): Promise<void> => {
+      driver1 = createRDSDriver({ transactionIsolationLevel });
+      await driver1.connect();
+      driver2 = createRDSDriver({ transactionIsolationLevel });
+      await driver2.connect();
+    };
+
+    const getLockTestRecordById = async (
+      driver: RDSBaseDriver,
+      id: number,
+    ): Promise<LockTestRecord> => {
+      const r = await driver.requestSql({
+        sql: 'SELECT n FROM lock_test WHERE id = $1',
+        conditions: { binds: [id + ''] },
+      });
+      return r.rows[0].values as LockTestRecord;
+    };
+
+    const getLockTestSummaryValue = async (
+      driver: RDSBaseDriver,
+    ): Promise<number> => {
+      const r = await driver.requestSql({
+        sql: 'SELECT SUM(n) as n FROM lock_test',
+      });
+      return toNum(r.rows[0].values.n);
+    };
+
+    afterEach(async () => {
+      await driver1.disconnect();
+      await driver2.disconnect();
+    });
+
+    test.each([
+      'READ UNCOMMITTED',
+      'READ COMMITTED',
+      'REPEATABLE READ',
+      'SERIALIZABLE',
+    ])(
+      'should succeed in setting the transaction isolation level (%s)',
+      async (transactionIsolationLevel: TransactionIsolationLevel) => {
+        await resetDrivers(transactionIsolationLevel);
+        await driver1.begin();
+        await expect(driver1.getTransactionIsolationLevel()).resolves.toBe(
+          transactionIsolationLevel,
+        );
+        await driver1.rollback();
+      },
+    );
+
+    describe('Level READ UNCOMMITTED', () => {
+      it('should not cause Dirty read', async () => {
+        const transactionIsolationLevel = 'READ UNCOMMITTED';
+        await resetDrivers(transactionIsolationLevel);
+
+        await driver1.begin();
+        await driver2.begin();
+
+        const beforeRecord = await getLockTestRecordById(driver2, 1);
+        await driver1.requestSql({
+          sql: `UPDATE lock_test SET n=999 WHERE id=1`,
+        });
+        const afterRecord = await getLockTestRecordById(driver2, 1);
+
+        expect(beforeRecord.n).toBe(10);
+        expect(afterRecord.n).toBe(999);
+
+        await driver1.rollback();
+        await driver2.rollback();
+      });
+    });
+
+    describe('Level READ COMMITTED', () => {
+      it('should not cause Dirty read', async () => {
+        const transactionIsolationLevel = 'READ COMMITTED';
+        await resetDrivers(transactionIsolationLevel);
+        await driver1.begin();
+        await driver2.begin();
+
+        const beforeRecord = await getLockTestRecordById(driver2, 1);
+        await driver1.requestSql({
+          sql: `UPDATE lock_test SET n=999 WHERE id=1`,
+        });
+        // WAIT until driver1's commit or rollback...
+        await expect(getLockTestRecordById(driver2, 1)).rejects.toThrow(
+          'Lock request time out period exceeded.',
+        );
+
+        expect(beforeRecord.n).toBe(10);
+        await driver1.rollback();
+        const afterRecord2 = await getLockTestRecordById(driver2, 1);
+        expect(afterRecord2.n).toBe(10);
+
+        await driver2.rollback();
+      });
     });
   });
 
@@ -527,15 +657,25 @@ describe('SQLServerDriver', () => {
     });
   });
 
-  function createRDSDriver(asRoot = false): SQLServerDriver {
-    return asRoot
-      ? new SQLServerDriver({
-          ...connectOption,
-          user: 'sa',
-          database: 'master',
-          password: 'Pass123zxcv!',
-          name: 'mssqlRoot',
-        })
-      : new SQLServerDriver(connectOption);
+  function createRDSDriver(
+    params?: Partial<ConnectionSetting> & { asRoot?: boolean },
+  ): RDSBaseDriver {
+    let options = { ...connectOption };
+    const { asRoot, ...others } = { ...params };
+    if (asRoot) {
+      options = {
+        ...options,
+        user: 'sa',
+        database: 'master',
+        password: 'Pass123zxcv!',
+        name: 'mssqlRoot',
+      };
+    }
+    options = {
+      ...options,
+      ...others,
+    };
+
+    return new SQLServerDriver(options);
   }
 });

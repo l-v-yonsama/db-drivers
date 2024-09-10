@@ -83,6 +83,14 @@ export async function init(): Promise<void> {
       "UPDATE testtable set s4='b', d1=NULL, d2=NULL WHERE id=9 ",
     );
 
+    await con.execute('DROP TABLE IF EXISTS lock_test');
+    await con.execute<ResultSetHeader>(CREATE_LOCK_TEST_TABLE_STATEMENT);
+    for (const n of [1, 5, 10]) {
+      await con.execute(
+        `INSERT INTO lock_test (id,title,n) VALUES(${n}, 'T${n}', ${n * 10})`,
+      );
+    }
+
     await con.execute('DROP TABLE IF EXISTS testdb.diff');
     await con.execute(CREATE_TABLE_STATEMENT2);
     for (let i = 1; i <= 10; i++) {
@@ -330,4 +338,11 @@ const CREATE_ORDER_DETAIL_TABLE_STATEMENT = `CREATE TABLE testdb.order_detail (
   PRIMARY KEY(order_no, detail_no),
   FOREIGN KEY fk_order_no(order_no) REFERENCES testdb.order(order_no)
 ) COMMENT='受注明細'
+`;
+
+const CREATE_LOCK_TEST_TABLE_STATEMENT = `CREATE TABLE lock_test (
+  id int unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title varchar(255) NOT NULL DEFAULT '',
+  n int NOT NULL
+) COMMENT='ロックテスト'
 `;

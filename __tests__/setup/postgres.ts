@@ -59,6 +59,14 @@ export async function init(): Promise<void> {
       await pool.query(INSERT_STATEMENT, binds);
     }
 
+    await pool.query('DROP TABLE IF EXISTS lock_test');
+    await pool.query(CREATE_LOCK_TEST_TABLE_STATEMENT);
+    for (const n of [1, 5, 10]) {
+      await pool.query(
+        `INSERT INTO lock_test (id,title,n) VALUES(${n}, 'T${n}', ${n * 10})`,
+      );
+    }
+
     await pool.query('DROP TABLE IF EXISTS diff');
     await pool.query(CREATE_TABLE_STATEMENT2);
     for (let i = 1; i <= 10; i++) {
@@ -279,3 +287,10 @@ const CREATE_TABLE_EMP = `CREATE TABLE EMP (
     PRIMARY KEY  (EMPNO),
     FOREIGN KEY (DEPTNO) REFERENCES DEPT(DEPTNO)
   ) `;
+
+const CREATE_LOCK_TEST_TABLE_STATEMENT = `CREATE TABLE lock_test (
+    id SERIAL NOT NULL PRIMARY KEY,
+    title varchar(255) NOT NULL DEFAULT '',
+    n int NOT NULL
+  )
+  `;

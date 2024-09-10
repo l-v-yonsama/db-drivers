@@ -9,8 +9,7 @@ export async function init(): Promise<void> {
     dbType: DBType.SQLite,
     name: 'sqlite',
   });
-  const result = await driver.connect();
-  console.log('connect result', result);
+  await driver.connect();
 
   try {
     await driver.requestSql({ sql: 'DROP TABLE IF EXISTS testtable' });

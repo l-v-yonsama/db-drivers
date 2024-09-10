@@ -13,6 +13,7 @@ import {
   QStatement,
   QueryParams,
   TransactionControlType,
+  TransactionIsolationLevel,
 } from '../types';
 import { BaseDriver } from './BaseDriver';
 
@@ -257,6 +258,12 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   abstract rollback(): Promise<void>;
   abstract setAutoCommit(value: boolean): Promise<void>;
   abstract connectWithTest(): Promise<string>;
+  abstract getVersion(): Promise<string>;
+  abstract getTransactionIsolationLevel(): Promise<TransactionIsolationLevel>;
+  async getMajorVersion(): Promise<number> {
+    const version = await this.getVersion();
+    return toNum(version.replace(/^([0-9]+)\..*$/, '$1'));
+  }
 
   async connectSub(autoCommit = true): Promise<string> {
     let errorMessage = await this.connectWithTest();

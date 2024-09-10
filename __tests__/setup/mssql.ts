@@ -133,7 +133,6 @@ export async function init0(): Promise<void> {
 
     await q('USE master');
     await q(`GRANT VIEW SERVER PERFORMANCE STATE to testuser`);
-
   } finally {
     if (con) {
       await con.close();
@@ -193,6 +192,14 @@ export async function init(): Promise<void> {
       req.input('16', Buffer.from('s6')); // VARBINARY
 
       await req.query(INSERT_STATEMENT);
+    }
+
+    await q('DROP TABLE IF EXISTS lock_test');
+    await q(CREATE_LOCK_TEST_TABLE_STATEMENT);
+    for (const n of [1, 5, 10]) {
+      await q(
+        `INSERT INTO lock_test (id,title,n) VALUES(${n}, 'T${n}', ${n * 10})`,
+      );
     }
 
     await q('DROP TABLE IF EXISTS diff');
@@ -710,3 +717,10 @@ const CREATE_CITY_TABLE_STATEMENT = `CREATE TABLE city (
   district char(20),
   population int
 )`;
+
+const CREATE_LOCK_TEST_TABLE_STATEMENT = `CREATE TABLE lock_test (
+  id int PRIMARY KEY,
+  title varchar(255) NOT NULL DEFAULT '',
+  n int NOT NULL
+)
+`;

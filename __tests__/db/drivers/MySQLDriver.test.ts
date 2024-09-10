@@ -1,8 +1,4 @@
-import {
-  GeneralColumnType,
-  ResultSetDataBuilder,
-  sleep,
-} from '@l-v-yonsama/rdh';
+import { GeneralColumnType, sleep, toNum } from '@l-v-yonsama/rdh';
 import {
   ConnectionSetting,
   DbColumn,
@@ -12,6 +8,7 @@ import {
   MySQLDriver,
   RDSBaseDriver,
   RdsDatabase,
+  TransactionIsolationLevel,
 } from '../../../src';
 import { init } from '../../setup/mysql';
 
@@ -27,15 +24,17 @@ const connectOption: ConnectionSetting = {
   ...baseConnectOption,
   dbType: DBType.MySQL,
   name: 'mysql',
+  lockWaitTimeoutMs: 1000,
+  queryTimeoutMs: 2000,
 };
 
 describe('MySQLDriver', () => {
-  let driver: MySQLDriver;
-  let rootDriver: MySQLDriver;
+  let driver: RDSBaseDriver;
+  let rootDriver: RDSBaseDriver;
 
   beforeAll(async () => {
     driver = createRDSDriver();
-    rootDriver = createRDSDriver(true);
+    rootDriver = createRDSDriver({ asRoot: true });
     await driver.connect();
     await rootDriver.connect();
 
@@ -471,6 +470,21 @@ describe('MySQLDriver', () => {
     });
   });
 
+  describe('Timeout', () => {
+    it('should cause query timeout', async () => {
+      const driver = createRDSDriver({ queryTimeoutMs: 500 });
+      await driver.connect();
+      await expect(
+        driver.requestSql({
+          sql: `select sleep(3) from testtable `,
+        }),
+      ).rejects.toThrow(
+        'Query execution was interrupted, maximum statement execution time exceeded',
+      );
+      await driver.disconnect();
+    });
+  });
+
   describe('kill', () => {
     it('current session', async () => {
       const result = await Promise.allSettled([
@@ -525,7 +539,7 @@ describe('MySQLDriver', () => {
     beforeEach(async () => {
       driver1 = createRDSDriver();
       driver2 = createRDSDriver();
-      driver3 = createRDSDriver(true);
+      driver3 = createRDSDriver({ asRoot: true });
       await driver1.connect();
       await driver2.connect();
       await driver3.connect();
@@ -537,80 +551,339 @@ describe('MySQLDriver', () => {
       await driver3.disconnect();
     });
 
-    it('should have status', async () => {
-      const sql1 = 'SELECT * FROM EMP WHERE EMPNO = 7839 FOR UPDATE';
-      const sql2 = 'UPDATE EMP SET SAL=SAL+1 WHERE EMPNO = 7839';
+    it('should have Recrod lock', async () => {
+      const sql1 = 'SELECT * FROM lock_test WHERE id = 1 FOR UPDATE';
       await driver1.begin();
-      await driver2.begin();
       await driver1.requestSql({ sql: sql1 });
-      driver2.requestSql({ sql: sql2 });
       const result3 = await driver3.getLocks('testDb');
       await driver1.rollback();
-      await driver2.kill();
-      const lockStatus = result3.rows
+
+      // TABLE_LOCK
+      const tableLockStatus = result3.rows.find(
+        (it) => it.values['lock_type'] === 'TABLE',
+      )?.values;
+      expect(tableLockStatus.lock_mode).toBe('IX');
+      expect(tableLockStatus.lock_status).toBe('GRANTED');
+      expect(tableLockStatus.lock_data).toBeNull();
+      // RECORD_LOCK
+      const recordLockStatus = result3.rows.find(
+        (it) => it.values['lock_type'] === 'RECORD',
+      )?.values;
+      expect(recordLockStatus.lock_mode).toBe('X,REC_NOT_GAP');
+      expect(recordLockStatus.lock_status).toBe('GRANTED');
+      expect(recordLockStatus.lock_data).toBe('1');
+    });
+
+    it('should have Gap lock', async () => {
+      const sql1 = 'SELECT * FROM lock_test WHERE id = 2 FOR UPDATE';
+      await driver1.begin();
+      await driver1.requestSql({ sql: sql1 });
+      const result3 = await driver3.getLocks('testDb');
+      await driver1.rollback();
+
+      // TABLE_LOCK
+      const tableLockStatus = result3.rows.find(
+        (it) => it.values['lock_type'] === 'TABLE',
+      )?.values;
+      expect(tableLockStatus.lock_mode).toBe('IX');
+      expect(tableLockStatus.lock_status).toBe('GRANTED');
+      expect(tableLockStatus.lock_data).toBeNull();
+      // RECORD_LOCK
+      const recordLockStatus = result3.rows.find(
+        (it) => it.values['lock_type'] === 'RECORD',
+      )?.values;
+      expect(recordLockStatus.lock_mode).toBe('X,GAP');
+      expect(recordLockStatus.lock_status).toBe('GRANTED');
+      expect(recordLockStatus.lock_data).toBe('5');
+    });
+
+    it('should have Next Key lock', async () => {
+      const sql1 = 'SELECT * FROM lock_test WHERE id > 5 FOR UPDATE';
+      await driver1.begin();
+      await driver1.requestSql({ sql: sql1 });
+      const result3 = await driver3.getLocks('testDb');
+      await driver1.rollback();
+
+      // TABLE_LOCK
+      const tableLockStatus = result3.rows.find(
+        (it) => it.values['lock_type'] === 'TABLE',
+      )?.values;
+      expect(tableLockStatus.lock_mode).toBe('IX');
+      expect(tableLockStatus.lock_status).toBe('GRANTED');
+      expect(tableLockStatus.lock_data).toBeNull();
+      // RECORD_LOCK
+      const recordLockStatusList = result3.rows
         .filter((it) => it.values['lock_type'] === 'RECORD')
-        .map((it) => it.values['lock_status']);
-      expect(lockStatus).toEqual(
-        expect.arrayContaining(['GRANTED', 'WAITING']),
+        .map((it) => it.values);
+      expect(recordLockStatusList.map((it) => it.lock_mode)).toEqual([
+        'X',
+        'X',
+      ]);
+      expect(recordLockStatusList.map((it) => it.lock_status)).toEqual([
+        'GRANTED',
+        'GRANTED',
+      ]);
+      expect(recordLockStatusList.map((it) => it.lock_data)).toEqual(
+        expect.arrayContaining(['supremum pseudo-record', '10']),
       );
     });
   });
 
-  describe.skip('sessions', () => {
+  type LockTestRecord = {
+    id: number;
+    title: string;
+    n: number;
+  };
+
+  describe('transaction isolation', () => {
     let driver1: RDSBaseDriver;
     let driver2: RDSBaseDriver;
-    let driver3: RDSBaseDriver;
 
     beforeEach(async () => {
-      driver1 = createRDSDriver();
-      driver2 = createRDSDriver();
-      driver3 = createRDSDriver();
-      await driver1.connect();
-      await driver2.connect();
-      await driver3.connect();
+      const driver = createRDSDriver();
+      await driver.connect();
+      // init
+      await driver.requestSql({ sql: `DELETE FROM lock_test` });
+      for (const n of [1, 5, 10]) {
+        await driver.requestSql({
+          sql: `INSERT INTO lock_test (id,title,n) VALUES(${n}, 'T${n}', ${
+            n * 10
+          })`,
+        });
+      }
+      await driver.disconnect();
     });
+
+    const getLockTestRecordById = async (
+      driver: RDSBaseDriver,
+      id: number,
+    ): Promise<LockTestRecord> => {
+      const r = await driver.requestSql({
+        sql: 'SELECT n FROM lock_test WHERE id = ?',
+        conditions: { binds: [id + ''] },
+      });
+      return r.rows[0].values as LockTestRecord;
+    };
+
+    const getLockTestSummaryValue = async (
+      driver: RDSBaseDriver,
+    ): Promise<number> => {
+      const r = await driver.requestSql({
+        sql: 'SELECT SUM(n) as n FROM lock_test',
+      });
+      return toNum(r.rows[0].values.n);
+    };
+
+    const resetDrivers = async (
+      transactionIsolationLevel: TransactionIsolationLevel,
+    ): Promise<void> => {
+      driver1 = createRDSDriver({ transactionIsolationLevel });
+      await driver1.connect();
+      driver2 = createRDSDriver({ transactionIsolationLevel });
+      await driver2.connect();
+    };
 
     afterEach(async () => {
       await driver1.disconnect();
       await driver2.disconnect();
-      await driver3.disconnect();
-    }, 10000);
+    });
 
-    it('should have sessionId', async () => {
-      const sql1 = 'DELETE FROM EMP WHERE EMPNO = 7839';
-      const sql2 = 'UPDATE EMP SET SAL=SAL+1 WHERE EMPNO = 7839';
-      await driver1.begin();
-      await driver2.begin();
-      await driver1.requestSql({ sql: sql1 });
-      setTimeout(async () => {
-        const result3Before = await driver3.getSessions('testDb');
-        const sessionIdsBefore = result3Before.rows
-          .filter((it) => it.values['query'] === sql2)
-          .map((it) => it.values['session_id']);
-        expect(sessionIdsBefore).toHaveLength(1);
-        const killResult = await driver3.kill(sessionIdsBefore[0]);
-        expect(killResult).toBe('');
-        const result3After = await driver3.getSessions('testDb');
-        const sessionIdsAfter = result3After.rows
-          .filter((it) => it.values['query'] === sql2)
-          .map((it) => it.values['session_id']);
-        expect(sessionIdsAfter).toHaveLength(0);
+    test.each([
+      'READ UNCOMMITTED',
+      'READ COMMITTED',
+      'REPEATABLE READ',
+      'SERIALIZABLE',
+    ])(
+      'should succeed in setting the transaction isolation level (%s)',
+      async (transactionIsolationLevel: TransactionIsolationLevel) => {
+        await resetDrivers(transactionIsolationLevel);
+        await expect(driver1.getTransactionIsolationLevel()).resolves.toBe(
+          transactionIsolationLevel,
+        );
+      },
+    );
+
+    describe('Level READ UNCOMMITTED', () => {
+      it('should cause Dirty read', async () => {
+        const transactionIsolationLevel = 'READ UNCOMMITTED';
+        await resetDrivers(transactionIsolationLevel);
+
+        await driver1.begin();
+        await driver2.begin();
+
+        const beforeRecord = await getLockTestRecordById(driver2, 1);
+        await driver1.requestSql({
+          sql: `UPDATE lock_test SET n=999 WHERE id=1`,
+        });
+        const afterRecord = await getLockTestRecordById(driver2, 1);
+
+        expect(beforeRecord.n).toBe(10);
+        expect(afterRecord.n).toBe(999);
+
         await driver1.rollback();
-      }, 50);
+        await driver2.rollback();
+      });
+    });
 
-      await expect(driver2.requestSql({ sql: sql2 })).rejects.toThrow(
-        'Connection lost',
-      );
+    describe('Level READ COMMITTED', () => {
+      it('should not cause Dirty read', async () => {
+        const transactionIsolationLevel = 'READ COMMITTED';
+        await resetDrivers(transactionIsolationLevel);
+        await driver1.begin();
+        await driver2.begin();
+
+        const beforeRecord = await getLockTestRecordById(driver2, 1);
+        await driver1.requestSql({
+          sql: `UPDATE lock_test SET n=999 WHERE id=1`,
+        });
+        const afterRecord = await getLockTestRecordById(driver2, 1);
+
+        expect(beforeRecord.n).toBe(10);
+        expect(afterRecord.n).toBe(10);
+
+        await driver1.rollback();
+        await driver2.rollback();
+      });
+
+      it('should cause Fuzzy read', async () => {
+        const transactionIsolationLevel = 'READ COMMITTED';
+        await resetDrivers(transactionIsolationLevel);
+        await driver1.begin();
+        await driver2.begin();
+
+        const beforeRecord = await getLockTestRecordById(driver2, 1);
+        await driver1.requestSql({
+          sql: `UPDATE lock_test SET n=999 WHERE id=1`,
+        });
+        const afterRecord = await getLockTestRecordById(driver2, 1);
+        expect(beforeRecord.n).toBe(10);
+        expect(afterRecord.n).toBe(10);
+        await driver1.commit();
+        const afterRecord2 = await getLockTestRecordById(driver2, 1);
+        expect(afterRecord2.n).toBe(999);
+        await driver2.rollback();
+      });
+
+      it('should cause Phantom read', async () => {
+        const transactionIsolationLevel = 'READ COMMITTED';
+        await resetDrivers(transactionIsolationLevel);
+        await driver1.begin();
+        await driver2.begin();
+
+        const beforeValue = await getLockTestSummaryValue(driver2);
+        await driver1.requestSql({
+          sql: `INSERT INTO lock_test (id,title,n) VALUES (20, 'T20', 200)`,
+        });
+        const afterValue = await getLockTestSummaryValue(driver2);
+
+        expect(beforeValue).toBe(160); // 10 + 50 + 100
+        expect(afterValue).toBe(160); // 10 + 50 + 100
+        await driver1.commit();
+        const afterValue2 = await getLockTestSummaryValue(driver2);
+        expect(afterValue2).toBe(360); // 10 + 50 + 100 + 200
+        await driver2.rollback();
+      });
+    });
+
+    describe('Level REPEATABLE READ', () => {
+      it('should not cause Dirty read', async () => {
+        const transactionIsolationLevel = 'REPEATABLE READ';
+        await resetDrivers(transactionIsolationLevel);
+        await driver1.begin();
+        await driver2.begin();
+
+        const beforeRecord = await getLockTestRecordById(driver2, 1);
+        await driver1.requestSql({
+          sql: `UPDATE lock_test SET n=999 WHERE id=1`,
+        });
+        const afterRecord = await getLockTestRecordById(driver2, 1);
+
+        expect(beforeRecord.n).toBe(10);
+        expect(afterRecord.n).toBe(10);
+
+        await driver1.rollback();
+        await driver2.rollback();
+      });
+
+      it('should not cause Fuzzy read', async () => {
+        const transactionIsolationLevel = 'REPEATABLE READ';
+        await resetDrivers(transactionIsolationLevel);
+        await driver1.begin();
+        await driver2.begin();
+
+        const beforeRecord = await getLockTestRecordById(driver2, 1);
+        await driver1.requestSql({
+          sql: `UPDATE lock_test SET n=999 WHERE id=1`,
+        });
+        const afterRecord = await getLockTestRecordById(driver2, 1);
+        expect(beforeRecord.n).toBe(10);
+        expect(afterRecord.n).toBe(10);
+        await driver1.commit();
+        const afterRecord2 = await getLockTestRecordById(driver2, 1);
+        expect(afterRecord2.n).toBe(10);
+        await driver2.rollback();
+      });
+
+      it('should not cause Phantom read', async () => {
+        const transactionIsolationLevel = 'REPEATABLE READ';
+        await resetDrivers(transactionIsolationLevel);
+        await driver1.begin();
+        await driver2.begin();
+
+        const beforeValue = await getLockTestSummaryValue(driver2);
+        await driver1.requestSql({
+          sql: `INSERT INTO lock_test (id,title,n) VALUES (20, 'T20', 200)`,
+        });
+        const afterValue = await getLockTestSummaryValue(driver2);
+
+        expect(beforeValue).toBe(160); // 10 + 50 + 100
+        expect(afterValue).toBe(160); // 10 + 50 + 100
+        await driver1.commit();
+        // InnoDBはリピータブルリード分離レベルではファントムリードは起きません
+        const afterValue2 = await getLockTestSummaryValue(driver2);
+        expect(afterValue2).toBe(160); // 10 + 50 + 100
+        await driver2.rollback();
+      });
+    });
+
+    describe('Level SERIALIZABLE', () => {
+      it('should not cause Phantom read', async () => {
+        const transactionIsolationLevel = 'SERIALIZABLE';
+        await resetDrivers(transactionIsolationLevel);
+        await driver1.begin();
+        await driver2.begin();
+
+        await getLockTestSummaryValue(driver2);
+        await expect(
+          driver1.requestSql({
+            sql: `INSERT INTO lock_test (id,title,n) VALUES (20, 'T20', 200)`,
+          }),
+        ).rejects.toThrow(
+          'Lock wait timeout exceeded; try restarting transaction',
+        );
+        await driver1.rollback();
+        await driver2.rollback();
+      });
     });
   });
 
-  function createRDSDriver(asRoot = false): MySQLDriver {
-    return asRoot
-      ? new MySQLDriver({
-          ...connectOption,
-          user: 'root',
-          password: 'p@ssw0rd',
-        })
-      : new MySQLDriver(connectOption);
+  function createRDSDriver(
+    params?: Partial<ConnectionSetting> & { asRoot?: boolean },
+  ): RDSBaseDriver {
+    let options = { ...connectOption };
+    const { asRoot, ...others } = { ...params };
+    if (asRoot) {
+      options = {
+        ...options,
+        user: 'root',
+        password: 'p@ssw0rd',
+      };
+    }
+    options = {
+      ...options,
+      ...others,
+    };
+
+    return new MySQLDriver(options);
   }
 });
