@@ -153,7 +153,9 @@ export class AwsCloudwatchServiceClient
     }
 
     if (!results || results.length === 0) {
-      return ResultSetDataBuilder.createEmpty();
+      return ResultSetDataBuilder.createEmpty({
+        message: 'No records.',
+      }).build();
     }
 
     const keys = results[0]

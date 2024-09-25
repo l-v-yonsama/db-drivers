@@ -3,6 +3,7 @@ export const AwsServiceType = {
   SQS: 'SQS',
   SES: 'SES',
   Cloudwatch: 'Cloudwatch',
+  DynamoDB: 'DynamoDB',
 } as const;
 export type AwsServiceType =
   (typeof AwsServiceType)[keyof typeof AwsServiceType];

@@ -78,13 +78,14 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - SERVICES=s3,sqs,ses,cloudwatch,logs,lambda
+      - SERVICES=s3,sqs,ses,cloudwatch,logs,lambda,dynamodb
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=ap-northeast-1
       - DATA_DIR=/tmp/localstack/data
       - DISABLE_CORS_CHECKS=1
       - LAMBDA_DOCKER_NETWORK=host
+      - DYNAMODB_SHARE_DB=1
 
   keycloak:
     image: quay.io/keycloak/keycloak:20.0.5

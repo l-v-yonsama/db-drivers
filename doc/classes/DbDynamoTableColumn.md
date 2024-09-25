@@ -1,57 +1,61 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / DbSchema
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / DbDynamoTableColumn
 
-# Class: DbSchema
+# Class: DbDynamoTableColumn
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)\<[`DbTable`](DbTable.md)\>
+- [`DbResource`](DbResource.md)
 
-  ↳ **`DbSchema`**
+  ↳ **`DbDynamoTableColumn`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](DbSchema.md#constructor)
+- [constructor](DbDynamoTableColumn.md#constructor)
 
 ### Properties
 
-- [children](DbSchema.md#children)
-- [comment](DbSchema.md#comment)
-- [id](DbSchema.md#id)
-- [isDefault](DbSchema.md#isdefault)
-- [isInProgress](DbSchema.md#isinprogress)
-- [meta](DbSchema.md#meta)
-- [name](DbSchema.md#name)
-- [resourceType](DbSchema.md#resourcetype)
+- [attrType](DbDynamoTableColumn.md#attrtype)
+- [children](DbDynamoTableColumn.md#children)
+- [comment](DbDynamoTableColumn.md#comment)
+- [id](DbDynamoTableColumn.md#id)
+- [isInProgress](DbDynamoTableColumn.md#isinprogress)
+- [meta](DbDynamoTableColumn.md#meta)
+- [name](DbDynamoTableColumn.md#name)
+- [pk](DbDynamoTableColumn.md#pk)
+- [resourceType](DbDynamoTableColumn.md#resourcetype)
+- [sk](DbDynamoTableColumn.md#sk)
 
 ### Methods
 
-- [addChild](DbSchema.md#addchild)
-- [clearChildren](DbSchema.md#clearchildren)
-- [findChildren](DbSchema.md#findchildren)
-- [getChildByName](DbSchema.md#getchildbyname)
-- [getProperties](DbSchema.md#getproperties)
-- [getUniqColumnNameWithComments](DbSchema.md#getuniqcolumnnamewithcomments)
-- [hasChildren](DbSchema.md#haschildren)
-- [toJsonStringify](DbSchema.md#tojsonstringify)
-- [toString](DbSchema.md#tostring)
+- [addChild](DbDynamoTableColumn.md#addchild)
+- [clearChildren](DbDynamoTableColumn.md#clearchildren)
+- [findChildren](DbDynamoTableColumn.md#findchildren)
+- [getChildByName](DbDynamoTableColumn.md#getchildbyname)
+- [getProperties](DbDynamoTableColumn.md#getproperties)
+- [hasChildren](DbDynamoTableColumn.md#haschildren)
+- [toJsonStringify](DbDynamoTableColumn.md#tojsonstringify)
+- [toString](DbDynamoTableColumn.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new DbSchema**(`name`): [`DbSchema`](DbSchema.md)
+• **new DbDynamoTableColumn**(`name`, `attrType`, `pk`, `sk`): [`DbDynamoTableColumn`](DbDynamoTableColumn.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `name` | `string` |
+| `attrType` | [`ScalarAttributeType`](../modules.md#scalarattributetype) |
+| `pk` | `boolean` |
+| `sk` | `boolean` |
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`DbDynamoTableColumn`](DbDynamoTableColumn.md)
 
 #### Overrides
 
@@ -59,13 +63,23 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:622](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L622)
+[src/resource/DbResource.ts:970](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L970)
 
 ## Properties
 
+### attrType
+
+• `Readonly` **attrType**: [`ScalarAttributeType`](../modules.md#scalarattributetype)
+
+#### Defined in
+
+[src/resource/DbResource.ts:966](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L966)
+
+___
+
 ### children
 
-• `Readonly` **children**: [`DbTable`](DbTable.md)[]
+• `Readonly` **children**: [`AllSubDbResource`](../modules.md#allsubdbresource)[]
 
 #### Inherited from
 
@@ -102,16 +116,6 @@ ___
 #### Defined in
 
 [src/resource/DbResource.ts:169](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L169)
-
-___
-
-### isDefault
-
-• **isDefault**: `boolean` = `false`
-
-#### Defined in
-
-[src/resource/DbResource.ts:621](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L621)
 
 ___
 
@@ -161,6 +165,16 @@ ___
 
 ___
 
+### pk
+
+• `Readonly` **pk**: `boolean`
+
+#### Defined in
+
+[src/resource/DbResource.ts:967](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L967)
+
+___
+
 ### resourceType
 
 • `Readonly` **resourceType**: [`ResourceType`](../modules.md#resourcetype)
@@ -173,21 +187,31 @@ ___
 
 [src/resource/DbResource.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L170)
 
+___
+
+### sk
+
+• `Readonly` **sk**: `boolean`
+
+#### Defined in
+
+[src/resource/DbResource.ts:968](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L968)
+
 ## Methods
 
 ### addChild
 
-▸ **addChild**(`res`): [`DbTable`](DbTable.md)
+▸ **addChild**(`res`): [`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`DbTable`](DbTable.md) |
+| `res` | [`AllSubDbResource`](../modules.md#allsubdbresource) |
 
 #### Returns
 
-[`DbTable`](DbTable.md)
+[`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Inherited from
 
@@ -252,7 +276,7 @@ ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`DbTable`](DbTable.md)
+▸ **getChildByName**(`name`, `insensitive?`): [`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Parameters
 
@@ -263,7 +287,7 @@ ___
 
 #### Returns
 
-[`DbTable`](DbTable.md)
+[`AllSubDbResource`](../modules.md#allsubdbresource)
 
 #### Inherited from
 
@@ -283,27 +307,13 @@ ___
 
 `Object`
 
-#### Inherited from
+#### Overrides
 
 [DbResource](DbResource.md).[getProperties](DbResource.md#getproperties)
 
 #### Defined in
 
-[src/resource/DbResource.ts:183](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L183)
-
-___
-
-### getUniqColumnNameWithComments
-
-▸ **getUniqColumnNameWithComments**(): \{ `comment?`: `string` ; `name`: `string`  }[]
-
-#### Returns
-
-\{ `comment?`: `string` ; `name`: `string`  }[]
-
-#### Defined in
-
-[src/resource/DbResource.ts:626](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L626)
+[src/resource/DbResource.ts:986](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L986)
 
 ___
 
@@ -357,10 +367,10 @@ ___
 
 `string`
 
-#### Inherited from
+#### Overrides
 
 [DbResource](DbResource.md).[toString](DbResource.md#tostring)
 
 #### Defined in
 
-[src/resource/DbResource.ts:251](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L251)
+[src/resource/DbResource.ts:982](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L982)

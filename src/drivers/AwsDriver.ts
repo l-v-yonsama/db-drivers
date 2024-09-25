@@ -21,6 +21,7 @@ import { AwsS3ServiceClient } from './aws/AwsS3ServiceClient';
 import { AwsServiceClient } from './aws/AwsServiceClient';
 import { AwsSESServiceClient } from './aws/AwsSESServiceClient';
 import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
+import { AwsDynamoServiceClient } from './aws/AwsDynamoServiceClient';
 
 export type ClientConfigType = {
   region?: string;
@@ -33,6 +34,7 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
   public sqsClient: AwsSQSServiceClient;
   public cloudwatchClient: AwsCloudwatchServiceClient;
   public s3Client: AwsS3ServiceClient;
+  public dynamoClient: AwsDynamoServiceClient;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -70,6 +72,9 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
       case 'SQS':
         client = this.sqsClient;
         break;
+      case 'DynamoDB':
+        client = this.dynamoClient;
+        break;
     }
     return client as T;
   }
@@ -89,6 +94,9 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
         break;
       case 'Queue':
         client = this.sqsClient;
+        break;
+      case 'DynamoTable':
+        client = this.dynamoClient;
         break;
     }
     return client as T;
@@ -119,6 +127,7 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
     const sqs = new AwsSQSServiceClient(this.conRes, config);
     const s3 = new AwsS3ServiceClient(this.conRes, config);
     const ses = new AwsSESServiceClient(this.conRes, config);
+    const dynamo = new AwsDynamoServiceClient(this.conRes, config);
     const { services } = this.conRes.awsSetting;
 
     let message = '';
@@ -158,6 +167,15 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
         this.s3Client = s3;
       }
     }
+    if (services.includes(AwsServiceType.DynamoDB)) {
+      message = await dynamo.connect();
+      if (message) {
+        messageList.push(message);
+        this.dynamoClient = null;
+      } else {
+        this.dynamoClient = dynamo;
+      }
+    }
     return messageList.join(',');
   }
 
@@ -168,6 +186,7 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
       this.sesClient,
       this.sqsClient,
       this.cloudwatchClient,
+      this.dynamoClient,
     ]) {
       if (!client) {
         continue;
@@ -212,6 +231,13 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
         messageList.push(message);
       }
     }
+    if (services.includes(AwsServiceType.DynamoDB)) {
+      const client = new AwsDynamoServiceClient(this.conRes, config);
+      const message = await client.test(with_connect);
+      if (message) {
+        messageList.push(message);
+      }
+    }
     return messageList.join(',');
   }
 
@@ -222,6 +248,7 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
       this.sqsClient,
       this.cloudwatchClient,
       this.s3Client,
+      this.dynamoClient,
     ]) {
       const message = await client.disconnect();
       if (message) {

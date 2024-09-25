@@ -6,6 +6,7 @@
 
 - [`Auth0Driver`](../classes/Auth0Driver.md)
 - [`AwsCloudwatchServiceClient`](../classes/AwsCloudwatchServiceClient.md)
+- [`AwsDynamoServiceClient`](../classes/AwsDynamoServiceClient.md)
 - [`AwsS3ServiceClient`](../classes/AwsS3ServiceClient.md)
 - [`AwsSQSServiceClient`](../classes/AwsSQSServiceClient.md)
 - [`KeycloakDriver`](../classes/KeycloakDriver.md)
@@ -35,4 +36,4 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/1053741cda8cc80cfd60d64c697497cdf84c905e/src/drivers/BaseDriver.ts#L7)
+[src/drivers/BaseDriver.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L7)

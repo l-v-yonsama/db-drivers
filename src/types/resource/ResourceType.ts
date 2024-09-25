@@ -8,6 +8,8 @@ export const ResourceType = {
   Table: 'Table',
   Column: 'Column',
   Key: 'Key',
+  DynamoTable: 'DynamoTable',
+  DynamoColumn: 'DynamoColumn',
   Bucket: 'Bucket',
   Queue: 'Queue',
   Owner: 'Owner',

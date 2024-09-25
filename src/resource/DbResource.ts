@@ -12,6 +12,7 @@ import {
   AwsServiceType,
   AwsSetting,
   AwsSQSAttributes,
+  AwsDynamoTableAttributes,
   ConnectionSetting,
   DBType,
   FirebaseSetting,
@@ -24,6 +25,9 @@ import {
   SslSetting,
   TransactionIsolationLevel,
   UniqueKeyConstraint,
+  LSI,
+  GSI,
+  ScalarAttributeType,
 } from '../types';
 
 const uid = new ShortUniqueId();
@@ -109,6 +113,21 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
         json,
       );
       break;
+    case ResourceType.DynamoTable:
+      res = Object.assign(
+        new DbDynamoTable(name, castTo<DbDynamoTable>(json).attr),
+        json,
+      );
+      break;
+    case ResourceType.DynamoColumn:
+      {
+        const params = castTo<DbDynamoTableColumn>(json);
+        res = Object.assign(
+          new DbDynamoTableColumn(name, params.attrType, params.pk, params.sk),
+          json,
+        );
+      }
+      break;
   }
   if (json.children) {
     const children = json.children.map((child) => fromJson(child));
@@ -135,6 +154,8 @@ export type AllSubDbResource =
   | DbLogGroup
   | DbLogStream
   | DbS3Owner
+  | DbDynamoTable
+  | DbDynamoTableColumn
   // IAM
   | IamRealm
   | IamClient
@@ -344,7 +365,7 @@ export class RdsDatabase extends DbResource<DbSchema> {
 }
 
 export class AwsDatabase extends DbResource<
-  DbS3Bucket | DbSQSQueue | DbLogGroup | DbS3Owner
+  DbS3Bucket | DbSQSQueue | DbLogGroup | DbS3Owner | DbDynamoTable
 > {
   constructor(name: string, public readonly serviceType: AwsServiceType) {
     super(ResourceType.AwsDatabase, name);
@@ -634,7 +655,11 @@ export class DbSchema extends DbResource<DbTable> {
   }
 }
 
-export class DbTable extends DbResource<DbColumn> {
+export interface ITableComparable {
+  getCompareKeys(availableColumnNames?: string[]): CompareKey[];
+}
+
+export class DbTable extends DbResource<DbColumn> implements ITableComparable {
   public tableType: any;
   public foreignKeys?: ForeignKeyConstraint = {};
   public uniqueKeys?: UniqueKeyConstraint[];
@@ -839,7 +864,10 @@ export class DbColumn extends DbResource {
   }
 }
 
-export class AwsDbResource<T = any> extends DbResource {
+export class AwsDbResource<
+  T = any,
+  U extends AllSubDbResource = any,
+> extends DbResource<U> {
   private dateProperties?: string[];
   private byteProperties?: string[];
 
@@ -876,6 +904,92 @@ export class AwsDbResource<T = any> extends DbResource {
       (props as any)[name] = format(v);
     });
     return props;
+  }
+}
+
+export class DbDynamoTable
+  extends AwsDbResource<AwsDynamoTableAttributes, DbDynamoTableColumn>
+  implements ITableComparable
+{
+  constructor(name: string, attr: AwsDynamoTableAttributes) {
+    super(ResourceType.DynamoTable, name, attr);
+    this.setPropertyFormat({
+      dates: ['CreationDateTime'],
+      bytes: ['TableSizeBytes'],
+    });
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      lsi: this.attr.lsi.length,
+      gsi: this.attr.gsi.length,
+    };
+  }
+
+  getPrimaryColumnNames(): string[] {
+    return (
+      this.children.filter((it) => it.pk || it.sk).map((it) => it.name) ?? []
+    );
+  }
+
+  getCompareKeys(availableColumnNames?: string[]): CompareKey[] {
+    const ret: CompareKey[] = [];
+    const pks = this.getPrimaryColumnNames();
+    if (pks.length) {
+      if (availableColumnNames) {
+        if (
+          pks.every((pk) =>
+            availableColumnNames.some((ac) => equalsIgnoreCase(ac, pk)),
+          )
+        ) {
+          ret.push({
+            kind: 'primary',
+            names: pks.map((pk) =>
+              availableColumnNames.find((ac) => equalsIgnoreCase(ac, pk)),
+            ),
+          });
+        }
+      } else {
+        ret.push({
+          kind: 'primary',
+          names: pks,
+        });
+      }
+    }
+
+    return ret;
+  }
+}
+
+export class DbDynamoTableColumn extends DbResource {
+  public readonly attrType: ScalarAttributeType;
+  public readonly pk: boolean;
+  public readonly sk: boolean;
+
+  constructor(
+    name: string,
+    attrType: ScalarAttributeType,
+    pk: boolean,
+    sk: boolean,
+  ) {
+    super(ResourceType.DynamoColumn, name);
+    this.attrType = attrType;
+    this.pk = pk;
+    this.sk = sk;
+  }
+
+  toString(): string {
+    return `[${super.toString()}]: Pk[${this.pk}]]`;
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      'attribute type': this.attrType,
+      'partial key': this.pk,
+      'sort key': this.sk,
+    };
   }
 }
 

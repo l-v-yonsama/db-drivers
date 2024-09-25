@@ -2,6 +2,7 @@ export * from './AwsRegion';
 export * from './AwsServiceType';
 export * from './AwsSQSAttributes';
 export * from './AwsSupplyCredentialType';
+export * from './AwsDynamoTableAttributes';
 export * from './ConnectionSetting';
 export * from './DBType';
 export * from './ForeignKeyConstraint';

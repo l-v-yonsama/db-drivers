@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -12,6 +12,7 @@
     "@types/humanize-duration": "^3.27.2",
     "@types/jest": "~29.2",
     "@types/json-rules-engine": "^4.1.0",
+    "@types/lodash.chunk": "^4.2.9",
     "@types/lodash.isequal": "^4.5.6",
     "@types/mssql": "^9.1.5",
     "@types/node": "~18",
@@ -44,6 +45,7 @@
     "prepublishOnly": "npm run build:release",
     "lint": "eslint . --ext .ts --ext .mts",
     "lint:fix": "eslint --fix . --ext .ts --ext .mts",
+    "examples:dynamo": "npm run build && node built/src/examples/dynamo.js",
     "examples:mysql": "npm run build && node built/src/examples/mysql.js",
     "examples:mysql2": "npm run build && node built/src/examples/mysql2.js",
     "examples:mssql": "npm run build && node built/src/examples/mssql.js",
@@ -79,12 +81,14 @@
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.306.0",
+    "@aws-sdk/client-dynamodb": "^3.654.0",
     "@aws-sdk/client-s3": "^3.279.0",
     "@aws-sdk/client-ses": "^3.398.0",
     "@aws-sdk/client-sqs": "^3.398.0",
     "@aws-sdk/credential-providers": "^3.279.0",
+    "@aws-sdk/lib-dynamodb": "^3.656.0",
     "@aws-sdk/s3-request-presigner": "^3.427.0",
-    "@l-v-yonsama/rdh": "^0.1.11",
+    "@l-v-yonsama/rdh": "^0.1.12",
     "auth0": "^3.7.1",
     "axios": "^1.6.0",
     "bytes": "^3.1.2",
@@ -96,6 +100,7 @@
     "ioredis": "^5.3.1",
     "json-rules-engine": "^6.5.0",
     "jwt-decode": "^4.0.0",
+    "lodash.chunk": "^4.2.0",
     "mime-lite": "^1.0.3",
     "mssql": "^11.0.1",
     "mysql2": "^3.1.2",

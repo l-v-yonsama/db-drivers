@@ -1,62 +1,64 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / DbLogGroup
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / DbDynamoTable
 
-# Class: DbLogGroup
+# Class: DbDynamoTable
 
 ## Hierarchy
 
-- [`AwsDbResource`](AwsDbResource.md)\<\{ `creationTime?`: `number` ; `kmsKeyId?`: `string` ; `retentionInDays?`: `number` ; `storedBytes?`: `number`  }\>
+- [`AwsDbResource`](AwsDbResource.md)\<[`AwsDynamoTableAttributes`](../modules.md#awsdynamotableattributes), [`DbDynamoTableColumn`](DbDynamoTableColumn.md)\>
 
-  ↳ **`DbLogGroup`**
+  ↳ **`DbDynamoTable`**
+
+## Implements
+
+- [`ITableComparable`](../interfaces/ITableComparable.md)
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](DbLogGroup.md#constructor)
+- [constructor](DbDynamoTable.md#constructor)
 
 ### Properties
 
-- [attr](DbLogGroup.md#attr)
-- [children](DbLogGroup.md#children)
-- [comment](DbLogGroup.md#comment)
-- [id](DbLogGroup.md#id)
-- [isInProgress](DbLogGroup.md#isinprogress)
-- [meta](DbLogGroup.md#meta)
-- [name](DbLogGroup.md#name)
-- [resourceType](DbLogGroup.md#resourcetype)
+- [attr](DbDynamoTable.md#attr)
+- [children](DbDynamoTable.md#children)
+- [comment](DbDynamoTable.md#comment)
+- [id](DbDynamoTable.md#id)
+- [isInProgress](DbDynamoTable.md#isinprogress)
+- [meta](DbDynamoTable.md#meta)
+- [name](DbDynamoTable.md#name)
+- [resourceType](DbDynamoTable.md#resourcetype)
 
 ### Methods
 
-- [addChild](DbLogGroup.md#addchild)
-- [clearChildren](DbLogGroup.md#clearchildren)
-- [findChildren](DbLogGroup.md#findchildren)
-- [getChildByName](DbLogGroup.md#getchildbyname)
-- [getProperties](DbLogGroup.md#getproperties)
-- [hasChildren](DbLogGroup.md#haschildren)
-- [setPropertyFormat](DbLogGroup.md#setpropertyformat)
-- [toJsonStringify](DbLogGroup.md#tojsonstringify)
-- [toString](DbLogGroup.md#tostring)
+- [addChild](DbDynamoTable.md#addchild)
+- [clearChildren](DbDynamoTable.md#clearchildren)
+- [findChildren](DbDynamoTable.md#findchildren)
+- [getChildByName](DbDynamoTable.md#getchildbyname)
+- [getCompareKeys](DbDynamoTable.md#getcomparekeys)
+- [getPrimaryColumnNames](DbDynamoTable.md#getprimarycolumnnames)
+- [getProperties](DbDynamoTable.md#getproperties)
+- [hasChildren](DbDynamoTable.md#haschildren)
+- [setPropertyFormat](DbDynamoTable.md#setpropertyformat)
+- [toJsonStringify](DbDynamoTable.md#tojsonstringify)
+- [toString](DbDynamoTable.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new DbLogGroup**(`name`, `attr`): [`DbLogGroup`](DbLogGroup.md)
+• **new DbDynamoTable**(`name`, `attr`): [`DbDynamoTable`](DbDynamoTable.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `name` | `string` |
-| `attr` | `Object` |
-| `attr.creationTime?` | `number` |
-| `attr.kmsKeyId?` | `string` |
-| `attr.retentionInDays?` | `number` |
-| `attr.storedBytes?` | `number` |
+| `attr` | [`AwsDynamoTableAttributes`](../modules.md#awsdynamotableattributes) |
 
 #### Returns
 
-[`DbLogGroup`](DbLogGroup.md)
+[`DbDynamoTable`](DbDynamoTable.md)
 
 #### Overrides
 
@@ -64,22 +66,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:1033](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L1033)
+[src/resource/DbResource.ts:914](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L914)
 
 ## Properties
 
 ### attr
 
-• `Readonly` **attr**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `creationTime?` | `number` |
-| `kmsKeyId?` | `string` |
-| `retentionInDays?` | `number` |
-| `storedBytes?` | `number` |
+• `Readonly` **attr**: [`AwsDynamoTableAttributes`](../modules.md#awsdynamotableattributes)
 
 #### Inherited from
 
@@ -93,7 +86,7 @@ ___
 
 ### children
 
-• `Readonly` **children**: `any`[]
+• `Readonly` **children**: [`DbDynamoTableColumn`](DbDynamoTableColumn.md)[]
 
 #### Inherited from
 
@@ -195,17 +188,17 @@ ___
 
 ### addChild
 
-▸ **addChild**(`res`): `any`
+▸ **addChild**(`res`): [`DbDynamoTableColumn`](DbDynamoTableColumn.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | `any` |
+| `res` | [`DbDynamoTableColumn`](DbDynamoTableColumn.md) |
 
 #### Returns
 
-`any`
+[`DbDynamoTableColumn`](DbDynamoTableColumn.md)
 
 #### Inherited from
 
@@ -270,7 +263,7 @@ ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): `any`
+▸ **getChildByName**(`name`, `insensitive?`): [`DbDynamoTableColumn`](DbDynamoTableColumn.md)
 
 #### Parameters
 
@@ -281,7 +274,7 @@ ___
 
 #### Returns
 
-`any`
+[`DbDynamoTableColumn`](DbDynamoTableColumn.md)
 
 #### Inherited from
 
@@ -293,6 +286,44 @@ ___
 
 ___
 
+### getCompareKeys
+
+▸ **getCompareKeys**(`availableColumnNames?`): `CompareKey`[]
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `availableColumnNames?` | `string`[] |
+
+#### Returns
+
+`CompareKey`[]
+
+#### Implementation of
+
+[ITableComparable](../interfaces/ITableComparable.md).[getCompareKeys](../interfaces/ITableComparable.md#getcomparekeys)
+
+#### Defined in
+
+[src/resource/DbResource.ts:936](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L936)
+
+___
+
+### getPrimaryColumnNames
+
+▸ **getPrimaryColumnNames**(): `string`[]
+
+#### Returns
+
+`string`[]
+
+#### Defined in
+
+[src/resource/DbResource.ts:930](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L930)
+
+___
+
 ### getProperties
 
 ▸ **getProperties**(): `Object`
@@ -301,13 +332,13 @@ ___
 
 `Object`
 
-#### Inherited from
+#### Overrides
 
 [AwsDbResource](AwsDbResource.md).[getProperties](AwsDbResource.md#getproperties)
 
 #### Defined in
 
-[src/resource/DbResource.ts:893](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L893)
+[src/resource/DbResource.ts:922](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L922)
 
 ___
 

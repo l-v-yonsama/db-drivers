@@ -16,6 +16,7 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { BaseDriver } from './BaseDriver';
+import { setRdhMetaAndStatement } from '../utils';
 
 export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
   constructor(conRes: ConnectionSetting) {
@@ -98,7 +99,15 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       ...params,
       dbTable,
     });
-    this.setRdhMetaAndStatement(params, rdb, qst?.ast?.type, qst, dbTable);
+    setRdhMetaAndStatement({
+      connectionName: this.conRes.name,
+      params,
+      rdb,
+      type: qst?.ast?.type,
+      qst,
+      dbTable,
+      tableComment: dbTable?.comment,
+    });
 
     return rdb.build();
   }
@@ -125,7 +134,16 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       ...params,
       dbTable,
     });
-    this.setRdhMetaAndStatement(params, rdb, 'explain' as any, ast, dbTable);
+    setRdhMetaAndStatement({
+      connectionName: this.conRes.name,
+      params,
+      rdb,
+      type: 'explain' as any,
+      qst: ast,
+      dbTable,
+      tableComment: dbTable?.comment,
+    });
+
     rdb.rs.meta.compareKeys = undefined; // update
 
     return rdb.build();
@@ -147,7 +165,15 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
       ...params,
       dbTable,
     });
-    this.setRdhMetaAndStatement(params, rdb, 'analyze' as any, ast, dbTable);
+    setRdhMetaAndStatement({
+      connectionName: this.conRes.name,
+      params,
+      rdb,
+      type: 'analyze' as any,
+      qst: ast,
+      dbTable,
+      tableComment: dbTable?.comment,
+    });
     rdb.rs.meta.compareKeys = undefined; // update
 
     return rdb.build();
@@ -184,45 +210,6 @@ export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
     }
 
     return undefined;
-  }
-
-  setRdhMetaAndStatement(
-    params: QueryParams,
-    rdb: ResultSetDataBuilder,
-    type: Statement['type'],
-    qst: QStatement,
-    dbTable?: DbTable,
-  ): void {
-    const { sql, conditions, meta } = params;
-    rdb.setSqlStatement(sql);
-    const connectionName = this.conRes.name;
-    let schemaName = meta?.schemaName;
-    let tableName = meta?.tableName;
-    const comment = meta?.comment ?? dbTable?.comment;
-    let compareKeys = meta?.compareKeys;
-
-    if (!schemaName) {
-      schemaName = qst?.names?.schemaName;
-    }
-    if (!tableName) {
-      tableName = qst?.names?.tableName;
-    }
-
-    if (!rdb.rs.meta.compareKeys && !compareKeys) {
-      if (dbTable) {
-        compareKeys = dbTable.getCompareKeys(rdb.keynames());
-      }
-    }
-    rdb.updateMeta({
-      connectionName,
-      comment,
-      schemaName,
-      tableName,
-      compareKeys,
-      type,
-      editable: meta?.editable,
-    });
-    rdb.rs.queryConditions = conditions;
   }
 
   resetDefaultSchema(database: RdsDatabase, hint = ''): void {
