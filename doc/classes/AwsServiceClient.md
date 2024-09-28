@@ -24,6 +24,7 @@
 
 ### Properties
 
+- [awsDriver](AwsServiceClient.md#awsdriver)
 - [conRes](AwsServiceClient.md#conres)
 - [config](AwsServiceClient.md#config)
 - [isConnected](AwsServiceClient.md#isconnected)
@@ -43,7 +44,7 @@
 
 ### constructor
 
-• **new AwsServiceClient**(`conRes`, `config`): [`AwsServiceClient`](AwsServiceClient.md)
+• **new AwsServiceClient**(`conRes`, `config`, `awsDriver`): [`AwsServiceClient`](AwsServiceClient.md)
 
 #### Parameters
 
@@ -51,6 +52,7 @@
 | :------ | :------ |
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 | `config` | [`ClientConfigType`](../modules.md#clientconfigtype) |
+| `awsDriver` | [`AwsDriver`](AwsDriver.md) |
 
 #### Returns
 
@@ -58,9 +60,19 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L11)
 
 ## Properties
+
+### awsDriver
+
+• `Protected` **awsDriver**: [`AwsDriver`](AwsDriver.md)
+
+#### Defined in
+
+[src/drivers/aws/AwsServiceClient.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L14)
+
+___
 
 ### conRes
 
@@ -68,7 +80,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -78,7 +90,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:13](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L13)
 
 ___
 
@@ -88,7 +100,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ## Methods
 
@@ -102,7 +114,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L85)
+[src/drivers/aws/AwsServiceClient.ts:88](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L88)
 
 ___
 
@@ -116,7 +128,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L20)
 
 ___
 
@@ -130,7 +142,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L83)
+[src/drivers/aws/AwsServiceClient.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L86)
 
 ___
 
@@ -144,7 +156,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L59)
+[src/drivers/aws/AwsServiceClient.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L62)
 
 ___
 
@@ -158,7 +170,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L86)
+[src/drivers/aws/AwsServiceClient.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L89)
 
 ___
 
@@ -172,7 +184,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L55)
+[src/drivers/aws/AwsServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L58)
 
 ___
 
@@ -192,7 +204,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L39)
 
 ___
 
@@ -206,4 +218,4 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L84)
+[src/drivers/aws/AwsServiceClient.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L87)

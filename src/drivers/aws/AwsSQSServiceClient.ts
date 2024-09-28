@@ -39,15 +39,19 @@ import {
   ConnectionSetting,
   ScanParams,
 } from '../../types';
-import { ClientConfigType } from '../AwsDriver';
+import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 
 export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
   sqsClient: SQSClient;
 
-  constructor(conRes: ConnectionSetting, config: ClientConfigType) {
-    super(conRes, config);
+  constructor(
+    conRes: ConnectionSetting,
+    config: ClientConfigType,
+    awsDriver: AwsDriver,
+  ) {
+    super(conRes, config, awsDriver);
   }
 
   protected async connectSub(): Promise<string> {

@@ -31,7 +31,7 @@ import {
   ResourceType,
   ScanParams,
 } from '../../types';
-import { ClientConfigType } from '../AwsDriver';
+import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 
@@ -41,8 +41,12 @@ export class AwsCloudwatchServiceClient
 {
   logClient: CloudWatchLogsClient;
 
-  constructor(conRes: ConnectionSetting, config: ClientConfigType) {
-    super(conRes, config);
+  constructor(
+    conRes: ConnectionSetting,
+    config: ClientConfigType,
+    awsDriver: AwsDriver,
+  ) {
+    super(conRes, config, awsDriver);
   }
 
   async connectSub(): Promise<string> {

@@ -35,15 +35,19 @@ import {
 } from '../../resource';
 import { AwsServiceType, ConnectionSetting, ScanParams } from '../../types';
 import { parseContentType, prettyFileSize } from '../../utils';
-import { ClientConfigType } from '../AwsDriver';
+import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 
 export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   s3Client: S3Client;
 
-  constructor(conRes: ConnectionSetting, config: ClientConfigType) {
-    super(conRes, config);
+  constructor(
+    conRes: ConnectionSetting,
+    config: ClientConfigType,
+    awsDriver: AwsDriver,
+  ) {
+    super(conRes, config, awsDriver);
   }
 
   async connectSub(): Promise<string> {

@@ -46,7 +46,8 @@
 - [getClientByResourceType](AwsDriver.md#getclientbyresourcetype)
 - [getClientByServiceType](AwsDriver.md#getclientbyservicetype)
 - [getConnectionRes](AwsDriver.md#getconnectionres)
-- [getDbDatabase](AwsDriver.md#getdbdatabase)
+- [getDbDatabases](AwsDriver.md#getdbdatabases)
+- [getFirstDbDatabase](AwsDriver.md#getfirstdbdatabase)
 - [getInfomationSchemas](AwsDriver.md#getinfomationschemas)
 - [getInfomationSchemasSub](AwsDriver.md#getinfomationschemassub)
 - [getName](AwsDriver.md#getname)
@@ -84,7 +85,7 @@
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L45)
+[src/drivers/AwsDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L45)
 
 ## Properties
 
@@ -94,7 +95,7 @@
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L41)
+[src/drivers/AwsDriver.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L41)
 
 ___
 
@@ -108,7 +109,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L44)
+[src/drivers/BaseDriver.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L48)
 
 ___
 
@@ -118,7 +119,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L43)
+[src/drivers/AwsDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L43)
 
 ___
 
@@ -132,7 +133,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L43)
+[src/drivers/BaseDriver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L47)
 
 ___
 
@@ -142,7 +143,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L42)
+[src/drivers/AwsDriver.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L42)
 
 ___
 
@@ -152,7 +153,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L39)
+[src/drivers/AwsDriver.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L39)
 
 ___
 
@@ -162,7 +163,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L40)
+[src/drivers/AwsDriver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L40)
 
 ___
 
@@ -176,7 +177,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L46)
+[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L50)
 
 ___
 
@@ -190,7 +191,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L45)
+[src/drivers/BaseDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L49)
 
 ## Methods
 
@@ -208,7 +209,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:250](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L250)
+[src/drivers/AwsDriver.ts:250](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L250)
 
 ___
 
@@ -226,7 +227,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L152)
+[src/drivers/BaseDriver.ts:156](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L156)
 
 ___
 
@@ -244,7 +245,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:129](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L129)
+[src/drivers/AwsDriver.ts:129](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L129)
 
 ___
 
@@ -268,7 +269,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L309)
+[src/drivers/AwsDriver.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L309)
 
 ___
 
@@ -292,7 +293,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:298](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L298)
+[src/drivers/AwsDriver.ts:298](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L298)
 
 ___
 
@@ -306,7 +307,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L49)
+[src/drivers/AwsDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L49)
 
 ___
 
@@ -331,7 +332,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L224)
+[src/drivers/BaseDriver.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L232)
 
 ___
 
@@ -349,7 +350,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L177)
+[src/drivers/BaseDriver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L181)
 
 ___
 
@@ -373,7 +374,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:294](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L294)
+[src/drivers/AwsDriver.ts:294](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L294)
 
 ___
 
@@ -397,7 +398,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:290](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L290)
+[src/drivers/AwsDriver.ts:290](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L290)
 
 ___
 
@@ -427,7 +428,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L94)
+[src/drivers/BaseDriver.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L98)
 
 ___
 
@@ -453,7 +454,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:88](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L88)
+[src/drivers/AwsDriver.ts:88](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L88)
 
 ___
 
@@ -479,7 +480,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L64)
+[src/drivers/AwsDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L64)
 
 ___
 
@@ -497,13 +498,31 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L56)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L60)
 
 ___
 
-### getDbDatabase
+### getDbDatabases
 
-▸ **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
+▸ **getDbDatabases**(): [`DbDatabase`](../modules.md#dbdatabase)[]
+
+#### Returns
+
+[`DbDatabase`](../modules.md#dbdatabase)[]
+
+#### Inherited from
+
+[BaseDriver](BaseDriver.md).[getDbDatabases](BaseDriver.md#getdbdatabases)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:222](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L222)
+
+___
+
+### getFirstDbDatabase
+
+▸ **getFirstDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
 
 #### Returns
 
@@ -511,11 +530,11 @@ ___
 
 #### Inherited from
 
-[BaseDriver](BaseDriver.md).[getDbDatabase](BaseDriver.md#getdbdatabase)
+[BaseDriver](BaseDriver.md).[getFirstDbDatabase](BaseDriver.md#getfirstdbdatabase)
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L218)
+[src/drivers/BaseDriver.ts:226](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L226)
 
 ___
 
@@ -533,7 +552,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L203)
+[src/drivers/BaseDriver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L207)
 
 ___
 
@@ -551,7 +570,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L188)
+[src/drivers/AwsDriver.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L188)
 
 ___
 
@@ -569,7 +588,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L57)
 
 ___
 
@@ -587,7 +606,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:271](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L271)
+[src/drivers/AwsDriver.ts:271](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L271)
 
 ___
 
@@ -605,7 +624,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -623,7 +642,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:275](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L275)
+[src/drivers/AwsDriver.ts:275](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L275)
 
 ___
 
@@ -641,7 +660,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L64)
+[src/drivers/BaseDriver.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L68)
 
 ___
 
@@ -659,7 +678,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:267](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L267)
+[src/drivers/AwsDriver.ts:267](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L267)
 
 ___
 
@@ -683,7 +702,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L71)
 
 ___
 
@@ -701,7 +720,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:279](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L279)
+[src/drivers/AwsDriver.ts:279](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L279)
 
 ___
 
@@ -725,7 +744,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:302](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L302)
+[src/drivers/AwsDriver.ts:302](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L302)
 
 ___
 
@@ -749,7 +768,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L78)
+[src/drivers/BaseDriver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L82)
 
 ___
 
@@ -773,7 +792,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:283](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L283)
+[src/drivers/AwsDriver.ts:283](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L283)
 
 ___
 
@@ -797,4 +816,4 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:208](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L208)
+[src/drivers/AwsDriver.ts:208](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/AwsDriver.ts#L208)

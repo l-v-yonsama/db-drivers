@@ -20,6 +20,7 @@
 
 ### Properties
 
+- [awsDriver](AwsCloudwatchServiceClient.md#awsdriver)
 - [conRes](AwsCloudwatchServiceClient.md#conres)
 - [config](AwsCloudwatchServiceClient.md#config)
 - [isConnected](AwsCloudwatchServiceClient.md#isconnected)
@@ -48,7 +49,7 @@
 
 ### constructor
 
-• **new AwsCloudwatchServiceClient**(`conRes`, `config`): [`AwsCloudwatchServiceClient`](AwsCloudwatchServiceClient.md)
+• **new AwsCloudwatchServiceClient**(`conRes`, `config`, `awsDriver`): [`AwsCloudwatchServiceClient`](AwsCloudwatchServiceClient.md)
 
 #### Parameters
 
@@ -56,6 +57,7 @@
 | :------ | :------ |
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 | `config` | [`ClientConfigType`](../modules.md#clientconfigtype) |
+| `awsDriver` | [`AwsDriver`](AwsDriver.md) |
 
 #### Returns
 
@@ -67,9 +69,23 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L44)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L44)
 
 ## Properties
+
+### awsDriver
+
+• `Protected` **awsDriver**: [`AwsDriver`](AwsDriver.md)
+
+#### Inherited from
+
+[AwsServiceClient](AwsServiceClient.md).[awsDriver](AwsServiceClient.md#awsdriver)
+
+#### Defined in
+
+[src/drivers/aws/AwsServiceClient.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L14)
+
+___
 
 ### conRes
 
@@ -81,7 +97,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -95,7 +111,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:13](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L13)
 
 ___
 
@@ -109,7 +125,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ___
 
@@ -119,7 +135,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L42)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L42)
 
 ## Methods
 
@@ -137,7 +153,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:314](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L314)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:318](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L318)
 
 ___
 
@@ -155,7 +171,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L20)
 
 ___
 
@@ -173,7 +189,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L48)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L52)
 
 ___
 
@@ -191,7 +207,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L59)
+[src/drivers/aws/AwsServiceClient.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L62)
 
 ___
 
@@ -205,7 +221,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:236](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L236)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:240](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L240)
 
 ___
 
@@ -229,7 +245,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L63)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L67)
 
 ___
 
@@ -250,7 +266,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:265](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L265)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:269](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L269)
 
 ___
 
@@ -264,7 +280,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:295](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L295)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:299](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L299)
 
 ___
 
@@ -282,7 +298,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:318](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L318)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:322](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L322)
 
 ___
 
@@ -300,7 +316,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L55)
+[src/drivers/aws/AwsServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L58)
 
 ___
 
@@ -320,7 +336,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L98)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:102](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L102)
 
 ___
 
@@ -344,7 +360,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:128](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L128)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:132](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L132)
 
 ___
 
@@ -364,7 +380,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:137](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L137)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:141](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L141)
 
 ___
 
@@ -384,7 +400,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:198](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L198)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:202](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L202)
 
 ___
 
@@ -408,7 +424,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L39)
 
 ___
 
@@ -426,4 +442,4 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsCloudwatchServiceClient.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsCloudwatchServiceClient.ts#L53)
+[src/drivers/aws/AwsCloudwatchServiceClient.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsCloudwatchServiceClient.ts#L57)

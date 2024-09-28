@@ -129,11 +129,11 @@ export class AwsDriver
   async connectSub(): Promise<string> {
     const messageList = [];
     const config = this.createClientConfig();
-    const cw = new AwsCloudwatchServiceClient(this.conRes, config);
-    const sqs = new AwsSQSServiceClient(this.conRes, config);
-    const s3 = new AwsS3ServiceClient(this.conRes, config);
-    const ses = new AwsSESServiceClient(this.conRes, config);
-    const dynamo = new AwsDynamoServiceClient(this.conRes, config);
+    const cw = new AwsCloudwatchServiceClient(this.conRes, config, this);
+    const sqs = new AwsSQSServiceClient(this.conRes, config, this);
+    const s3 = new AwsS3ServiceClient(this.conRes, config, this);
+    const ses = new AwsSESServiceClient(this.conRes, config, this);
+    const dynamo = new AwsDynamoServiceClient(this.conRes, config, this);
     const { services } = this.conRes.awsSetting;
 
     let message = '';
@@ -210,35 +210,35 @@ export class AwsDriver
     const config = this.createClientConfig();
     const { services } = this.conRes.awsSetting;
     if (services.includes(AwsServiceType.Cloudwatch)) {
-      const client = new AwsCloudwatchServiceClient(this.conRes, config);
+      const client = new AwsCloudwatchServiceClient(this.conRes, config, this);
       const message = await client.test(with_connect);
       if (message) {
         messageList.push(message);
       }
     }
     if (services.includes(AwsServiceType.SES)) {
-      const client = new AwsSESServiceClient(this.conRes, config);
+      const client = new AwsSESServiceClient(this.conRes, config, this);
       const message = await client.test(with_connect);
       if (message) {
         messageList.push(message);
       }
     }
     if (services.includes(AwsServiceType.SQS)) {
-      const client = new AwsSQSServiceClient(this.conRes, config);
+      const client = new AwsSQSServiceClient(this.conRes, config, this);
       const message = await client.test(with_connect);
       if (message) {
         messageList.push(message);
       }
     }
     if (services.includes(AwsServiceType.S3)) {
-      const client = new AwsS3ServiceClient(this.conRes, config);
+      const client = new AwsS3ServiceClient(this.conRes, config, this);
       const message = await client.test(with_connect);
       if (message) {
         messageList.push(message);
       }
     }
     if (services.includes(AwsServiceType.DynamoDB)) {
-      const client = new AwsDynamoServiceClient(this.conRes, config);
+      const client = new AwsDynamoServiceClient(this.conRes, config, this);
       const message = await client.test(with_connect);
       if (message) {
         messageList.push(message);

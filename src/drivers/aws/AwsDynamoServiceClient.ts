@@ -52,7 +52,7 @@ import {
   ScanParams,
 } from '../../types';
 import { setRdhMetaAndStatement } from '../../utils';
-import { ClientConfigType } from '../AwsDriver';
+import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 import { parseQuery } from '../../helpers';
@@ -66,11 +66,14 @@ export class AwsDynamoServiceClient
 {
   client: DynamoDBClient;
   docClient: DynamoDBDocumentClient;
-  awsDatabase: AwsDatabase;
   private interrupted = false;
 
-  constructor(conRes: ConnectionSetting, config: ClientConfigType) {
-    super(conRes, config);
+  constructor(
+    conRes: ConnectionSetting,
+    config: ClientConfigType,
+    awsDriver: AwsDriver,
+  ) {
+    super(conRes, config, awsDriver);
   }
 
   async connectSub(): Promise<string> {
@@ -241,7 +244,6 @@ export class AwsDynamoServiceClient
       console.error(e);
       // reject(e);
     }
-    this.awsDatabase = dbDatabase;
     return dbDatabase;
   }
 
@@ -479,12 +481,26 @@ export class AwsDynamoServiceClient
   }
 
   private getDbTable(qst?: QStatement): DbDynamoTable | undefined {
-    const db = this.awsDatabase;
-    if (qst === undefined || qst.names === undefined || db === undefined) {
+    const db = this.awsDriver
+      .getDbDatabases()
+      ?.find(
+        (it) =>
+          it instanceof AwsDatabase &&
+          it.serviceType === AwsServiceType.DynamoDB,
+      );
+    if (db === undefined) {
       return undefined;
     }
 
-    return db.getChildByName(qst.names.tableName, false) as DbDynamoTable;
+    if (qst === undefined || qst.names === undefined || db === undefined) {
+      return undefined;
+    }
+    const tables = db.findChildren<DbDynamoTable>({
+      resourceType: 'DynamoTable',
+      keyword: qst.names.tableName,
+      recursively: false,
+    });
+    return tables?.find((it) => it.name === qst.names.tableName);
   }
 
   protected async closeSub(): Promise<void> {

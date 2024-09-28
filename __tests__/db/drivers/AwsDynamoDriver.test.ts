@@ -684,6 +684,7 @@ describe('AwsDynamoDBDriver', () => {
       const rs = await driver.dynamoClient.requestPartiql({
         sql: 'SELECT * FROM testtable Limit 10',
       });
+      console.log(ResultSetDataBuilder.from(rs).toMarkdown({ withType: true }));
       expect(rs.keys.map((it) => it.name)).toEqual(
         expect.arrayContaining(['id', 'b', 'm', 'n', 's2', 'ss', 'null']),
       );

@@ -74,7 +74,7 @@ export abstract class RDSBaseDriver
   abstract isLimitAsTop(): boolean;
 
   protected getRdsDatabase(): RdsDatabase | undefined {
-    const db = this.getDbDatabase();
+    const db = this.getFirstDbDatabase();
     if (db instanceof RdsDatabase) {
       return db;
     }

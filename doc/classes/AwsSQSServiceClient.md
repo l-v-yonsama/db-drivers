@@ -20,6 +20,7 @@
 
 ### Properties
 
+- [awsDriver](AwsSQSServiceClient.md#awsdriver)
 - [conRes](AwsSQSServiceClient.md#conres)
 - [config](AwsSQSServiceClient.md#config)
 - [isConnected](AwsSQSServiceClient.md#isconnected)
@@ -48,7 +49,7 @@
 
 ### constructor
 
-• **new AwsSQSServiceClient**(`conRes`, `config`): [`AwsSQSServiceClient`](AwsSQSServiceClient.md)
+• **new AwsSQSServiceClient**(`conRes`, `config`, `awsDriver`): [`AwsSQSServiceClient`](AwsSQSServiceClient.md)
 
 #### Parameters
 
@@ -56,6 +57,7 @@
 | :------ | :------ |
 | `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
 | `config` | [`ClientConfigType`](../modules.md#clientconfigtype) |
+| `awsDriver` | [`AwsDriver`](AwsDriver.md) |
 
 #### Returns
 
@@ -67,9 +69,23 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L49)
+[src/drivers/aws/AwsSQSServiceClient.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L49)
 
 ## Properties
+
+### awsDriver
+
+• `Protected` **awsDriver**: [`AwsDriver`](AwsDriver.md)
+
+#### Inherited from
+
+[AwsServiceClient](AwsServiceClient.md).[awsDriver](AwsServiceClient.md#awsdriver)
+
+#### Defined in
+
+[src/drivers/aws/AwsServiceClient.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L14)
+
+___
 
 ### conRes
 
@@ -81,7 +97,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -95,7 +111,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L11)
+[src/drivers/aws/AwsServiceClient.ts:13](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L13)
 
 ___
 
@@ -109,7 +125,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ___
 
@@ -119,7 +135,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L47)
+[src/drivers/aws/AwsSQSServiceClient.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L47)
 
 ## Methods
 
@@ -137,7 +153,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:235](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L235)
+[src/drivers/aws/AwsSQSServiceClient.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L239)
 
 ___
 
@@ -155,7 +171,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L17)
+[src/drivers/aws/AwsServiceClient.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L20)
 
 ___
 
@@ -173,7 +189,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L53)
+[src/drivers/aws/AwsSQSServiceClient.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L57)
 
 ___
 
@@ -195,7 +211,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:202](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L202)
+[src/drivers/aws/AwsSQSServiceClient.ts:206](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L206)
 
 ___
 
@@ -217,7 +233,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:223](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L223)
+[src/drivers/aws/AwsSQSServiceClient.ts:227](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L227)
 
 ___
 
@@ -238,7 +254,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:215](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L215)
+[src/drivers/aws/AwsSQSServiceClient.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L219)
 
 ___
 
@@ -256,7 +272,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L59)
+[src/drivers/aws/AwsServiceClient.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L62)
 
 ___
 
@@ -270,7 +286,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:132](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L132)
+[src/drivers/aws/AwsSQSServiceClient.ts:136](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L136)
 
 ___
 
@@ -288,7 +304,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:239](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L239)
+[src/drivers/aws/AwsSQSServiceClient.ts:243](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L243)
 
 ___
 
@@ -306,7 +322,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L55)
+[src/drivers/aws/AwsServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L58)
 
 ___
 
@@ -327,7 +343,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L219)
+[src/drivers/aws/AwsSQSServiceClient.ts:223](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L223)
 
 ___
 
@@ -347,7 +363,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L64)
+[src/drivers/aws/AwsSQSServiceClient.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L68)
 
 ___
 
@@ -371,7 +387,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:85](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L85)
+[src/drivers/aws/AwsSQSServiceClient.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L89)
 
 ___
 
@@ -391,7 +407,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:128](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L128)
+[src/drivers/aws/AwsSQSServiceClient.ts:132](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L132)
 
 ___
 
@@ -415,7 +431,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsServiceClient.ts#L36)
+[src/drivers/aws/AwsServiceClient.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsServiceClient.ts#L39)
 
 ___
 
@@ -433,4 +449,4 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsSQSServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/aws/AwsSQSServiceClient.ts#L58)
+[src/drivers/aws/AwsSQSServiceClient.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/aws/AwsSQSServiceClient.ts#L62)

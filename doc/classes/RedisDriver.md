@@ -38,7 +38,8 @@
 - [flushAll](RedisDriver.md#flushall)
 - [flushDb](RedisDriver.md#flushdb)
 - [getConnectionRes](RedisDriver.md#getconnectionres)
-- [getDbDatabase](RedisDriver.md#getdbdatabase)
+- [getDbDatabases](RedisDriver.md#getdbdatabases)
+- [getFirstDbDatabase](RedisDriver.md#getfirstdbdatabase)
 - [getInfomationSchemas](RedisDriver.md#getinfomationschemas)
 - [getInfomationSchemasSub](RedisDriver.md#getinfomationschemassub)
 - [getName](RedisDriver.md#getname)
@@ -73,7 +74,7 @@
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L21)
+[src/drivers/RedisDriver.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L21)
 
 ## Properties
 
@@ -83,7 +84,7 @@
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L19)
+[src/drivers/RedisDriver.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L19)
 
 ___
 
@@ -97,7 +98,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L44)
+[src/drivers/BaseDriver.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L48)
 
 ___
 
@@ -111,7 +112,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L43)
+[src/drivers/BaseDriver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L47)
 
 ___
 
@@ -125,7 +126,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L46)
+[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L50)
 
 ___
 
@@ -139,7 +140,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L45)
+[src/drivers/BaseDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L49)
 
 ## Methods
 
@@ -157,7 +158,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:235](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L235)
+[src/drivers/RedisDriver.ts:235](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L235)
 
 ___
 
@@ -175,7 +176,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L152)
+[src/drivers/BaseDriver.ts:156](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L156)
 
 ___
 
@@ -193,7 +194,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L25)
+[src/drivers/RedisDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L25)
 
 ___
 
@@ -218,7 +219,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L224)
+[src/drivers/BaseDriver.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L232)
 
 ___
 
@@ -238,7 +239,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:91](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L91)
+[src/drivers/RedisDriver.ts:91](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L91)
 
 ___
 
@@ -256,7 +257,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L177)
+[src/drivers/BaseDriver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L181)
 
 ___
 
@@ -286,7 +287,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L94)
+[src/drivers/BaseDriver.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L98)
 
 ___
 
@@ -300,7 +301,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L83)
+[src/drivers/RedisDriver.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L83)
 
 ___
 
@@ -314,7 +315,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L87)
+[src/drivers/RedisDriver.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L87)
 
 ___
 
@@ -332,13 +333,31 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L56)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L60)
 
 ___
 
-### getDbDatabase
+### getDbDatabases
 
-▸ **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
+▸ **getDbDatabases**(): [`DbDatabase`](../modules.md#dbdatabase)[]
+
+#### Returns
+
+[`DbDatabase`](../modules.md#dbdatabase)[]
+
+#### Inherited from
+
+[BaseDriver](BaseDriver.md).[getDbDatabases](BaseDriver.md#getdbdatabases)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:222](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L222)
+
+___
+
+### getFirstDbDatabase
+
+▸ **getFirstDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
 
 #### Returns
 
@@ -346,11 +365,11 @@ ___
 
 #### Inherited from
 
-[BaseDriver](BaseDriver.md).[getDbDatabase](BaseDriver.md#getdbdatabase)
+[BaseDriver](BaseDriver.md).[getFirstDbDatabase](BaseDriver.md#getfirstdbdatabase)
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L218)
+[src/drivers/BaseDriver.ts:226](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L226)
 
 ___
 
@@ -368,7 +387,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L203)
+[src/drivers/BaseDriver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L207)
 
 ___
 
@@ -386,7 +405,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L210)
+[src/drivers/RedisDriver.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L210)
 
 ___
 
@@ -404,7 +423,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L57)
 
 ___
 
@@ -426,7 +445,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:189](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L189)
+[src/drivers/RedisDriver.ts:189](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L189)
 
 ___
 
@@ -444,7 +463,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -462,7 +481,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L64)
+[src/drivers/BaseDriver.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L68)
 
 ___
 
@@ -486,7 +505,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L71)
 
 ___
 
@@ -510,7 +529,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L78)
+[src/drivers/BaseDriver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L82)
 
 ___
 
@@ -534,7 +553,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:139](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L139)
+[src/drivers/RedisDriver.ts:139](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L139)
 
 ___
 
@@ -554,7 +573,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L95)
+[src/drivers/RedisDriver.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L95)
 
 ___
 
@@ -578,4 +597,4 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RedisDriver.ts#L64)
+[src/drivers/RedisDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RedisDriver.ts#L64)

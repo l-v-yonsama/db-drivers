@@ -14,9 +14,9 @@ export function isScannable(arg: any): arg is Scannable {
   return typeof arg === 'object' && typeof arg.scan === 'function';
 }
 
-class SharedDbRes {
+export class SharedDbRes {
   static instance: SharedDbRes;
-  private map = new Map<string, DbDatabase>();
+  private map = new Map<string, DbDatabase[]>();
 
   public static getInstance(): SharedDbRes {
     if (this.instance) {
@@ -26,11 +26,15 @@ class SharedDbRes {
     return this.instance;
   }
 
-  get(conName: string): DbDatabase | undefined {
+  get(conName: string): DbDatabase[] | undefined {
     return this.map.get(conName);
   }
 
-  set(conName: string, res: DbDatabase): void {
+  getFirst(conName: string): DbDatabase | undefined {
+    return this.map.get(conName)?.[0];
+  }
+
+  set(conName: string, res: DbDatabase[]): void {
     this.map.set(conName, res);
   }
 
@@ -206,7 +210,7 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
     }
     const dbResource = await this.getInfomationSchemasSub();
     if (dbResource.length) {
-      SharedDbRes.getInstance().set(this.conRes.name, dbResource[0]);
+      SharedDbRes.getInstance().set(this.conRes.name, dbResource);
     } else {
       SharedDbRes.getInstance().remove(this.conRes.name);
     }
@@ -215,8 +219,12 @@ export abstract class BaseDriver<T extends DbDatabase = DbDatabase> {
 
   abstract getInfomationSchemasSub(): Promise<T[]>;
 
-  protected getDbDatabase(): DbDatabase | undefined {
+  getDbDatabases(): DbDatabase[] | undefined {
     return SharedDbRes.getInstance().get(this.conRes.name);
+  }
+
+  getFirstDbDatabase(): DbDatabase | undefined {
+    return SharedDbRes.getInstance().getFirst(this.conRes.name);
   }
 
   abstract test(with_connect: boolean): Promise<string>;

@@ -16,14 +16,18 @@ import {
 } from '@aws-sdk/client-ses';
 import { AwsDatabase } from '../../resource';
 import { AwsServiceType, ConnectionSetting } from '../../types';
-import { ClientConfigType } from '../AwsDriver';
+import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 
 export class AwsSESServiceClient extends AwsServiceClient {
   sesClient: SESClient;
 
-  constructor(conRes: ConnectionSetting, config: ClientConfigType) {
-    super(conRes, config);
+  constructor(
+    conRes: ConnectionSetting,
+    config: ClientConfigType,
+    awsDriver: AwsDriver,
+  ) {
+    super(conRes, config, awsDriver);
   }
 
   protected async connectSub(): Promise<string> {

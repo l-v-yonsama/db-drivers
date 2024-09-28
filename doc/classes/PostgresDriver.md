@@ -42,7 +42,8 @@
 - [flow](PostgresDriver.md#flow)
 - [flowTransaction](PostgresDriver.md#flowtransaction)
 - [getConnectionRes](PostgresDriver.md#getconnectionres)
-- [getDbDatabase](PostgresDriver.md#getdbdatabase)
+- [getDbDatabases](PostgresDriver.md#getdbdatabases)
+- [getFirstDbDatabase](PostgresDriver.md#getfirstdbdatabase)
 - [getInfomationSchemas](PostgresDriver.md#getinfomationschemas)
 - [getInfomationSchemasSub](PostgresDriver.md#getinfomationschemassub)
 - [getLockWaitTimeout](PostgresDriver.md#getlockwaittimeout)
@@ -97,7 +98,7 @@
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L28)
+[src/drivers/PostgresDriver.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L28)
 
 ## Properties
 
@@ -111,7 +112,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L44)
+[src/drivers/BaseDriver.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L48)
 
 ___
 
@@ -125,7 +126,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L43)
+[src/drivers/BaseDriver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L47)
 
 ___
 
@@ -139,7 +140,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L46)
+[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L50)
 
 ___
 
@@ -153,7 +154,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L45)
+[src/drivers/BaseDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L49)
 
 ## Methods
 
@@ -173,7 +174,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:355](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L355)
+[src/drivers/PostgresDriver.ts:355](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L355)
 
 ___
 
@@ -191,7 +192,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L32)
+[src/drivers/PostgresDriver.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L32)
 
 ___
 
@@ -209,7 +210,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:649](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L649)
+[src/drivers/PostgresDriver.ts:649](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L649)
 
 ___
 
@@ -227,7 +228,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L43)
+[src/drivers/PostgresDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L43)
 
 ___
 
@@ -245,7 +246,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L152)
+[src/drivers/BaseDriver.ts:156](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L156)
 
 ___
 
@@ -269,7 +270,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:258](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L258)
+[src/drivers/RDSBaseDriver.ts:258](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L258)
 
 ___
 
@@ -287,7 +288,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:134](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L134)
+[src/drivers/PostgresDriver.ts:134](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L134)
 
 ___
 
@@ -311,7 +312,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L56)
+[src/drivers/RDSBaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L56)
 
 ___
 
@@ -335,7 +336,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L118)
+[src/drivers/RDSBaseDriver.ts:118](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L118)
 
 ___
 
@@ -360,7 +361,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L224)
+[src/drivers/BaseDriver.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L232)
 
 ___
 
@@ -378,7 +379,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L177)
+[src/drivers/BaseDriver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L181)
 
 ___
 
@@ -402,7 +403,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:162](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L162)
+[src/drivers/RDSBaseDriver.ts:162](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L162)
 
 ___
 
@@ -426,7 +427,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:267](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L267)
+[src/drivers/PostgresDriver.ts:267](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L267)
 
 ___
 
@@ -450,7 +451,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:131](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L131)
+[src/drivers/RDSBaseDriver.ts:131](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L131)
 
 ___
 
@@ -474,7 +475,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:256](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L256)
+[src/drivers/PostgresDriver.ts:256](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L256)
 
 ___
 
@@ -496,7 +497,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L96)
+[src/drivers/PostgresDriver.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L96)
 
 ___
 
@@ -526,7 +527,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L94)
+[src/drivers/BaseDriver.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L98)
 
 ___
 
@@ -558,7 +559,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:271](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L271)
+[src/drivers/RDSBaseDriver.ts:271](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L271)
 
 ___
 
@@ -576,13 +577,31 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L56)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L60)
 
 ___
 
-### getDbDatabase
+### getDbDatabases
 
-▸ **getDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
+▸ **getDbDatabases**(): [`DbDatabase`](../modules.md#dbdatabase)[]
+
+#### Returns
+
+[`DbDatabase`](../modules.md#dbdatabase)[]
+
+#### Inherited from
+
+[RDSBaseDriver](RDSBaseDriver.md).[getDbDatabases](RDSBaseDriver.md#getdbdatabases)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:222](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L222)
+
+___
+
+### getFirstDbDatabase
+
+▸ **getFirstDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
 
 #### Returns
 
@@ -590,11 +609,11 @@ ___
 
 #### Inherited from
 
-[RDSBaseDriver](RDSBaseDriver.md).[getDbDatabase](RDSBaseDriver.md#getdbdatabase)
+[RDSBaseDriver](RDSBaseDriver.md).[getFirstDbDatabase](RDSBaseDriver.md#getfirstdbdatabase)
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L218)
+[src/drivers/BaseDriver.ts:226](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L226)
 
 ___
 
@@ -612,7 +631,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L203)
+[src/drivers/BaseDriver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L207)
 
 ___
 
@@ -630,7 +649,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:331](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L331)
+[src/drivers/PostgresDriver.ts:331](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L331)
 
 ___
 
@@ -644,7 +663,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L57)
+[src/drivers/PostgresDriver.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L57)
 
 ___
 
@@ -668,7 +687,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:289](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L289)
+[src/drivers/PostgresDriver.ts:289](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L289)
 
 ___
 
@@ -686,7 +705,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:253](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L253)
+[src/drivers/RDSBaseDriver.ts:253](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L253)
 
 ___
 
@@ -704,7 +723,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L57)
 
 ___
 
@@ -722,7 +741,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:641](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L641)
+[src/drivers/PostgresDriver.ts:641](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L641)
 
 ___
 
@@ -740,7 +759,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:76](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L76)
+[src/drivers/RDSBaseDriver.ts:76](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L76)
 
 ___
 
@@ -760,7 +779,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:377](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L377)
+[src/drivers/PostgresDriver.ts:377](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L377)
 
 ___
 
@@ -784,7 +803,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L312)
+[src/drivers/PostgresDriver.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L312)
 
 ___
 
@@ -804,7 +823,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:391](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L391)
+[src/drivers/PostgresDriver.ts:391](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L391)
 
 ___
 
@@ -822,7 +841,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:191](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L191)
+[src/drivers/PostgresDriver.ts:191](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L191)
 
 ___
 
@@ -840,7 +859,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L78)
+[src/drivers/PostgresDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L78)
 
 ___
 
@@ -858,7 +877,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:283](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L283)
+[src/drivers/PostgresDriver.ts:283](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L283)
 
 ___
 
@@ -876,7 +895,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -894,7 +913,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:645](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L645)
+[src/drivers/PostgresDriver.ts:645](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L645)
 
 ___
 
@@ -912,7 +931,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L64)
+[src/drivers/BaseDriver.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L68)
 
 ___
 
@@ -930,7 +949,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:637](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L637)
+[src/drivers/PostgresDriver.ts:637](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L637)
 
 ___
 
@@ -954,7 +973,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L71)
 
 ___
 
@@ -972,7 +991,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L70)
+[src/drivers/RDSBaseDriver.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L70)
 
 ___
 
@@ -999,7 +1018,7 @@ If sesssionOrPid is not specified, cancel the running request.
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:168](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L168)
+[src/drivers/PostgresDriver.ts:168](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L168)
 
 ___
 
@@ -1023,7 +1042,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L78)
+[src/drivers/BaseDriver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/BaseDriver.ts#L82)
 
 ___
 
@@ -1047,7 +1066,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L84)
+[src/drivers/RDSBaseDriver.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L84)
 
 ___
 
@@ -1071,7 +1090,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L196)
+[src/drivers/PostgresDriver.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L196)
 
 ___
 
@@ -1096,7 +1115,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L218)
+[src/drivers/RDSBaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L218)
 
 ___
 
@@ -1114,7 +1133,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L47)
+[src/drivers/PostgresDriver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L47)
 
 ___
 
@@ -1138,7 +1157,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L51)
+[src/drivers/PostgresDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L51)
 
 ___
 
@@ -1158,7 +1177,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:419](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L419)
+[src/drivers/PostgresDriver.ts:419](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L419)
 
 ___
 
@@ -1178,7 +1197,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:566](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L566)
+[src/drivers/PostgresDriver.ts:566](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L566)
 
 ___
 
@@ -1198,7 +1217,7 @@ ___
 
 #### Defined in
 
-[src/drivers/PostgresDriver.ts:504](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/PostgresDriver.ts#L504)
+[src/drivers/PostgresDriver.ts:504](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/PostgresDriver.ts#L504)
 
 ___
 
@@ -1222,4 +1241,4 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/RDSBaseDriver.ts#L38)
+[src/drivers/RDSBaseDriver.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/6bdf622920b8402dd42c3d040e02d96caf1d1195/src/drivers/RDSBaseDriver.ts#L38)

@@ -2,16 +2,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { ConnectionSetting } from '../../types';
-import { ClientConfigType } from '../AwsDriver';
+import { AwsDriver, ClientConfigType } from '../AwsDriver';
 
 export abstract class AwsServiceClient {
   public isConnected: boolean;
   protected conRes: ConnectionSetting;
 
-  constructor(conRes: ConnectionSetting, protected config: ClientConfigType) {
+  constructor(
+    conRes: ConnectionSetting,
+    protected config: ClientConfigType,
+    protected awsDriver: AwsDriver,
+  ) {
     this.conRes = conRes;
     this.isConnected = false;
-    // log.info(this.getName(), '★CREATED', this.conRes.id);
   }
 
   async connect(): Promise<string> {
