@@ -23,10 +23,17 @@ import { TopLevelCondition } from 'json-rules-engine';
 import * as os from 'os';
 import { NodeLocation, parse, Statement } from 'pgsql-ast-parser';
 import { DbResource, DbSchema } from '../resource';
-import { DbColumn, DbTable, RdsDatabase } from '../resource/DbResource';
+import {
+  AwsDatabase,
+  DbColumn,
+  DbDynamoTableColumn,
+  DbTable,
+  RdsDatabase,
+} from '../resource/DbResource';
 import {
   BindOptions,
   BindParamPosition,
+  parseDynamoAttrType,
   Proposal,
   ProposalKind,
   ProposalParams,
@@ -418,7 +425,7 @@ const createConditionalClause = ({
   quote,
 }: {
   conditions?: TopLevelCondition;
-  columns: DbColumn[];
+  columns: (DbColumn | DbDynamoTableColumn)[];
   params: {
     bindParams: { [key: string]: any };
     pos: number;
@@ -449,9 +456,15 @@ const createConditionalClause = ({
     } else {
       // condition
       const { fact, value, operator } = nest;
-      const colType =
-        columns.find((it) => equalsIgnoreCase(it.name, fact))?.colType ??
-        GeneralColumnType.TEXT;
+      const mcol = columns.find((it) => equalsIgnoreCase(it.name, fact));
+      let colType: GeneralColumnType = GeneralColumnType.TEXT;
+      if (mcol) {
+        if (mcol instanceof DbColumn) {
+          colType = mcol.colType;
+        } else {
+          colType = parseDynamoAttrType(mcol.attrType);
+        }
+      }
 
       let q = `${wrapQuote(fact, quote)} ${operatorToSQLString(operator)} `;
 
@@ -859,11 +872,13 @@ export const normalizeSimpleParametersQuery = (
 };
 
 export const getProposals = (params: ProposalParams): Proposal[] => {
-  const { db, sql, lastChar, keyword, parentWord } = params;
+  const { db: idb, sql, lastChar, keyword, parentWord } = params;
   const upperKeyword = keyword.toUpperCase();
   const upperParentWord = parentWord?.toUpperCase();
   let ast: Statement | undefined;
   const retList: Proposal[] = [];
+
+  const db = idb instanceof RdsDatabase ? idb : toRdsDatabase(idb);
 
   try {
     if (db) {
@@ -915,12 +930,19 @@ export const getProposals = (params: ProposalParams): Proposal[] => {
 export const getResourcePositions = (
   params: ResourcePositionParams,
 ): ResourcePosition[] => {
-  const { db, sql } = params;
+  const { db: idb, sql } = params;
   const sqlLowerCase = sql.toLocaleLowerCase();
 
   const retList: ResourcePosition[] = [];
+  if (idb === undefined) {
+    return retList;
+  }
 
-  const schema = db.getSchema({ isDefault: true });
+  const schema =
+    idb instanceof RdsDatabase
+      ? idb.getSchema({ isDefault: true })
+      : toRdsDatabase(idb).getSchema({ isDefault: true });
+
   const tableNames = schema.children
     .map((it) => it.name.toLocaleLowerCase())
     .join('|');
@@ -1407,4 +1429,25 @@ export const separateMultipleQueries = (text: string): string[] => {
   }
 
   return queries.filter((it) => it.replace(/[\r\n]+/g, ' ').trim().length > 0);
+};
+
+const toRdsDatabase = (awsDb?: AwsDatabase): RdsDatabase | undefined => {
+  if (awsDb === undefined) {
+    return undefined;
+  }
+  const db = new RdsDatabase(awsDb.name);
+  const schema = new DbSchema('public');
+  schema.isDefault = true;
+  db.addChild(schema);
+  awsDb.children.forEach((tbl) => {
+    const table = new DbTable(tbl.name, 'TABLE', '');
+    schema.addChild(table);
+    tbl.children.forEach((col) => {
+      const column = new DbColumn(col.name, parseDynamoAttrType(col.attrType), {
+        key: col.pk ? 'PRI' : '',
+      });
+      table.addChild(column);
+    });
+  });
+  return db;
 };

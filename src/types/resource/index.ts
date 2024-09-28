@@ -11,3 +11,4 @@ export * from './ResourceType';
 export * from './SQLServerAuthenticationType';
 export * from './SQLServerColumnType';
 export * from './UniqueKeyConstraint';
+export * from './PartiQLAttrType';

@@ -10,7 +10,7 @@ import {
   DynamoDBDocumentClient,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { ResultSetData } from '@l-v-yonsama/rdh';
+import { ResultSetDataBuilder } from '@l-v-yonsama/rdh';
 import {
   AwsDatabase,
   AwsDriver,
@@ -384,11 +384,16 @@ describe('AwsDynamoDBDriver', () => {
         ItemCount: 6,
         IndexStatus: 'ACTIVE',
       });
+
+      const testtable = testDbRes.getChildByName('testtable') as DbDynamoTable;
+      expect(testtable.name).toBe('testtable');
+      expect(testtable.attr?.ReadCapacityUnits).toBe(10);
+      expect(testtable.attr?.WriteCapacityUnits).toBe(5);
     });
 
     it('should have DbDynamoTableColumn resource', async () => {
       const music = testDbRes.getChildByName('Music') as DbDynamoTable;
-      expect(music.children).toHaveLength(2);
+      expect(music.children).toHaveLength(3);
       // Artist
       const artist = music.getChildByName('Artist');
       expect(artist.attrType).toBe('S');
@@ -399,10 +404,15 @@ describe('AwsDynamoDBDriver', () => {
       expect(songTitle.attrType).toBe('S');
       expect(songTitle.pk).toBe(false);
       expect(songTitle.sk).toBe(true);
+      // AlbumTitle
+      const albumTitle = music.getChildByName('AlbumTitle');
+      expect(albumTitle.attrType).toBe('S');
+      expect(albumTitle.pk).toBe(false);
+      expect(albumTitle.sk).toBe(false);
 
       const food = testDbRes.getChildByName('Food') as DbDynamoTable;
-      expect(food.children).toHaveLength(4);
-      // Artist
+      expect(food.children).toHaveLength(5);
+      // Name
       const name = food.getChildByName('Name');
       expect(name.attrType).toBe('S');
       expect(name.pk).toBe(true);
@@ -422,6 +432,11 @@ describe('AwsDynamoDBDriver', () => {
       expect(country.attrType).toBe('S');
       expect(country.pk).toBe(false);
       expect(country.sk).toBe(false);
+      // Season
+      const season = food.getChildByName('Season');
+      expect(season.attrType).toBe('S');
+      expect(season.pk).toBe(false);
+      expect(season.sk).toBe(false);
     });
   });
 
@@ -662,45 +677,17 @@ describe('AwsDynamoDBDriver', () => {
         expect.arrayContaining(['Id', 'Title', 's1']),
       );
       expect(rs.summary.selectedRows).toBe(1000);
-
-      // const r2 = await driver.dynamoClient.requestPartiql({
-      //   sql: 'SELECT * FROM MassiveRecords Limit 1000',
-      //   NextToken: r1.NextToken,
-      // });
-      // expect(r2).toEqual({
-      //   Count: 3,
-      //   Items: expect.any(Array),
-      //   LastEvaluatedKey: undefined,
-      //   CapacityUnits: expect.any(Number),
-      // });
     });
 
-    // it('with Limit under 1MB', async () => {
-    //   const r1 = await driver.dynamoClient.executeStatement({
-    //     Statement: 'SELECT * FROM MassiveRecords',
-    //     Limit: 1,
-    //   });
-    //   expect(r1).toEqual({
-    //     Count: 1,
-    //     Items: expect.any(Array),
-    //     LastEvaluatedKey: undefined,
-    //     CapacityUnits: expect.any(Number),
-    //     NextToken: expect.any(String),
-    //   });
-    // });
-
-    // it('With partial key', async () => {
-    //   const r1 = await driver.dynamoClient.executeStatement({
-    //     Statement: 'SELECT * FROM MassiveRecords WHERE Id = ?',
-    //     Parameters: [1],
-    //   });
-    //   expect(r1).toEqual({
-    //     Count: 1,
-    //     Items: expect.any(Array),
-    //     LastEvaluatedKey: undefined,
-    //     NextToken: undefined,
-    //     CapacityUnits: expect.any(Number),
-    //   });
-    // });
+    it('variable attr types', async () => {
+      await driver.getInfomationSchemas();
+      const rs = await driver.dynamoClient.requestPartiql({
+        sql: 'SELECT * FROM testtable Limit 10',
+      });
+      expect(rs.keys.map((it) => it.name)).toEqual(
+        expect.arrayContaining(['id', 'b', 'm', 'n', 's2', 'ss', 'null']),
+      );
+      expect(rs.summary.selectedRows).toBe(2);
+    });
   });
 });

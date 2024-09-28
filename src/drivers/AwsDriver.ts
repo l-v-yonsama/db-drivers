@@ -5,7 +5,7 @@ import {
   AwsCredentialIdentity,
   AwsCredentialIdentityProvider,
 } from '@aws-sdk/types';
-import { AwsDatabase } from '../resource';
+import { AwsDatabase, SchemaAndTableName } from '../resource';
 import { BaseDriver } from './BaseDriver';
 
 import { fromEnv, fromIni } from '@aws-sdk/credential-providers';
@@ -13,6 +13,7 @@ import { fromEnv, fromIni } from '@aws-sdk/credential-providers';
 import {
   AwsServiceType,
   ConnectionSetting,
+  QueryParams,
   ResourceType,
   SupplyCredentialType,
 } from '../types';
@@ -22,6 +23,8 @@ import { AwsServiceClient } from './aws/AwsServiceClient';
 import { AwsSESServiceClient } from './aws/AwsSESServiceClient';
 import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
 import { AwsDynamoServiceClient } from './aws/AwsDynamoServiceClient';
+import { ISQLSupportDriver } from './ISQLSupportDriver';
+import { ResultSetData } from '@l-v-yonsama/rdh';
 
 export type ClientConfigType = {
   region?: string;
@@ -29,7 +32,10 @@ export type ClientConfigType = {
   credentials: AwsCredentialIdentityProvider | AwsCredentialIdentity;
 };
 
-export class AwsDriver extends BaseDriver<AwsDatabase> {
+export class AwsDriver
+  extends BaseDriver<AwsDatabase>
+  implements ISQLSupportDriver
+{
   public sesClient: AwsSESServiceClient;
   public sqsClient: AwsSQSServiceClient;
   public cloudwatchClient: AwsCloudwatchServiceClient;
@@ -256,5 +262,54 @@ export class AwsDriver extends BaseDriver<AwsDatabase> {
       }
     }
     return messageList.join(',');
+  }
+
+  isPositionedParameterAvailable(): boolean {
+    return false;
+  }
+
+  getPositionalCharacter(): string | undefined {
+    return undefined;
+  }
+
+  isLimitAsTop(): boolean {
+    return false;
+  }
+
+  isSchemaSpecificationSvailable(): boolean {
+    return false;
+  }
+
+  async requestSql(params: QueryParams): Promise<ResultSetData> {
+    if (this.dynamoClient) {
+      return this.dynamoClient.requestPartiql(params);
+    }
+    throw new Error('Not supported.');
+  }
+
+  async explainSql(params: QueryParams): Promise<ResultSetData> {
+    throw new Error('Not supported.');
+  }
+
+  async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
+    throw new Error('Not supported.');
+  }
+
+  async countSql(params: QueryParams): Promise<number | undefined> {
+    throw new Error('Not supported.');
+  }
+
+  async kill(sesssionOrPid?: number): Promise<string> {
+    if (this.dynamoClient) {
+      return this.dynamoClient.kill();
+    }
+    throw new Error('Not supported.');
+  }
+
+  async count(params: SchemaAndTableName): Promise<number | undefined> {
+    if (this.dynamoClient) {
+      return await this.dynamoClient.count(params.table);
+    }
+    throw new Error('Not supported.');
   }
 }

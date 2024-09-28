@@ -59,13 +59,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:370](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L370)
+[src/resource/DbResource.ts:367](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L367)
 
 ## Properties
 
 ### children
 
-• `Readonly` **children**: ([`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md) \| [`DbDynamoTable`](DbDynamoTable.md))[]
+• `Readonly` **children**: ([`DbDynamoTable`](DbDynamoTable.md) \| [`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md))[]
 
 #### Inherited from
 
@@ -73,7 +73,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:173](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L173)
+[src/resource/DbResource.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L170)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:172](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L172)
+[src/resource/DbResource.ts:169](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L169)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:169](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L169)
+[src/resource/DbResource.ts:166](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L166)
 
 ___
 
@@ -115,7 +115,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:175](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L175)
+[src/resource/DbResource.ts:172](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L172)
 
 ___
 
@@ -133,7 +133,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:174](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L174)
+[src/resource/DbResource.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L171)
 
 ___
 
@@ -147,7 +147,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:171](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L171)
+[src/resource/DbResource.ts:168](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L168)
 
 ___
 
@@ -161,7 +161,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L170)
+[src/resource/DbResource.ts:167](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L167)
 
 ___
 
@@ -171,23 +171,23 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:370](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L370)
+[src/resource/DbResource.ts:367](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L367)
 
 ## Methods
 
 ### addChild
 
-▸ **addChild**(`res`): [`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md) \| [`DbDynamoTable`](DbDynamoTable.md)
+▸ **addChild**(`res`): [`DbDynamoTable`](DbDynamoTable.md) \| [`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md) \| [`DbDynamoTable`](DbDynamoTable.md) |
+| `res` | [`DbDynamoTable`](DbDynamoTable.md) \| [`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md) |
 
 #### Returns
 
-[`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md) \| [`DbDynamoTable`](DbDynamoTable.md)
+[`DbDynamoTable`](DbDynamoTable.md) \| [`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md)
 
 #### Inherited from
 
@@ -195,7 +195,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:190](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L190)
+[src/resource/DbResource.ts:187](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L187)
 
 ___
 
@@ -213,7 +213,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:199](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L199)
+[src/resource/DbResource.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L196)
 
 ___
 
@@ -246,13 +246,13 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:211](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L211)
+[src/resource/DbResource.ts:208](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L208)
 
 ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md) \| [`DbDynamoTable`](DbDynamoTable.md)
+▸ **getChildByName**(`name`, `insensitive?`): [`DbDynamoTable`](DbDynamoTable.md) \| [`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md)
 
 #### Parameters
 
@@ -263,7 +263,7 @@ ___
 
 #### Returns
 
-[`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md) \| [`DbDynamoTable`](DbDynamoTable.md)
+[`DbDynamoTable`](DbDynamoTable.md) \| [`DbS3Bucket`](DbS3Bucket.md) \| [`DbSQSQueue`](DbSQSQueue.md) \| [`DbLogGroup`](DbLogGroup.md) \| [`DbS3Owner`](DbS3Owner.md)
 
 #### Inherited from
 
@@ -271,7 +271,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L203)
+[src/resource/DbResource.ts:200](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L200)
 
 ___
 
@@ -289,7 +289,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:183](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L183)
+[src/resource/DbResource.ts:180](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L180)
 
 ___
 
@@ -307,7 +307,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:195](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L195)
+[src/resource/DbResource.ts:192](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L192)
 
 ___
 
@@ -331,7 +331,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:254](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L254)
+[src/resource/DbResource.ts:251](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L251)
 
 ___
 
@@ -349,4 +349,4 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:251](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/resource/DbResource.ts#L251)
+[src/resource/DbResource.ts:248](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/resource/DbResource.ts#L248)

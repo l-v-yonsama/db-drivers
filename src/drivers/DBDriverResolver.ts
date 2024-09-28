@@ -5,7 +5,7 @@ import {
   GeneralResult,
   TransactionControlType,
 } from '../types';
-import { isRDSType } from '../utils';
+import { isPartiQLType, isRDSType } from '../utils';
 import { Auth0Driver } from './Auth0Driver';
 import { AwsDriver } from './AwsDriver';
 import { BaseDriver } from './BaseDriver';
@@ -16,6 +16,7 @@ import { RDSBaseDriver } from './RDSBaseDriver';
 import { RedisDriver } from './RedisDriver';
 import { SQLServerDriver } from './SQLServerDriver';
 import { SQLiteDriver } from './SQLiteDriver';
+import { ISQLSupportDriver } from './ISQLSupportDriver';
 
 const uid = new ShortUniqueId();
 
@@ -50,6 +51,16 @@ export class DBDriverResolver {
       throw new Error(`${setting.dbType} is not a relational database`);
     }
     return this.createDriver<T>(setting);
+  }
+
+  createSQLSupportDriver(setting: ConnectionSetting): ISQLSupportDriver {
+    if (
+      isRDSType(setting.dbType) ||
+      isPartiQLType(setting.dbType, setting.awsSetting)
+    ) {
+      return this.createDriver(setting) as unknown as ISQLSupportDriver;
+    }
+    throw new Error(`${setting.dbType} is not support sql`);
   }
 
   createDriver<T extends BaseDriver>(setting: ConnectionSetting): T {

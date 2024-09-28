@@ -8,6 +8,10 @@
 
   ↳ **`AwsDriver`**
 
+## Implements
+
+- [`ISQLSupportDriver`](../interfaces/ISQLSupportDriver.md)
+
 ## Table of contents
 
 ### Constructors
@@ -31,9 +35,13 @@
 - [closeSub](AwsDriver.md#closesub)
 - [connect](AwsDriver.md#connect)
 - [connectSub](AwsDriver.md#connectsub)
+- [count](AwsDriver.md#count)
+- [countSql](AwsDriver.md#countsql)
 - [createClientConfig](AwsDriver.md#createclientconfig)
 - [createDBError](AwsDriver.md#createdberror)
 - [disconnect](AwsDriver.md#disconnect)
+- [explainAnalyzeSql](AwsDriver.md#explainanalyzesql)
+- [explainSql](AwsDriver.md#explainsql)
 - [flow](AwsDriver.md#flow)
 - [getClientByResourceType](AwsDriver.md#getclientbyresourcetype)
 - [getClientByServiceType](AwsDriver.md#getclientbyservicetype)
@@ -42,10 +50,16 @@
 - [getInfomationSchemas](AwsDriver.md#getinfomationschemas)
 - [getInfomationSchemasSub](AwsDriver.md#getinfomationschemassub)
 - [getName](AwsDriver.md#getname)
+- [getPositionalCharacter](AwsDriver.md#getpositionalcharacter)
 - [initBaseStatus](AwsDriver.md#initbasestatus)
+- [isLimitAsTop](AwsDriver.md#islimitastop)
 - [isNeedsSsh](AwsDriver.md#isneedsssh)
+- [isPositionedParameterAvailable](AwsDriver.md#ispositionedparameteravailable)
 - [isQuery](AwsDriver.md#isquery)
+- [isSchemaSpecificationSvailable](AwsDriver.md#isschemaspecificationsvailable)
+- [kill](AwsDriver.md#kill)
 - [parseSchemaAndTableHints](AwsDriver.md#parseschemaandtablehints)
+- [requestSql](AwsDriver.md#requestsql)
 - [test](AwsDriver.md#test)
 
 ## Constructors
@@ -70,7 +84,7 @@
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L39)
+[src/drivers/AwsDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L45)
 
 ## Properties
 
@@ -80,7 +94,7 @@
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L35)
+[src/drivers/AwsDriver.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L41)
 
 ___
 
@@ -94,7 +108,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L44)
+[src/drivers/BaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L44)
 
 ___
 
@@ -104,7 +118,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L37)
+[src/drivers/AwsDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L43)
 
 ___
 
@@ -118,7 +132,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L43)
+[src/drivers/BaseDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L43)
 
 ___
 
@@ -128,7 +142,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L36)
+[src/drivers/AwsDriver.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L42)
 
 ___
 
@@ -138,7 +152,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L33)
+[src/drivers/AwsDriver.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L39)
 
 ___
 
@@ -148,7 +162,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:34](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L34)
+[src/drivers/AwsDriver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L40)
 
 ___
 
@@ -162,7 +176,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L46)
+[src/drivers/BaseDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L46)
 
 ___
 
@@ -176,7 +190,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L45)
+[src/drivers/BaseDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L45)
 
 ## Methods
 
@@ -194,7 +208,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:244](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L244)
+[src/drivers/AwsDriver.ts:250](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L250)
 
 ___
 
@@ -212,7 +226,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L152)
+[src/drivers/BaseDriver.ts:152](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L152)
 
 ___
 
@@ -230,7 +244,55 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:123](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L123)
+[src/drivers/AwsDriver.ts:129](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L129)
+
+___
+
+### count
+
+▸ **count**(`params`): `Promise`\<`number`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`SchemaAndTableName`](../interfaces/SchemaAndTableName.md) |
+
+#### Returns
+
+`Promise`\<`number`\>
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[count](../interfaces/ISQLSupportDriver.md#count)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L309)
+
+___
+
+### countSql
+
+▸ **countSql**(`params`): `Promise`\<`number`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`QueryParams`](../modules.md#queryparams) |
+
+#### Returns
+
+`Promise`\<`number`\>
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[countSql](../interfaces/ISQLSupportDriver.md#countsql)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:298](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L298)
 
 ___
 
@@ -244,7 +306,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L43)
+[src/drivers/AwsDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L49)
 
 ___
 
@@ -269,7 +331,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L224)
+[src/drivers/BaseDriver.ts:224](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L224)
 
 ___
 
@@ -287,7 +349,55 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L177)
+[src/drivers/BaseDriver.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L177)
+
+___
+
+### explainAnalyzeSql
+
+▸ **explainAnalyzeSql**(`params`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`QueryParams`](../modules.md#queryparams) |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[explainAnalyzeSql](../interfaces/ISQLSupportDriver.md#explainanalyzesql)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:294](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L294)
+
+___
+
+### explainSql
+
+▸ **explainSql**(`params`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`QueryParams`](../modules.md#queryparams) |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[explainSql](../interfaces/ISQLSupportDriver.md#explainsql)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:290](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L290)
 
 ___
 
@@ -317,7 +427,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L94)
+[src/drivers/BaseDriver.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L94)
 
 ___
 
@@ -343,7 +453,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L82)
+[src/drivers/AwsDriver.ts:88](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L88)
 
 ___
 
@@ -369,7 +479,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L58)
+[src/drivers/AwsDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L64)
 
 ___
 
@@ -387,7 +497,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L56)
+[src/drivers/BaseDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L56)
 
 ___
 
@@ -405,7 +515,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L218)
+[src/drivers/BaseDriver.ts:218](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L218)
 
 ___
 
@@ -423,7 +533,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L203)
+[src/drivers/BaseDriver.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L203)
 
 ___
 
@@ -441,7 +551,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:182](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L182)
+[src/drivers/AwsDriver.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L188)
 
 ___
 
@@ -459,7 +569,25 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L53)
+
+___
+
+### getPositionalCharacter
+
+▸ **getPositionalCharacter**(): `string`
+
+#### Returns
+
+`string`
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[getPositionalCharacter](../interfaces/ISQLSupportDriver.md#getpositionalcharacter)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:271](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L271)
 
 ___
 
@@ -477,7 +605,25 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L60)
+
+___
+
+### isLimitAsTop
+
+▸ **isLimitAsTop**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[isLimitAsTop](../interfaces/ISQLSupportDriver.md#islimitastop)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:275](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L275)
 
 ___
 
@@ -495,7 +641,25 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L64)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L64)
+
+___
+
+### isPositionedParameterAvailable
+
+▸ **isPositionedParameterAvailable**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[isPositionedParameterAvailable](../interfaces/ISQLSupportDriver.md#ispositionedparameteravailable)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:267](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L267)
 
 ___
 
@@ -519,7 +683,49 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L67)
+[src/drivers/BaseDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L67)
+
+___
+
+### isSchemaSpecificationSvailable
+
+▸ **isSchemaSpecificationSvailable**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[isSchemaSpecificationSvailable](../interfaces/ISQLSupportDriver.md#isschemaspecificationsvailable)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:279](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L279)
+
+___
+
+### kill
+
+▸ **kill**(`sesssionOrPid?`): `Promise`\<`string`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sesssionOrPid?` | `number` |
+
+#### Returns
+
+`Promise`\<`string`\>
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[kill](../interfaces/ISQLSupportDriver.md#kill)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:302](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L302)
 
 ___
 
@@ -543,7 +749,31 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/BaseDriver.ts#L78)
+[src/drivers/BaseDriver.ts:78](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/BaseDriver.ts#L78)
+
+___
+
+### requestSql
+
+▸ **requestSql**(`params`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`QueryParams`](../modules.md#queryparams) |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Implementation of
+
+[ISQLSupportDriver](../interfaces/ISQLSupportDriver.md).[requestSql](../interfaces/ISQLSupportDriver.md#requestsql)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:283](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L283)
 
 ___
 
@@ -567,4 +797,4 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:202](https://github.com/l-v-yonsama/db-drivers/blob/a33574b0381e3eacbae1eadf11ab70ba4b011c93/src/drivers/AwsDriver.ts#L202)
+[src/drivers/AwsDriver.ts:208](https://github.com/l-v-yonsama/db-drivers/blob/c2ce840d0c502a068b6a6ee92b0784d5bf1156b4/src/drivers/AwsDriver.ts#L208)

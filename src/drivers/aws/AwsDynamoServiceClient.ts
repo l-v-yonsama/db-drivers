@@ -4,20 +4,11 @@ import {
   DynamoDBClient,
   CreateTableCommand,
   ListTablesCommand,
-  PutItemCommandInput,
-  PutItemCommand,
   DescribeTableCommand,
-  DynamoDBClientConfig,
   TableDescription,
   CreateTableCommandInput,
-  GetItemCommand,
-  GetItemCommandInput,
-  DeleteItemCommand,
-  DeleteItemCommandInput,
-  UpdateItemCommand,
-  UpdateItemCommandInput,
   AttributeValue,
-  UpdateItemInput,
+  ScanCommand as OriginalScanCommand,
 } from '@aws-sdk/client-dynamodb';
 import {
   BatchWriteCommand,
@@ -31,7 +22,6 @@ import {
   NativeAttributeValue,
   PutCommand,
   PutCommandInput,
-  PutCommandOutput,
   QueryCommand,
   QueryCommandInput,
   QueryCommandOutput,
@@ -40,15 +30,9 @@ import {
   ScanCommandOutput,
   UpdateCommand,
   UpdateCommandInput,
-  paginateQuery,
-  paginateScan,
 } from '@aws-sdk/lib-dynamodb';
 import {
   createRdhKey,
-  equalsIgnoreCase,
-  FileAnnotation,
-  GeneralColumnType,
-  RdhRowMeta,
   ResultSetData,
   ResultSetDataBuilder,
   toNum,
@@ -58,29 +42,24 @@ import {
   AwsDatabase,
   DbDynamoTable,
   DbDynamoTableColumn,
-  DbKey,
-  DbS3Bucket,
-  DbS3Owner,
-  DbTable,
-  S3KeyParams,
 } from '../../resource';
 import {
   AwsServiceType,
   ConnectionSetting,
+  parseDynamoAttrType,
   QStatement,
   QueryParams,
   ScanParams,
 } from '../../types';
-import {
-  parseContentType,
-  prettyFileSize,
-  setRdhMetaAndStatement,
-} from '../../utils';
+import { setRdhMetaAndStatement } from '../../utils';
 import { ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 import { parseQuery } from '../../helpers';
 
+export type TableDescWithExtraAttrs = TableDescription & {
+  ExtraItems?: { name: string; value: AttributeValue }[];
+};
 export class AwsDynamoServiceClient
   extends AwsServiceClient
   implements Scannable
@@ -88,6 +67,7 @@ export class AwsDynamoServiceClient
   client: DynamoDBClient;
   docClient: DynamoDBDocumentClient;
   awsDatabase: AwsDatabase;
+  private interrupted = false;
 
   constructor(conRes: ConnectionSetting, config: ClientConfigType) {
     super(conRes, config);
@@ -99,6 +79,7 @@ export class AwsDynamoServiceClient
     // };
     this.client = new DynamoDBClient(this.config);
     this.docClient = DynamoDBDocumentClient.from(this.client);
+    this.interrupted = false;
     return this.test(false);
   }
 
@@ -106,6 +87,11 @@ export class AwsDynamoServiceClient
     if (this.client) {
       await this.listTableNames(1);
     }
+  }
+
+  async kill(): Promise<string> {
+    this.interrupted = true;
+    return '';
   }
 
   async listTableNames(limit?: number): Promise<string[]> {
@@ -129,9 +115,18 @@ export class AwsDynamoServiceClient
     return tableNames;
   }
 
-  async listTables(): Promise<TableDescription[]> {
+  async count(tableName: string): Promise<number | undefined> {
+    const res = await this.client.send(
+      new DescribeTableCommand({
+        TableName: tableName,
+      }),
+    );
+    return res.Table.ItemCount;
+  }
+
+  async listTables(): Promise<TableDescWithExtraAttrs[]> {
     const tableNames = await this.listTableNames();
-    const tableList: TableDescription[] = [];
+    const tableList: TableDescWithExtraAttrs[] = [];
     await Promise.all(
       tableNames.map(async (TableName) => {
         const res = await this.client.send(
@@ -140,7 +135,23 @@ export class AwsDynamoServiceClient
           }),
         );
         if (res.Table) {
-          tableList.push(res.Table);
+          const tableDef: TableDescWithExtraAttrs = res.Table;
+          tableList.push(tableDef);
+          if (res.Table?.ItemCount > 0) {
+            const res2 = await this.client.send(
+              new OriginalScanCommand({
+                TableName,
+                Limit: 1,
+              }),
+            );
+            if (res2.Items?.length > 0) {
+              const item0 = res2.Items[0];
+              tableDef.ExtraItems = Object.keys(item0).map((name) => ({
+                name,
+                value: item0[name],
+              }));
+            }
+          }
         }
       }),
     );
@@ -161,7 +172,6 @@ export class AwsDynamoServiceClient
 
     try {
       const tables = await this.listTables();
-      console.log('tables=', tables);
 
       for (const table of tables) {
         const dynamoTable = new DbDynamoTable(table.TableName, {
@@ -211,6 +221,18 @@ export class AwsDynamoServiceClient
               sk,
             ),
           );
+        });
+        table.ExtraItems?.forEach((item) => {
+          if (!dynamoTable.getChildByName(item.name)) {
+            dynamoTable.addChild(
+              new DbDynamoTableColumn(
+                item.name,
+                Object.keys(item.value)[0],
+                false,
+                false,
+              ),
+            );
+          }
         });
         dbDatabase.addChild(dynamoTable);
       }
@@ -308,7 +330,6 @@ export class AwsDynamoServiceClient
       });
 
       const response = await this.client.send(command);
-      console.log(response.ConsumedCapacity);
       LastEvaluatedKey = response.LastEvaluatedKey;
       CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
@@ -332,6 +353,7 @@ export class AwsDynamoServiceClient
     Count: number;
     CapacityUnits: number;
   }> {
+    this.interrupted = false;
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
     let NextToken = params.NextToken;
@@ -339,6 +361,10 @@ export class AwsDynamoServiceClient
 
     const Items: QueryCommandOutput['Items'] = [];
     do {
+      if (this.interrupted) {
+        this.interrupted = false;
+        throw new Error('INTERRUPT');
+      }
       const command = new ExecuteStatementCommand({
         ...params,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
@@ -347,13 +373,6 @@ export class AwsDynamoServiceClient
       });
 
       const response = await this.client.send(command);
-      console.log(
-        'res',
-        response.Items.length,
-        response.NextToken,
-        response.LastEvaluatedKey,
-        response.ConsumedCapacity,
-      );
       LastEvaluatedKey = response.LastEvaluatedKey;
       NextToken = response.NextToken;
       CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
@@ -407,8 +426,6 @@ export class AwsDynamoServiceClient
       CapacityUnits: capacityUnits,
       Count,
       Items,
-      LastEvaluatedKey,
-      NextToken,
     } = await this.executeStatement({
       Statement,
       Parameters: binds,
@@ -419,7 +436,7 @@ export class AwsDynamoServiceClient
 
     if (Count === 0) {
       const rdb = ResultSetDataBuilder.createEmpty({
-        message: 'No records.',
+        noRecordsReason: 'No records.',
       });
       rdb.setSummary({
         elapsedTimeMilli,
@@ -434,7 +451,7 @@ export class AwsDynamoServiceClient
         const col = dbTable?.getChildByName(it);
         return createRdhKey({
           name: it,
-          type: this.parseColumnType(col?.attrType),
+          type: parseDynamoAttrType(col?.attrType),
           required: col?.pk || col?.sk,
         });
       }),
@@ -461,34 +478,6 @@ export class AwsDynamoServiceClient
     return rdb.build();
   }
 
-  private parseColumnType(typeString: string): GeneralColumnType {
-    if (typeString == null || typeString === '') {
-      return GeneralColumnType.UNKNOWN;
-    }
-    if ('S' === typeString) {
-      return GeneralColumnType.TEXT;
-    } else if ('N' === typeString) {
-      return GeneralColumnType.NUMERIC;
-    } else if ('B' === typeString) {
-      return GeneralColumnType.BINARY;
-    } else if (
-      'SS' === typeString ||
-      'NS' === typeString ||
-      'BS' === typeString
-    ) {
-      return GeneralColumnType.SET;
-    } else if ('M' === typeString) {
-      return GeneralColumnType.JSON;
-    } else if ('L' === typeString) {
-      return GeneralColumnType.ARRAY;
-    } else if ('NULL' === typeString) {
-      return GeneralColumnType.UNKNOWN;
-    } else if ('BOOL' === typeString) {
-      return GeneralColumnType.BOOLEAN;
-    }
-    return GeneralColumnType.UNKNOWN;
-  }
-
   private getDbTable(qst?: QStatement): DbDynamoTable | undefined {
     const db = this.awsDatabase;
     if (qst === undefined || qst.names === undefined || db === undefined) {
@@ -501,6 +490,7 @@ export class AwsDynamoServiceClient
   protected async closeSub(): Promise<void> {
     this.docClient.destroy();
     this.client.destroy();
+    this.interrupted = false;
   }
 
   protected getServiceName(): string {

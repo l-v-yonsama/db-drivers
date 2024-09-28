@@ -25,9 +25,6 @@ import {
   SslSetting,
   TransactionIsolationLevel,
   UniqueKeyConstraint,
-  LSI,
-  GSI,
-  ScalarAttributeType,
 } from '../types';
 
 const uid = new ShortUniqueId();
@@ -963,16 +960,11 @@ export class DbDynamoTable
 }
 
 export class DbDynamoTableColumn extends DbResource {
-  public readonly attrType: ScalarAttributeType;
+  public readonly attrType: string;
   public readonly pk: boolean;
   public readonly sk: boolean;
 
-  constructor(
-    name: string,
-    attrType: ScalarAttributeType,
-    pk: boolean,
-    sk: boolean,
-  ) {
+  constructor(name: string, attrType: string, pk: boolean, sk: boolean) {
     super(ResourceType.DynamoColumn, name);
     this.attrType = attrType;
     this.pk = pk;

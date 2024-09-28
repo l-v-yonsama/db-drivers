@@ -1,6 +1,11 @@
 import { TopLevelCondition } from 'json-rules-engine';
 import { Statement } from 'pgsql-ast-parser';
-import { DbTable, RdsDatabase } from '../../resource';
+import {
+  AwsDatabase,
+  DbDynamoTable,
+  DbTable,
+  RdsDatabase,
+} from '../../resource';
 
 export type QNames = {
   tableName: string;
@@ -24,7 +29,7 @@ export type BindOptions = {
 };
 
 export type ToViewDataQueryParams = {
-  tableRes: DbTable;
+  tableRes: DbTable | DbDynamoTable;
   schemaName?: string;
   conditions?: TopLevelCondition;
   quote?: boolean;
@@ -53,7 +58,7 @@ export type ProposalParams = {
   lastChar: string;
   keyword: string;
   parentWord?: string;
-  db?: RdsDatabase;
+  db?: RdsDatabase | AwsDatabase;
 };
 
 export type ResourcePosition = {
@@ -66,7 +71,7 @@ export type ResourcePosition = {
 
 export type ResourcePositionParams = {
   sql: string;
-  db?: RdsDatabase;
+  db?: RdsDatabase | AwsDatabase;
 };
 
 export type BindParamPosition = {

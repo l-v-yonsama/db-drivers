@@ -4,7 +4,6 @@ import {
   equalsIgnoreCase,
   toNum,
 } from '@l-v-yonsama/rdh';
-import { Statement } from 'pgsql-ast-parser';
 import { parseQuery, toCountRecordsQuery } from '../helpers';
 import { DbTable, RdsDatabase, SchemaAndTableName } from '../resource';
 import {
@@ -17,8 +16,12 @@ import {
 } from '../types';
 import { BaseDriver } from './BaseDriver';
 import { setRdhMetaAndStatement } from '../utils';
+import { ISQLSupportDriver } from './ISQLSupportDriver';
 
-export abstract class RDSBaseDriver extends BaseDriver<RdsDatabase> {
+export abstract class RDSBaseDriver
+  extends BaseDriver<RdsDatabase>
+  implements ISQLSupportDriver
+{
   constructor(conRes: ConnectionSetting) {
     super(conRes);
   }
