@@ -140,7 +140,7 @@ export class AwsDynamoServiceClient
         if (res.Table) {
           const tableDef: TableDescWithExtraAttrs = res.Table;
           tableList.push(tableDef);
-          if (res.Table?.ItemCount > 0) {
+          if (res.Table?.TableStatus === 'ACTIVE') {
             const res2 = await this.client.send(
               new OriginalScanCommand({
                 TableName,
@@ -424,15 +424,20 @@ export class AwsDynamoServiceClient
     }
     const binds = conditions?.binds ?? [];
     const startTime = new Date().getTime();
+    const input: ExecuteStatementCommandInput = {
+      Statement,
+      Limit,
+    };
+
+    // 1 validation error detected: Value '[]' at 'parameters' failed to satisfy constraint: Member must have length greater than or equal to 1
+    if (binds && binds.length > 0) {
+      input.Parameters = binds;
+    }
     const {
       CapacityUnits: capacityUnits,
       Count,
       Items,
-    } = await this.executeStatement({
-      Statement,
-      Parameters: binds,
-      Limit,
-    });
+    } = await this.executeStatement(input);
 
     const elapsedTimeMilli = new Date().getTime() - startTime;
 

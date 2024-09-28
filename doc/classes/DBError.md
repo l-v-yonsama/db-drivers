@@ -56,7 +56,7 @@ Error.constructor
 
 #### Defined in
 
-[src/drivers/DBError.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/4cace6e4381dbc5a94d2a63c97a522b7ef7f0f7a/src/drivers/DBError.ts#L7)
+[src/drivers/DBError.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/a26ba6ec975410448ea02495f2c33489c2e47d25/src/drivers/DBError.ts#L7)
 
 ## Properties
 
@@ -66,7 +66,7 @@ Error.constructor
 
 #### Defined in
 
-[src/drivers/DBError.ts:2](https://github.com/l-v-yonsama/db-drivers/blob/4cace6e4381dbc5a94d2a63c97a522b7ef7f0f7a/src/drivers/DBError.ts#L2)
+[src/drivers/DBError.ts:2](https://github.com/l-v-yonsama/db-drivers/blob/a26ba6ec975410448ea02495f2c33489c2e47d25/src/drivers/DBError.ts#L2)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBError.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/4cace6e4381dbc5a94d2a63c97a522b7ef7f0f7a/src/drivers/DBError.ts#L3)
+[src/drivers/DBError.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/a26ba6ec975410448ea02495f2c33489c2e47d25/src/drivers/DBError.ts#L3)
 
 ___
 
@@ -114,7 +114,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBError.ts:4](https://github.com/l-v-yonsama/db-drivers/blob/4cace6e4381dbc5a94d2a63c97a522b7ef7f0f7a/src/drivers/DBError.ts#L4)
+[src/drivers/DBError.ts:4](https://github.com/l-v-yonsama/db-drivers/blob/a26ba6ec975410448ea02495f2c33489c2e47d25/src/drivers/DBError.ts#L4)
 
 ___
 
@@ -124,7 +124,7 @@ ___
 
 #### Defined in
 
-[src/drivers/DBError.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/4cace6e4381dbc5a94d2a63c97a522b7ef7f0f7a/src/drivers/DBError.ts#L5)
+[src/drivers/DBError.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/a26ba6ec975410448ea02495f2c33489c2e47d25/src/drivers/DBError.ts#L5)
 
 ___
 
