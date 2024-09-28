@@ -585,6 +585,14 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
 
   replacedSql = replacedSql.replace(/^[ \r\n]+/, '');
 
+  // console.log('replacedSql0=', replacedSql);
+  // for dynamoDB
+  replacedSql = replacedSql.replace(
+    /\bINSERT\s+INTO\s+(.+)\s+VALUE\s+\{[^}]+\}/gim,
+    'INSERT INTO $1 VALUES (NULL)',
+  );
+  // console.log('replacedSql1=', replacedSql);
+
   return replacedSql.replace(FUNCTION_MATCHER, '1');
 };
 
@@ -630,20 +638,20 @@ export const parseQuery = (sql: string): QStatement | undefined => {
   } catch (_) {
     const getAstType = (): Statement['type'] | null => {
       const rsql = replacedSql.toLocaleLowerCase();
-      if (rsql.match(/select\\s+/)) {
+      if (rsql.match(/select\s+/)) {
         return 'select';
-      } else if (rsql.match(/insert\\s+into/)) {
+      } else if (rsql.match(/insert\s+into/)) {
         return 'insert';
-      } else if (rsql.match(/update\\s+/)) {
+      } else if (rsql.match(/update\s+/)) {
         return 'update';
-      } else if (rsql.match(/delete\\s+/)) {
+      } else if (rsql.match(/delete\s+/)) {
         return 'delete';
       }
       return null;
     };
 
     const astType = getAstType();
-    if (!astType) {
+    if (astType) {
       return {
         ast: {
           type: astType,

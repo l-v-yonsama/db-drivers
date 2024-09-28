@@ -438,12 +438,20 @@ export class AwsDynamoServiceClient
 
     if (Count === 0) {
       const rdb = ResultSetDataBuilder.createEmpty({
-        noRecordsReason: 'No records.',
+        noRecordsReason: qst?.ast?.type === 'select' ? 'No records.' : '',
       });
       rdb.setSummary({
         elapsedTimeMilli,
         selectedRows: 0,
         capacityUnits,
+      });
+      setRdhMetaAndStatement({
+        connectionName: this.conRes.name,
+        params,
+        rdb,
+        type: qst?.ast?.type,
+        qst,
+        dbTable,
       });
       return rdb.build();
     }

@@ -659,36 +659,73 @@ describe('AwsDynamoDBDriver', () => {
   });
 
   describe('RequestPartiql', () => {
-    it('no conditions', async () => {
-      const rs = await driver.dynamoClient.requestPartiql({
-        sql: 'SELECT * FROM MassiveRecords',
+    describe('SELECT', () => {
+      it('no conditions', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: 'SELECT * FROM MassiveRecords',
+        });
+        expect(rs.keys.map((it) => it.name)).toEqual(
+          expect.arrayContaining(['Id', 'Title', 's1']),
+        );
+        expect(rs.summary.selectedRows).toBe(1003);
       });
-      expect(rs.keys.map((it) => it.name)).toEqual(
-        expect.arrayContaining(['Id', 'Title', 's1']),
-      );
-      expect(rs.summary.selectedRows).toBe(1003);
-    });
 
-    it('with Limit over 1MB', async () => {
-      const rs = await driver.dynamoClient.requestPartiql({
-        sql: 'SELECT * FROM MassiveRecords Limit 1000',
+      it('with Limit over 1MB', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: 'SELECT * FROM MassiveRecords Limit 1000',
+        });
+        expect(rs.keys.map((it) => it.name)).toEqual(
+          expect.arrayContaining(['Id', 'Title', 's1']),
+        );
+        expect(rs.summary.selectedRows).toBe(1000);
       });
-      expect(rs.keys.map((it) => it.name)).toEqual(
-        expect.arrayContaining(['Id', 'Title', 's1']),
-      );
-      expect(rs.summary.selectedRows).toBe(1000);
-    });
 
-    it('variable attr types', async () => {
-      await driver.getInfomationSchemas();
-      const rs = await driver.dynamoClient.requestPartiql({
-        sql: 'SELECT * FROM testtable Limit 10',
+      it('variable attr types', async () => {
+        await driver.getInfomationSchemas();
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: 'SELECT * FROM testtable Limit 10',
+        });
+        // console.log(
+        //   ResultSetDataBuilder.from(rs).toMarkdown({ withType: true }),
+        // );
+        expect(rs.keys.map((it) => it.name)).toEqual(
+          expect.arrayContaining(['id', 'b', 'm', 'n', 's2', 'ss', 'null']),
+        );
+        expect(rs.summary.selectedRows).toBe(2);
       });
-      console.log(ResultSetDataBuilder.from(rs).toMarkdown({ withType: true }));
-      expect(rs.keys.map((it) => it.name)).toEqual(
-        expect.arrayContaining(['id', 'b', 'm', 'n', 's2', 'ss', 'null']),
-      );
-      expect(rs.summary.selectedRows).toBe(2);
+    });
+    describe('INSERT', () => {
+      it('Music', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `INSERT INTO 
+          Music VALUE {
+            'Artist': 'KAZUYOSHI SAITO',
+            'SongTitle':'やさしくなりたい',
+            'AlbumTitle':'斉藤'
+          }`,
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.meta.type).toBe('insert');
+        expect(rs.meta.tableName).toBe('Music');
+        expect(rs.noRecordsReason).toBe('');
+      });
+    });
+    describe('UPDATE', () => {
+      it('testtable No returning', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `UPDATE
+          testtable 
+          SET s2 = 'aaaaa'
+          WHERE id=2
+          `,
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.meta.type).toBe('update');
+        expect(rs.meta.tableName).toBe('testtable');
+        expect(rs.noRecordsReason).toBe('');
+      });
     });
   });
 });
