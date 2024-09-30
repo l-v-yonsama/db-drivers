@@ -493,6 +493,57 @@ describe('SQLHelper', () => {
         expect(ast).not.toBeUndefined();
       });
     });
+    describe('Unexpected keyword tokens for DynamoDB', () => {
+      it('update', () => {
+        const sql = `UPDATE "Music" 
+SET AwardsWon=1 
+SET AwardDetail={'Grammys':[2020, 2018]}  
+WHERE Artist='Acme Band' AND SongTitle='PartiQL Rocks'`;
+        const ast = parseQuery(sql);
+        expect(ast).toEqual({
+          ast: {
+            type: 'update',
+          },
+          names: {
+            tableName: 'Music',
+          },
+        });
+      });
+      it('delete', () => {
+        const sql = `DELETE FROM 
+"Music" 
+WHERE Artist='Acme Band' AND SongTitle='PartiQL Rocks'
+RETURNING ALL OLD`;
+        const ast = parseQuery(sql);
+        expect(ast).toEqual({
+          ast: {
+            type: 'delete',
+          },
+          names: {
+            tableName: 'Music',
+          },
+        });
+      });
+      it('insert', () => {
+        const sql = `INSERT  
+INTO Music (a)
+values (`;
+        const ast = parseQuery(sql);
+
+        expect(ast.ast.type).toBe('insert');
+        expect(ast.names.tableName).toBe('Music');
+      });
+
+      it('select', () => {
+        const sql = `SELECT OrderID, Total
+FROM "Orders"
+WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
+        const ast = parseQuery(sql);
+
+        expect(ast.ast.type).toBe('select');
+        expect(ast.names.tableName).toBe('Orders');
+      });
+    });
   });
 
   describe('getResourcePositions', () => {

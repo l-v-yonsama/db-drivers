@@ -278,7 +278,7 @@ describe('AwsDynamoDBDriver', () => {
             b: Uint8Array.from(Buffer.from([0x0, 0x1, 0x2, 0xf0])),
             bool: true,
             null: null,
-            m: { M: 'aa', S: 'bb', S2: 'cc' },
+            m: { M0: 'aa', S1: 'bb', S2: 'cc' },
             ss: ['test', 'test2'],
             ns: [1, 2, 3],
             bs: [
@@ -298,7 +298,7 @@ describe('AwsDynamoDBDriver', () => {
             b: Uint8Array.from(Buffer.from([0x0, 0x1, 0x2, 0xf0])),
             bool2: true,
             null: null,
-            m: { M: 'aa', S: 'bb', S2: 'cc' },
+            m: { M0: 'aa', S1: 'bb', S2: 'cc' },
             ss: ['test', 'test2'],
           },
         }),
@@ -685,13 +685,46 @@ describe('AwsDynamoDBDriver', () => {
         const rs = await driver.dynamoClient.requestPartiql({
           sql: 'SELECT * FROM testtable Limit 10',
         });
-        // console.log(
-        //   ResultSetDataBuilder.from(rs).toMarkdown({ withType: true }),
-        // );
+
         expect(rs.keys.map((it) => it.name)).toEqual(
           expect.arrayContaining(['id', 'b', 'm', 'n', 's2', 'ss', 'null']),
         );
         expect(rs.summary.selectedRows).toBe(2);
+      });
+
+      it('using lsi', async () => {
+        await driver.getInfomationSchemas();
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: 'SELECT * FROM Food.iCountry Limit 10',
+        });
+        expect(rs.keys.map((it) => it.name)).toEqual(
+          expect.arrayContaining([
+            'Country',
+            'Season',
+            'Name',
+            'Color',
+            'Kind',
+          ]),
+        );
+        expect(rs.summary.selectedRows).toBe(6);
+        expect(rs.meta.tableName).toBe('Food');
+      });
+      it('using gsi', async () => {
+        await driver.getInfomationSchemas();
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: 'SELECT * FROM Food.iKind Limit 10',
+        });
+        expect(rs.keys.map((it) => it.name)).toEqual(
+          expect.arrayContaining([
+            'Country',
+            'Season',
+            'Name',
+            'Color',
+            'Kind',
+          ]),
+        );
+        expect(rs.summary.selectedRows).toBe(6);
+        expect(rs.meta.tableName).toBe('Food');
       });
     });
     describe('INSERT', () => {
@@ -712,6 +745,31 @@ describe('AwsDynamoDBDriver', () => {
       });
     });
     describe('UPDATE', () => {
+      describe('variable attribute types', () => {
+        it('testtable No returning', async () => {
+          await driver.getInfomationSchemas();
+          const rs0 = await driver.dynamoClient.requestPartiql({
+            sql: 'SELECT * FROM testtable',
+          });
+          console.log(
+            ResultSetDataBuilder.from(rs0).toMarkdown({ withType: true }),
+          );
+
+          const rs = await driver.dynamoClient.requestPartiql({
+            sql: `UPDATE
+            testtable 
+            SET AwardsWon=1 
+            SET AwardDetail={'Grammys':[2020, 2018]}  
+            WHERE id=2
+            `,
+          });
+
+          expect(rs.rows).toHaveLength(0);
+          expect(rs.meta.type).toBe('update');
+          expect(rs.meta.tableName).toBe('testtable');
+          expect(rs.noRecordsReason).toBe('');
+        });
+      });
       it('testtable No returning', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
           sql: `UPDATE

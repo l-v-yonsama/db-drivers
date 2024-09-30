@@ -207,24 +207,40 @@ export class AwsDynamoServiceClient
               };
             }) ?? [],
         });
-        table.AttributeDefinitions?.forEach((attr) => {
-          const pk = table.KeySchema?.some(
-            (it) =>
-              it.AttributeName === attr.AttributeName && it.KeyType === 'HASH',
-          );
-          const sk = table.KeySchema?.some(
-            (it) =>
-              it.AttributeName === attr.AttributeName && it.KeyType === 'RANGE',
-          );
-          dynamoTable.addChild(
-            new DbDynamoTableColumn(
+        const cols =
+          table.AttributeDefinitions?.map((attr) => {
+            const pk = table.KeySchema?.some(
+              (it) =>
+                it.AttributeName === attr.AttributeName &&
+                it.KeyType === 'HASH',
+            );
+            const sk = table.KeySchema?.some(
+              (it) =>
+                it.AttributeName === attr.AttributeName &&
+                it.KeyType === 'RANGE',
+            );
+            return new DbDynamoTableColumn(
               attr.AttributeName,
               attr.AttributeType,
               pk,
               sk,
-            ),
-          );
-        });
+            );
+          }) ?? [];
+        cols
+          .sort((a, b) => {
+            const n = (it): number => (it.pk ? -2 : it.sk ? -1 : 0);
+            const an = n(a);
+            const bn = n(b);
+            if (an < bn) {
+              return -1;
+            }
+            if (an > bn) {
+              return 1;
+            }
+
+            return a.name.localeCompare(b.name);
+          })
+          .forEach((it) => dynamoTable.addChild(it));
         table.ExtraItems?.forEach((item) => {
           if (!dynamoTable.getChildByName(item.name)) {
             dynamoTable.addChild(
@@ -401,6 +417,16 @@ export class AwsDynamoServiceClient
 
     if (conditions?.rawQueries !== true) {
       qst = parseQuery(sql);
+      if (
+        qst &&
+        qst.ast?.type === 'select' &&
+        qst.names &&
+        qst.names.schemaName
+      ) {
+        // for table.index
+        qst.names.tableName = qst.names.schemaName;
+        qst.names.schemaName = undefined;
+      }
       dbTable = this.getDbTable(qst);
       if (qst?.ast?.type) {
         if (!params.meta) {
@@ -460,9 +486,9 @@ export class AwsDynamoServiceClient
       });
       return rdb.build();
     }
-    const records = Items[0];
+    const record = Items[0];
     rdb = new ResultSetDataBuilder(
-      Object.keys(records).map((it) => {
+      Object.keys(record).map((it) => {
         const col = dbTable?.getChildByName(it);
         return createRdhKey({
           name: it,

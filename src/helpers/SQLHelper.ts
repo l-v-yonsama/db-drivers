@@ -636,25 +636,47 @@ export const parseQuery = (sql: string): QStatement | undefined => {
       };
     }
   } catch (_) {
-    const getAstType = (): Statement['type'] | null => {
-      const rsql = replacedSql.toLocaleLowerCase();
-      if (rsql.match(/select\s+/)) {
-        return 'select';
-      } else if (rsql.match(/insert\s+into/)) {
-        return 'insert';
-      } else if (rsql.match(/update\s+/)) {
-        return 'update';
-      } else if (rsql.match(/delete\s+/)) {
-        return 'delete';
+    // console.error(_);
+    const getTypeWithTable = (): {
+      type: 'select' | 'insert' | 'update' | 'delete';
+      table: string | null;
+    } | null => {
+      const rsql = replacedSql.replace(/[\r\n]/gm, ' ');
+      // console.log('rsql=', rsql);
+      let result = rsql.match(/select\s+.+?\s+FROM\s+(.+?)\s+/i);
+      if (result) {
+        return { type: 'select', table: unwrapQuote(result[1]) };
+      }
+      result = rsql.match(/insert\s+into\s+(.+?)\s+/i);
+      if (result) {
+        return { type: 'insert', table: unwrapQuote(result[1]) };
+      }
+      result = rsql.match(/update\s+(.+?)\s+set\s+/i);
+      if (result) {
+        return { type: 'update', table: unwrapQuote(result[1]) };
+      }
+      result = rsql.match(/delete\s+from\s+(.+?)\s+/i);
+      if (result) {
+        return { type: 'delete', table: unwrapQuote(result[1]) };
       }
       return null;
     };
 
-    const astType = getAstType();
-    if (astType) {
+    const tt = getTypeWithTable();
+    if (tt) {
+      if (tt.table) {
+        return {
+          ast: {
+            type: tt.type,
+          } as any,
+          names: {
+            tableName: tt.table,
+          },
+        };
+      }
       return {
         ast: {
-          type: astType,
+          type: tt.type,
         } as any,
         names: undefined,
       };
@@ -662,7 +684,7 @@ export const parseQuery = (sql: string): QStatement | undefined => {
 
     console.log('sql=', sql);
     console.log('replacedSql=', replacedSql);
-    console.error(_);
+    // console.error(_);
     // do nothing.
   }
   return undefined;
@@ -1185,6 +1207,16 @@ const createReservedWordProposal = (word: string): Proposal => {
 const wrapQuote = (s: string, withQuote?: boolean): string => {
   if (withQuote === true) {
     return `\`${s}\``;
+  }
+  return s;
+};
+
+const unwrapQuote = (s: string): string => {
+  if (s.startsWith('"') && s.endsWith('"')) {
+    return s.substring(1, s.length - 1);
+  }
+  if (s.startsWith("'") && s.endsWith("'")) {
+    return s.substring(1, s.length - 1);
   }
   return s;
 };
