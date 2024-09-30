@@ -149,6 +149,19 @@ export async function init(): Promise<void> {
       );
     }
 
+    await con.execute('DROP DATABASE IF EXISTS stock_market');
+    await con.execute(`CREATE DATABASE stock_market`);
+    await con.execute(
+      `GRANT ALL PRIVILEGES ON stock_market.* TO 'testuser'@'%' WITH GRANT OPTION`,
+    );
+    await con.execute(CREATE_TABLE_STOCK_MARKET_SAMPLE);
+    await con.execute(
+      `INSERT INTO stock_market.\`stocks by trading volume\` VALUES (1, 'aaa')`,
+    );
+    await con.execute(
+      `INSERT INTO stock_market.\`stocks by trading volume\` VALUES (2, 'bbb')`,
+    );
+
     await con.execute('DROP DATABASE IF EXISTS oradb');
     await con.execute(`CREATE DATABASE oradb`);
     await con.execute(
@@ -274,6 +287,12 @@ CREATE TABLE testdb.diff2 (
 
 )
 `;
+
+const CREATE_TABLE_STOCK_MARKET_SAMPLE = `CREATE TABLE stock_market.\`stocks by trading volume\` (
+  ID integer NOT NULL COMMENT 'ID',
+  NAME varchar(14) default NULL COMMENT '名',
+  PRIMARY KEY  (ID)
+)`;
 
 const CREATE_TABLE_ORA_DEPT = `CREATE TABLE oradb.DEPT (
   DEPTNO integer NOT NULL COMMENT '部門番号',

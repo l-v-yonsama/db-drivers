@@ -149,6 +149,9 @@ export class MySQLDriver extends RDSBaseDriver {
           this.conRes.transactionIsolationLevel,
         );
       }
+      if (this.conRes.useDatabaseName) {
+        await this.con.query(`USE \`${this.conRes.useDatabaseName}\``);
+      }
     } catch (e) {
       console.error(e);
       errorMessage = e.message;

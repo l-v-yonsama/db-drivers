@@ -66,7 +66,7 @@ describe('MySQLDriver', () => {
     });
 
     it('should have Schema resource', async () => {
-      expect(testDbRes.children).toHaveLength(2);
+      expect(testDbRes.children).toHaveLength(3);
       testSchemaRes = testDbRes.getSchema({ isDefault: true });
       expect(testSchemaRes.name).toBe('testdb');
     });
@@ -460,6 +460,30 @@ describe('MySQLDriver', () => {
         message: 'Something error!',
         result: undefined,
       });
+    });
+  });
+
+  describe('switch databse', () => {
+    let driver1: RDSBaseDriver;
+    beforeEach(async () => {
+      driver1 = createRDSDriver({ useDatabaseName: 'stock_market' });
+      await driver1.connect();
+    });
+
+    afterEach(async () => {
+      await driver1.disconnect();
+    });
+
+    it('should have 2 records', async () => {
+      const sql1 = 'SELECT * FROM stock_market.`stocks by trading volume`';
+      const rs1 = await driver.requestSql({ sql: sql1 });
+      expect(rs1.rows).toHaveLength(2);
+    });
+
+    it('should have 2 records too', async () => {
+      const sql1 = 'SELECT * FROM `stocks by trading volume`';
+      const rs1 = await driver1.requestSql({ sql: sql1 });
+      expect(rs1.rows).toHaveLength(2);
     });
   });
 
