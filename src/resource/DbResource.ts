@@ -288,7 +288,6 @@ export class DbConnection
   public transactionIsolationLevel?: TransactionIsolationLevel;
   public queryTimeoutMs?: number;
   public lockWaitTimeoutMs?: number;
-  public useDatabaseName?: string;
 
   constructor(prop: any) {
     super(ResourceType.Connection, prop.name);
@@ -312,7 +311,6 @@ export class DbConnection
     this.transactionIsolationLevel = prop.transactionIsolationLevel;
     this.queryTimeoutMs = prop.queryTimeoutMs;
     this.lockWaitTimeoutMs = prop.lockWaitTimeoutMs;
-    this.useDatabaseName = prop.useDatabaseName;
     this.isConnected = false;
     this.isInProgress = false;
   }

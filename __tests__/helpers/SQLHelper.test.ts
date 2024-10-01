@@ -493,6 +493,54 @@ describe('SQLHelper', () => {
         expect(ast).not.toBeUndefined();
       });
     });
+    describe('Unexpected quote for MySQL', () => {
+      it('with schema', () => {
+        const sql = 'select * from hoge.`piyo fuga`';
+        const ast = parseQuery(sql);
+        expect(ast.ast.type).toBe('select');
+        expect(ast.names.schemaName).toBe('hoge');
+        expect(ast.names.tableName).toBe('piyo fuga');
+      });
+      it('without schema', () => {
+        const sql = 'select * from `piyo fuga`';
+        const ast = parseQuery(sql);
+        expect(ast.ast.type).toBe('select');
+        expect(ast.names.schemaName).toBeUndefined();
+        expect(ast.names.tableName).toBe('piyo fuga');
+      });
+    });
+    describe('Unexpected quote for SQLServer', () => {
+      it('with schema', () => {
+        const sql = 'select * from hoge.[piyo fuga]';
+        const ast = parseQuery(sql);
+        expect(ast.ast.type).toBe('select');
+        expect(ast.names.schemaName).toBe('hoge');
+        expect(ast.names.tableName).toBe('piyo fuga');
+      });
+      it('without schema', () => {
+        const sql = 'select * from [piyo fuga]';
+        const ast = parseQuery(sql);
+        expect(ast.ast.type).toBe('select');
+        expect(ast.names.schemaName).toBeUndefined();
+        expect(ast.names.tableName).toBe('piyo fuga');
+      });
+    });
+    describe('Unexpected quote for PostgreSQL', () => {
+      it('with schema', () => {
+        const sql = 'select * from hoge."piyo fuga"';
+        const ast = parseQuery(sql);
+        expect(ast.ast.type).toBe('select');
+        expect(ast.names.schemaName).toBe('hoge');
+        expect(ast.names.tableName).toBe('piyo fuga');
+      });
+      it('without schema', () => {
+        const sql = 'select * from "piyo fuga"';
+        const ast = parseQuery(sql);
+        expect(ast.ast.type).toBe('select');
+        expect(ast.names.schemaName).toBeUndefined();
+        expect(ast.names.tableName).toBe('piyo fuga');
+      });
+    });
     describe('Unexpected keyword tokens for DynamoDB', () => {
       it('update', () => {
         const sql = `UPDATE "Music" 

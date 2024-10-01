@@ -125,6 +125,10 @@ export class MySQLDriver extends RDSBaseDriver {
     return key;
   }
 
+  async useDatabase(database: string): Promise<void> {
+    await this.con.query(`USE \`${database}\``);
+  }
+
   async connectWithTest(): Promise<string> {
     let errorMessage = '';
     this.con = await this.createConnection();
@@ -148,9 +152,6 @@ export class MySQLDriver extends RDSBaseDriver {
         await this.setTransactionIsolationLevel(
           this.conRes.transactionIsolationLevel,
         );
-      }
-      if (this.conRes.useDatabaseName) {
-        await this.con.query(`USE \`${this.conRes.useDatabaseName}\``);
       }
     } catch (e) {
       console.error(e);

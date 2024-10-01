@@ -131,5 +131,4 @@ export type ConnectionSetting = {
   transactionIsolationLevel?: TransactionIsolationLevel;
   queryTimeoutMs?: number;
   lockWaitTimeoutMs?: number;
-  useDatabaseName?: string;
 };

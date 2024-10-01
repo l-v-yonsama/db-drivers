@@ -583,15 +583,19 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
   // Unexpected kw_authorization token: "authorization".
   replacedSql = replacedSql.replace(/\b(authorization)/i, '$1_1');
 
+  // replaceTableNameQuotes
+  // 角括弧 [] で囲まれたテーブル名をダブルクォート "" に置換
+  replacedSql = replacedSql.replace(/\[([^\]]+)\]/g, '"$1"');
+  // バッククォート `` で囲まれたテーブル名をダブルクォート "" に置換
+  replacedSql = replacedSql.replace(/`([^`]+)`/g, '"$1"');
+
   replacedSql = replacedSql.replace(/^[ \r\n]+/, '');
 
-  // console.log('replacedSql0=', replacedSql);
   // for dynamoDB
   replacedSql = replacedSql.replace(
     /\bINSERT\s+INTO\s+(.+)\s+VALUE\s+\{[^}]+\}/gim,
     'INSERT INTO $1 VALUES (NULL)',
   );
-  // console.log('replacedSql1=', replacedSql);
 
   return replacedSql.replace(FUNCTION_MATCHER, '1');
 };
@@ -1371,14 +1375,14 @@ const createQNamesUsingLocation = ({
       const names = qname.split('.');
       if (names.length >= 2) {
         return {
-          schemaName: names[0],
-          tableName: names[1],
+          schemaName: unwrapQuote(names[0]),
+          tableName: unwrapQuote(names[1]),
         };
       }
     } else {
       return {
         schemaName: undefined,
-        tableName: qname,
+        tableName: unwrapQuote(qname),
       };
     }
   }

@@ -77,7 +77,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L71)
+[src/drivers/aws/AwsDynamoServiceClient.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L71)
 
 ## Properties
 
@@ -91,7 +91,7 @@
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsServiceClient.ts#L14)
+[src/drivers/aws/AwsServiceClient.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsServiceClient.ts#L14)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L67)
+[src/drivers/aws/AwsDynamoServiceClient.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L67)
 
 ___
 
@@ -115,7 +115,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsServiceClient.ts#L9)
+[src/drivers/aws/AwsServiceClient.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsServiceClient.ts#L9)
 
 ___
 
@@ -129,7 +129,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:13](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsServiceClient.ts#L13)
+[src/drivers/aws/AwsServiceClient.ts:13](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsServiceClient.ts#L13)
 
 ___
 
@@ -139,7 +139,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L68)
+[src/drivers/aws/AwsDynamoServiceClient.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L68)
 
 ___
 
@@ -153,7 +153,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsServiceClient.ts#L8)
+[src/drivers/aws/AwsServiceClient.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsServiceClient.ts#L8)
 
 ## Methods
 
@@ -171,7 +171,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:545](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L545)
+[src/drivers/aws/AwsDynamoServiceClient.ts:545](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L545)
 
 ___
 
@@ -189,7 +189,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsServiceClient.ts#L20)
+[src/drivers/aws/AwsServiceClient.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsServiceClient.ts#L20)
 
 ___
 
@@ -207,7 +207,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L79)
+[src/drivers/aws/AwsDynamoServiceClient.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L79)
 
 ___
 
@@ -227,7 +227,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:121](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L121)
+[src/drivers/aws/AwsDynamoServiceClient.ts:121](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L121)
 
 ___
 
@@ -247,7 +247,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:266](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L266)
+[src/drivers/aws/AwsDynamoServiceClient.ts:266](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L266)
 
 ___
 
@@ -267,7 +267,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:281](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L281)
+[src/drivers/aws/AwsDynamoServiceClient.ts:281](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L281)
 
 ___
 
@@ -285,7 +285,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsServiceClient.ts#L62)
+[src/drivers/aws/AwsServiceClient.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsServiceClient.ts#L62)
 
 ___
 
@@ -305,7 +305,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:367](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L367)
+[src/drivers/aws/AwsDynamoServiceClient.ts:367](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L367)
 
 ___
 
@@ -319,7 +319,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:169](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L169)
+[src/drivers/aws/AwsDynamoServiceClient.ts:169](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L169)
 
 ___
 
@@ -339,7 +339,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:274](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L274)
+[src/drivers/aws/AwsDynamoServiceClient.ts:274](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L274)
 
 ___
 
@@ -357,7 +357,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:551](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L551)
+[src/drivers/aws/AwsDynamoServiceClient.ts:551](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L551)
 
 ___
 
@@ -375,7 +375,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsServiceClient.ts#L58)
+[src/drivers/aws/AwsServiceClient.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsServiceClient.ts#L58)
 
 ___
 
@@ -389,7 +389,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L95)
+[src/drivers/aws/AwsDynamoServiceClient.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L95)
 
 ___
 
@@ -409,7 +409,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L100)
+[src/drivers/aws/AwsDynamoServiceClient.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L100)
 
 ___
 
@@ -423,7 +423,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:130](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L130)
+[src/drivers/aws/AwsDynamoServiceClient.ts:130](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L130)
 
 ___
 
@@ -443,7 +443,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:270](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L270)
+[src/drivers/aws/AwsDynamoServiceClient.ts:270](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L270)
 
 ___
 
@@ -463,7 +463,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:328](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L328)
+[src/drivers/aws/AwsDynamoServiceClient.ts:328](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L328)
 
 ___
 
@@ -483,7 +483,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:412](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L412)
+[src/drivers/aws/AwsDynamoServiceClient.ts:412](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L412)
 
 ___
 
@@ -507,7 +507,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L164)
+[src/drivers/aws/AwsDynamoServiceClient.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L164)
 
 ___
 
@@ -527,7 +527,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:289](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L289)
+[src/drivers/aws/AwsDynamoServiceClient.ts:289](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L289)
 
 ___
 
@@ -551,7 +551,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsServiceClient.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsServiceClient.ts#L39)
+[src/drivers/aws/AwsServiceClient.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsServiceClient.ts#L39)
 
 ___
 
@@ -569,7 +569,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L89)
+[src/drivers/aws/AwsDynamoServiceClient.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L89)
 
 ___
 
@@ -589,4 +589,4 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:285](https://github.com/l-v-yonsama/db-drivers/blob/bcd433a5c4453aa15ded63aa1500ddf16647d682/src/drivers/aws/AwsDynamoServiceClient.ts#L285)
+[src/drivers/aws/AwsDynamoServiceClient.ts:285](https://github.com/l-v-yonsama/db-drivers/blob/b37d902f22184a4ab36e6d48ee1b1991de8127d4/src/drivers/aws/AwsDynamoServiceClient.ts#L285)

@@ -194,6 +194,11 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     throw new Error('Missing transaction_isolation');
   }
 
+  async useDatabase(database: string): Promise<void> {
+    const sql = `USE ${database}`;
+    await this.requestSqlSub({ sql, dbTable: undefined });
+  }
+
   fieldInfo2Key(
     fieldInfo: ResultColumn,
     useTableColumnType: boolean,

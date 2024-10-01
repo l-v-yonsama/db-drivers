@@ -5,6 +5,7 @@ import { Statement } from 'pgsql-ast-parser';
 
 export const setRdhMetaAndStatement = ({
   connectionName,
+  useDatabase,
   params,
   rdb,
   type,
@@ -13,6 +14,7 @@ export const setRdhMetaAndStatement = ({
   dbTable,
 }: {
   connectionName: string;
+  useDatabase?: string;
   params: QueryParams;
   rdb: ResultSetDataBuilder;
   type: Statement['type'];
@@ -41,6 +43,7 @@ export const setRdhMetaAndStatement = ({
   }
   rdb.updateMeta({
     connectionName,
+    useDatabase,
     comment,
     schemaName,
     tableName,

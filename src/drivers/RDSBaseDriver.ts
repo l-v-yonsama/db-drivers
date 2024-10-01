@@ -67,6 +67,8 @@ export abstract class RDSBaseDriver
 
   abstract getPositionalCharacter(): string | undefined;
 
+  abstract useDatabase(database: string): Promise<void>;
+
   isSchemaSpecificationSvailable(): boolean {
     return true;
   }
@@ -82,7 +84,7 @@ export abstract class RDSBaseDriver
   }
 
   async requestSql(params: QueryParams): Promise<ResultSetData> {
-    const { sql, conditions } = params;
+    const { sql, conditions, prepare } = params;
 
     let qst: QStatement | undefined = undefined;
     let dbTable: DbTable | undefined = undefined;
@@ -97,6 +99,9 @@ export abstract class RDSBaseDriver
         params.meta.type = qst?.ast?.type;
       }
     }
+    if (prepare && prepare.useDatabaseName) {
+      await this.useDatabase(prepare.useDatabaseName);
+    }
 
     const rdb = await this.requestSqlSub({
       ...params,
@@ -104,6 +109,7 @@ export abstract class RDSBaseDriver
     });
     setRdhMetaAndStatement({
       connectionName: this.conRes.name,
+      useDatabase: prepare?.useDatabaseName,
       params,
       rdb,
       type: qst?.ast?.type,
@@ -116,6 +122,9 @@ export abstract class RDSBaseDriver
   }
 
   async countSql(params: QueryParams): Promise<number | undefined> {
+    if (params.prepare && params.prepare.useDatabaseName) {
+      await this.useDatabase(params.prepare.useDatabaseName);
+    }
     const rdb = await this.requestSql(params);
     if (rdb.rows.length > 0) {
       const v = rdb.rows[0].values[rdb.keys[0].name];
@@ -123,15 +132,18 @@ export abstract class RDSBaseDriver
     }
     return undefined;
   }
-
   abstract requestSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder>;
 
   async explainSql(params: QueryParams): Promise<ResultSetData> {
-    const { sql } = params;
+    const { sql, prepare } = params;
     const ast = parseQuery(sql);
     const dbTable = this.getDbTable(ast);
+
+    if (prepare && prepare.useDatabaseName) {
+      await this.useDatabase(prepare.useDatabaseName);
+    }
 
     const rdb = await this.explainSqlSub({
       ...params,
@@ -139,6 +151,7 @@ export abstract class RDSBaseDriver
     });
     setRdhMetaAndStatement({
       connectionName: this.conRes.name,
+      useDatabase: prepare?.useDatabaseName,
       params,
       rdb,
       type: 'explain' as any,
@@ -160,16 +173,20 @@ export abstract class RDSBaseDriver
   abstract getSessions(dbName: string): Promise<ResultSetData>;
 
   async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
-    const { sql } = params;
+    const { sql, prepare } = params;
     const ast = parseQuery(sql);
     const dbTable = this.getDbTable(ast);
 
+    if (prepare && prepare.useDatabaseName) {
+      await this.useDatabase(prepare.useDatabaseName);
+    }
     const rdb = await this.explainAnalyzeSqlSub({
       ...params,
       dbTable,
     });
     setRdhMetaAndStatement({
       connectionName: this.conRes.name,
+      useDatabase: prepare?.useDatabaseName,
       params,
       rdb,
       type: 'analyze' as any,

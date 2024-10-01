@@ -131,6 +131,10 @@ export class PostgresDriver extends RDSBaseDriver {
     return key;
   }
 
+  async useDatabase(database: string): Promise<void> {
+    console.log(`Ignore "USE DATABASE(${database})"`);
+  }
+
   async connectWithTest(): Promise<string> {
     let errorReason = '';
 

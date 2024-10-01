@@ -466,7 +466,7 @@ describe('MySQLDriver', () => {
   describe('switch databse', () => {
     let driver1: RDSBaseDriver;
     beforeEach(async () => {
-      driver1 = createRDSDriver({ useDatabaseName: 'stock_market' });
+      driver1 = createRDSDriver();
       await driver1.connect();
     });
 
@@ -482,7 +482,10 @@ describe('MySQLDriver', () => {
 
     it('should have 2 records too', async () => {
       const sql1 = 'SELECT * FROM `stocks by trading volume`';
-      const rs1 = await driver1.requestSql({ sql: sql1 });
+      const rs1 = await driver1.requestSql({
+        sql: sql1,
+        prepare: { useDatabaseName: 'stock_market' },
+      });
       expect(rs1.rows).toHaveLength(2);
     });
   });

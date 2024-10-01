@@ -50,6 +50,10 @@ export class SQLiteDriver extends RDSBaseDriver {
     await this.requestSql({ sql: 'ROLLBACK' });
   }
 
+  async useDatabase(database: string): Promise<void> {
+    console.log(`Ignore "USE DATABASE(${database})"`);
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   async setAutoCommit(value: boolean): Promise<void> {}
 

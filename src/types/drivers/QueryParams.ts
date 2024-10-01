@@ -4,4 +4,7 @@ export type QueryParams = {
   sql: string;
   conditions?: QueryConditions;
   meta?: RdhMeta;
+  prepare?: {
+    useDatabaseName?: string;
+  };
 };
