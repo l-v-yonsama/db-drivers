@@ -247,13 +247,26 @@ export class AwsDynamoServiceClient
           .forEach((it) => dynamoTable.addChild(it));
         table.ExtraItems?.forEach((item) => {
           if (!dynamoTable.getChildByName(item.name)) {
+            let attrType = Object.keys(item.value)[0];
+            if (attrType === 'L') {
+              if (item.value.L.length > 0) {
+                const arr = item.value.L;
+                const sunAttrType = Object.keys(arr[0])[0];
+                switch (sunAttrType) {
+                  case 'S':
+                    attrType = 'SS';
+                    break;
+                  case 'N':
+                    attrType = 'NS';
+                    break;
+                  case 'B':
+                    attrType = 'BS';
+                    break;
+                }
+              }
+            }
             dynamoTable.addChild(
-              new DbDynamoTableColumn(
-                item.name,
-                Object.keys(item.value)[0],
-                false,
-                false,
-              ),
+              new DbDynamoTableColumn(item.name, attrType, false, false),
             );
           }
         });
