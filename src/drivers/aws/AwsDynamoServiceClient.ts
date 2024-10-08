@@ -3,6 +3,9 @@
 import {
   DynamoDBClient,
   CreateTableCommand,
+  ExecuteStatementCommand as OriginalExecuteStatementCommand,
+  ExecuteStatementCommandInput as OriginalExecuteStatementCommandInput,
+  ExecuteStatementCommandOutput as OriginalExecuteStatementCommandOutput,
   ListTablesCommand,
   DescribeTableCommand,
   TableDescription,
@@ -11,7 +14,6 @@ import {
   ScanCommand as OriginalScanCommand,
 } from '@aws-sdk/client-dynamodb';
 import {
-  BatchWriteCommand,
   DeleteCommand,
   DeleteCommandInput,
   DynamoDBDocumentClient,
@@ -33,6 +35,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import {
   createRdhKey,
+  GeneralColumnType,
   ResultSetData,
   ResultSetDataBuilder,
   toNum,
@@ -56,6 +59,7 @@ import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 import { parseQuery } from '../../helpers';
+import { unmarshall } from '@aws-sdk/util-dynamodb';
 
 export type TableDescWithExtraAttrs = TableDescription & {
   ExtraItems?: { name: string; value: AttributeValue }[];
@@ -370,12 +374,16 @@ export class AwsDynamoServiceClient
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
     CapacityUnits: number;
+    extra: {
+      allAttributeNames: string[];
+    };
   }> {
     this.interrupted = false;
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
     let NextToken = params.NextToken;
     let CapacityUnits = 0;
+    const allAttributeNames = new Set<string>();
 
     const Items: QueryCommandOutput['Items'] = [];
     do {
@@ -395,6 +403,13 @@ export class AwsDynamoServiceClient
       NextToken = response.NextToken;
       CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
+      response.Items.forEach((item) => {
+        Object.keys(item)
+          .filter((it) => !allAttributeNames.has(it))
+          .forEach((it) => {
+            allAttributeNames.add(it);
+          });
+      });
       if (params.Limit && Items.length >= params.Limit) {
         break;
       }
@@ -406,6 +421,71 @@ export class AwsDynamoServiceClient
       NextToken,
       Count: Items.length,
       CapacityUnits,
+      extra: {
+        allAttributeNames: [...allAttributeNames],
+      },
+    };
+  }
+
+  async executeStatementAtClient(
+    params: OriginalExecuteStatementCommandInput,
+  ): Promise<{
+    Items: OriginalExecuteStatementCommandOutput['Items'];
+    NextToken?: string;
+    LastEvaluatedKey: Record<string, NativeAttributeValue>;
+    Count: number;
+    CapacityUnits: number;
+    extra: {
+      allAttributeTypes: Map<string, GeneralColumnType>;
+    };
+  }> {
+    this.interrupted = false;
+    let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
+      undefined;
+    let NextToken = params.NextToken;
+    let CapacityUnits = 0;
+    const allAttributeTypes = new Map<string, GeneralColumnType>();
+
+    const Items: OriginalExecuteStatementCommandOutput['Items'] = [];
+    do {
+      if (this.interrupted) {
+        this.interrupted = false;
+        throw new Error('INTERRUPT');
+      }
+      const command = new OriginalExecuteStatementCommand({
+        ...params,
+        Limit: params.Limit ? params.Limit - Items.length : undefined,
+        NextToken,
+        ReturnConsumedCapacity: 'TOTAL',
+      });
+
+      const response = await this.client.send(command);
+      LastEvaluatedKey = response.LastEvaluatedKey;
+      NextToken = response.NextToken;
+      CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
+      Items.push(...response.Items);
+      response.Items.forEach((item) => {
+        Object.keys(item)
+          .filter((it) => !allAttributeTypes.has(it))
+          .forEach((it) => {
+            const colType = this.parseDynamoAttrTypeByNameAndItem(it, item);
+            allAttributeTypes.set(it, colType);
+          });
+      });
+      if (params.Limit && Items.length >= params.Limit) {
+        break;
+      }
+    } while (LastEvaluatedKey || NextToken);
+
+    return {
+      Items,
+      LastEvaluatedKey,
+      NextToken,
+      Count: Items.length,
+      CapacityUnits,
+      extra: {
+        allAttributeTypes,
+      },
     };
   }
 
@@ -463,7 +543,8 @@ export class AwsDynamoServiceClient
       CapacityUnits: capacityUnits,
       Count,
       Items,
-    } = await this.executeStatement(input);
+      extra: { allAttributeTypes },
+    } = await this.executeStatementAtClient(input);
 
     const elapsedTimeMilli = new Date().getTime() - startTime;
 
@@ -487,18 +568,31 @@ export class AwsDynamoServiceClient
       return rdb.build();
     }
     const record = Items[0];
-    rdb = new ResultSetDataBuilder(
-      Object.keys(record).map((it) => {
-        const col = dbTable?.getChildByName(it);
-        return createRdhKey({
-          name: it,
-          type: parseDynamoAttrType(col?.attrType),
-          required: col?.pk || col?.sk,
-        });
-      }),
-    );
+    const keys = Object.keys(record).map((it) => {
+      const col = dbTable?.getChildByName(it);
+      const type = col?.attrType
+        ? parseDynamoAttrType(col.attrType)
+        : allAttributeTypes.get(it);
+      return createRdhKey({
+        name: it,
+        type,
+        required: col?.pk || col?.sk,
+      });
+    });
+    for (const [attrName, colType] of allAttributeTypes) {
+      if (!keys.map((key) => key.name).includes(attrName)) {
+        keys.push(
+          createRdhKey({
+            name: attrName,
+            type: colType,
+          }),
+        );
+      }
+    }
+
+    rdb = new ResultSetDataBuilder(keys);
     Items.forEach((item) => {
-      rdb.addRow(item);
+      rdb.addRow(unmarshall(item));
     });
 
     setRdhMetaAndStatement({
@@ -510,7 +604,6 @@ export class AwsDynamoServiceClient
       dbTable,
     });
 
-    rdb.resetKeyTypeByRows();
     rdb.setSummary({
       elapsedTimeMilli,
       selectedRows: rdb.rs.rows.length,
@@ -550,5 +643,33 @@ export class AwsDynamoServiceClient
 
   protected getServiceName(): string {
     return 'DynamoDB';
+  }
+
+  private parseDynamoAttrTypeByNameAndItem(
+    name: string,
+    item: Record<string, AttributeValue>,
+  ): GeneralColumnType {
+    const attr = item[name];
+    const attrName = Object.keys(attr)[0];
+    const colType = parseDynamoAttrType(attrName);
+    if (colType !== GeneralColumnType.ARRAY) {
+      return colType;
+    }
+    // ARRAY
+    const array = attr[attrName];
+    if (array.length === 0) {
+      return GeneralColumnType.ARRAY;
+    }
+    const first = array[0];
+    const firstAttrName = Object.keys(first)[0];
+    switch (firstAttrName) {
+      case 'S':
+        return GeneralColumnType.STRING_ARRAY;
+      case 'N':
+        return GeneralColumnType.NUMERIC_ARRAY;
+      case 'B':
+        return GeneralColumnType.BINARY_ARRAY;
+    }
+    return GeneralColumnType.ARRAY;
   }
 }

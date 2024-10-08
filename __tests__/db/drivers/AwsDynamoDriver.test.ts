@@ -600,6 +600,9 @@ describe('AwsDynamoDBDriver', () => {
         Count: 1003,
         Items: expect.any(Array),
         CapacityUnits: expect.any(Number),
+        extra: {
+          allAttributeNames: expect.any(Array),
+        },
       });
     });
 
@@ -614,6 +617,9 @@ describe('AwsDynamoDBDriver', () => {
         LastEvaluatedKey: undefined,
         NextToken: expect.any(String),
         CapacityUnits: expect.any(Number),
+        extra: {
+          allAttributeNames: expect.any(Array),
+        },
       });
 
       const r2 = await driver.dynamoClient.executeStatement({
@@ -626,6 +632,9 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
         CapacityUnits: expect.any(Number),
+        extra: {
+          allAttributeNames: expect.any(Array),
+        },
       });
     });
 
@@ -640,6 +649,9 @@ describe('AwsDynamoDBDriver', () => {
         LastEvaluatedKey: undefined,
         CapacityUnits: expect.any(Number),
         NextToken: expect.any(String),
+        extra: {
+          allAttributeNames: expect.any(Array),
+        },
       });
     });
 
@@ -654,6 +666,9 @@ describe('AwsDynamoDBDriver', () => {
         LastEvaluatedKey: undefined,
         NextToken: undefined,
         CapacityUnits: expect.any(Number),
+        extra: {
+          allAttributeNames: expect.any(Array),
+        },
       });
     });
   });
