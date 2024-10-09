@@ -60,6 +60,7 @@ export const createUndoChangeSQL = ({
   diffResult,
   bindOption,
   quote,
+  sqlLang,
 }: {
   schemaName?: string;
   tableName: string;
@@ -67,6 +68,7 @@ export const createUndoChangeSQL = ({
   diffResult: DiffToUndoChangesResult;
   bindOption: BindOptions;
   quote?: boolean;
+  sqlLang?: SQLLang;
 }): QueryWithBindsResult[] => {
   const { ok, toBeInserted, toBeUpdated, toBeDeleted } = diffResult;
   if (!ok) {
@@ -85,6 +87,7 @@ export const createUndoChangeSQL = ({
         bindOption,
         compactSql: true,
         quote,
+        sqlLang,
       }),
     ),
   );
@@ -100,6 +103,7 @@ export const createUndoChangeSQL = ({
         conditions: it.conditions,
         bindOption,
         quote,
+        sqlLang,
       }),
     ),
   );
@@ -114,6 +118,7 @@ export const createUndoChangeSQL = ({
         conditions: it.conditions,
         bindOption,
         quote,
+        sqlLang,
       }),
     ),
   );
@@ -198,7 +203,14 @@ export const toInsertStatement = ({
   if (compactSql) {
     if (sqlLang === 'partiql') {
       query += `INSERT INTO ${tableNameWithSchema} VALUE {${columnNames
-        .map((it, idx) => `${wrapSingleQuote(it)}: ${embdeddedValues[idx]}`)
+        .map(
+          (it, idx) =>
+            `${wrapSingleQuote(it)}: ${
+              specifyValuesWithBindParameters
+                ? placeHolders[idx]
+                : embdeddedValues[idx]
+            }`,
+        )
         .join(',' + os.EOL)}}`;
     } else {
       query += `INSERT INTO ${tableNameWithSchema} (${columnNames.join(
@@ -214,10 +226,20 @@ export const toInsertStatement = ({
       query += `INSERT INTO ${tableNameWithSchema} ${os.EOL}`;
       query += `VALUE {${os.EOL}`;
 
-      for (let i = 0; i < embdeddedValues.length; i++) {
-        query += `  ${wrapSingleQuote(columnNames[i])}: ${embdeddedValues[i]}${
-          i < embdeddedValues.length - 1 ? ',' : ''
-        }${withComment ? ' -- ' + columnComments[i] : ''}${os.EOL}`;
+      if (specifyValuesWithBindParameters) {
+        for (let i = 0; i < placeHolders.length; i++) {
+          query += `  ${wrapSingleQuote(columnNames[i])}: ${placeHolders[i]}${
+            i < placeHolders.length - 1 ? ',' : ''
+          }${withComment ? ' -- ' + columnComments[i] : ''}${os.EOL}`;
+        }
+      } else {
+        for (let i = 0; i < embdeddedValues.length; i++) {
+          query += `  ${wrapSingleQuote(columnNames[i])}: ${
+            embdeddedValues[i]
+          }${i < embdeddedValues.length - 1 ? ',' : ''}${
+            withComment ? ' -- ' + columnComments[i] : ''
+          }${os.EOL}`;
+        }
       }
 
       query += `}${os.EOL}`;
@@ -291,12 +313,22 @@ export const toUpdateStatement = ({
       GeneralColumnType.UNKNOWN;
 
     if (sqlLang === 'partiql') {
-      setList.push(
-        `${wrapDoubleQuote(key)} = ${toEmbeddedStringValue(
-          colType,
-          values[key],
-        )}`,
-      );
+      if (specifyValuesWithBindParameters) {
+        setList.push(
+          `${wrapDoubleQuote(key)} = ${
+            toPositionedParameter === true ? `${pChar}${index + 1}` : '?'
+          }`,
+        );
+        binds.push(toBindValue(colType, values[key]));
+        index++;
+      } else {
+        setList.push(
+          `${wrapDoubleQuote(key)} = ${toEmbeddedStringValue(
+            colType,
+            values[key],
+          )}`,
+        );
+      }
     } else {
       if (specifyValuesWithBindParameters) {
         setList.push(
@@ -322,12 +354,22 @@ export const toUpdateStatement = ({
       GeneralColumnType.UNKNOWN;
 
     if (sqlLang === 'partiql') {
-      conditionList.push(
-        `${wrapDoubleQuote(key)} = ${toEmbeddedStringValue(
-          colType,
-          conditions[key],
-        )}`,
-      );
+      if (specifyValuesWithBindParameters) {
+        conditionList.push(
+          `${wrapDoubleQuote(key)} = ${
+            toPositionedParameter === true ? `$${index + 1}` : '?'
+          }`,
+        );
+        binds.push(toBindValue(colType, conditions[key]));
+        index++;
+      } else {
+        conditionList.push(
+          `${wrapDoubleQuote(key)} = ${toEmbeddedStringValue(
+            colType,
+            conditions[key],
+          )}`,
+        );
+      }
     } else {
       if (specifyValuesWithBindParameters) {
         conditionList.push(
@@ -396,12 +438,21 @@ export const toDeleteStatement = ({
       columns.find((it) => equalsIgnoreCase(it.name, key))?.type ??
       GeneralColumnType.UNKNOWN;
     if (sqlLang === 'partiql') {
-      conditionList.push(
-        `${wrapDoubleQuote(key)}  = ${toEmbeddedStringValue(
-          colType,
-          conditions[key],
-        )}`,
-      );
+      if (specifyValuesWithBindParameters) {
+        conditionList.push(
+          `${wrapDoubleQuote(key)}  = ${
+            toPositionedParameter === true ? `${pChar}${index + 1}` : '?'
+          }`,
+        );
+        binds.push(toBindValue(colType, conditions[key]));
+      } else {
+        conditionList.push(
+          `${wrapDoubleQuote(key)}  = ${toEmbeddedStringValue(
+            colType,
+            conditions[key],
+          )}`,
+        );
+      }
     } else {
       if (specifyValuesWithBindParameters) {
         conditionList.push(
@@ -533,165 +584,83 @@ const createConditionalClause = ({
       }`;
       q += ` ${operatorToSQLString(operator)} `;
 
-      if (sqlLang === 'partiql') {
-        if (operator === 'isNull' || operator === 'isNotNull') {
-          // do nothing.
-        } else if (operator === 'like') {
-          if (value === undefined || value === null) {
-            q = `Contains(${wrapDoubleQuote(fact)}, NULL)`;
-          } else {
-            let s = value + '';
-            if (s.startsWith('%')) {
-              s = s.substring(1);
-              if (s.endsWith('%')) {
-                s = s.substring(0, s.length - 1);
-              }
-              q = `Contains(${wrapDoubleQuote(fact)}, ${wrapSingleQuote(s)})`;
-            } else {
-              if (s.endsWith('%')) {
-                s = s.substring(0, s.length - 1);
-                q = `begins_with(${wrapDoubleQuote(fact)}, ${wrapSingleQuote(
-                  s,
-                )})`;
-              } else {
-                q = `Contains(${wrapDoubleQuote(fact)}, ${wrapSingleQuote(s)})`;
-              }
-            }
-          }
-        } else if (
-          operator === 'between' ||
-          operator === 'in' ||
-          operator === 'notIn'
-        ) {
-          let val: any = null;
-          if (value === undefined || value === null) {
-            val = null;
-          } else {
-            let arr: any[] = [];
-            if (Array.isArray(value)) {
-              arr = value;
-            } else if (value.startsWith('[') && value.endsWith(']')) {
-              arr = JSON.parse(value) as any[];
-            } else {
-              arr = ('' + value).split(/,/).map((it) => it.trim());
-            }
-            if (isNumericLike(colType)) {
-              val = arr.map((it) => toNum(it) ?? null);
-            } else if (isBooleanLike(colType)) {
-              val = arr.map((it) => toBoolean(it) ?? null);
-            } else {
-              val = arr.map((it) => it + '');
-            }
-          }
-          if (operator === 'between') {
-            if (val === null) {
-              q += `NULL AND NULL`;
-            } else {
-              if (isNumericLike(colType) || isBooleanLike(colType)) {
-                q += `${val[0]} AND ${val[1]}`;
-              } else {
-                q += `${wrapSingleQuote(val[0])} AND ${wrapSingleQuote(
-                  val[1],
-                )}`;
-              }
-            }
-          } else {
-            if (isNumericLike(colType) || isBooleanLike(colType)) {
-              q += `( ${val.map((it) => `${it}`).join(',')} )`;
-            } else {
-              q += `( ${val.map((it) => wrapSingleQuote(it)).join(',')} )`;
-            }
-          }
+      if (operator === 'isNull' || operator === 'isNotNull') {
+        // do nothing.
+      } else if (
+        operator === 'between' ||
+        operator === 'in' ||
+        operator === 'notIn'
+      ) {
+        let val: any = null;
+        if (value === undefined || value === null) {
+          val = null;
         } else {
-          let val: any = null;
-          if (isNumericLike(colType)) {
-            val = toNum(value) ?? null;
-          } else if (isBooleanLike(colType)) {
-            val = toBoolean(value) ?? null;
-          } else if (isDateTimeOrDate(colType)) {
-            val = toDate(value) ?? null;
-          } else if (isTime(colType)) {
-            val = toTime(value) ?? null;
+          let arr: any[] = [];
+          if (Array.isArray(value)) {
+            arr = value;
+          } else if (value.startsWith('[') && value.endsWith(']')) {
+            arr = JSON.parse(value) as any[];
           } else {
-            val = value;
+            arr = ('' + value).split(/,/).map((it) => it.trim());
           }
-
-          if (isNumericLike(colType) || isBooleanLike(colType)) {
-            q += `${val}`;
+          if (isNumericLike(colType)) {
+            val = arr.map((it) => toNum(it) ?? null);
+          } else if (isBooleanLike(colType)) {
+            val = arr.map((it) => toBoolean(it) ?? null);
+          } else if (isDateTimeOrDate(colType)) {
+            val = arr.map((it) => toDate(it) ?? null);
+          } else if (isTime(colType)) {
+            val = arr.map((it) => toTime(it) ?? null);
           } else {
-            q += wrapSingleQuote(val);
+            val = arr.map((it) => it + '');
           }
         }
-      } else {
-        if (operator === 'isNull' || operator === 'isNotNull') {
-          // do nothing.
-        } else if (
-          operator === 'between' ||
-          operator === 'in' ||
-          operator === 'notIn'
-        ) {
-          let val: any = null;
-          if (value === undefined || value === null) {
-            val = null;
+        if (operator === 'between') {
+          const bindName1 = `val${params.pos}`;
+          params.pos++;
+          const bindName2 = `val${params.pos}`;
+          params.pos++;
+          q += `:${bindName1} AND :${bindName2}`;
+          if (val === null) {
+            params.bindParams[bindName1] = null;
+            params.bindParams[bindName2] = null;
           } else {
-            let arr: any[] = [];
-            if (Array.isArray(value)) {
-              arr = value;
-            } else if (value.startsWith('[') && value.endsWith(']')) {
-              arr = JSON.parse(value) as any[];
-            } else {
-              arr = ('' + value).split(/,/).map((it) => it.trim());
-            }
-            if (isNumericLike(colType)) {
-              val = arr.map((it) => toNum(it) ?? null);
-            } else if (isBooleanLike(colType)) {
-              val = arr.map((it) => toBoolean(it) ?? null);
-            } else if (isDateTimeOrDate(colType)) {
-              val = arr.map((it) => toDate(it) ?? null);
-            } else if (isTime(colType)) {
-              val = arr.map((it) => toTime(it) ?? null);
-            } else {
-              val = arr.map((it) => it + '');
-            }
-          }
-          if (operator === 'between') {
-            const bindName1 = `val${params.pos}`;
-            params.pos++;
-            const bindName2 = `val${params.pos}`;
-            params.pos++;
-            q += `:${bindName1} AND :${bindName2}`;
-            if (val === null) {
-              params.bindParams[bindName1] = null;
-              params.bindParams[bindName2] = null;
-            } else {
-              params.bindParams[bindName1] = val[0];
-              params.bindParams[bindName2] = val[1];
-            }
-          } else {
-            const bindName = `val${params.pos}`;
-            params.pos++;
-            q += `(:${bindName})`;
-            params.bindParams[bindName] = val;
+            params.bindParams[bindName1] = val[0];
+            params.bindParams[bindName2] = val[1];
           }
         } else {
-          let val: any = null;
-          if (isNumericLike(colType)) {
-            val = toNum(value) ?? null;
-          } else if (isBooleanLike(colType)) {
-            val = toBoolean(value) ?? null;
-          } else if (isDateTimeOrDate(colType)) {
-            val = toDate(value) ?? null;
-          } else if (isTime(colType)) {
-            val = toTime(value) ?? null;
-          } else {
-            val = value;
-          }
-
           const bindName = `val${params.pos}`;
-          q += `:${bindName}`;
+          params.pos++;
+          q += `(:${bindName})`;
           params.bindParams[bindName] = val;
+        }
+      } else if (operator === 'like' && sqlLang === 'partiql') {
+        if (value === undefined || value === null) {
+          q = `Contains(${wrapDoubleQuote(fact)}, NULL)`;
+        } else {
+          const bindName = `val${params.pos}`;
+          params.bindParams[bindName] = value;
+          q = `Contains(${wrapDoubleQuote(fact)}, :${bindName})`;
           params.pos++;
         }
+      } else {
+        let val: any = null;
+        if (isNumericLike(colType)) {
+          val = toNum(value) ?? null;
+        } else if (isBooleanLike(colType)) {
+          val = toBoolean(value) ?? null;
+        } else if (isDateTimeOrDate(colType)) {
+          val = toDate(value) ?? null;
+        } else if (isTime(colType)) {
+          val = toTime(value) ?? null;
+        } else {
+          val = value;
+        }
+
+        const bindName = `val${params.pos}`;
+        q += `:${bindName}`;
+        params.bindParams[bindName] = val;
+        params.pos++;
       }
 
       queries.push(q);

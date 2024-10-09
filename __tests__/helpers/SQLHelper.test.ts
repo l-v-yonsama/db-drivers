@@ -812,10 +812,10 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
         expect(eolToSpace(query)).toBe('SELECT * FROM "testtable"');
         expect(binds).toEqual([]);
       });
-      it('With conitions', () => {
+      it('With conitions-in', () => {
         const schemaRes = db.getSchema({ isDefault: true });
 
-        const { query } = toViewDataQuery({
+        const { query, binds } = toViewDataQuery({
           tableRes: schemaRes.getChildByName('testtable'),
           conditions: {
             all: [
@@ -849,13 +849,19 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
           sqlLang: 'partiql',
         });
         expect(eolToSpace(query)).toBe(
-          'SELECT * FROM "testtable" WHERE "ID" <> 100 AND "n0" = true AND "n1" IS NOT NULL AND "n2" IN ( 1,2,3 ) AND Contains("s2", \'test\')',
+          'SELECT * FROM "testtable" WHERE "ID" <> :val1 AND "n0" = :val2 AND "n1" IS NOT NULL AND "n2" IN (:val3) AND Contains("s2", :val4)',
         );
+        expect(binds).toEqual({
+          val1: 100,
+          val2: true,
+          val3: [1, 2, 3],
+          val4: 'test',
+        });
       });
       it('With conitions2', () => {
         const schemaRes = db.getSchema({ isDefault: true });
 
-        const { query } = toViewDataQuery({
+        const { query, binds } = toViewDataQuery({
           tableRes: schemaRes.getChildByName('testtable'),
           conditions: {
             all: [
@@ -872,15 +878,21 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
               {
                 fact: 's2',
                 operator: 'like',
-                value: 'test%',
+                value: 'test',
               },
             ],
           },
           sqlLang: 'partiql',
         });
         expect(eolToSpace(query)).toBe(
-          'SELECT * FROM "testtable" WHERE "ID" <> 100 AND "n2" BETWEEN 1 AND 2 AND begins_with("s2", \'test\')',
+          'SELECT * FROM "testtable" WHERE "ID" <> :val1 AND "n2" BETWEEN :val2 AND :val3 AND Contains("s2", :val4)',
         );
+        expect(binds).toEqual({
+          val1: 100,
+          val2: 1,
+          val3: 2,
+          val4: 'test',
+        });
       });
     });
   });
@@ -930,7 +942,7 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
 
         expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
       });
-      it('partiQL', () => {
+      it('partiQL embedded values', () => {
         const {
           tableName,
           tableComment,
@@ -964,6 +976,42 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
         const expectedQuery = `INSERT INTO "testtable"  VALUE {'ID': 0, 's1': '', 'd1': NULL}`;
 
         expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
+      });
+      it('partiQL with bind parameters', () => {
+        const {
+          tableName,
+          tableComment,
+          columns: iCols,
+          values: iVals,
+        } = createToInsertStatementParams(db);
+
+        const columns: RdhKey[] = [];
+        const values: { [key: string]: any } = {};
+        ['ID', 's1', 'd1'].forEach((col) => {
+          const idx = iCols.findIndex((it) => it.name === col);
+          if (idx >= 0) {
+            columns.push(iCols[idx]);
+            values[col] = iVals[col];
+          }
+        });
+
+        const { query, binds } = toInsertStatement({
+          tableName,
+          tableComment,
+          columns,
+          values,
+          bindOption: {
+            specifyValuesWithBindParameters: true,
+          },
+          withComment: false,
+          compactSql: true,
+          sqlLang: 'partiql',
+        });
+
+        const expectedQuery = `INSERT INTO "testtable"  VALUE {'ID': ?, 's1': ?, 'd1': ?}`;
+
+        expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
+        expect(binds).toEqual([0, '', null]);
       });
     });
     describe('compactSql:false', () => {
@@ -1130,7 +1178,7 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
 
         expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
       });
-      it('partiQL', () => {
+      it('partiQL embedded values', () => {
         const {
           tableName,
           tableComment,
@@ -1170,6 +1218,48 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
         `;
 
         expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
+      });
+      it('partiQL with bind parameters', () => {
+        const {
+          tableName,
+          tableComment,
+          columns: iCols,
+          values: iVals,
+        } = createToInsertStatementParams(db);
+
+        const columns: RdhKey[] = [];
+        const values: { [key: string]: any } = {};
+        ['ID', 's1', 'd1'].forEach((col) => {
+          const idx = iCols.findIndex((it) => it.name === col);
+          if (idx >= 0) {
+            columns.push(iCols[idx]);
+            values[col] = iVals[col];
+          }
+        });
+
+        const { query, binds } = toInsertStatement({
+          tableName,
+          tableComment,
+          columns,
+          values,
+          bindOption: {
+            specifyValuesWithBindParameters: true,
+          },
+          withComment: false,
+          compactSql: false,
+          sqlLang: 'partiql',
+        });
+
+        const expectedQuery = `INSERT INTO "testtable" 
+        VALUE {
+          'ID': ?,
+          's1': ?, 
+          'd1': ?
+        }
+        `;
+
+        expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
+        expect(binds).toEqual([0, '', null]);
       });
     });
   });

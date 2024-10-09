@@ -59,7 +59,7 @@ import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 import { parseQuery } from '../../helpers';
-import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { unmarshall, marshall } from '@aws-sdk/util-dynamodb';
 
 export type TableDescWithExtraAttrs = TableDescription & {
   ExtraItems?: { name: string; value: AttributeValue }[];
@@ -550,7 +550,8 @@ export class AwsDynamoServiceClient
 
     // 1 validation error detected: Value '[]' at 'parameters' failed to satisfy constraint: Member must have length greater than or equal to 1
     if (binds && binds.length > 0) {
-      input.Parameters = binds;
+      input.Parameters = marshall(binds);
+      console.log('input.Parameters=', input.Parameters);
     }
     const {
       CapacityUnits: capacityUnits,
