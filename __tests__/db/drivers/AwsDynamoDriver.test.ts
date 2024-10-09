@@ -134,6 +134,27 @@ describe('AwsDynamoDBDriver', () => {
       );
       await client.send(
         new CreateTableCommand({
+          TableName: 'Escape-Test',
+          AttributeDefinitions: [
+            {
+              AttributeName: 'id',
+              AttributeType: 'N',
+            },
+          ],
+          KeySchema: [
+            {
+              AttributeName: 'id',
+              KeyType: 'HASH',
+            },
+          ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 10,
+            WriteCapacityUnits: 5,
+          },
+        }),
+      );
+      await client.send(
+        new CreateTableCommand({
           TableName: 'Food',
           AttributeDefinitions: [
             { AttributeName: 'Name', AttributeType: 'S' },
@@ -228,6 +249,18 @@ describe('AwsDynamoDBDriver', () => {
               Artist: item[0],
               SongTitle: item[1],
               AlbumTitle: item[2],
+            },
+          }),
+        );
+      }
+
+      for (const n of [1, 2, 3]) {
+        await docClient.send(
+          new PutCommand({
+            TableName: 'Escape-Test',
+            Item: {
+              id: n,
+              'name with quote\'"a': `value with quote'"a${n}`,
             },
           }),
         );
@@ -352,7 +385,7 @@ describe('AwsDynamoDBDriver', () => {
     });
 
     it('should have DbDynamoTable resource', async () => {
-      expect(testDbRes.children).toHaveLength(4);
+      expect(testDbRes.children).toHaveLength(5);
       const music = testDbRes.getChildByName('Music') as DbDynamoTable;
       expect(music.name).toBe('Music');
       expect(music.attr?.ReadCapacityUnits).toBe(10);
@@ -758,6 +791,31 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.meta.tableName).toBe('Music');
         expect(rs.noRecordsReason).toBe('');
       });
+      it('Escape-Test', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `INSERT INTO 
+          "Escape-Test" VALUE {
+            'id': 4,
+            'name with quote''"a':'value with quote''"a4'
+          }`,
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.meta.type).toBe('insert');
+        expect(rs.meta.tableName).toBe('Escape-Test');
+        expect(rs.noRecordsReason).toBe('');
+
+        const rs2 = await driver.dynamoClient.requestPartiql({
+          sql: `SELECT * FROM "Escape-Test" WHERE id = 4`,
+        });
+        expect(rs2.rows).toHaveLength(1);
+        expect(rs2.meta.type).toBe('select');
+        expect(rs2.meta.tableName).toBe('Escape-Test');
+        expect(rs2.rows[0].values).toEqual({
+          id: 4,
+          'name with quote\'"a': 'value with quote\'"a4',
+        });
+      });
     });
     describe('UPDATE', () => {
       describe('variable attribute types', () => {
@@ -798,6 +856,54 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.meta.type).toBe('update');
         expect(rs.meta.tableName).toBe('testtable');
         expect(rs.noRecordsReason).toBe('');
+      });
+      it('Escape-Test', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `UPDATE 
+          "Escape-Test"
+          SET "name with quote'""a" = 'value with quote''"a300'
+          WHERE "id" = 3
+          `,
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.meta.type).toBe('update');
+        expect(rs.meta.tableName).toBe('Escape-Test');
+        expect(rs.noRecordsReason).toBe('');
+
+        const rs2 = await driver.dynamoClient.requestPartiql({
+          sql: `SELECT * FROM "Escape-Test" WHERE id = 3`,
+        });
+        expect(rs2.rows).toHaveLength(1);
+        expect(rs2.meta.type).toBe('select');
+        expect(rs2.meta.tableName).toBe('Escape-Test');
+        expect(rs2.rows[0].values).toEqual({
+          id: 3,
+          'name with quote\'"a': 'value with quote\'"a300',
+        });
+      });
+    });
+
+    describe('DELETE', () => {
+      it('Escape-Test', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `DELETE FROM 
+          "Escape-Test"
+          WHERE "id" = 2 AND "name with quote'""a" = 'value with quote''"a2'
+          `,
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.meta.type).toBe('delete');
+        expect(rs.meta.tableName).toBe('Escape-Test');
+        expect(rs.noRecordsReason).toBe('');
+
+        const rs2 = await driver.dynamoClient.requestPartiql({
+          sql: `SELECT * FROM "Escape-Test" WHERE id = 2`,
+        });
+        expect(rs2.rows).toHaveLength(0);
+        expect(rs2.meta.type).toBe('select');
+        expect(rs2.meta.tableName).toBe('Escape-Test');
       });
     });
   });

@@ -11,29 +11,23 @@ import {
   GeneralResult,
   QStatement,
   QueryParams,
+  SQLLang,
   TransactionControlType,
   TransactionIsolationLevel,
 } from '../types';
-import { BaseDriver } from './BaseDriver';
 import { setRdhMetaAndStatement } from '../utils';
-import { ISQLSupportDriver } from './ISQLSupportDriver';
+import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 
-export abstract class RDSBaseDriver
-  extends BaseDriver<RdsDatabase>
-  implements ISQLSupportDriver
-{
+export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
   constructor(conRes: ConnectionSetting) {
     super(conRes);
   }
 
   protected abstract getTestSqlStatement(): string;
 
-  /**
-   * Terminate (kill) a specific session.
-   * If sesssionOrPid is not specified, cancel the running request.
-   * @param sesssionOrPid
-   */
-  abstract kill(sesssionOrPid?: number): Promise<string>;
+  getSqlLang(): SQLLang {
+    return 'sql';
+  }
 
   async test(with_connect = false): Promise<string> {
     let errorReason = '';
@@ -63,17 +57,11 @@ export abstract class RDSBaseDriver
     });
   }
 
-  abstract isPositionedParameterAvailable(): boolean;
-
-  abstract getPositionalCharacter(): string | undefined;
-
   abstract useDatabase(database: string): Promise<void>;
 
   isSchemaSpecificationSvailable(): boolean {
     return true;
   }
-
-  abstract isLimitAsTop(): boolean;
 
   protected getRdsDatabase(): RdsDatabase | undefined {
     const db = this.getFirstDbDatabase();

@@ -6,7 +6,6 @@ import {
   AwsCredentialIdentityProvider,
 } from '@aws-sdk/types';
 import { AwsDatabase, SchemaAndTableName } from '../resource';
-import { BaseDriver } from './BaseDriver';
 
 import { fromEnv, fromIni } from '@aws-sdk/credential-providers';
 
@@ -15,6 +14,7 @@ import {
   ConnectionSetting,
   QueryParams,
   ResourceType,
+  SQLLang,
   SupplyCredentialType,
 } from '../types';
 import { AwsCloudwatchServiceClient } from './aws/AwsCloudwatchServiceClient';
@@ -23,8 +23,8 @@ import { AwsServiceClient } from './aws/AwsServiceClient';
 import { AwsSESServiceClient } from './aws/AwsSESServiceClient';
 import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
 import { AwsDynamoServiceClient } from './aws/AwsDynamoServiceClient';
-import { ISQLSupportDriver } from './ISQLSupportDriver';
 import { ResultSetData } from '@l-v-yonsama/rdh';
+import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 
 export type ClientConfigType = {
   region?: string;
@@ -32,10 +32,7 @@ export type ClientConfigType = {
   credentials: AwsCredentialIdentityProvider | AwsCredentialIdentity;
 };
 
-export class AwsDriver
-  extends BaseDriver<AwsDatabase>
-  implements ISQLSupportDriver
-{
+export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
   public sesClient: AwsSESServiceClient;
   public sqsClient: AwsSQSServiceClient;
   public cloudwatchClient: AwsCloudwatchServiceClient;
@@ -59,6 +56,10 @@ export class AwsDriver
       config.endpoint = url;
     }
     return config;
+  }
+
+  getSqlLang(): SQLLang {
+    return 'partiql';
   }
 
   getClientByServiceType<T extends AwsServiceClient = AwsServiceClient>(

@@ -42,6 +42,7 @@ import {
   QueryWithBindsResult,
   ResourcePosition,
   ResourcePositionParams,
+  SQLLang,
   ToViewDataQueryParams,
 } from '../types';
 import { FUNCTIONS, RESERVED_WORDS } from './constant';
@@ -130,6 +131,7 @@ export const toInsertStatement = ({
   withComment,
   compactSql,
   quote,
+  sqlLang,
 }: {
   schemaName?: string;
   tableName: string;
@@ -140,11 +142,13 @@ export const toInsertStatement = ({
   withComment?: boolean;
   compactSql?: boolean;
   quote?: boolean;
+  sqlLang?: SQLLang;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableName,
     quote,
+    sqlLang,
   });
   const {
     specifyValuesWithBindParameters,
@@ -164,7 +168,7 @@ export const toInsertStatement = ({
     const column = columns.find((it) => equalsIgnoreCase(it.name, key));
     const colType = column?.type ?? GeneralColumnType.UNKNOWN;
 
-    columnNames.push(`${wrapQuote(key, quote)}`);
+    columnNames.push(`${quote ? wrapQuote(key, '`') : key}`);
 
     if (specifyValuesWithBindParameters) {
       const value = toBindValue(colType, values[key]);
@@ -192,31 +196,50 @@ export const toInsertStatement = ({
     query += `-- ${tableComment + os.EOL}`;
   }
   if (compactSql) {
-    query += `INSERT INTO ${tableNameWithSchema} (${columnNames.join(
-      ',',
-    )}) VALUES (${
-      specifyValuesWithBindParameters
-        ? placeHolders.join(',')
-        : embdeddedValues.join(',')
-    })`;
-  } else {
-    query += `INSERT INTO ${tableNameWithSchema + os.EOL} (${os.EOL}  `;
-    query += `${columnNames.join(',' + os.EOL + '  ')}${os.EOL}`;
-    query += `) VALUES (${os.EOL}`;
-    if (specifyValuesWithBindParameters) {
-      for (let i = 0; i < placeHolders.length; i++) {
-        query += `  ${placeHolders[i]}${
-          i < placeHolders.length - 1 ? ',' : ''
-        }${withComment ? ' -- ' + columnComments[i] : ''}${os.EOL}`;
-      }
+    if (sqlLang === 'partiql') {
+      query += `INSERT INTO ${tableNameWithSchema} VALUE {${columnNames
+        .map((it, idx) => `${wrapSingleQuote(it)}: ${embdeddedValues[idx]}`)
+        .join(',' + os.EOL)}}`;
     } else {
+      query += `INSERT INTO ${tableNameWithSchema} (${columnNames.join(
+        ',',
+      )}) VALUES (${
+        specifyValuesWithBindParameters
+          ? placeHolders.join(',')
+          : embdeddedValues.join(',')
+      })`;
+    }
+  } else {
+    if (sqlLang === 'partiql') {
+      query += `INSERT INTO ${tableNameWithSchema} ${os.EOL}`;
+      query += `VALUE {${os.EOL}`;
+
       for (let i = 0; i < embdeddedValues.length; i++) {
-        query += `  ${embdeddedValues[i]}${
+        query += `  ${wrapSingleQuote(columnNames[i])}: ${embdeddedValues[i]}${
           i < embdeddedValues.length - 1 ? ',' : ''
         }${withComment ? ' -- ' + columnComments[i] : ''}${os.EOL}`;
       }
+
+      query += `}${os.EOL}`;
+    } else {
+      query += `INSERT INTO ${tableNameWithSchema + os.EOL} (${os.EOL}  `;
+      query += `${columnNames.join(',' + os.EOL + '  ')}${os.EOL}`;
+      query += `) VALUES (${os.EOL}`;
+      if (specifyValuesWithBindParameters) {
+        for (let i = 0; i < placeHolders.length; i++) {
+          query += `  ${placeHolders[i]}${
+            i < placeHolders.length - 1 ? ',' : ''
+          }${withComment ? ' -- ' + columnComments[i] : ''}${os.EOL}`;
+        }
+      } else {
+        for (let i = 0; i < embdeddedValues.length; i++) {
+          query += `  ${embdeddedValues[i]}${
+            i < embdeddedValues.length - 1 ? ',' : ''
+          }${withComment ? ' -- ' + columnComments[i] : ''}${os.EOL}`;
+        }
+      }
+      query += `)${os.EOL}`;
     }
-    query += `)${os.EOL}`;
   }
 
   return {
@@ -233,6 +256,7 @@ export const toUpdateStatement = ({
   conditions,
   bindOption,
   quote,
+  sqlLang,
 }: {
   schemaName?: string;
   tableName: string;
@@ -241,11 +265,13 @@ export const toUpdateStatement = ({
   conditions: { [key: string]: any };
   bindOption: BindOptions;
   quote?: boolean;
+  sqlLang?: SQLLang;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableName,
     quote,
+    sqlLang,
   });
   const {
     specifyValuesWithBindParameters,
@@ -264,21 +290,30 @@ export const toUpdateStatement = ({
       columns.find((it) => equalsIgnoreCase(it.name, key))?.type ??
       GeneralColumnType.UNKNOWN;
 
-    if (specifyValuesWithBindParameters) {
+    if (sqlLang === 'partiql') {
       setList.push(
-        `${wrapQuote(key, quote)} = ${
-          toPositionedParameter === true ? `${pChar}${index + 1}` : '?'
-        }`,
-      );
-      binds.push(toBindValue(colType, values[key]));
-      index++;
-    } else {
-      setList.push(
-        `${wrapQuote(key, quote)} = ${toEmbeddedStringValue(
+        `${wrapDoubleQuote(key)} = ${toEmbeddedStringValue(
           colType,
           values[key],
         )}`,
       );
+    } else {
+      if (specifyValuesWithBindParameters) {
+        setList.push(
+          `${quote ? wrapBackQuote(key) : key} = ${
+            toPositionedParameter === true ? `${pChar}${index + 1}` : '?'
+          }`,
+        );
+        binds.push(toBindValue(colType, values[key]));
+        index++;
+      } else {
+        setList.push(
+          `${quote ? wrapBackQuote(key) : key} = ${toEmbeddedStringValue(
+            colType,
+            values[key],
+          )}`,
+        );
+      }
     }
   });
   Object.keys(conditions).forEach((key) => {
@@ -286,21 +321,30 @@ export const toUpdateStatement = ({
       columns.find((it) => equalsIgnoreCase(it.name, key))?.type ??
       GeneralColumnType.UNKNOWN;
 
-    if (specifyValuesWithBindParameters) {
+    if (sqlLang === 'partiql') {
       conditionList.push(
-        `${wrapQuote(key, quote)} = ${
-          toPositionedParameter === true ? `$${index + 1}` : '?'
-        }`,
-      );
-      binds.push(toBindValue(colType, conditions[key]));
-      index++;
-    } else {
-      conditionList.push(
-        `${wrapQuote(key, quote)} = ${toEmbeddedStringValue(
+        `${wrapDoubleQuote(key)} = ${toEmbeddedStringValue(
           colType,
           conditions[key],
         )}`,
       );
+    } else {
+      if (specifyValuesWithBindParameters) {
+        conditionList.push(
+          `${quote ? wrapBackQuote(key) : key} = ${
+            toPositionedParameter === true ? `$${index + 1}` : '?'
+          }`,
+        );
+        binds.push(toBindValue(colType, conditions[key]));
+        index++;
+      } else {
+        conditionList.push(
+          `${quote ? wrapBackQuote(key) : key} = ${toEmbeddedStringValue(
+            colType,
+            conditions[key],
+          )}`,
+        );
+      }
     }
   });
 
@@ -321,6 +365,7 @@ export const toDeleteStatement = ({
   conditions,
   bindOption,
   quote,
+  sqlLang,
 }: {
   schemaName?: string;
   tableName: string;
@@ -328,11 +373,13 @@ export const toDeleteStatement = ({
   conditions: { [key: string]: any };
   bindOption: BindOptions;
   quote?: boolean;
+  sqlLang?: SQLLang;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableName,
     quote,
+    sqlLang,
   });
   const {
     specifyValuesWithBindParameters,
@@ -348,21 +395,29 @@ export const toDeleteStatement = ({
     const colType =
       columns.find((it) => equalsIgnoreCase(it.name, key))?.type ??
       GeneralColumnType.UNKNOWN;
-
-    if (specifyValuesWithBindParameters) {
+    if (sqlLang === 'partiql') {
       conditionList.push(
-        `${wrapQuote(key, quote)}  = ${
-          toPositionedParameter === true ? `${pChar}${index + 1}` : '?'
-        }`,
-      );
-      binds.push(toBindValue(colType, conditions[key]));
-    } else {
-      conditionList.push(
-        `${wrapQuote(key, quote)}  = ${toEmbeddedStringValue(
+        `${wrapDoubleQuote(key)}  = ${toEmbeddedStringValue(
           colType,
           conditions[key],
         )}`,
       );
+    } else {
+      if (specifyValuesWithBindParameters) {
+        conditionList.push(
+          `${quote ? wrapBackQuote(key) : key}  = ${
+            toPositionedParameter === true ? `${pChar}${index + 1}` : '?'
+          }`,
+        );
+        binds.push(toBindValue(colType, conditions[key]));
+      } else {
+        conditionList.push(
+          `${quote ? wrapBackQuote(key) : key}  = ${toEmbeddedStringValue(
+            colType,
+            conditions[key],
+          )}`,
+        );
+      }
     }
   });
 
@@ -423,6 +478,7 @@ const createConditionalClause = ({
   params,
   indent,
   quote,
+  sqlLang,
 }: {
   conditions?: TopLevelCondition;
   columns: (DbColumn | DbDynamoTableColumn)[];
@@ -432,6 +488,7 @@ const createConditionalClause = ({
   };
   indent: string;
   quote?: boolean;
+  sqlLang?: SQLLang;
 }): string => {
   const queries: string[] = [];
   let andOr = 'AND';
@@ -451,6 +508,7 @@ const createConditionalClause = ({
         params,
         indent: indent + '  ',
         quote,
+        sqlLang,
       });
       queries.push(`(${os.EOL}${q}${os.EOL}${indent})`);
     } else {
@@ -466,76 +524,176 @@ const createConditionalClause = ({
         }
       }
 
-      let q = `${wrapQuote(fact, quote)} ${operatorToSQLString(operator)} `;
+      let q = `${
+        sqlLang === 'partiql'
+          ? wrapDoubleQuote(fact)
+          : quote
+          ? wrapBackQuote(fact)
+          : fact
+      }`;
+      q += ` ${operatorToSQLString(operator)} `;
 
-      if (operator === 'isNull' || operator === 'isNotNull') {
-        // do nothing.
-      } else if (
-        operator === 'between' ||
-        operator === 'in' ||
-        operator === 'notIn'
-      ) {
-        let val: any = null;
-        if (value === undefined || value === null) {
-          val = null;
-        } else {
-          let arr: any[] = [];
-          if (Array.isArray(value)) {
-            arr = value;
-          } else if (value.startsWith('[') && value.endsWith(']')) {
-            arr = JSON.parse(value) as any[];
+      if (sqlLang === 'partiql') {
+        if (operator === 'isNull' || operator === 'isNotNull') {
+          // do nothing.
+        } else if (operator === 'like') {
+          if (value === undefined || value === null) {
+            q = `Contains(${wrapDoubleQuote(fact)}, NULL)`;
           } else {
-            arr = ('' + value).split(/,/).map((it) => it.trim());
+            let s = value + '';
+            if (s.startsWith('%')) {
+              s = s.substring(1);
+              if (s.endsWith('%')) {
+                s = s.substring(0, s.length - 1);
+              }
+              q = `Contains(${wrapDoubleQuote(fact)}, ${wrapSingleQuote(s)})`;
+            } else {
+              if (s.endsWith('%')) {
+                s = s.substring(0, s.length - 1);
+                q = `begins_with(${wrapDoubleQuote(fact)}, ${wrapSingleQuote(
+                  s,
+                )})`;
+              } else {
+                q = `Contains(${wrapDoubleQuote(fact)}, ${wrapSingleQuote(s)})`;
+              }
+            }
           }
+        } else if (
+          operator === 'between' ||
+          operator === 'in' ||
+          operator === 'notIn'
+        ) {
+          let val: any = null;
+          if (value === undefined || value === null) {
+            val = null;
+          } else {
+            let arr: any[] = [];
+            if (Array.isArray(value)) {
+              arr = value;
+            } else if (value.startsWith('[') && value.endsWith(']')) {
+              arr = JSON.parse(value) as any[];
+            } else {
+              arr = ('' + value).split(/,/).map((it) => it.trim());
+            }
+            if (isNumericLike(colType)) {
+              val = arr.map((it) => toNum(it) ?? null);
+            } else if (isBooleanLike(colType)) {
+              val = arr.map((it) => toBoolean(it) ?? null);
+            } else {
+              val = arr.map((it) => it + '');
+            }
+          }
+          if (operator === 'between') {
+            if (val === null) {
+              q += `NULL AND NULL`;
+            } else {
+              if (isNumericLike(colType) || isBooleanLike(colType)) {
+                q += `${val[0]} AND ${val[1]}`;
+              } else {
+                q += `${wrapSingleQuote(val[0])} AND ${wrapSingleQuote(
+                  val[1],
+                )}`;
+              }
+            }
+          } else {
+            if (isNumericLike(colType) || isBooleanLike(colType)) {
+              q += `( ${val.map((it) => `${it}`).join(',')} )`;
+            } else {
+              q += `( ${val.map((it) => wrapSingleQuote(it)).join(',')} )`;
+            }
+          }
+        } else {
+          let val: any = null;
           if (isNumericLike(colType)) {
-            val = arr.map((it) => toNum(it) ?? null);
+            val = toNum(value) ?? null;
           } else if (isBooleanLike(colType)) {
-            val = arr.map((it) => toBoolean(it) ?? null);
+            val = toBoolean(value) ?? null;
           } else if (isDateTimeOrDate(colType)) {
-            val = arr.map((it) => toDate(it) ?? null);
+            val = toDate(value) ?? null;
           } else if (isTime(colType)) {
-            val = arr.map((it) => toTime(it) ?? null);
+            val = toTime(value) ?? null;
           } else {
-            val = arr.map((it) => it + '');
+            val = value;
           }
-        }
-        if (operator === 'between') {
-          const bindName1 = `val${params.pos}`;
-          params.pos++;
-          const bindName2 = `val${params.pos}`;
-          params.pos++;
-          q += `:${bindName1} AND :${bindName2}`;
-          if (val === null) {
-            params.bindParams[bindName1] = null;
-            params.bindParams[bindName2] = null;
+
+          if (isNumericLike(colType) || isBooleanLike(colType)) {
+            q += `${val}`;
           } else {
-            params.bindParams[bindName1] = val[0];
-            params.bindParams[bindName2] = val[1];
+            q += wrapSingleQuote(val);
           }
-        } else {
-          const bindName = `val${params.pos}`;
-          params.pos++;
-          q += `(:${bindName})`;
-          params.bindParams[bindName] = val;
         }
       } else {
-        let val: any = null;
-        if (isNumericLike(colType)) {
-          val = toNum(value) ?? null;
-        } else if (isBooleanLike(colType)) {
-          val = toBoolean(value) ?? null;
-        } else if (isDateTimeOrDate(colType)) {
-          val = toDate(value) ?? null;
-        } else if (isTime(colType)) {
-          val = toTime(value) ?? null;
+        if (operator === 'isNull' || operator === 'isNotNull') {
+          // do nothing.
+        } else if (
+          operator === 'between' ||
+          operator === 'in' ||
+          operator === 'notIn'
+        ) {
+          let val: any = null;
+          if (value === undefined || value === null) {
+            val = null;
+          } else {
+            let arr: any[] = [];
+            if (Array.isArray(value)) {
+              arr = value;
+            } else if (value.startsWith('[') && value.endsWith(']')) {
+              arr = JSON.parse(value) as any[];
+            } else {
+              arr = ('' + value).split(/,/).map((it) => it.trim());
+            }
+            if (isNumericLike(colType)) {
+              val = arr.map((it) => toNum(it) ?? null);
+            } else if (isBooleanLike(colType)) {
+              val = arr.map((it) => toBoolean(it) ?? null);
+            } else if (isDateTimeOrDate(colType)) {
+              val = arr.map((it) => toDate(it) ?? null);
+            } else if (isTime(colType)) {
+              val = arr.map((it) => toTime(it) ?? null);
+            } else {
+              val = arr.map((it) => it + '');
+            }
+          }
+          if (operator === 'between') {
+            const bindName1 = `val${params.pos}`;
+            params.pos++;
+            const bindName2 = `val${params.pos}`;
+            params.pos++;
+            q += `:${bindName1} AND :${bindName2}`;
+            if (val === null) {
+              params.bindParams[bindName1] = null;
+              params.bindParams[bindName2] = null;
+            } else {
+              params.bindParams[bindName1] = val[0];
+              params.bindParams[bindName2] = val[1];
+            }
+          } else {
+            const bindName = `val${params.pos}`;
+            params.pos++;
+            q += `(:${bindName})`;
+            params.bindParams[bindName] = val;
+          }
         } else {
-          val = value;
+          let val: any = null;
+          if (isNumericLike(colType)) {
+            val = toNum(value) ?? null;
+          } else if (isBooleanLike(colType)) {
+            val = toBoolean(value) ?? null;
+          } else if (isDateTimeOrDate(colType)) {
+            val = toDate(value) ?? null;
+          } else if (isTime(colType)) {
+            val = toTime(value) ?? null;
+          } else {
+            val = value;
+          }
+
+          const bindName = `val${params.pos}`;
+          q += `:${bindName}`;
+          params.bindParams[bindName] = val;
+          params.pos++;
         }
-        const bindName = `val${params.pos}`;
-        q += `:${bindName}`;
-        params.bindParams[bindName] = val;
-        params.pos++;
       }
+
       queries.push(q);
     }
   }
@@ -1208,11 +1366,25 @@ const createReservedWordProposal = (word: string): Proposal => {
   };
 };
 
-const wrapQuote = (s: string, withQuote?: boolean): string => {
-  if (withQuote === true) {
-    return `\`${s}\``;
+type QuoteChar = '"' | '`' | "'";
+
+const wrapSingleQuote = (input: string): string => wrapQuote(input, "'");
+
+const wrapDoubleQuote = (input: string): string => wrapQuote(input, '"');
+
+const wrapBackQuote = (input: string): string => wrapQuote(input, '`');
+
+const wrapQuote = (input: string, quoteChar: QuoteChar): string => {
+  switch (quoteChar) {
+    case '"':
+      return `"${input.replace(/"/g, '""')}"`;
+    case "'":
+      return `'${input.replace(/'/g, "''")}'`;
+    case '`':
+      return `\`${input.replace(/`/g, '``')}\``;
+    default:
+      throw new Error('Invalid quote char');
   }
-  return s;
 };
 
 const unwrapQuote = (s: string): string => {
@@ -1229,15 +1401,22 @@ const createTableNameWithSchema = ({
   schema,
   table,
   quote,
+  sqlLang,
 }: {
   schema?: string;
   table: string;
   quote?: boolean;
+  sqlLang?: SQLLang;
 }): string => {
-  if (schema) {
-    return `${wrapQuote(schema, quote)}.${wrapQuote(table, quote)}`;
+  if (sqlLang === 'partiql') {
+    return wrapDoubleQuote(table);
   }
-  return `${wrapQuote(table, quote)}`;
+  if (schema) {
+    return `${quote ? wrapBackQuote(schema) : schema}.${
+      quote ? wrapBackQuote(table) : table
+    }`;
+  }
+  return `${quote ? wrapBackQuote(table) : table}`;
 };
 
 const FUNCTION_MATCHER = new RegExp(
@@ -1284,7 +1463,7 @@ const toEmbeddedStringValue = (
   }
 
   if (isTextLike(colType) || isEnumOrSet(colType)) {
-    return `'${value.replace(/'/, "''")}'`;
+    return wrapSingleQuote(value);
   }
 
   if (isJsonLike(colType)) {
@@ -1399,6 +1578,7 @@ const toGeneralQuery = ({
   schemaName,
   conditions,
   quote,
+  sqlLang,
   limit,
   limitAsTop,
 }: ToViewDataQueryParams & { selectClause: string }): {
@@ -1409,6 +1589,7 @@ const toGeneralQuery = ({
     schema: schemaName,
     table: tableRes.name,
     quote,
+    sqlLang,
   });
   const params = {
     pos: 1,
@@ -1427,6 +1608,7 @@ const toGeneralQuery = ({
       params,
       indent: '  ',
       quote,
+      sqlLang,
     });
     if (q) {
       query += os.EOL + 'WHERE' + os.EOL + q;

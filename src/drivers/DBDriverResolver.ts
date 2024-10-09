@@ -16,7 +16,7 @@ import { RDSBaseDriver } from './RDSBaseDriver';
 import { RedisDriver } from './RedisDriver';
 import { SQLServerDriver } from './SQLServerDriver';
 import { SQLiteDriver } from './SQLiteDriver';
-import { ISQLSupportDriver } from './ISQLSupportDriver';
+import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 
 const uid = new ShortUniqueId();
 
@@ -53,12 +53,14 @@ export class DBDriverResolver {
     return this.createDriver<T>(setting);
   }
 
-  createSQLSupportDriver(setting: ConnectionSetting): ISQLSupportDriver {
+  createSQLSupportDriver<T extends BaseSQLSupportDriver>(
+    setting: ConnectionSetting,
+  ): T {
     if (
       isRDSType(setting.dbType) ||
       isPartiQLType(setting.dbType, setting.awsSetting)
     ) {
-      return this.createDriver(setting) as unknown as ISQLSupportDriver;
+      return this.createDriver<T>(setting);
     }
     throw new Error(`${setting.dbType} is not support sql`);
   }

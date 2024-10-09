@@ -631,174 +631,257 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
   });
 
   describe('toViewDataQuery', () => {
-    it('Simple (no conitions)', () => {
-      const schemaRes = db.getSchema({ isDefault: true });
-      const { query, binds } = toViewDataNormalizedQuery({
-        tableRes: schemaRes.getChildByName('testtable'),
-        schemaName: schemaRes.name,
+    describe('sql', () => {
+      it('Simple (no conitions)', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+        const { query, binds } = toViewDataNormalizedQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          schemaName: schemaRes.name,
+        });
+        expect(eolToSpace(query)).toBe('SELECT * FROM testdb.testtable');
+        expect(binds).toEqual([]);
       });
-      expect(eolToSpace(query)).toBe('SELECT * FROM testdb.testtable');
-      expect(binds).toEqual([]);
-    });
-    it('With conitions', () => {
-      const schemaRes = db.getSchema({ isDefault: true });
+      it('With conitions', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
 
-      const { query, binds } = toViewDataQuery({
-        tableRes: schemaRes.getChildByName('testtable'),
-        schemaName: schemaRes.name,
-        conditions: {
-          all: [
-            {
-              fact: 'ID',
-              operator: 'notEqual',
-              value: '100',
-            },
-            {
-              fact: 'n0',
-              operator: 'equal',
-              value: '1',
-            },
-            {
-              fact: 'n1',
-              operator: 'isNotNull',
-              value: null,
-            },
-            {
-              fact: 'n2',
-              operator: 'in',
-              value: '1, 2, 3',
-            },
-            {
-              fact: 'd1',
-              operator: 'in',
-              value: '2020-01-01, today',
-            },
-            {
-              fact: 'd3',
-              operator: 'lessThan',
-              value: 'now',
-            },
-          ],
-        },
+        const { query, binds } = toViewDataQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          schemaName: schemaRes.name,
+          conditions: {
+            all: [
+              {
+                fact: 'ID',
+                operator: 'notEqual',
+                value: '100',
+              },
+              {
+                fact: 'n0',
+                operator: 'equal',
+                value: '1',
+              },
+              {
+                fact: 'n1',
+                operator: 'isNotNull',
+                value: null,
+              },
+              {
+                fact: 'n2',
+                operator: 'in',
+                value: '1, 2, 3',
+              },
+              {
+                fact: 'd1',
+                operator: 'in',
+                value: '2020-01-01, today',
+              },
+              {
+                fact: 'd3',
+                operator: 'lessThan',
+                value: 'now',
+              },
+            ],
+          },
+        });
+        expect(eolToSpace(query)).toBe(
+          'SELECT * FROM testdb.testtable WHERE ID <> :val1 AND n0 = :val2 AND n1 IS NOT NULL AND n2 IN (:val3) AND d1 IN (:val4) AND d3 < :val5',
+        );
+        expect(binds).toEqual({
+          val1: 100,
+          val2: true,
+          val3: [1, 2, 3],
+          val4: expect.any(Array),
+          val5: expect.anything(),
+        });
       });
-      expect(eolToSpace(query)).toBe(
-        'SELECT * FROM testdb.testtable WHERE ID <> :val1 AND n0 = :val2 AND n1 IS NOT NULL AND n2 IN (:val3) AND d1 IN (:val4) AND d3 < :val5',
-      );
-      expect(binds).toEqual({
-        val1: 100,
-        val2: true,
-        val3: [1, 2, 3],
-        val4: expect.any(Array),
-        val5: expect.anything(),
+      it('With conitions2', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+
+        const { query, binds } = toViewDataNormalizedQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          schemaName: schemaRes.name,
+          conditions: {
+            all: [
+              {
+                fact: 'ID',
+                operator: 'notEqual',
+                value: '100',
+              },
+              {
+                fact: 'n0',
+                operator: 'equal',
+                value: '1',
+              },
+              {
+                fact: 'n1',
+                operator: 'isNotNull',
+                value: null,
+              },
+              {
+                fact: 'n2',
+                operator: 'in',
+                value: '1, 2, 3',
+              },
+              {
+                fact: 'd1',
+                operator: 'in',
+                value: '2020-01-01, today',
+              },
+              {
+                fact: 'd3',
+                operator: 'lessThan',
+                value: 'now',
+              },
+            ],
+          },
+        });
+        expect(eolToSpace(query)).toBe(
+          'SELECT * FROM testdb.testtable WHERE ID <> ? AND n0 = ? AND n1 IS NOT NULL AND n2 IN (?,?,?) AND d1 IN (?,?) AND d3 < ?',
+        );
+        expect(binds).toEqual([
+          100,
+          true,
+          1,
+          2,
+          3,
+          expect.anything(),
+          expect.anything(),
+          expect.anything(),
+        ]);
+      });
+      it('With conitions3', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+        const { query, binds } = toViewDataNormalizedQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          schemaName: schemaRes.name,
+          toPositionedParameter: true,
+          conditions: {
+            any: [
+              {
+                fact: 'n0',
+                operator: 'isNull',
+                value: null,
+              },
+              {
+                fact: 'd2',
+                operator: 'greaterThan',
+                value: '13:24:56',
+              },
+              {
+                all: [
+                  {
+                    fact: 'n2',
+                    operator: 'between',
+                    value: '20, 30',
+                  },
+                  {
+                    fact: 'd1',
+                    operator: 'between',
+                    value: '2020-01-01, 2022-12-31',
+                  },
+                ],
+              },
+              {
+                fact: 's2',
+                operator: 'like',
+                value: 't%st',
+              },
+            ],
+          },
+        });
+
+        expect(eolToSpace(query)).toBe(
+          'SELECT * FROM testdb.testtable WHERE n0 IS NULL OR d2 > $1 OR ( n2 BETWEEN $2 AND $3 AND d1 BETWEEN $4 AND $5 ) OR s2 LIKE $6',
+        );
+        expect(binds).toEqual([
+          '13:24:56',
+          20,
+          30,
+          expect.anything(),
+          expect.anything(),
+          't%st',
+        ]);
       });
     });
-    it('With conitions2', () => {
-      const schemaRes = db.getSchema({ isDefault: true });
-
-      const { query, binds } = toViewDataNormalizedQuery({
-        tableRes: schemaRes.getChildByName('testtable'),
-        schemaName: schemaRes.name,
-        conditions: {
-          all: [
-            {
-              fact: 'ID',
-              operator: 'notEqual',
-              value: '100',
-            },
-            {
-              fact: 'n0',
-              operator: 'equal',
-              value: '1',
-            },
-            {
-              fact: 'n1',
-              operator: 'isNotNull',
-              value: null,
-            },
-            {
-              fact: 'n2',
-              operator: 'in',
-              value: '1, 2, 3',
-            },
-            {
-              fact: 'd1',
-              operator: 'in',
-              value: '2020-01-01, today',
-            },
-            {
-              fact: 'd3',
-              operator: 'lessThan',
-              value: 'now',
-            },
-          ],
-        },
+    describe('partiql', () => {
+      it('Simple (no conitions)', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+        const { query, binds } = toViewDataNormalizedQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          sqlLang: 'partiql',
+        });
+        expect(eolToSpace(query)).toBe('SELECT * FROM "testtable"');
+        expect(binds).toEqual([]);
       });
-      expect(eolToSpace(query)).toBe(
-        'SELECT * FROM testdb.testtable WHERE ID <> ? AND n0 = ? AND n1 IS NOT NULL AND n2 IN (?,?,?) AND d1 IN (?,?) AND d3 < ?',
-      );
-      expect(binds).toEqual([
-        100,
-        true,
-        1,
-        2,
-        3,
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-      ]);
-    });
-    it('With conitions3', () => {
-      const schemaRes = db.getSchema({ isDefault: true });
-      const { query, binds } = toViewDataNormalizedQuery({
-        tableRes: schemaRes.getChildByName('testtable'),
-        schemaName: schemaRes.name,
-        toPositionedParameter: true,
-        conditions: {
-          any: [
-            {
-              fact: 'n0',
-              operator: 'isNull',
-              value: null,
-            },
-            {
-              fact: 'd2',
-              operator: 'greaterThan',
-              value: '13:24:56',
-            },
-            {
-              all: [
-                {
-                  fact: 'n2',
-                  operator: 'between',
-                  value: '20, 30',
-                },
-                {
-                  fact: 'd1',
-                  operator: 'between',
-                  value: '2020-01-01, 2022-12-31',
-                },
-              ],
-            },
-            {
-              fact: 's2',
-              operator: 'like',
-              value: 't%st',
-            },
-          ],
-        },
-      });
+      it('With conitions', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
 
-      expect(eolToSpace(query)).toBe(
-        'SELECT * FROM testdb.testtable WHERE n0 IS NULL OR d2 > $1 OR ( n2 BETWEEN $2 AND $3 AND d1 BETWEEN $4 AND $5 ) OR s2 LIKE $6',
-      );
-      expect(binds).toEqual([
-        '13:24:56',
-        20,
-        30,
-        expect.anything(),
-        expect.anything(),
-        't%st',
-      ]);
+        const { query } = toViewDataQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          conditions: {
+            all: [
+              {
+                fact: 'ID',
+                operator: 'notEqual',
+                value: '100',
+              },
+              {
+                fact: 'n0',
+                operator: 'equal',
+                value: '1',
+              },
+              {
+                fact: 'n1',
+                operator: 'isNotNull',
+                value: null,
+              },
+              {
+                fact: 'n2',
+                operator: 'in',
+                value: '1, 2, 3',
+              },
+              {
+                fact: 's2',
+                operator: 'like',
+                value: 'test',
+              },
+            ],
+          },
+          sqlLang: 'partiql',
+        });
+        expect(eolToSpace(query)).toBe(
+          'SELECT * FROM "testtable" WHERE "ID" <> 100 AND "n0" = true AND "n1" IS NOT NULL AND "n2" IN ( 1,2,3 ) AND Contains("s2", \'test\')',
+        );
+      });
+      it('With conitions2', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+
+        const { query } = toViewDataQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          conditions: {
+            all: [
+              {
+                fact: 'ID',
+                operator: 'notEqual',
+                value: '100',
+              },
+              {
+                fact: 'n2',
+                operator: 'between',
+                value: '1, 2',
+              },
+              {
+                fact: 's2',
+                operator: 'like',
+                value: 'test%',
+              },
+            ],
+          },
+          sqlLang: 'partiql',
+        });
+        expect(eolToSpace(query)).toBe(
+          'SELECT * FROM "testtable" WHERE "ID" <> 100 AND "n2" BETWEEN 1 AND 2 AND begins_with("s2", \'test\')',
+        );
+      });
     });
   });
 
@@ -844,6 +927,41 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
         });
 
         const expectedQuery = `INSERT INTO testdb.testtable (d1,d2,d3,d4,d5,f1,f2,f3,g1,ID,j1,long_column_name_long_text,n0,n1,n2,n3,n4,s1,s2,s3a,s3b,s3c,s4,s5,s6,s7,s71,s8) VALUES (NULL,NULL,NULL,NULL,0,0,0,NULL,NULL,0,NULL,'',NULL,0,0,0,0,'','','','','',NULL,NULL,NULL,NULL,NULL,NULL)`;
+
+        expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
+      });
+      it('partiQL', () => {
+        const {
+          tableName,
+          tableComment,
+          columns: iCols,
+          values: iVals,
+        } = createToInsertStatementParams(db);
+
+        const columns: RdhKey[] = [];
+        const values: { [key: string]: any } = {};
+        ['ID', 's1', 'd1'].forEach((col) => {
+          const idx = iCols.findIndex((it) => it.name === col);
+          if (idx >= 0) {
+            columns.push(iCols[idx]);
+            values[col] = iVals[col];
+          }
+        });
+
+        const { query } = toInsertStatement({
+          tableName,
+          tableComment,
+          columns,
+          values,
+          bindOption: {
+            specifyValuesWithBindParameters: false,
+          },
+          withComment: false,
+          compactSql: true,
+          sqlLang: 'partiql',
+        });
+
+        const expectedQuery = `INSERT INTO "testtable"  VALUE {'ID': 0, 's1': '', 'd1': NULL}`;
 
         expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
       });
@@ -1009,6 +1127,47 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
          NULL
        )
        `;
+
+        expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
+      });
+      it('partiQL', () => {
+        const {
+          tableName,
+          tableComment,
+          columns: iCols,
+          values: iVals,
+        } = createToInsertStatementParams(db);
+
+        const columns: RdhKey[] = [];
+        const values: { [key: string]: any } = {};
+        ['ID', 's1', 'd1'].forEach((col) => {
+          const idx = iCols.findIndex((it) => it.name === col);
+          if (idx >= 0) {
+            columns.push(iCols[idx]);
+            values[col] = iVals[col];
+          }
+        });
+
+        const { query } = toInsertStatement({
+          tableName,
+          tableComment,
+          columns,
+          values,
+          bindOption: {
+            specifyValuesWithBindParameters: false,
+          },
+          withComment: false,
+          compactSql: false,
+          sqlLang: 'partiql',
+        });
+
+        const expectedQuery = `INSERT INTO "testtable" 
+        VALUE {
+          'ID': 0,
+          's1': '', 
+          'd1': NULL
+        }
+        `;
 
         expect(eolToSpace(query)).toBe(eolToSpace(expectedQuery));
       });

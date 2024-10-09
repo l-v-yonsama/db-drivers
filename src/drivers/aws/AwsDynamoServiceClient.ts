@@ -586,10 +586,18 @@ export class AwsDynamoServiceClient
       const type = col?.attrType
         ? parseDynamoAttrType(col.attrType)
         : allAttributeTypes.get(it);
+      let comment = '';
+      if (col?.pk) {
+        comment = '(pk)';
+      }
+      if (col?.sk) {
+        comment = '(sk)';
+      }
       return createRdhKey({
         name: it,
         type,
         required: col?.pk || col?.sk,
+        comment,
       });
     });
     for (const [attrName, colType] of allAttributeTypes) {

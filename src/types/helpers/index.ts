@@ -28,11 +28,14 @@ export type BindOptions = {
   toPositionalCharacter?: string;
 };
 
+export type SQLLang = 'sql' | 'partiql';
+
 export type ToViewDataQueryParams = {
   tableRes: DbTable | DbDynamoTable;
   schemaName?: string;
   conditions?: TopLevelCondition;
   quote?: boolean;
+  sqlLang?: SQLLang;
   // toPositionedParameter?: boolean;
   // toPositionalCharacter?: string;
   limit?: number;

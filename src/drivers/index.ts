@@ -11,4 +11,4 @@ export * from './RDSBaseDriver';
 export * from './RedisDriver';
 export * from './SQLiteDriver';
 export * from './SQLServerDriver';
-export * from './ISQLSupportDriver';
+export * from './BaseSQLSupportDriver';
