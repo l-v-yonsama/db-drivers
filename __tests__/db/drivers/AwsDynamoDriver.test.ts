@@ -10,7 +10,7 @@ import {
   DynamoDBDocumentClient,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { ResultSetDataBuilder } from '@l-v-yonsama/rdh';
+import { ResultSetDataBuilder, setOf } from '@l-v-yonsama/rdh';
 import {
   AwsDatabase,
   AwsDriver,
@@ -312,15 +312,16 @@ describe('AwsDynamoDBDriver', () => {
             bool: true,
             null: null,
             m: { M0: 'aa', S1: 'bb', S2: 'cc' },
-            ss: ['test', 'test2'],
-            ns: [1, 2, 3],
-            bs: [
+            ss: setOf('test', 'test2'),
+            ns: setOf(1, 2, 3),
+            bs: setOf(
               Uint8Array.from(Buffer.from([0x0, 0x1, 0x2, 0xf0])),
               Uint8Array.from(Buffer.from([0x20, 0x21, 0x22, 0x20])),
-            ],
+            ),
           },
         }),
       );
+
       await docClient.send(
         new PutCommand({
           TableName: 'testtable',
@@ -332,7 +333,7 @@ describe('AwsDynamoDBDriver', () => {
             bool2: true,
             null: null,
             m: { M0: 'aa', S1: 'bb', S2: 'cc' },
-            ss: ['test', 'test2'],
+            ss: setOf('test2222', 'test23232323'),
           },
         }),
       );

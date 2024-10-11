@@ -614,7 +614,16 @@ export class AwsDynamoServiceClient
 
     rdb = new ResultSetDataBuilder(keys);
     Items.forEach((item) => {
-      rdb.addRow(unmarshall(item));
+      const values = unmarshall(item);
+      Object.entries(values).forEach(([key, value]) => {
+        const attrType = Object.keys(item[key])[0];
+        if (attrType === 'SS' || attrType === 'NS' || attrType === 'BS') {
+          if (value instanceof Set) {
+            values[key] = Array.from(value);
+          }
+        }
+      });
+      rdb.addRow(values);
     });
 
     setRdhMetaAndStatement({
@@ -673,25 +682,6 @@ export class AwsDynamoServiceClient
   ): GeneralColumnType {
     const attr = item[name];
     const attrName = Object.keys(attr)[0];
-    const colType = parseDynamoAttrType(attrName);
-    if (colType !== GeneralColumnType.ARRAY) {
-      return colType;
-    }
-    // ARRAY
-    const array = attr[attrName];
-    if (array.length === 0) {
-      return GeneralColumnType.ARRAY;
-    }
-    const first = array[0];
-    const firstAttrName = Object.keys(first)[0];
-    switch (firstAttrName) {
-      case 'S':
-        return GeneralColumnType.STRING_ARRAY;
-      case 'N':
-        return GeneralColumnType.NUMERIC_ARRAY;
-      case 'B':
-        return GeneralColumnType.BINARY_ARRAY;
-    }
-    return GeneralColumnType.ARRAY;
+    return parseDynamoAttrType(attrName);
   }
 }

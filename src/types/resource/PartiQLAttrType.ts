@@ -11,11 +11,11 @@ export const parseDynamoAttrType = (typeString: string): GeneralColumnType => {
   } else if ('B' === typeString) {
     return GeneralColumnType.BINARY;
   } else if ('SS' === typeString) {
-    return GeneralColumnType.STRING_ARRAY;
+    return GeneralColumnType.STRING_SET;
   } else if ('NS' === typeString) {
-    return GeneralColumnType.NUMERIC_ARRAY;
+    return GeneralColumnType.NUMERIC_SET;
   } else if ('BS' === typeString) {
-    return GeneralColumnType.BINARY_ARRAY;
+    return GeneralColumnType.BINARY_SET;
   } else if ('M' === typeString) {
     return GeneralColumnType.JSON;
   } else if ('L' === typeString) {
