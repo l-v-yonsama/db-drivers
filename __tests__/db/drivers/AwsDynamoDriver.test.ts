@@ -625,9 +625,9 @@ describe('AwsDynamoDBDriver', () => {
     });
   });
 
-  describe('Execute statement', () => {
+  describe('executeStatementAtDocClient', () => {
     it('no conditions', async () => {
-      const r1 = await driver.dynamoClient.executeStatement({
+      const r1 = await driver.dynamoClient.executeStatementAtDocClient({
         Statement: 'SELECT * FROM MassiveRecords',
       });
       expect(r1).toEqual({
@@ -641,7 +641,7 @@ describe('AwsDynamoDBDriver', () => {
     });
 
     it('with Limit over 1MB', async () => {
-      const r1 = await driver.dynamoClient.executeStatement({
+      const r1 = await driver.dynamoClient.executeStatementAtDocClient({
         Statement: 'SELECT * FROM MassiveRecords',
         Limit: 1000,
       });
@@ -656,7 +656,7 @@ describe('AwsDynamoDBDriver', () => {
         },
       });
 
-      const r2 = await driver.dynamoClient.executeStatement({
+      const r2 = await driver.dynamoClient.executeStatementAtDocClient({
         Statement: 'SELECT * FROM MassiveRecords',
         Limit: 1000,
         NextToken: r1.NextToken,
@@ -673,7 +673,7 @@ describe('AwsDynamoDBDriver', () => {
     });
 
     it('with Limit under 1MB', async () => {
-      const r1 = await driver.dynamoClient.executeStatement({
+      const r1 = await driver.dynamoClient.executeStatementAtDocClient({
         Statement: 'SELECT * FROM MassiveRecords',
         Limit: 1,
       });
@@ -690,7 +690,7 @@ describe('AwsDynamoDBDriver', () => {
     });
 
     it('With partial key', async () => {
-      const r1 = await driver.dynamoClient.executeStatement({
+      const r1 = await driver.dynamoClient.executeStatementAtDocClient({
         Statement: 'SELECT * FROM MassiveRecords WHERE Id = ?',
         Parameters: [1],
       });

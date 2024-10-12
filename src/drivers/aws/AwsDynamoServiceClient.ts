@@ -6,6 +6,9 @@ import {
   ExecuteStatementCommand as OriginalExecuteStatementCommand,
   ExecuteStatementCommandInput as OriginalExecuteStatementCommandInput,
   ExecuteStatementCommandOutput as OriginalExecuteStatementCommandOutput,
+  QueryCommand as OriginalQueryCommand,
+  QueryCommandInput as OriginalQueryCommandInput,
+  QueryCommandOutput as OriginalQueryCommandOutput,
   ListTablesCommand,
   DescribeTableCommand,
   TableDescription,
@@ -60,6 +63,8 @@ import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 import { parseQuery } from '../../helpers';
 import { unmarshall, marshall } from '@aws-sdk/util-dynamodb';
+
+export type QueryItemsAtClientInputParams = OriginalQueryCommandInput;
 
 export type TableDescWithExtraAttrs = TableDescription & {
   ExtraItems?: { name: string; value: AttributeValue }[];
@@ -165,11 +170,6 @@ export class AwsDynamoServiceClient
     return tableList;
   }
 
-  async scan(params: ScanParams): Promise<ResultSetData> {
-    const { target, limit, keyword, startTime, endTime, withValue } = params;
-    return null;
-  }
-
   async getInfomationSchemas(): Promise<AwsDatabase> {
     if (!this.conRes) {
       return null;
@@ -247,24 +247,7 @@ export class AwsDynamoServiceClient
           .forEach((it) => dynamoTable.addChild(it));
         table.ExtraItems?.forEach((item) => {
           if (!dynamoTable.getChildByName(item.name)) {
-            let attrType = Object.keys(item.value)[0];
-            if (attrType === 'L') {
-              if (item.value.L.length > 0) {
-                const arr = item.value.L;
-                const sunAttrType = Object.keys(arr[0])[0];
-                switch (sunAttrType) {
-                  case 'S':
-                    attrType = 'SS';
-                    break;
-                  case 'N':
-                    attrType = 'NS';
-                    break;
-                  case 'B':
-                    attrType = 'BS';
-                    break;
-                }
-              }
-            }
+            const attrType = Object.keys(item.value)[0];
             dynamoTable.addChild(
               new DbDynamoTableColumn(item.name, attrType, false, false),
             );
@@ -364,7 +347,7 @@ export class AwsDynamoServiceClient
         ReturnConsumedCapacity: 'TOTAL',
       });
 
-      const response = await this.client.send(command);
+      const response = await this.docClient.send(command);
       LastEvaluatedKey = response.LastEvaluatedKey;
       CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
@@ -381,7 +364,90 @@ export class AwsDynamoServiceClient
     };
   }
 
-  async executeStatement(params: ExecuteStatementCommandInput): Promise<{
+  async queryItemsAtClient(
+    params: OriginalQueryCommandInput,
+  ): Promise<ResultSetData> {
+    const { TableName, IndexName } = params;
+
+    let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
+      undefined;
+    let CapacityUnits = 0;
+    const qst: QStatement = {
+      ast: { type: 'select' },
+      names: { tableName: TableName },
+    };
+    const dbTable = this.getDbTable(qst);
+
+    const Items: OriginalQueryCommandOutput['Items'] = [];
+
+    const allAttributeTypes = new Map<string, GeneralColumnType>();
+    const startTime = new Date().getTime();
+    do {
+      const command = new OriginalQueryCommand({
+        ...params,
+        TableName,
+        IndexName,
+        Limit: params.Limit ? params.Limit - Items.length : undefined,
+        ExclusiveStartKey: LastEvaluatedKey ? LastEvaluatedKey : undefined,
+        ReturnConsumedCapacity: 'TOTAL',
+      });
+
+      try {
+        const response = await this.client.send(command);
+        LastEvaluatedKey = response.LastEvaluatedKey;
+        CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
+        Items.push(...response.Items);
+        response.Items.forEach((item) => {
+          Object.keys(item)
+            .filter((it) => !allAttributeTypes.has(it))
+            .forEach((it) => {
+              const colType = this.parseDynamoAttrTypeByNameAndItem(it, item);
+              allAttributeTypes.set(it, colType);
+            });
+        });
+        if (Items.length >= params.Limit) {
+          break;
+        }
+      } catch (e) {
+        if (e.name === 'ResourceNotFoundException') {
+          // create empty ResultSetData
+          break;
+        }
+        // re-throw
+        throw e;
+      }
+    } while (LastEvaluatedKey);
+    const elapsedTimeMilli = new Date().getTime() - startTime;
+
+    const rs = this.itemsToResultSetData({
+      Count: Items.length,
+      Items,
+      params: {
+        sql: '',
+        conditions: {},
+        meta: {
+          type: 'select',
+          tableName: TableName,
+        },
+      },
+      qst,
+      elapsedTimeMilli,
+      capacityUnits: CapacityUnits,
+      dbTable,
+      allAttributeTypes,
+    });
+    rs.meta.queryInput = JSON.stringify(params, null, 2);
+    return rs;
+  }
+
+  async scan(params: ScanParams): Promise<ResultSetData> {
+    const { target, limit, keyword, startTime, endTime, withValue } = params;
+    return null;
+  }
+
+  async executeStatementAtDocClient(
+    params: ExecuteStatementCommandInput,
+  ): Promise<{
     Items: QueryCommandOutput['Items'];
     NextToken?: string;
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
@@ -411,7 +477,7 @@ export class AwsDynamoServiceClient
         ReturnConsumedCapacity: 'TOTAL',
       });
 
-      const response = await this.client.send(command);
+      const response = await this.docClient.send(command);
       LastEvaluatedKey = response.LastEvaluatedKey;
       NextToken = response.NextToken;
       CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
@@ -465,6 +531,7 @@ export class AwsDynamoServiceClient
         this.interrupted = false;
         throw new Error('INTERRUPT');
       }
+
       const command = new OriginalExecuteStatementCommand({
         ...params,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
@@ -504,7 +571,7 @@ export class AwsDynamoServiceClient
 
   async requestPartiql(params: QueryParams): Promise<ResultSetData> {
     const { sql, conditions } = params;
-    let rdb: ResultSetDataBuilder | undefined = undefined;
+    const rdb: ResultSetDataBuilder | undefined = undefined;
     let qst: QStatement | undefined = undefined;
     let dbTable: DbDynamoTable | undefined = undefined;
 
@@ -561,6 +628,39 @@ export class AwsDynamoServiceClient
     } = await this.executeStatementAtClient(input);
 
     const elapsedTimeMilli = new Date().getTime() - startTime;
+
+    return this.itemsToResultSetData({
+      Count,
+      Items,
+      params,
+      qst,
+      elapsedTimeMilli,
+      capacityUnits,
+      dbTable,
+      allAttributeTypes,
+    });
+  }
+
+  private itemsToResultSetData({
+    Count,
+    Items,
+    params,
+    qst,
+    elapsedTimeMilli,
+    capacityUnits,
+    dbTable,
+    allAttributeTypes,
+  }: {
+    Count: number;
+    Items?: Record<string, AttributeValue>[];
+    params: QueryParams;
+    qst: QStatement;
+    elapsedTimeMilli: number;
+    capacityUnits: number;
+    dbTable: DbDynamoTable;
+    allAttributeTypes: Map<string, GeneralColumnType>;
+  }): ResultSetData {
+    let rdb: ResultSetDataBuilder | undefined = undefined;
 
     if (Count === 0) {
       const rdb = ResultSetDataBuilder.createEmpty({
