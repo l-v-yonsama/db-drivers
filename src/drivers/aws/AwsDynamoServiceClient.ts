@@ -15,6 +15,7 @@ import {
   CreateTableCommandInput,
   AttributeValue,
   ScanCommand as OriginalScanCommand,
+  DescribeTimeToLiveCommand,
 } from '@aws-sdk/client-dynamodb';
 import {
   DeleteCommand,
@@ -56,6 +57,7 @@ import {
   QStatement,
   QueryParams,
   ScanParams,
+  TTLDesc,
 } from '../../types';
 import { setRdhMetaAndStatement } from '../../utils';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
@@ -68,6 +70,7 @@ export type QueryItemsAtClientInputParams = OriginalQueryCommandInput;
 
 export type TableDescWithExtraAttrs = TableDescription & {
   ExtraItems?: { name: string; value: AttributeValue }[];
+  ttl?: TTLDesc;
 };
 export class AwsDynamoServiceClient
   extends AwsServiceClient
@@ -163,6 +166,22 @@ export class AwsDynamoServiceClient
                 value: item0[name],
               }));
             }
+            const res3 = await this.client.send(
+              new DescribeTimeToLiveCommand({
+                TableName,
+              }),
+            );
+            if (
+              res3.TimeToLiveDescription &&
+              res3.TimeToLiveDescription.TimeToLiveStatus
+            ) {
+              const { TimeToLiveStatus, AttributeName } =
+                res3.TimeToLiveDescription;
+              tableDef.ttl = {
+                TimeToLiveStatus,
+                AttributeName,
+              };
+            }
           }
         }
       }),
@@ -189,6 +208,7 @@ export class AwsDynamoServiceClient
           TableSizeBytes: table.TableSizeBytes,
           ItemCount: table.ItemCount,
           TableArn: table.TableArn,
+          ttl: table.ttl,
           lsi:
             table.LocalSecondaryIndexes?.map((it) => {
               return {
@@ -282,8 +302,22 @@ export class AwsDynamoServiceClient
     await this.docClient.send(new DeleteCommand(params));
   }
 
-  async updateItem(params: UpdateCommandInput): Promise<void> {
-    await this.docClient.send(new UpdateCommand(params));
+  async updateItem(
+    params: Omit<UpdateCommandInput, 'ReturnConsumedCapacity'>,
+  ): Promise<{
+    Attributes?: Record<string, AttributeValue>;
+    CapacityUnits?: number;
+  }> {
+    const { Attributes, ConsumedCapacity } = await this.docClient.send(
+      new UpdateCommand({
+        ...params,
+        ReturnConsumedCapacity: 'TOTAL',
+      }),
+    );
+    return {
+      Attributes,
+      CapacityUnits: ConsumedCapacity?.CapacityUnits,
+    };
   }
 
   async scanItems(params: ScanCommandInput): Promise<{
@@ -446,7 +480,7 @@ export class AwsDynamoServiceClient
   }
 
   async executeStatementAtDocClient(
-    params: ExecuteStatementCommandInput,
+    params: Omit<ExecuteStatementCommandInput, 'ReturnConsumedCapacity'>,
   ): Promise<{
     Items: QueryCommandOutput['Items'];
     NextToken?: string;
@@ -584,6 +618,7 @@ export class AwsDynamoServiceClient
         qst.names.schemaName
       ) {
         // for table.index
+        qst.names.indexName = qst.names.tableName;
         qst.names.tableName = qst.names.schemaName;
         qst.names.schemaName = undefined;
       }
@@ -618,8 +653,9 @@ export class AwsDynamoServiceClient
     // 1 validation error detected: Value '[]' at 'parameters' failed to satisfy constraint: Member must have length greater than or equal to 1
     if (binds && binds.length > 0) {
       input.Parameters = marshall(binds);
-      console.log('input.Parameters=', input.Parameters);
+      // console.log('input.Parameters=', input.Parameters);
     }
+
     const {
       CapacityUnits: capacityUnits,
       Count,
@@ -682,25 +718,31 @@ export class AwsDynamoServiceClient
       return rdb.build();
     }
     const record = Items[0];
+    const pkAndSk = dbTable?.getPkAndSkByIndex(qst?.names?.indexName);
+
     const keys = Object.keys(record).map((it) => {
       const col = dbTable?.getChildByName(it);
       const type = col?.attrType
         ? parseDynamoAttrType(col.attrType)
         : allAttributeTypes.get(it);
       let comment = '';
-      if (col?.pk) {
+      let required = false;
+      if (col?.name === pkAndSk?.pk) {
         comment = '(pk)';
+        required = true;
       }
-      if (col?.sk) {
+      if (col?.name === pkAndSk?.sk) {
         comment = '(sk)';
+        required = true;
       }
       return createRdhKey({
         name: it,
         type,
-        required: col?.pk || col?.sk,
+        required,
         comment,
       });
     });
+
     for (const [attrName, colType] of allAttributeTypes) {
       if (!keys.map((key) => key.name).includes(attrName)) {
         keys.push(
@@ -709,6 +751,30 @@ export class AwsDynamoServiceClient
             type: colType,
           }),
         );
+      }
+    }
+
+    if (
+      qst?.ast?.type === 'select' &&
+      qst?.ast?.columns &&
+      qst?.ast?.columns.length === 1
+    ) {
+      const { expr } = qst.ast.columns[0];
+      if (expr.type === 'ref' && expr.name === '*') {
+        keys.sort((a, b) => {
+          const n = (it): number =>
+            it.name === pkAndSk?.pk ? -2 : it.name === pkAndSk?.sk ? -1 : 0;
+          const an = n(a);
+          const bn = n(b);
+          if (an < bn) {
+            return -1;
+          }
+          if (an > bn) {
+            return 1;
+          }
+
+          return a.name.localeCompare(b.name);
+        });
       }
     }
 

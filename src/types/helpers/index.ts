@@ -10,6 +10,7 @@ import {
 export type QNames = {
   tableName: string;
   schemaName?: string;
+  indexName?: string; // for table.index
 };
 
 export type QStatement = {

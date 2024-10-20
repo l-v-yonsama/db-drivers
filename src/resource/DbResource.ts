@@ -917,17 +917,58 @@ export class DbDynamoTable
   }
 
   getProperties(): { [key: string]: any } {
-    return {
+    const props: { [key: string]: any } = {
       ...super.getProperties(),
       lsi: this.attr.lsi.length,
       gsi: this.attr.gsi.length,
     };
+    if (this.attr.ttl) {
+      props.ttl = `${this.attr.ttl.AttributeName} (${this.attr.ttl.TimeToLiveStatus})`;
+    }
+    if (this.attr.lsi) {
+      this.attr.lsi.forEach((it, idx) => {
+        props[`lsi${idx + 1}_${it.IndexName}`] = it.KeySchema.map(
+          (ks) => `${ks.AttributeName}(${ks.KeyType})`,
+        ).join(', ');
+      });
+    }
+    if (this.attr.gsi) {
+      this.attr.gsi.forEach((it, idx) => {
+        props[`gsi${idx + 1}_${it.IndexName}`] = it.KeySchema.map(
+          (ks) => `${ks.AttributeName}(${ks.KeyType})`,
+        ).join(', ');
+      });
+    }
+    return props;
   }
 
   getPrimaryColumnNames(): string[] {
     return (
       this.children.filter((it) => it.pk || it.sk).map((it) => it.name) ?? []
     );
+  }
+
+  getPkAndSkByIndex(indexName?: string): { pk?: string; sk?: string } {
+    if (!indexName) {
+      return {
+        pk: this.children.find((it) => it.pk)?.name,
+        sk: this.children.find((it) => it.sk)?.name,
+      };
+    }
+    let index = this.attr.lsi.find((it) => it.IndexName === indexName);
+    if (index === undefined) {
+      index = this.attr.gsi.find((it) => it.IndexName === indexName);
+    }
+    if (index) {
+      return {
+        pk: index.KeySchema.find((it) => it.KeyType === 'HASH')?.AttributeName,
+        sk: index.KeySchema.find((it) => it.KeyType === 'RANGE')?.AttributeName,
+      };
+    }
+    return {
+      pk: undefined,
+      sk: undefined,
+    };
   }
 
   getCompareKeys(availableColumnNames?: string[]): CompareKey[] {
@@ -984,7 +1025,6 @@ export class DbDynamoTableColumn extends DbResource {
     };
   }
 }
-
 export class DbS3Bucket extends AwsDbResource<{
   CreationDate?: Date;
 }> {

@@ -8,6 +8,17 @@ export declare const TableStatusType: {
   readonly UPDATING: 'UPDATING';
 };
 
+export type TimeToLiveStatusTypes =
+  | 'ENABLING'
+  | 'DISABLING'
+  | 'ENABLED'
+  | 'DISABLED';
+
+export type TTLDesc = {
+  TimeToLiveStatus: TimeToLiveStatusTypes;
+  AttributeName?: string;
+};
+
 export type TableStatusType =
   (typeof TableStatusType)[keyof typeof TableStatusType];
 
@@ -45,6 +56,8 @@ export type AwsDynamoTableAttributes = {
   lsi: LSI[];
 
   gsi: GSI[];
+
+  ttl?: TTLDesc;
 
   [key: string]: any;
 };

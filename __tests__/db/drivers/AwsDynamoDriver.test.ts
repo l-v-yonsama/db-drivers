@@ -4,13 +4,19 @@ import {
   ListTablesCommand,
   DeleteTableCommand,
   waitUntilTableExists,
+  UpdateTimeToLiveCommand,
 } from '@aws-sdk/client-dynamodb';
 import {
   BatchWriteCommand,
   DynamoDBDocumentClient,
   PutCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb';
-import { ResultSetDataBuilder, setOf } from '@l-v-yonsama/rdh';
+import {
+  GeneralColumnType,
+  ResultSetDataBuilder,
+  setOf,
+} from '@l-v-yonsama/rdh';
 import {
   AwsDatabase,
   AwsDriver,
@@ -102,6 +108,19 @@ describe('AwsDynamoDBDriver', () => {
         ),
       );
 
+      await client.send(
+        new CreateTableCommand({
+          TableName: 'Counters',
+          KeySchema: [{ AttributeName: 'CounterName', KeyType: 'HASH' }],
+          AttributeDefinitions: [
+            { AttributeName: 'CounterName', AttributeType: 'S' },
+          ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 5,
+            WriteCapacityUnits: 5,
+          },
+        }),
+      );
       // https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/WorkingWithTables.Basics.html
       await client.send(
         new CreateTableCommand({
@@ -237,8 +256,23 @@ describe('AwsDynamoDBDriver', () => {
       );
 
       await waitUntilTableExists(
-        { client, maxWaitTime: 3000 },
+        { client, maxWaitTime: 1000 },
         { TableName: 'Music' },
+      );
+
+      await waitUntilTableExists(
+        { client, maxWaitTime: 1000 },
+        { TableName: 'testtable' },
+      );
+
+      await client.send(
+        new UpdateTimeToLiveCommand({
+          TableName: 'testtable',
+          TimeToLiveSpecification: {
+            AttributeName: 'ttl',
+            Enabled: true,
+          },
+        }),
       );
 
       for (const item of MUSIC_ITEMS) {
@@ -334,6 +368,7 @@ describe('AwsDynamoDBDriver', () => {
             null: null,
             m: { M0: 'aa', S1: 'bb', S2: 'cc' },
             ss: setOf('test2222', 'test23232323'),
+            ttl: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 10,
           },
         }),
       );
@@ -386,7 +421,7 @@ describe('AwsDynamoDBDriver', () => {
     });
 
     it('should have DbDynamoTable resource', async () => {
-      expect(testDbRes.children).toHaveLength(5);
+      expect(testDbRes.children).toHaveLength(6);
       const music = testDbRes.getChildByName('Music') as DbDynamoTable;
       expect(music.name).toBe('Music');
       expect(music.attr?.ReadCapacityUnits).toBe(10);
@@ -418,11 +453,16 @@ describe('AwsDynamoDBDriver', () => {
         ItemCount: 6,
         IndexStatus: 'ACTIVE',
       });
+      console.log(food.getProperties());
 
       const testtable = testDbRes.getChildByName('testtable') as DbDynamoTable;
       expect(testtable.name).toBe('testtable');
       expect(testtable.attr?.ReadCapacityUnits).toBe(10);
       expect(testtable.attr?.WriteCapacityUnits).toBe(5);
+      expect(testtable.attr?.ttl).toEqual({
+        AttributeName: 'ttl',
+        TimeToLiveStatus: 'ENABLED',
+      });
     });
 
     it('should have DbDynamoTableColumn resource', async () => {
@@ -471,6 +511,51 @@ describe('AwsDynamoDBDriver', () => {
       expect(season.attrType).toBe('S');
       expect(season.pk).toBe(false);
       expect(season.sk).toBe(false);
+    });
+  });
+
+  describe('Atomic counter', () => {
+    describe('using updateItem', () => {
+      const counterName = 'Users';
+      it('initialize', async () => {
+        const params: UpdateCommandInput = {
+          TableName: 'Counters',
+          Key: {
+            CounterName: counterName,
+          },
+          UpdateExpression:
+            'SET CounterValue = if_not_exists(CounterValue, :start) + :inc',
+          ExpressionAttributeValues: {
+            ':start': 0,
+            ':inc': 1,
+          },
+          ReturnValues: 'UPDATED_NEW',
+          ReturnConsumedCapacity: 'TOTAL',
+        };
+
+        const { Attributes } = await driver.dynamoClient.updateItem(params);
+        expect(Attributes.CounterValue).toBe(1);
+      });
+
+      it('next', async () => {
+        const params: UpdateCommandInput = {
+          TableName: 'Counters',
+          Key: {
+            CounterName: counterName,
+          },
+          UpdateExpression:
+            'SET CounterValue = if_not_exists(CounterValue, :start) + :inc',
+          ExpressionAttributeValues: {
+            ':start': 0,
+            ':inc': 1,
+          },
+          ReturnValues: 'UPDATED_NEW',
+          ReturnConsumedCapacity: 'TOTAL',
+        };
+
+        const { Attributes } = await driver.dynamoClient.updateItem(params);
+        expect(Attributes.CounterValue).toBe(2);
+      });
     });
   });
 
@@ -734,18 +819,18 @@ describe('AwsDynamoDBDriver', () => {
         const rs = await driver.dynamoClient.requestPartiql({
           sql: 'SELECT * FROM testtable Limit 10',
         });
-
         expect(rs.keys.map((it) => it.name)).toEqual(
           expect.arrayContaining(['id', 'b', 'm', 'n', 's2', 'ss', 'null']),
         );
         expect(rs.summary.selectedRows).toBe(2);
       });
 
-      it('using lsi', async () => {
+      it('using gsi', async () => {
         await driver.getInfomationSchemas();
         const rs = await driver.dynamoClient.requestPartiql({
           sql: 'SELECT * FROM Food.iCountry Limit 10',
         });
+
         expect(rs.keys.map((it) => it.name)).toEqual(
           expect.arrayContaining([
             'Country',
@@ -755,14 +840,16 @@ describe('AwsDynamoDBDriver', () => {
             'Kind',
           ]),
         );
+
         expect(rs.summary.selectedRows).toBe(6);
         expect(rs.meta.tableName).toBe('Food');
       });
-      it('using gsi', async () => {
+      it('using lsi', async () => {
         await driver.getInfomationSchemas();
         const rs = await driver.dynamoClient.requestPartiql({
           sql: 'SELECT * FROM Food.iKind Limit 10',
         });
+
         expect(rs.keys.map((it) => it.name)).toEqual(
           expect.arrayContaining([
             'Country',
@@ -817,6 +904,99 @@ describe('AwsDynamoDBDriver', () => {
           'name with quote\'"a': 'value with quote\'"a4',
         });
       });
+      it('testtable', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `INSERT INTO 
+          testtable VALUE {
+            'id': 3,
+            's': 'string',
+            'n': 30,
+            'bool': true,
+            'null': null,
+            'ss': <<'test', 'test2'>>,
+            'ns': <<1,2,3>>
+          }`,
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.meta.type).toBe('insert');
+        expect(rs.meta.tableName).toBe('testtable');
+        expect(rs.noRecordsReason).toBe('');
+
+        const rs2 = await driver.dynamoClient.requestPartiql({
+          sql: `SELECT * FROM testtable WHERE id = 3`,
+        });
+        expect(rs2.rows).toHaveLength(1);
+        expect(rs2.meta.type).toBe('select');
+        expect(rs2.meta.tableName).toBe('testtable');
+        expect(rs2.keys.find((it) => it.name === 'ss').type).toEqual(
+          GeneralColumnType.STRING_SET,
+        );
+        expect(rs2.keys.find((it) => it.name === 'ns').type).toEqual(
+          GeneralColumnType.NUMERIC_SET,
+        );
+        expect(rs2.rows[0].values).toEqual({
+          id: 3,
+          s: 'string',
+          n: 30,
+          bool: true,
+          null: null,
+          ss: expect.arrayContaining(['test', 'test2']),
+          ns: expect.arrayContaining([1, 2, 3]),
+        });
+      });
+      it('testtable with bind params', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `INSERT INTO 
+          testtable VALUE {
+            'id': ?,
+            's': ?,
+            'n': ?,
+            'bool': ?,
+            'null': ?,
+            'ss': ?,
+            'ns': ?
+          }`,
+          conditions: {
+            binds: [
+              4,
+              'string',
+              40,
+              true,
+              null,
+              setOf('test', 'test2'),
+              setOf(1, 2, 3),
+            ] as any,
+          },
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.meta.type).toBe('insert');
+        expect(rs.meta.tableName).toBe('testtable');
+        expect(rs.noRecordsReason).toBe('');
+
+        const rs2 = await driver.dynamoClient.requestPartiql({
+          sql: `SELECT * FROM testtable WHERE id = 4`,
+        });
+        expect(rs2.rows).toHaveLength(1);
+        expect(rs2.meta.type).toBe('select');
+        expect(rs2.meta.tableName).toBe('testtable');
+        expect(rs2.keys.find((it) => it.name === 'ss').type).toEqual(
+          GeneralColumnType.STRING_SET,
+        );
+        expect(rs2.keys.find((it) => it.name === 'ns').type).toEqual(
+          GeneralColumnType.NUMERIC_SET,
+        );
+        expect(rs2.rows[0].values).toEqual({
+          id: 4,
+          s: 'string',
+          n: 40,
+          bool: true,
+          null: null,
+          ss: expect.arrayContaining(['test', 'test2']),
+          ns: expect.arrayContaining([1, 2, 3]),
+        });
+      });
     });
     describe('UPDATE', () => {
       describe('variable attribute types', () => {
@@ -826,7 +1006,10 @@ describe('AwsDynamoDBDriver', () => {
             sql: 'SELECT * FROM testtable',
           });
           console.log(
-            ResultSetDataBuilder.from(rs0).toMarkdown({ withType: true }),
+            ResultSetDataBuilder.from(rs0).toMarkdown({
+              withType: true,
+              withComment: true,
+            }),
           );
 
           const rs = await driver.dynamoClient.requestPartiql({
@@ -882,6 +1065,39 @@ describe('AwsDynamoDBDriver', () => {
           id: 3,
           'name with quote\'"a': 'value with quote\'"a300',
         });
+      });
+      it('Remove-Test', async () => {
+        const rs0 = await driver.dynamoClient.requestPartiql({
+          sql: `SELECT * FROM "Food" WHERE Name = 'Apple' AND "Color" = 'Green'`,
+        });
+
+        expect(rs0.rows).toHaveLength(1);
+        expect(rs0.meta.type).toBe('select');
+        expect(rs0.meta.tableName).toBe('Food');
+        expect(rs0.rows[0].values['Season']).toEqual('Winter');
+
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `-- remove test statement
+          UPDATE 
+          Food
+          REMOVE Season
+          WHERE "Name" = 'Apple' AND "Color" = 'Green'
+          `,
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.meta.type).toBe('update');
+        expect(rs.meta.tableName).toBe('Food');
+        expect(rs.noRecordsReason).toBe('');
+
+        const rs2 = await driver.dynamoClient.requestPartiql({
+          sql: `SELECT * FROM "Food" WHERE Name = 'Apple' AND "Color" = 'Green'`,
+        });
+
+        expect(rs2.rows).toHaveLength(1);
+        expect(rs2.meta.type).toBe('select');
+        expect(rs2.meta.tableName).toBe('Food');
+        expect(rs2.rows[0].values['Season']).toBeUndefined();
       });
     });
 

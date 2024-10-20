@@ -12,6 +12,7 @@ import {
   isTime,
   isUUIDType,
   RdhKey,
+  setOf,
   toBoolean,
   toDate,
   toLines,
@@ -782,7 +783,7 @@ export const parseQuery = (sql: string): QStatement | undefined => {
       if (result) {
         return { type: 'insert', table: unwrapQuote(result[1]) };
       }
-      result = rsql.match(/update\s+(.+?)\s+set\s+/i);
+      result = rsql.match(/update\s+(.+?)\s+(set|remove)\s+/i);
       if (result) {
         return { type: 'update', table: unwrapQuote(result[1]) };
       }
@@ -1400,6 +1401,23 @@ const toBindValue = (colType: GeneralColumnType, value: string | null): any => {
 
   if (value === undefined || value === null || value.length === 0) {
     return null;
+  }
+
+  if (colType === GeneralColumnType.STRING_SET) {
+    return setOf(
+      ...value
+        .split(',')
+        .map((it) => it.trim())
+        .filter((it) => it.length > 0),
+    );
+  } else if (colType === GeneralColumnType.NUMERIC_SET) {
+    return setOf(
+      ...value
+        .split(',')
+        .map((it) => it.trim())
+        .filter((it) => it.length > 0)
+        .map((it) => toNum(it)),
+    );
   }
 
   if (
