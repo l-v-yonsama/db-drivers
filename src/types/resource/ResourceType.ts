@@ -10,6 +10,7 @@ export const ResourceType = {
   Key: 'Key',
   DynamoTable: 'DynamoTable',
   DynamoColumn: 'DynamoColumn',
+  UserPool: 'UserPool',
   Bucket: 'Bucket',
   Queue: 'Queue',
   Owner: 'Owner',

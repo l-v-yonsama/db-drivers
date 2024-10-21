@@ -1056,6 +1056,29 @@ export class DbSQSQueue extends AwsDbResource<AwsSQSAttributes> {
   }
 }
 
+export class DbUserPool extends AwsDbResource<{
+  creationDate?: number;
+  lastModifiedDate?: number;
+  status?: 'Disabled' | 'Enabled';
+  kmsKeyId?: string;
+}> {
+  constructor(
+    name: string,
+    attr: {
+      creationDate?: number;
+      lastModifiedDate?: number;
+      status?: 'Disabled' | 'Enabled';
+      kmsKeyId?: string;
+    },
+  ) {
+    super(ResourceType.UserPool, name, attr);
+    this.setPropertyFormat({
+      dates: ['creationDate', 'lastModifiedDate'],
+      bytes: [],
+    });
+  }
+}
+
 export class DbLogGroup extends AwsDbResource<{
   creationTime?: number;
   storedBytes?: number;

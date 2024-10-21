@@ -23,6 +23,7 @@ import { AwsServiceClient } from './aws/AwsServiceClient';
 import { AwsSESServiceClient } from './aws/AwsSESServiceClient';
 import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
 import { AwsDynamoServiceClient } from './aws/AwsDynamoServiceClient';
+import { AwsCognitoServiceClient } from './aws/AwsCognitoServiceClient';
 import { ResultSetData } from '@l-v-yonsama/rdh';
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 
@@ -38,6 +39,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
   public cloudwatchClient: AwsCloudwatchServiceClient;
   public s3Client: AwsS3ServiceClient;
   public dynamoClient: AwsDynamoServiceClient;
+  public cognitoClient: AwsCognitoServiceClient;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -82,6 +84,9 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       case 'DynamoDB':
         client = this.dynamoClient;
         break;
+      case 'Cognito':
+        client = this.cognitoClient;
+        break;
     }
     return client as T;
   }
@@ -104,6 +109,9 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         break;
       case 'DynamoTable':
         client = this.dynamoClient;
+        break;
+      case 'UserPool':
+        client = this.cognitoClient;
         break;
     }
     return client as T;
@@ -135,6 +143,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     const s3 = new AwsS3ServiceClient(this.conRes, config, this);
     const ses = new AwsSESServiceClient(this.conRes, config, this);
     const dynamo = new AwsDynamoServiceClient(this.conRes, config, this);
+    const cognito = new AwsCognitoServiceClient(this.conRes, config, this);
     const { services } = this.conRes.awsSetting;
 
     let message = '';
@@ -183,6 +192,15 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         this.dynamoClient = dynamo;
       }
     }
+    if (services.includes(AwsServiceType.Cognito)) {
+      message = await cognito.connect();
+      if (message) {
+        messageList.push(message);
+        this.cognitoClient = null;
+      } else {
+        this.cognitoClient = cognito;
+      }
+    }
     return messageList.join(',');
   }
 
@@ -194,6 +212,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       this.sqsClient,
       this.cloudwatchClient,
       this.dynamoClient,
+      this.cognitoClient,
     ]) {
       if (!client) {
         continue;
@@ -245,6 +264,13 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         messageList.push(message);
       }
     }
+    if (services.includes(AwsServiceType.Cognito)) {
+      const client = new AwsCognitoServiceClient(this.conRes, config, this);
+      const message = await client.test(with_connect);
+      if (message) {
+        messageList.push(message);
+      }
+    }
     return messageList.join(',');
   }
 
@@ -256,6 +282,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       this.cloudwatchClient,
       this.s3Client,
       this.dynamoClient,
+      this.cognitoClient,
     ]) {
       const message = await client.disconnect();
       if (message) {

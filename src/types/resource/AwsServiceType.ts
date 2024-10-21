@@ -4,6 +4,7 @@ export const AwsServiceType = {
   SES: 'SES',
   Cloudwatch: 'Cloudwatch',
   DynamoDB: 'DynamoDB',
+  Cognito: 'Cognito',
 } as const;
 export type AwsServiceType =
   (typeof AwsServiceType)[keyof typeof AwsServiceType];
