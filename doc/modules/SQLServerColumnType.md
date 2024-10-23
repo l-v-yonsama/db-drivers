@@ -27,7 +27,7 @@
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:167](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L167)
+[src/types/resource/SQLServerColumnType.ts:167](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L167)
 
 ___
 
@@ -47,4 +47,4 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L79)
+[src/types/resource/SQLServerColumnType.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L79)

@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.9.4",
+  "version": "0.9.7",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -45,6 +45,7 @@
     "prepublishOnly": "npm run build:release",
     "lint": "eslint . --ext .ts --ext .mts",
     "lint:fix": "eslint --fix . --ext .ts --ext .mts",
+    "examples:cw": "npm run build && node built/src/examples/cw.js",
     "examples:dynamo": "npm run build && node built/src/examples/dynamo.js",
     "examples:mysql": "npm run build && node built/src/examples/mysql.js",
     "examples:mysql2": "npm run build && node built/src/examples/mysql2.js",

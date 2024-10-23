@@ -45,7 +45,7 @@
 
 #### Defined in
 
-[src/types/drivers/GeneralResult.ts:6](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/drivers/GeneralResult.ts#L6)
+[src/types/drivers/GeneralResult.ts:6](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/drivers/GeneralResult.ts#L6)
 
 ## Properties
 
@@ -55,7 +55,7 @@
 
 #### Defined in
 
-[src/types/drivers/GeneralResult.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/drivers/GeneralResult.ts#L3)
+[src/types/drivers/GeneralResult.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/drivers/GeneralResult.ts#L3)
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/GeneralResult.ts:2](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/drivers/GeneralResult.ts#L2)
+[src/types/drivers/GeneralResult.ts:2](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/drivers/GeneralResult.ts#L2)
 
 ___
 
@@ -75,4 +75,4 @@ ___
 
 #### Defined in
 
-[src/types/drivers/GeneralResult.ts:4](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/drivers/GeneralResult.ts#L4)
+[src/types/drivers/GeneralResult.ts:4](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/drivers/GeneralResult.ts#L4)

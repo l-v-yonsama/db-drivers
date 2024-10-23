@@ -50,7 +50,7 @@
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L45)
+[src/types/resource/SQLServerColumnType.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L45)
 
 ___
 
@@ -60,7 +60,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L63)
+[src/types/resource/SQLServerColumnType.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L63)
 
 ___
 
@@ -70,7 +70,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L48)
+[src/types/resource/SQLServerColumnType.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L48)
 
 ___
 
@@ -80,7 +80,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L67)
+[src/types/resource/SQLServerColumnType.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L67)
 
 ___
 
@@ -90,7 +90,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L53)
+[src/types/resource/SQLServerColumnType.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L53)
 
 ___
 
@@ -100,7 +100,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L54)
+[src/types/resource/SQLServerColumnType.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L54)
 
 ___
 
@@ -110,7 +110,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L55)
+[src/types/resource/SQLServerColumnType.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L55)
 
 ___
 
@@ -120,7 +120,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L57)
+[src/types/resource/SQLServerColumnType.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L57)
 
 ___
 
@@ -130,7 +130,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L51)
+[src/types/resource/SQLServerColumnType.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L51)
 
 ___
 
@@ -140,7 +140,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L49)
+[src/types/resource/SQLServerColumnType.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L49)
 
 ___
 
@@ -150,7 +150,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L72)
+[src/types/resource/SQLServerColumnType.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L72)
 
 ___
 
@@ -160,7 +160,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:73](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L73)
+[src/types/resource/SQLServerColumnType.ts:73](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L73)
 
 ___
 
@@ -170,7 +170,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:65](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L65)
+[src/types/resource/SQLServerColumnType.ts:65](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L65)
 
 ___
 
@@ -180,7 +180,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L44)
+[src/types/resource/SQLServerColumnType.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L44)
 
 ___
 
@@ -190,7 +190,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L62)
+[src/types/resource/SQLServerColumnType.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L62)
 
 ___
 
@@ -200,7 +200,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L68)
+[src/types/resource/SQLServerColumnType.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L68)
 
 ___
 
@@ -210,7 +210,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L69)
+[src/types/resource/SQLServerColumnType.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L69)
 
 ___
 
@@ -220,7 +220,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L50)
+[src/types/resource/SQLServerColumnType.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L50)
 
 ___
 
@@ -230,7 +230,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L42)
+[src/types/resource/SQLServerColumnType.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L42)
 
 ___
 
@@ -240,7 +240,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L52)
+[src/types/resource/SQLServerColumnType.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L52)
 
 ___
 
@@ -250,7 +250,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L58)
+[src/types/resource/SQLServerColumnType.ts:58](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L58)
 
 ___
 
@@ -260,7 +260,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L47)
+[src/types/resource/SQLServerColumnType.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L47)
 
 ___
 
@@ -270,7 +270,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L61)
+[src/types/resource/SQLServerColumnType.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L61)
 
 ___
 
@@ -280,7 +280,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L43)
+[src/types/resource/SQLServerColumnType.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L43)
 
 ___
 
@@ -290,7 +290,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L59)
+[src/types/resource/SQLServerColumnType.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L59)
 
 ___
 
@@ -300,7 +300,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L56)
+[src/types/resource/SQLServerColumnType.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L56)
 
 ___
 
@@ -310,7 +310,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L46)
+[src/types/resource/SQLServerColumnType.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L46)
 
 ___
 
@@ -320,7 +320,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L70)
+[src/types/resource/SQLServerColumnType.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L70)
 
 ___
 
@@ -330,7 +330,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L71)
+[src/types/resource/SQLServerColumnType.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L71)
 
 ___
 
@@ -340,7 +340,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L60)
+[src/types/resource/SQLServerColumnType.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L60)
 
 ___
 
@@ -350,7 +350,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L75)
+[src/types/resource/SQLServerColumnType.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L75)
 
 ___
 
@@ -360,7 +360,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L64)
+[src/types/resource/SQLServerColumnType.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L64)
 
 ___
 
@@ -370,7 +370,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L41)
+[src/types/resource/SQLServerColumnType.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L41)
 
 ___
 
@@ -380,7 +380,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L74)
+[src/types/resource/SQLServerColumnType.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L74)
 
 ___
 
@@ -390,4 +390,4 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerColumnType.ts:66](https://github.com/l-v-yonsama/db-drivers/blob/2a503c7574fe14c7cb9042d2290354c0970699f9/src/types/resource/SQLServerColumnType.ts#L66)
+[src/types/resource/SQLServerColumnType.ts:66](https://github.com/l-v-yonsama/db-drivers/blob/6d0d269d945625f2c85f36e55838c502224f3573/src/types/resource/SQLServerColumnType.ts#L66)

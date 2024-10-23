@@ -79,10 +79,10 @@ export async function init0(): Promise<void> {
       return await req.query(sql);
     };
 
-    // await q('DROP DATABASE testdb');
+    await q('DROP DATABASE testdb');
     await q('CREATE DATABASE testdb');
     await q('USE testdb');
-    await q('DROP LOGIN testuser');
+    // await q('DROP LOGIN testuser');
     await q(
       `CREATE LOGIN testuser WITH PASSWORD = 'Pass123zxcv!', DEFAULT_DATABASE = testdb`,
     );

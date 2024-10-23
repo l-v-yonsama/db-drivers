@@ -185,11 +185,15 @@ export class AwsCloudwatchServiceClient
       rowResult.forEach((it) => {
         if (it.field === '@timestamp') {
           // 2023-04-18 10:44:25.000  UTC
-          const iso8601 = it.value?.replace(
-            /([0-9]+-[0-9]+-[0-9]+) ([0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?)/,
-            '$1T$2Z',
-          );
-          values[it.field] = toDate(iso8601);
+          if (typeof it.value === 'string') {
+            const iso8601 = it.value?.replace(
+              /([0-9]+-[0-9]+-[0-9]+) ([0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?)/,
+              '$1T$2Z',
+            );
+            values[it.field] = toDate(iso8601);
+          } else {
+            values[it.field] = toDate(it.value);
+          }
         } else {
           values[it.field] = it.value;
         }
