@@ -302,9 +302,15 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
 
   async kill(sesssionOrPid?: number): Promise<string> {
     if (this.dynamoClient) {
-      return this.dynamoClient.kill();
+      const message = await this.dynamoClient.kill();
+      if (message) {
+        return message;
+      }
     }
-    throw new Error('Not supported.');
+    if (this.cloudwatchClient) {
+      return await this.cloudwatchClient.kill();
+    }
+    return '';
   }
 
   async count(params: SchemaAndTableName): Promise<number | undefined> {

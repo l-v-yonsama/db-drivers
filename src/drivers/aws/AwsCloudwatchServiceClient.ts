@@ -14,9 +14,11 @@ import {
   QueryStatus,
   StartQueryCommand,
   StartQueryCommandInput,
+  StopQueryCommand,
 } from '@aws-sdk/client-cloudwatch-logs';
 import {
   GeneralColumnType,
+  RdhMeta,
   ResultSetData,
   ResultSetDataBuilder,
   createRdhKey,
@@ -40,6 +42,8 @@ export class AwsCloudwatchServiceClient
   implements Scannable
 {
   logClient: CloudWatchLogsClient;
+  private interrupted = false;
+  private queryId?: string;
 
   constructor(
     conRes: ConnectionSetting,
@@ -51,6 +55,8 @@ export class AwsCloudwatchServiceClient
 
   async connectSub(): Promise<string> {
     this.logClient = new CloudWatchLogsClient(this.config);
+    this.interrupted = false;
+    this.queryId = undefined;
     return this.test(false);
   }
 
@@ -64,6 +70,22 @@ export class AwsCloudwatchServiceClient
     }
   }
 
+  async kill(): Promise<string> {
+    this.interrupted = true;
+    if (this.queryId) {
+      try {
+        const command = new StopQueryCommand({
+          queryId: this.queryId,
+        });
+        await this.logClient.send(command);
+      } catch (e) {
+        console.error(e);
+      }
+      this.queryId = undefined;
+    }
+    return '';
+  }
+
   async getLogEvents(params: {
     logGroupName: string;
     logStreamName: string;
@@ -75,6 +97,10 @@ export class AwsCloudwatchServiceClient
     const requiredLimit = params.limit ?? 100;
     let nextToken: string | undefined = undefined;
     do {
+      if (this.interrupted) {
+        this.interrupted = false;
+        throw new Error('INTERRUPT');
+      }
       const limit = Math.min(requiredLimit - list.length, 10_000);
       const result = await this.logClient.send(
         new GetLogEventsCommand({
@@ -105,11 +131,16 @@ export class AwsCloudwatchServiceClient
     const { queryId } = await this.logClient.send(
       new StartQueryCommand(params),
     );
+    this.queryId = queryId;
 
     let status: QueryStatus | string = QueryStatus.Scheduled;
     let results: GetQueryResultsCommandOutput;
     while (status === QueryStatus.Running || status === QueryStatus.Scheduled) {
-      await sleep(1500);
+      if (this.interrupted) {
+        this.interrupted = false;
+        throw new Error('INTERRUPT');
+      }
+      await sleep(900);
       results = await this.logClient.send(
         new GetQueryResultsCommand({
           queryId,
@@ -125,6 +156,7 @@ export class AwsCloudwatchServiceClient
         break;
       }
     }
+    this.queryId = undefined;
 
     return results;
   }
@@ -141,6 +173,7 @@ export class AwsCloudwatchServiceClient
   async scanLogGroup(params: ScanParams): Promise<ResultSetData> {
     const { target, keyword, startTime, endTime, limit } = params;
 
+    const stTime = new Date().getTime();
     const { status, results } = await this.query({
       logGroupName: target,
       queryString: keyword,
@@ -148,6 +181,7 @@ export class AwsCloudwatchServiceClient
       endTime,
       limit,
     });
+    const elapsedTimeMilli = new Date().getTime() - stTime;
 
     if (status === QueryStatus.Cancelled) {
       throw new Error('StartQueryCommand Cancelled');
@@ -156,62 +190,100 @@ export class AwsCloudwatchServiceClient
       throw new Error('StartQueryCommand Failed');
     }
 
+    let rdb: ResultSetDataBuilder;
     if (!results || results.length === 0) {
-      return ResultSetDataBuilder.createEmpty({
+      rdb = ResultSetDataBuilder.createEmpty({
         noRecordsReason: 'No records.',
-      }).build();
+      });
+    } else {
+      const keys = results[0]
+        .filter((it) => it.field !== undefined && it.field !== '@ptr')
+        .map((it) => {
+          const key = createRdhKey({
+            name: it.field,
+            type: GeneralColumnType.TEXT,
+          });
+          if (it.field === '@timestamp') {
+            key.type = GeneralColumnType.TIMESTAMP;
+          } else if (it.field === '@message') {
+            key.width = 500;
+          } else if (it.field === '@logStream') {
+            key.width = 100;
+          }
+          return key;
+        });
+
+      rdb = new ResultSetDataBuilder(keys);
+      results.forEach((rowResult) => {
+        const values: { [key: string]: any } = {};
+        rowResult.forEach((it) => {
+          if (it.field === '@timestamp') {
+            // 2023-04-18 10:44:25.000  UTC
+            values[it.field] = this.toDate(it.value);
+          } else {
+            values[it.field] = it.value;
+          }
+        });
+        rdb.addRow(values);
+      });
     }
 
-    const keys = results[0]
-      .filter((it) => it.field !== undefined && it.field !== '@ptr')
-      .map((it) => {
-        const key = createRdhKey({
-          name: it.field,
-          type: GeneralColumnType.TEXT,
-        });
-        if (it.field === '@timestamp') {
-          key.type = GeneralColumnType.TIMESTAMP;
-        } else if (it.field === '@message') {
-          key.width = 500;
-        } else if (it.field === '@logStream') {
-          key.width = 100;
-        }
-        return key;
-      });
-
-    const rdb = new ResultSetDataBuilder(keys);
-    results.forEach((rowResult) => {
-      const values: { [key: string]: any } = {};
-      rowResult.forEach((it) => {
-        if (it.field === '@timestamp') {
-          // 2023-04-18 10:44:25.000  UTC
-          if (typeof it.value === 'string') {
-            const iso8601 = it.value?.replace(
-              /([0-9]+-[0-9]+-[0-9]+) ([0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?)/,
-              '$1T$2Z',
-            );
-            values[it.field] = toDate(iso8601);
-          } else {
-            values[it.field] = toDate(it.value);
-          }
-        } else {
-          values[it.field] = it.value;
-        }
-      });
-      rdb.addRow(values);
+    rdb.setSqlStatement(''); // No SQL
+    rdb.setSummary({
+      elapsedTimeMilli,
+      selectedRows: rdb.rs.rows.length,
+    });
+    rdb.updateMeta({
+      queryInput: this.createQueryInput({
+        logGroupName: target,
+        queryString: keyword,
+        startTime,
+        endTime,
+        limit,
+      }),
+      logGroupName: target,
     });
     return rdb.build();
+  }
+
+  private createQueryInput(params: RdhMeta): string {
+    Object.keys(params).forEach((key) => {
+      if (key === 'startTime' || key === 'endTime') {
+        const v = params[key];
+        if (v && typeof v === 'number') {
+          const dt = toDate(v * 1000);
+          if (dt) {
+            params[`${key}_iso`] = dt.toISOString();
+          }
+        }
+      }
+    });
+    return JSON.stringify(params, null, 2);
+  }
+
+  private toDate(v: any): Date {
+    // 2023-04-18 10:44:25.000  UTC
+    if (v && typeof v === 'string') {
+      const iso8601 = v?.replace(
+        /([0-9]+-[0-9]+-[0-9]+) ([0-9]+:[0-9]+:[0-9]+(\.[0-9]+)?)/,
+        '$1T$2Z',
+      );
+      return toDate(iso8601);
+    }
+    return toDate(v);
   }
 
   async scanLogStream(params: ScanParams): Promise<ResultSetData> {
     const { target, parentTarget, startTime, limit } = params;
 
+    const stTime = new Date().getTime();
     const list = await this.getLogEvents({
       logGroupName: parentTarget,
       logStreamName: target,
       startTime,
       limit,
     });
+    const elapsedTimeMilli = new Date().getTime() - stTime;
 
     const ingestionTime = createRdhKey({
       name: 'ingestionTime',
@@ -232,11 +304,26 @@ export class AwsCloudwatchServiceClient
     const rdb = new ResultSetDataBuilder(keys);
     list.forEach((rowResult) => {
       const values = {
-        ingestionTime: toDate(rowResult.ingestionTime),
-        timestamp: toDate(rowResult.timestamp),
+        ingestionTime: this.toDate(rowResult.ingestionTime),
+        timestamp: this.toDate(rowResult.timestamp),
         message: rowResult.message,
       };
       rdb.addRow(values);
+    });
+    rdb.setSqlStatement(''); // No SQL
+    rdb.setSummary({
+      elapsedTimeMilli,
+      selectedRows: rdb.rs.rows.length,
+    });
+    rdb.updateMeta({
+      queryInput: this.createQueryInput({
+        logGroupName: parentTarget,
+        logStreamName: target,
+        startTime,
+        limit,
+      }),
+      logGroupName: parentTarget,
+      logStreamName: target,
     });
     return rdb.build();
   }
@@ -257,6 +344,9 @@ export class AwsCloudwatchServiceClient
         if (result.logGroups) {
           for (const logGroup of result.logGroups) {
             const res = new DbLogGroup(logGroup.logGroupName, logGroup);
+            if (logGroup.storedBytes) {
+              res.comment = res.getProperties().storedBytes;
+            }
             dbDatabase.addChild(res);
           }
         }
@@ -279,6 +369,10 @@ export class AwsCloudwatchServiceClient
 
     const list: LogStream[] = [];
     do {
+      if (this.interrupted) {
+        this.interrupted = false;
+        throw new Error('INTERRUPT');
+      }
       const result = await this.logClient.send(
         new DescribeLogStreamsCommand({
           logGroupName,
@@ -305,6 +399,10 @@ export class AwsCloudwatchServiceClient
 
     const list: QueryDefinition[] = [];
     do {
+      if (this.interrupted) {
+        this.interrupted = false;
+        throw new Error('INTERRUPT');
+      }
       const result = await this.logClient.send(
         new DescribeQueryDefinitionsCommand({
           maxResults: 100,
@@ -321,6 +419,8 @@ export class AwsCloudwatchServiceClient
 
   protected async closeSub(): Promise<void> {
     await this.logClient.destroy();
+    this.interrupted = false;
+    this.queryId = undefined;
   }
 
   protected getServiceName(): string {
