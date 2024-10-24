@@ -440,13 +440,16 @@ ORDER BY A.pid DESC
       COLUMN_DEFAULT as col_default,
       null as col_extra,
       (
-      select
-        pg_catalog.col_description(oid,
-        col.ordinal_position::int)
-      from
-        pg_catalog.pg_class c
-      where
-        c.relname = col.table_name) as comment
+	    select
+    		pg_catalog.col_description(c.oid,
+	    	col.ordinal_position::int)
+    	from
+    		pg_catalog.pg_class c
+	    inner join pg_catalog.pg_namespace n on
+	    	c.relnamespace = n.oid
+	    where
+	    	c.relname = col.table_name
+	    	and n.nspname = col.table_schema) as comment
     from
       INFORMATION_SCHEMA.columns col
     left join (
