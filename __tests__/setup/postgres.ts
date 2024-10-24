@@ -29,6 +29,10 @@ export async function init(): Promise<void> {
     await pool.query('DROP TYPE IF EXISTS mood');
     await pool.query("CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy')");
 
+    await pool.query(
+      'CREATE SCHEMA IF NOT EXISTS test2 AUTHORIZATION testuser',
+    );
+
     await pool.query(CREATE_TABLE_STATEMENT);
     await pool.query(
       "COMMENT ON TABLE testtable IS 'table with various data types'",
@@ -84,6 +88,8 @@ export async function init(): Promise<void> {
 
     await pool.query('DROP TABLE IF EXISTS DEPT CASCADE');
     await pool.query(CREATE_TABLE_DEPT);
+    await pool.query("COMMENT ON TABLE DEPT IS '部門マスタ'");
+    await pool.query("COMMENT ON COLUMN DEPT.LOC IS 'ロケーション'");
 
     await pool.query(`INSERT INTO DEPT VALUES(10, 'ACCOUNTING', 'NEW YORK')`);
     await pool.query(`INSERT INTO DEPT VALUES(20, 'RESEARCH', 'DALLAS')`);
@@ -156,6 +162,14 @@ export async function init(): Promise<void> {
         binds3,
       );
     }
+
+    // for test2 schema
+    await pool.query('DROP TABLE IF EXISTS test2.DEPT CASCADE');
+    await pool.query(
+      CREATE_TABLE_DEPT.replace('TABLE DEPT', 'TABLE test2.DEPT'),
+    );
+    await pool.query("COMMENT ON TABLE test2.DEPT IS '部門マスタ'");
+    await pool.query("COMMENT ON COLUMN test2.DEPT.LOC IS 'ロケーション'");
   } finally {
     if (pool) {
       await pool.end();

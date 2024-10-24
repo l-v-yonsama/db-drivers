@@ -94,7 +94,7 @@ describe('PostgresDriver', () => {
     });
 
     it('should have Schema resource', async () => {
-      expect(testDbRes.children).toHaveLength(1);
+      expect(testDbRes.children).toHaveLength(2);
       testSchemaRes = testDbRes.getSchema({ isDefault: true });
       expect(testSchemaRes.name).toBe('public');
     });
