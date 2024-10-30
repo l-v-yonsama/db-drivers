@@ -361,20 +361,15 @@ ORDER BY A.pid DESC
   ): Promise<Array<RdsDatabase>> {
     const rdh = await this.requestSql({
       sql: `SELECT datname AS name, pg_encoding_to_char(encoding) AS comment
-      FROM pg_database ORDER BY datname`,
+      FROM pg_database
+      WHERE LOWER(datname) = '${connectionDatabase.toLowerCase()}'
+      ORDER BY datname`,
     });
     const list = rdh.rows.map((r) => {
       const res = new RdsDatabase(r.values.name);
       res.comment = r.values.comment;
       return res;
     });
-    const idx = list.findIndex(
-      (it) => it.name.toUpperCase() == connectionDatabase.toUpperCase(),
-    );
-    if (idx > 0) {
-      const arr = list.splice(idx, 1);
-      list.unshift(arr[0]);
-    }
     return list;
   }
 
