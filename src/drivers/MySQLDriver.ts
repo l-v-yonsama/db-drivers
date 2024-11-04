@@ -414,20 +414,22 @@ ORDER BY ID DESC`;
     const dbDatabase = new RdsDatabase(this.conRes.database);
     dbResources.push(dbDatabase);
 
-    const dbSchemas = await this.getSchemas(dbDatabase);
+    const dbSchemas = this.filterSchemas(await this.getSchemas(dbDatabase));
     dbSchemas.forEach((res) => {
       dbDatabase.addChild(res);
     });
     this.resetDefaultSchema(dbDatabase);
 
     for (const dbSchema of dbSchemas) {
-      const dbTables = await this.getTables(dbSchema);
+      const dbTables = this.filterTables(await this.getTables(dbSchema));
       dbTables.forEach((res) => dbSchema.addChild(res));
       await this.setColumns(dbSchema);
     }
     const defaultSchema = dbDatabase.getSchema({ isDefault: true });
-    await this.setForinKeys(defaultSchema);
-    await this.setUniqueKeys(defaultSchema);
+    if (defaultSchema) {
+      await this.setForinKeys(defaultSchema);
+      await this.setUniqueKeys(defaultSchema);
+    }
     return dbResources;
   }
 

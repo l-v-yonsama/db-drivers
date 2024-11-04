@@ -60,8 +60,25 @@ export async function init0(): Promise<void> {
 
   try {
     const q = async (sql: string): Promise<mssql.IResult<any>> => {
-      console.log('Exec sql: ', sql);
-      return await con.request().query(sql);
+      try {
+        const r = await con.request().query(sql);
+        console.log('OK: Exec sql: ', sql);
+        return r;
+      } catch (e) {
+        const messages = [];
+        if (e.message) {
+          messages.push(e.message);
+        }
+        if (e.precedingErrors) {
+          messages.push(...e.precedingErrors.map((it) => it.message));
+        }
+        console.error(
+          'NG: Exec sql: ',
+          sql,
+          `, Messages ${messages.join(', ')}`,
+        );
+        throw e;
+      }
     };
     const cq = async (sql: string): Promise<number> => {
       console.log('Exec sql: ', sql);
@@ -79,38 +96,81 @@ export async function init0(): Promise<void> {
       return await req.query(sql);
     };
 
-    await q('DROP DATABASE testdb');
-    await q('CREATE DATABASE testdb');
+    try {
+      // await q('DROP DATABASE testdb');
+    } catch (_) {
+      // ignore
+    }
+    try {
+      // await q('CREATE DATABASE testdb');
+    } catch (_) {
+      // ignore
+    }
     await q('USE testdb');
     // await q('DROP LOGIN testuser');
-    await q(
-      `CREATE LOGIN testuser WITH PASSWORD = 'Pass123zxcv!', DEFAULT_DATABASE = testdb`,
-    );
-    await q('ALTER LOGIN testuser WITH DEFAULT_DATABASE=testdb');
-    const countSchema0 = await cq(
-      `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.SCHEMATA WHERE CATALOG_NAME='testdb' AND SCHEMA_NAME='schema0'`,
-    );
-    if (countSchema0 === 0) {
-      await q('CREATE SCHEMA schema0');
+    try {
+      // await q(
+      //   `CREATE LOGIN testuser WITH PASSWORD = 'Pass123zxcv!', DEFAULT_DATABASE = testdb`,
+      // );
+    } catch (_) {
+      // ignore
     }
-    const countSchema1 = await cq(
-      `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.SCHEMATA WHERE CATALOG_NAME='testdb' AND SCHEMA_NAME='schema1'`,
-    );
-    if (countSchema1 === 0) {
-      await q('CREATE SCHEMA schema1');
+    // await q('ALTER LOGIN testuser WITH DEFAULT_DATABASE=testdb');
+
+    const createSchemaIfNotExists = async (
+      schemaName: string,
+    ): Promise<void> => {
+      const count = await cq(
+        `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.SCHEMATA WHERE CATALOG_NAME='testdb' AND SCHEMA_NAME='${schemaName}'`,
+      );
+      if (count === 0) {
+        await q(`create schema ${schemaName}`);
+      }
+    };
+    // await createSchemaIfNotExists('schema0');
+    // await createSchemaIfNotExists('schema1');
+
+    // await createSchemaIfNotExists('hoge1');
+
+    await createSchemaIfNotExists('h1_piyo2');
+
+    for (const a of [1, 2, 3]) {
+      for (const b of [1, 2]) {
+        const schemaName = `a${a}_b${b}_filTer_Test_c${b}_d${a}`;
+        await createSchemaIfNotExists(schemaName);
+        // for (const command of [
+        //   'ALTER',
+        //   'CONTROL',
+        //   'CREATE SEQUENCE',
+        //   'DELETE',
+        //   'EXECUTE',
+        //   'INSERT',
+        //   'REFERENCES',
+        //   'SELECT',
+        //   'TAKE OWNERSHIP',
+        //   'UPDATE',
+        // ]) {
+        //   await q(`GRANT ${command} ON SCHEMA::${schemaName} TO testuser`);
+        // }
+        // for (const c of [1, 2, 3]) {
+        //   for (const d of [1, 2]) {
+        //     const tableName = `c${c}_d${d}_ftT_e${d}_f${c}`;
+        //     await q(`DROP TABLE IF EXISTS ${schemaName}.${tableName}`);
+        //     await q(
+        //       `create TABLE ${schemaName}.${tableName} ( ID int IDENTITY PRIMARY KEY )`,
+        //     );
+        //   }
+        // }
+      }
     }
 
-    // const countUser = await cq(
-    //   `SELECT COUNT(*) as count
-    //   FROM master.sys.server_principals
-    //   WHERE default_database_name ='testdb' AND name ='testuser'`,
-    // );
-    // if (countUser > 0) {
-    //   await q(`DROP USER testuser`);
-    // }
-    await q(
-      `CREATE USER testuser FOR LOGIN testuser WITH DEFAULT_SCHEMA=schema1`,
-    );
+    try {
+      await q(
+        `CREATE USER testuser FOR LOGIN testuser WITH DEFAULT_SCHEMA=schema1`,
+      );
+    } catch (_) {
+      // ignore
+    }
 
     await q(`GRANT ALL to testuser`);
     await q(`GRANT SHOWPLAN to testuser`);

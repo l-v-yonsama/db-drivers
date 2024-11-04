@@ -56,129 +56,227 @@ describe('SQLiteDriver', () => {
     let testSchemaRes: DbSchema;
     let testTableRes: DbTable;
 
-    it('should return Database resource', async () => {
-      const dbRootRes = await driver.getInfomationSchemas();
-      expect(dbRootRes).toHaveLength(1);
-      testDbRes = dbRootRes[0];
-      expect(testDbRes.name).toBe(driver.getConnectionRes().database);
-    });
-
-    it('should have Schema resource', async () => {
-      expect(testDbRes.children).toHaveLength(1);
-      testSchemaRes = testDbRes.getSchema({ isDefault: true });
-      expect(testSchemaRes.name).toBe('Default');
-    });
-
-    it('should have Table resource', async () => {
-      testTableRes = testSchemaRes.getChildByName('testtable');
-      expect(testTableRes.name).toBe('testtable');
-      expect(testTableRes.tableType).toBe('TABLE');
-    });
-
-    it('should have Column resource', async () => {
-      // ID
-      const idRes = testTableRes.getChildByName('ID');
-      expect(idRes.colType).toBe(GeneralColumnType.INTEGER);
-      expect(idRes.primaryKey).toBe(true);
-      expect(idRes.extra).toBe('auto_increment');
-      // f1
-      const n0Res = testTableRes.getChildByName('f1');
-      expect(n0Res.colType).toBe(GeneralColumnType.REAL);
-      expect(n0Res.nullable).toBe(true);
-      // s1
-      const n1Res = testTableRes.getChildByName('s1');
-      expect(n1Res.colType).toBe(GeneralColumnType.TEXT);
-      expect(n1Res.nullable).toBe(false);
-      // b1
-      const s71Res = testTableRes.getChildByName('b1');
-      expect(s71Res.colType).toBe(GeneralColumnType.BLOB);
-      expect(s71Res.nullable).toBe(true);
-    });
-
-    it('should have Index on Column resource', async () => {
-      const tableRes = testSchemaRes.getChildByName('diff');
-      expect(tableRes.getPrimaryColumnNames()).toEqual(
-        expect.arrayContaining(['last_name', 'first_name']),
-      );
-      expect(tableRes.getUniqColumnNames()).toEqual(['full_name']);
-
-      const lastName = tableRes.getChildByName('last_name');
-      expect(lastName.primaryKey).toBe(true);
-      const firstName = tableRes.getChildByName('first_name');
-      expect(firstName.primaryKey).toBe(true);
-      const fullName = tableRes.children.find(
-        (it) => it.name == 'full_name',
-      ) as DbColumn;
-      expect(fullName.uniqKey).toBe(true);
-    });
-
-    it('should have foreign key', async () => {
-      // ORDER
-      const orderTable = testSchemaRes.getChildByName('order0');
-      expect(orderTable).not.toBeUndefined();
-      // ORDER_DETAIL
-      const orderDetailTable = testSchemaRes.getChildByName('order_detail');
-      expect(orderDetailTable).not.toBeUndefined();
-      // CUSTOMER
-      const customerTable = testSchemaRes.getChildByName('customer');
-      expect(customerTable).not.toBeUndefined();
-
-      // FROM order0.customer_no -> TO CUSTOMER.customer_no
-      const fkDetail = orderTable.foreignKeys.referenceTo['customer_no'];
-      expect(fkDetail).toEqual({
-        tableName: 'customer',
-        columnName: 'customer_no',
-        constraintName: expect.any(String),
+    describe('no resource filters', () => {
+      it('should return Database resource', async () => {
+        const dbRootRes = await driver.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe(driver.getConnectionRes().database);
       });
 
-      // FROM order_detail.order_no -> TO order0.order_no0
-      const fkDetail2 = orderDetailTable.foreignKeys.referenceTo['order_no'];
-      expect(fkDetail2).toEqual({
-        tableName: 'order0',
-        columnName: 'order_no0',
-        constraintName: expect.any(String),
+      it('should have Schema resource', async () => {
+        expect(testDbRes.children).toHaveLength(1);
+        testSchemaRes = testDbRes.getSchema({ isDefault: true });
+        expect(testSchemaRes.name).toBe('Default');
       });
 
-      // TO customer.customer_no <- FROM order0.customer_no
-      const fkDetail3 = customerTable.foreignKeys.referencedFrom['customer_no'];
-      expect(fkDetail3).toEqual({
-        tableName: 'order0',
-        columnName: 'customer_no',
-        constraintName: expect.any(String),
+      it('should have Table resource', async () => {
+        testTableRes = testSchemaRes.getChildByName('testtable');
+        expect(testTableRes.name).toBe('testtable');
+        expect(testTableRes.tableType).toBe('TABLE');
       });
 
-      // TO order.order_no <- FROM order_detail.order_no
-      const fkDetail4 = orderTable.foreignKeys.referencedFrom['order_no0'];
-      expect(fkDetail4).toEqual({
-        tableName: 'order_detail',
-        columnName: 'order_no',
-        constraintName: expect.any(String),
+      it('should have Column resource', async () => {
+        // ID
+        const idRes = testTableRes.getChildByName('ID');
+        expect(idRes.colType).toBe(GeneralColumnType.INTEGER);
+        expect(idRes.primaryKey).toBe(true);
+        expect(idRes.extra).toBe('auto_increment');
+        // f1
+        const n0Res = testTableRes.getChildByName('f1');
+        expect(n0Res.colType).toBe(GeneralColumnType.REAL);
+        expect(n0Res.nullable).toBe(true);
+        // s1
+        const n1Res = testTableRes.getChildByName('s1');
+        expect(n1Res.colType).toBe(GeneralColumnType.TEXT);
+        expect(n1Res.nullable).toBe(false);
+        // b1
+        const s71Res = testTableRes.getChildByName('b1');
+        expect(s71Res.colType).toBe(GeneralColumnType.BLOB);
+        expect(s71Res.nullable).toBe(true);
+      });
+
+      it('should have Index on Column resource', async () => {
+        const tableRes = testSchemaRes.getChildByName('diff');
+        expect(tableRes.getPrimaryColumnNames()).toEqual(
+          expect.arrayContaining(['last_name', 'first_name']),
+        );
+        expect(tableRes.getUniqColumnNames()).toEqual(['full_name']);
+
+        const lastName = tableRes.getChildByName('last_name');
+        expect(lastName.primaryKey).toBe(true);
+        const firstName = tableRes.getChildByName('first_name');
+        expect(firstName.primaryKey).toBe(true);
+        const fullName = tableRes.children.find(
+          (it) => it.name == 'full_name',
+        ) as DbColumn;
+        expect(fullName.uniqKey).toBe(true);
+      });
+
+      it('should have foreign key', async () => {
+        // ORDER
+        const orderTable = testSchemaRes.getChildByName('order0');
+        expect(orderTable).not.toBeUndefined();
+        // ORDER_DETAIL
+        const orderDetailTable = testSchemaRes.getChildByName('order_detail');
+        expect(orderDetailTable).not.toBeUndefined();
+        // CUSTOMER
+        const customerTable = testSchemaRes.getChildByName('customer');
+        expect(customerTable).not.toBeUndefined();
+
+        // FROM order0.customer_no -> TO CUSTOMER.customer_no
+        const fkDetail = orderTable.foreignKeys.referenceTo['customer_no'];
+        expect(fkDetail).toEqual({
+          tableName: 'customer',
+          columnName: 'customer_no',
+          constraintName: expect.any(String),
+        });
+
+        // FROM order_detail.order_no -> TO order0.order_no0
+        const fkDetail2 = orderDetailTable.foreignKeys.referenceTo['order_no'];
+        expect(fkDetail2).toEqual({
+          tableName: 'order0',
+          columnName: 'order_no0',
+          constraintName: expect.any(String),
+        });
+
+        // TO customer.customer_no <- FROM order0.customer_no
+        const fkDetail3 =
+          customerTable.foreignKeys.referencedFrom['customer_no'];
+        expect(fkDetail3).toEqual({
+          tableName: 'order0',
+          columnName: 'customer_no',
+          constraintName: expect.any(String),
+        });
+
+        // TO order.order_no <- FROM order_detail.order_no
+        const fkDetail4 = orderTable.foreignKeys.referencedFrom['order_no0'];
+        expect(fkDetail4).toEqual({
+          tableName: 'order_detail',
+          columnName: 'order_no',
+          constraintName: expect.any(String),
+        });
+      });
+
+      it('should have composite unique keys', async () => {
+        // DIFF2
+        const diff2Table = testSchemaRes.getChildByName('diff2');
+        expect(diff2Table).not.toBeUndefined();
+
+        expect(diff2Table.getChildByName('first_name').uniqKey).toBe(true);
+        expect(diff2Table.getChildByName('last_name').uniqKey).toBe(true);
+        expect(diff2Table.uniqueKeys).toEqual([
+          {
+            name: expect.any(String),
+            columns: ['last_name', 'first_name', 'note'],
+          },
+        ]);
+        expect(diff2Table.getCompareKeys()).toEqual([
+          {
+            kind: 'primary',
+            names: ['id', 'note'],
+          },
+          {
+            kind: 'uniq',
+            names: ['last_name', 'first_name', 'note'],
+          },
+        ]);
       });
     });
 
-    it('should have composite unique keys', async () => {
-      // DIFF2
-      const diff2Table = testSchemaRes.getChildByName('diff2');
-      expect(diff2Table).not.toBeUndefined();
+    describe('specify resource filters', () => {
+      let driver2: RDSBaseDriver;
 
-      expect(diff2Table.getChildByName('first_name').uniqKey).toBe(true);
-      expect(diff2Table.getChildByName('last_name').uniqKey).toBe(true);
-      expect(diff2Table.uniqueKeys).toEqual([
-        {
-          name: expect.any(String),
-          columns: ['last_name', 'first_name', 'note'],
-        },
-      ]);
-      expect(diff2Table.getCompareKeys()).toEqual([
-        {
-          kind: 'primary',
-          names: ['id', 'note'],
-        },
-        {
-          kind: 'uniq',
-          names: ['last_name', 'first_name', 'note'],
-        },
-      ]);
+      afterEach(async () => {
+        if (driver2) {
+          await driver2.disconnect();
+          driver2 = undefined;
+        }
+      });
+
+      it('prefix', async () => {
+        driver2 = createRDSDriver({
+          resourceFilter: {
+            table: { type: 'prefix', value: 'c2_d2' },
+          },
+        });
+        await driver2.connect();
+
+        const dbRootRes = await driver2.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe(driver.getConnectionRes().database);
+
+        const schemaRes = testDbRes.getSchema({ isDefault: true });
+        expect(schemaRes).not.toBeUndefined();
+        const tableRes = schemaRes.getChildByName('c2_d2_ftT_e2_f2');
+        expect(tableRes).not.toBeUndefined();
+        expect(tableRes.children).toHaveLength(1);
+
+        for (const c of [1, 3]) {
+          for (const d of [1, 3]) {
+            const tableName = `c${c}_d${d}_ftT_e${d}_f${c}`;
+            const tableRes = schemaRes.getChildByName(tableName);
+            expect(tableRes).toBeUndefined();
+          }
+        }
+      });
+
+      it('include', async () => {
+        driver2 = createRDSDriver({
+          resourceFilter: {
+            table: { type: 'include', value: 'd2_ft' },
+          },
+        });
+        await driver2.connect();
+
+        const dbRootRes = await driver2.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe(driver.getConnectionRes().database);
+
+        const schemaRes = testDbRes.getSchema({ isDefault: true });
+        expect(schemaRes).not.toBeUndefined();
+        const tableRes = schemaRes.getChildByName('c1_d2_ftT_e2_f1');
+        expect(tableRes).not.toBeUndefined();
+        expect(tableRes.children).toHaveLength(1);
+
+        for (const c of [1, 2, 3]) {
+          for (const d of [1, 3]) {
+            const tableName = `c${c}_d${d}_ftT_e${d}_f${c}`;
+            const tableRes = schemaRes.getChildByName(tableName);
+            expect(tableRes).toBeUndefined();
+          }
+        }
+      });
+
+      it('suffix', async () => {
+        driver2 = createRDSDriver({
+          resourceFilter: {
+            table: { type: 'suffix', value: 'e2_f1' },
+          },
+        });
+        await driver2.connect();
+
+        const dbRootRes = await driver2.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe(driver.getConnectionRes().database);
+
+        const schemaRes = testDbRes.getSchema({ isDefault: true });
+        expect(schemaRes).not.toBeUndefined();
+        const tableRes = schemaRes.getChildByName('c1_d2_ftT_e2_f1');
+        expect(tableRes).not.toBeUndefined();
+        expect(tableRes.children).toHaveLength(1);
+
+        for (const c of [1, 2, 3]) {
+          for (const d of [1, 3]) {
+            const tableName = `c${c}_d${d}_ftT_e${d}_f${c}`;
+            const tableRes = schemaRes.getChildByName(tableName);
+            expect(tableRes).toBeUndefined();
+          }
+        }
+      });
     });
   });
 
@@ -210,7 +308,6 @@ describe('SQLiteDriver', () => {
       );
     });
   });
-
   describe('explainSql', () => {
     it('should return explain and analyze result', async () => {
       const query = 'SELECT * FROM EMP WHERE EMPNO = 7839 ';
@@ -431,7 +528,8 @@ describe('SQLiteDriver', () => {
     }, 6000);
   });
 
-  function createRDSDriver(): RDSBaseDriver {
-    return new SQLiteDriver(connectOption);
+  function createRDSDriver(params?: Partial<ConnectionSetting>): RDSBaseDriver {
+    const options = { ...connectOption, ...params };
+    return new SQLiteDriver(options);
   }
 });

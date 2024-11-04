@@ -338,20 +338,22 @@ ORDER BY A.pid DESC
     db_list.forEach((db) => dbResources.push(db));
     const dbDatabase = db_list.find((d) => d.name === this.conRes.database);
 
-    const dbSchemas = await this.getSchemas(dbDatabase);
+    const dbSchemas = this.filterSchemas(await this.getSchemas(dbDatabase));
     dbSchemas.forEach((res) => {
       dbDatabase.addChild(res);
     });
     this.resetDefaultSchema(dbDatabase);
     // const parallels = [];
     for (const dbSchema of dbSchemas) {
-      const dbTables = await this.getTables(dbSchema);
+      const dbTables = this.filterTables(await this.getTables(dbSchema));
       dbTables.forEach((res) => dbSchema.addChild(res));
       await this.setColumns(dbSchema);
     }
     const defaultSchema = dbDatabase.getSchema({ isDefault: true });
-    await this.setForinKeys(defaultSchema);
-    await this.setUniqueKeys(defaultSchema);
+    if (defaultSchema) {
+      await this.setForinKeys(defaultSchema);
+      await this.setUniqueKeys(defaultSchema);
+    }
 
     return dbResources;
   }

@@ -12,6 +12,16 @@ export async function init(): Promise<void> {
   await driver.connect();
 
   try {
+    for (const c of [1, 2, 3]) {
+      for (const d of [1, 2]) {
+        const tableName = `c${c}_d${d}_ftT_e${d}_f${c}`;
+        await driver.requestSql({ sql: `DROP TABLE IF EXISTS ${tableName}` });
+        await driver.requestSql({
+          sql: `CREATE TABLE ${tableName} (ID INTEGER PRIMARY KEY)`,
+        });
+      }
+    }
+
     await driver.requestSql({ sql: 'DROP TABLE IF EXISTS testtable' });
     await driver.requestSql({ sql: CREATE_TABLE_STATEMENT });
 

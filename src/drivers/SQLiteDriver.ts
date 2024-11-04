@@ -18,6 +18,7 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { acceptResourceFilter } from '../utils';
 
 type ExecResult = {
   affectedRows: number;
@@ -251,8 +252,15 @@ export class SQLiteDriver extends RDSBaseDriver {
     ORDER BY m.name, p.cid`,
     });
 
+    const { resourceFilter } = this.conRes;
     tableRs.rows.forEach((row) => {
       const { values: it } = row;
+      if (
+        resourceFilter?.table &&
+        !acceptResourceFilter(it.tableName, resourceFilter.table)
+      ) {
+        return;
+      }
       if (
         beforeTableRes === undefined ||
         beforeTableRes.name !== it.tableName

@@ -26,6 +26,7 @@ import {
   DBDriverResolver,
   DbDynamoTable,
   DBType,
+  ResourceFilter,
   SupplyCredentialType,
 } from '../../../src';
 import _chunk from 'lodash.chunk';
@@ -55,7 +56,6 @@ const FOOD_ITEMS: string[][] = [
 ];
 
 describe('AwsDynamoDBDriver', () => {
-  let driverResolver: DBDriverResolver;
   let client: DynamoDBClient;
   let driver: AwsDriver;
   let docClient: DynamoDBDocumentClient;
@@ -71,18 +71,7 @@ describe('AwsDynamoDBDriver', () => {
     });
     docClient = DynamoDBDocumentClient.from(client);
 
-    driverResolver = DBDriverResolver.getInstance();
-    const setting: ConnectionSetting = {
-      name: 'localDynamo',
-      dbType: DBType.Aws,
-      awsSetting: {
-        supplyCredentialType: SupplyCredentialType.ExplicitInProperty,
-        services: [AwsServiceType.DynamoDB],
-        region: connectOption.region,
-      },
-      ...connectOption,
-    };
-    driver = driverResolver.createDriver<AwsDriver>(setting);
+    driver = createDriver();
 
     try {
       await driver.connect();
@@ -172,6 +161,25 @@ describe('AwsDynamoDBDriver', () => {
           },
         }),
       );
+
+      for (const a of [1, 2, 3]) {
+        for (const b of [1, 2, 3]) {
+          await client.send(
+            new CreateTableCommand({
+              TableName: `a${a}-b${b}_filTer-Test_c${b}-d${a}`,
+              AttributeDefinitions: [
+                { AttributeName: 'id', AttributeType: 'N' },
+              ],
+              KeySchema: [{ AttributeName: 'id', KeyType: 'HASH' }],
+              ProvisionedThroughput: {
+                ReadCapacityUnits: 10,
+                WriteCapacityUnits: 5,
+              },
+            }),
+          );
+        }
+      }
+
       await client.send(
         new CreateTableCommand({
           TableName: 'Food',
@@ -413,104 +421,191 @@ describe('AwsDynamoDBDriver', () => {
   describe('asyncGetResouces', () => {
     let testDbRes: AwsDatabase;
 
-    it('should return Database resource', async () => {
-      const dbRootRes = await driver.getInfomationSchemas();
-      expect(dbRootRes).toHaveLength(1);
-      testDbRes = dbRootRes[0];
-      expect(testDbRes.name).toBe('DynamoDB');
+    describe('no resource filters', () => {
+      it('should return Database resource', async () => {
+        const dbRootRes = await driver.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe('DynamoDB');
+      });
+
+      it('should have DbDynamoTable resource', async () => {
+        expect(testDbRes.children).toHaveLength(15);
+        const music = testDbRes.getChildByName('Music') as DbDynamoTable;
+        expect(music.name).toBe('Music');
+        expect(music.attr?.ReadCapacityUnits).toBe(10);
+        expect(music.attr?.WriteCapacityUnits).toBe(5);
+        expect(music.attr?.lsi).toHaveLength(0);
+        expect(music.attr?.gsi).toHaveLength(0);
+
+        const food = testDbRes.getChildByName('Food') as DbDynamoTable;
+        expect(food.name).toBe('Food');
+        expect(food.attr?.ReadCapacityUnits).toBe(10);
+        expect(food.attr?.WriteCapacityUnits).toBe(5);
+        expect(food.attr?.lsi).toHaveLength(1);
+        expect(food.attr?.gsi).toHaveLength(1);
+        expect(food.attr?.lsi[0]).toEqual({
+          IndexName: 'iKind',
+          KeySchema: [
+            { AttributeName: 'Name', KeyType: 'HASH' },
+            { AttributeName: 'Kind', KeyType: 'RANGE' },
+          ],
+          IndexArn: expect.any(String),
+          IndexSizeBytes: expect.any(Number),
+          ItemCount: 6,
+        });
+        expect(food.attr?.gsi[0]).toEqual({
+          IndexName: 'iCountry',
+          KeySchema: [{ AttributeName: 'Country', KeyType: 'HASH' }],
+          IndexArn: expect.any(String),
+          IndexSizeBytes: expect.any(Number),
+          ItemCount: 6,
+          IndexStatus: 'ACTIVE',
+        });
+        console.log(food.getProperties());
+
+        const testtable = testDbRes.getChildByName(
+          'testtable',
+        ) as DbDynamoTable;
+        expect(testtable.name).toBe('testtable');
+        expect(testtable.attr?.ReadCapacityUnits).toBe(10);
+        expect(testtable.attr?.WriteCapacityUnits).toBe(5);
+        expect(testtable.attr?.ttl).toEqual({
+          AttributeName: 'ttl',
+          TimeToLiveStatus: 'ENABLED',
+        });
+      });
+
+      it('should have DbDynamoTableColumn resource', async () => {
+        const music = testDbRes.getChildByName('Music') as DbDynamoTable;
+        expect(music.children).toHaveLength(3);
+        // Artist
+        const artist = music.getChildByName('Artist');
+        expect(artist.attrType).toBe('S');
+        expect(artist.pk).toBe(true);
+        expect(artist.sk).toBe(false);
+        // SongTitle
+        const songTitle = music.getChildByName('SongTitle');
+        expect(songTitle.attrType).toBe('S');
+        expect(songTitle.pk).toBe(false);
+        expect(songTitle.sk).toBe(true);
+        // AlbumTitle
+        const albumTitle = music.getChildByName('AlbumTitle');
+        expect(albumTitle.attrType).toBe('S');
+        expect(albumTitle.pk).toBe(false);
+        expect(albumTitle.sk).toBe(false);
+
+        const food = testDbRes.getChildByName('Food') as DbDynamoTable;
+        expect(food.children).toHaveLength(5);
+        // Name
+        const name = food.getChildByName('Name');
+        expect(name.attrType).toBe('S');
+        expect(name.pk).toBe(true);
+        expect(name.sk).toBe(false);
+        // Color
+        const color = food.getChildByName('Color');
+        expect(color.attrType).toBe('S');
+        expect(color.pk).toBe(false);
+        expect(color.sk).toBe(true);
+        // Kind
+        const kind = food.getChildByName('Kind');
+        expect(kind.attrType).toBe('S');
+        expect(kind.pk).toBe(false);
+        expect(kind.sk).toBe(false);
+        // Country
+        const country = food.getChildByName('Country');
+        expect(country.attrType).toBe('S');
+        expect(country.pk).toBe(false);
+        expect(country.sk).toBe(false);
+        // Season
+        const season = food.getChildByName('Season');
+        expect(season.attrType).toBe('S');
+        expect(season.pk).toBe(false);
+        expect(season.sk).toBe(false);
+      });
     });
 
-    it('should have DbDynamoTable resource', async () => {
-      expect(testDbRes.children).toHaveLength(6);
-      const music = testDbRes.getChildByName('Music') as DbDynamoTable;
-      expect(music.name).toBe('Music');
-      expect(music.attr?.ReadCapacityUnits).toBe(10);
-      expect(music.attr?.WriteCapacityUnits).toBe(5);
-      expect(music.attr?.lsi).toHaveLength(0);
-      expect(music.attr?.gsi).toHaveLength(0);
+    describe('specify resource filters', () => {
+      let driver2: AwsDriver;
 
-      const food = testDbRes.getChildByName('Food') as DbDynamoTable;
-      expect(food.name).toBe('Food');
-      expect(food.attr?.ReadCapacityUnits).toBe(10);
-      expect(food.attr?.WriteCapacityUnits).toBe(5);
-      expect(food.attr?.lsi).toHaveLength(1);
-      expect(food.attr?.gsi).toHaveLength(1);
-      expect(food.attr?.lsi[0]).toEqual({
-        IndexName: 'iKind',
-        KeySchema: [
-          { AttributeName: 'Name', KeyType: 'HASH' },
-          { AttributeName: 'Kind', KeyType: 'RANGE' },
-        ],
-        IndexArn: expect.any(String),
-        IndexSizeBytes: expect.any(Number),
-        ItemCount: 6,
+      afterEach(async () => {
+        if (driver2) {
+          await driver2.disconnect();
+          driver2 = undefined;
+        }
       });
-      expect(food.attr?.gsi[0]).toEqual({
-        IndexName: 'iCountry',
-        KeySchema: [{ AttributeName: 'Country', KeyType: 'HASH' }],
-        IndexArn: expect.any(String),
-        IndexSizeBytes: expect.any(Number),
-        ItemCount: 6,
-        IndexStatus: 'ACTIVE',
+
+      it('prefix', async () => {
+        driver2 = createDriver({
+          table: { type: 'prefix', value: 'a2-b1' },
+        });
+        await driver2.connect();
+
+        const dbRootRes = await driver2.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe('DynamoDB');
+
+        const table = testDbRes.getChildByName('a2-b1_filTer-Test_c1-d2');
+        expect(table).not.toBeUndefined();
+
+        for (const a of [1, 3]) {
+          for (const b of [2, 3]) {
+            const tableName = `a${a}-b${b}_filTer-Test_c${b}-d${a}`;
+            const table = testDbRes.getChildByName(tableName);
+            expect(table).toBeUndefined();
+          }
+        }
       });
-      console.log(food.getProperties());
 
-      const testtable = testDbRes.getChildByName('testtable') as DbDynamoTable;
-      expect(testtable.name).toBe('testtable');
-      expect(testtable.attr?.ReadCapacityUnits).toBe(10);
-      expect(testtable.attr?.WriteCapacityUnits).toBe(5);
-      expect(testtable.attr?.ttl).toEqual({
-        AttributeName: 'ttl',
-        TimeToLiveStatus: 'ENABLED',
+      it('inclue', async () => {
+        driver2 = createDriver({
+          table: { type: 'include', value: '-B2_FiL' },
+        });
+        await driver2.connect();
+
+        const dbRootRes = await driver2.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe('DynamoDB');
+
+        for (const a of [1, 2, 3]) {
+          const tableName = `a${a}-b2_filTer-Test_c2-d${a}`;
+          const table = testDbRes.getChildByName(tableName);
+          expect(table).not.toBeUndefined();
+
+          for (const b of [1, 3]) {
+            const tableName = `a${a}-b${b}_filTer-Test_c${b}-d${a}`;
+            const table = testDbRes.getChildByName(tableName);
+            expect(table).toBeUndefined();
+          }
+        }
       });
-    });
 
-    it('should have DbDynamoTableColumn resource', async () => {
-      const music = testDbRes.getChildByName('Music') as DbDynamoTable;
-      expect(music.children).toHaveLength(3);
-      // Artist
-      const artist = music.getChildByName('Artist');
-      expect(artist.attrType).toBe('S');
-      expect(artist.pk).toBe(true);
-      expect(artist.sk).toBe(false);
-      // SongTitle
-      const songTitle = music.getChildByName('SongTitle');
-      expect(songTitle.attrType).toBe('S');
-      expect(songTitle.pk).toBe(false);
-      expect(songTitle.sk).toBe(true);
-      // AlbumTitle
-      const albumTitle = music.getChildByName('AlbumTitle');
-      expect(albumTitle.attrType).toBe('S');
-      expect(albumTitle.pk).toBe(false);
-      expect(albumTitle.sk).toBe(false);
+      it('suffix', async () => {
+        driver2 = createDriver({
+          table: { type: 'suffix', value: 'c1-d2' },
+        });
+        await driver2.connect();
 
-      const food = testDbRes.getChildByName('Food') as DbDynamoTable;
-      expect(food.children).toHaveLength(5);
-      // Name
-      const name = food.getChildByName('Name');
-      expect(name.attrType).toBe('S');
-      expect(name.pk).toBe(true);
-      expect(name.sk).toBe(false);
-      // Color
-      const color = food.getChildByName('Color');
-      expect(color.attrType).toBe('S');
-      expect(color.pk).toBe(false);
-      expect(color.sk).toBe(true);
-      // Kind
-      const kind = food.getChildByName('Kind');
-      expect(kind.attrType).toBe('S');
-      expect(kind.pk).toBe(false);
-      expect(kind.sk).toBe(false);
-      // Country
-      const country = food.getChildByName('Country');
-      expect(country.attrType).toBe('S');
-      expect(country.pk).toBe(false);
-      expect(country.sk).toBe(false);
-      // Season
-      const season = food.getChildByName('Season');
-      expect(season.attrType).toBe('S');
-      expect(season.pk).toBe(false);
-      expect(season.sk).toBe(false);
+        const dbRootRes = await driver2.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe('DynamoDB');
+
+        const table = testDbRes.getChildByName('a2-b1_filTer-Test_c1-d2');
+        expect(table).not.toBeUndefined();
+
+        for (const a of [1, 3]) {
+          for (const b of [2, 3]) {
+            const tableName = `a${a}-b${b}_filTer-Test_c${b}-d${a}`;
+            const table = testDbRes.getChildByName(tableName);
+            expect(table).toBeUndefined();
+          }
+        }
+
+        await driver2.disconnect();
+      });
     });
   });
 
@@ -1124,4 +1219,20 @@ describe('AwsDynamoDBDriver', () => {
       });
     });
   });
+
+  function createDriver(resourceFilter?: ResourceFilter): AwsDriver {
+    const setting: ConnectionSetting = {
+      name: 'localDynamo',
+      dbType: DBType.Aws,
+      awsSetting: {
+        supplyCredentialType: SupplyCredentialType.ExplicitInProperty,
+        services: [AwsServiceType.DynamoDB],
+        region: connectOption.region,
+      },
+      resourceFilter,
+      ...connectOption,
+    };
+
+    return new AwsDriver(setting);
+  }
 });

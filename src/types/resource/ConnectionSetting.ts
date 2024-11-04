@@ -3,6 +3,18 @@ import { SupplyCredentialType } from './AwsSupplyCredentialType';
 import { DBType } from './DBType';
 import { SQLServerAuthenticationType } from './SQLServerAuthenticationType';
 
+export type ResourceFilterDetail = {
+  type: 'prefix' | 'suffix' | 'include';
+  value: string;
+};
+
+export type ResourceFilter = {
+  schema?: ResourceFilterDetail;
+  table?: ResourceFilterDetail;
+  bucket?: ResourceFilterDetail;
+  group?: ResourceFilterDetail;
+};
+
 export type SshSetting = {
   use: boolean;
   authMethod: string;
@@ -131,4 +143,5 @@ export type ConnectionSetting = {
   transactionIsolationLevel?: TransactionIsolationLevel;
   queryTimeoutMs?: number;
   lockWaitTimeoutMs?: number;
+  resourceFilter?: ResourceFilter;
 };

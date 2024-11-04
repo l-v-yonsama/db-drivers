@@ -59,7 +59,7 @@ import {
   ScanParams,
   TTLDesc,
 } from '../../types';
-import { setRdhMetaAndStatement } from '../../utils';
+import { acceptResourceFilter, setRdhMetaAndStatement } from '../../utils';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
@@ -140,7 +140,13 @@ export class AwsDynamoServiceClient
   }
 
   async listTables(): Promise<TableDescWithExtraAttrs[]> {
-    const tableNames = await this.listTableNames();
+    let tableNames = await this.listTableNames();
+    const { resourceFilter } = this.conRes;
+    if (resourceFilter && resourceFilter.table) {
+      tableNames = tableNames.filter((it) =>
+        acceptResourceFilter(it, resourceFilter.table),
+      );
+    }
     const tableList: TableDescWithExtraAttrs[] = [];
     await Promise.all(
       tableNames.map(async (TableName) => {

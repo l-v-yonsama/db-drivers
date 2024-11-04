@@ -25,6 +25,7 @@ import {
   SslSetting,
   TransactionIsolationLevel,
   UniqueKeyConstraint,
+  ResourceFilter,
 } from '../types';
 
 const uid = new ShortUniqueId();
@@ -288,6 +289,7 @@ export class DbConnection
   public transactionIsolationLevel?: TransactionIsolationLevel;
   public queryTimeoutMs?: number;
   public lockWaitTimeoutMs?: number;
+  public resourceFilter?: ResourceFilter;
 
   constructor(prop: any) {
     super(ResourceType.Connection, prop.name);
@@ -311,6 +313,7 @@ export class DbConnection
     this.transactionIsolationLevel = prop.transactionIsolationLevel;
     this.queryTimeoutMs = prop.queryTimeoutMs;
     this.lockWaitTimeoutMs = prop.lockWaitTimeoutMs;
+    this.resourceFilter = prop.resourceFilter;
     this.isConnected = false;
     this.isInProgress = false;
   }

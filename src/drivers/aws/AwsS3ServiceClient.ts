@@ -6,6 +6,8 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   GetObjectCommandOutput,
+  HeadBucketCommand,
+  HeadBucketCommandInput,
   HeadObjectCommand,
   HeadObjectCommandOutput,
   ListBucketsCommand,
@@ -34,7 +36,11 @@ import {
   S3KeyParams,
 } from '../../resource';
 import { AwsServiceType, ConnectionSetting, ScanParams } from '../../types';
-import { parseContentType, prettyFileSize } from '../../utils';
+import {
+  acceptResourceFilter,
+  parseContentType,
+  prettyFileSize,
+} from '../../utils';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
@@ -319,6 +325,12 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
       const buckets = await this.s3Client.send(new ListBucketsCommand({}));
       if (buckets.Buckets) {
         for (const bucket of buckets.Buckets) {
+          const { resourceFilter } = this.conRes;
+          if (resourceFilter?.bucket) {
+            if (!acceptResourceFilter(bucket.Name, resourceFilter.bucket)) {
+              continue;
+            }
+          }
           const dbBucket = new DbS3Bucket(bucket.Name, bucket.CreationDate);
           dbDatabase.addChild(dbBucket);
         }
@@ -355,7 +367,18 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
   }
 
   async createBucket({ bucket }: { bucket: string }): Promise<void> {
-    await this.s3Client.send(new CreateBucketCommand({ Bucket: bucket }));
+    try {
+      // バケットの存在を確認
+      const headParams: HeadBucketCommandInput = { Bucket: bucket };
+      await this.s3Client.send(new HeadBucketCommand(headParams));
+    } catch (error) {
+      if (error.name === 'NotFound') {
+        // バケットが存在しない場合に作成
+        await this.s3Client.send(new CreateBucketCommand({ Bucket: bucket }));
+      } else {
+        throw error;
+      }
+    }
   }
 
   async getValueByKey({
@@ -414,7 +437,7 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
         new ListObjectsCommand(bucketParams),
       );
       // return response; //For unit tests
-      for (let i = 0; i < response.Contents.length; i++) {
+      for (let i = 0; i < response.Contents?.length; i++) {
         const item = response.Contents[i];
         const delR = await this.s3Client.send(
           new DeleteObjectCommand({

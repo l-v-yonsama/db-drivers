@@ -1,5 +1,5 @@
 import { ResultSetDataBuilder } from '@l-v-yonsama/rdh';
-import { QStatement, QueryParams } from '../types';
+import { QStatement, QueryParams, ResourceFilterDetail } from '../types';
 import { ITableComparable } from '../resource';
 import { Statement } from 'pgsql-ast-parser';
 
@@ -52,4 +52,22 @@ export const setRdhMetaAndStatement = ({
     editable: meta?.editable,
   });
   rdb.rs.queryConditions = conditions;
+};
+
+export const acceptResourceFilter = (
+  resName: string,
+  filterDetail: ResourceFilterDetail,
+): boolean => {
+  if (filterDetail.value === '') {
+    return true;
+  }
+  const lowerResName = resName.toLowerCase();
+  if (filterDetail.type === 'include') {
+    return lowerResName.includes(filterDetail.value.toLocaleLowerCase());
+  } else if (filterDetail.type === 'prefix') {
+    return lowerResName.startsWith(filterDetail.value.toLocaleLowerCase());
+  } else if (filterDetail.type === 'suffix') {
+    return lowerResName.endsWith(filterDetail.value.toLocaleLowerCase());
+  }
+  return false;
 };

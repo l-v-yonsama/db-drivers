@@ -487,7 +487,7 @@ ORDER BY s.session_id DESC
       const schemaRes = new DbSchema(currentSchemaName);
       dbDatabase.addChild(schemaRes);
     } else {
-      const dbSchemas = await this.getSchemas(dbDatabase);
+      const dbSchemas = this.filterSchemas(await this.getSchemas(dbDatabase));
       dbSchemas.forEach((res) => {
         dbDatabase.addChild(res);
       });
@@ -496,14 +496,16 @@ ORDER BY s.session_id DESC
     this.resetDefaultSchema(dbDatabase, currentSchemaName);
 
     for (const dbSchema of dbDatabase.children) {
-      const dbTables = await this.getTables(dbSchema);
+      const dbTables = this.filterTables(await this.getTables(dbSchema));
       dbTables.forEach((res) => dbSchema.addChild(res));
       await this.setColumns(dbSchema);
     }
 
     const defaultSchema = dbDatabase.getSchema({ isDefault: true });
-    await this.setForinKeys(defaultSchema);
-    await this.setUniqueKeys(defaultSchema);
+    if (defaultSchema) {
+      await this.setForinKeys(defaultSchema);
+      await this.setUniqueKeys(defaultSchema);
+    }
     return dbResources;
   }
 

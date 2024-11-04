@@ -33,6 +33,24 @@ export async function init(): Promise<void> {
       'CREATE SCHEMA IF NOT EXISTS test2 AUTHORIZATION testuser',
     );
 
+    for (const a of [1, 2, 3]) {
+      for (const b of [1, 2]) {
+        const schemaName = `a${a}_b${b}_filTer_Test_c${b}_d${a}`;
+        await pool.query(
+          `CREATE SCHEMA IF NOT EXISTS ${schemaName} AUTHORIZATION testuser`,
+        );
+        for (const c of [1, 2, 3]) {
+          for (const d of [1, 2]) {
+            const tableName = `c${c}_d${d}_ftT_e${d}_f${c}`;
+            await pool.query(`DROP TABLE IF EXISTS ${schemaName}.${tableName}`);
+            await pool.query(
+              `create TABLE ${schemaName}.${tableName} ( id SERIAL NOT NULL PRIMARY KEY )`,
+            );
+          }
+        }
+      }
+    }
+
     await pool.query(CREATE_TABLE_STATEMENT);
     await pool.query(
       "COMMENT ON TABLE testtable IS 'table with various data types'",

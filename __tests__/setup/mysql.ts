@@ -149,11 +149,15 @@ export async function init(): Promise<void> {
       );
     }
 
-    await con.execute('DROP DATABASE IF EXISTS stock_market');
-    await con.execute(`CREATE DATABASE stock_market`);
-    await con.execute(
-      `GRANT ALL PRIVILEGES ON stock_market.* TO 'testuser'@'%' WITH GRANT OPTION`,
-    );
+    const reCreateDatabase = async (dbName: string) => {
+      await con.execute(`DROP DATABASE IF EXISTS ${dbName}`);
+      await con.execute(`CREATE DATABASE ${dbName}`);
+      await con.execute(
+        `GRANT ALL PRIVILEGES ON ${dbName}.* TO 'testuser'@'%' WITH GRANT OPTION`,
+      );
+    };
+
+    await reCreateDatabase('stock_market');
     await con.execute(CREATE_TABLE_STOCK_MARKET_SAMPLE);
     await con.execute(
       `INSERT INTO stock_market.\`stocks by trading volume\` VALUES (1, 'aaa')`,
@@ -162,11 +166,23 @@ export async function init(): Promise<void> {
       `INSERT INTO stock_market.\`stocks by trading volume\` VALUES (2, 'bbb')`,
     );
 
-    await con.execute('DROP DATABASE IF EXISTS oradb');
-    await con.execute(`CREATE DATABASE oradb`);
-    await con.execute(
-      `GRANT ALL PRIVILEGES ON oradb.* TO 'testuser'@'%' WITH GRANT OPTION`,
-    );
+    for (const a of [1, 2, 3]) {
+      for (const b of [1, 2]) {
+        const dbName = `a${a}_b${b}_filTer_Test_c${b}_d${a}`;
+        await reCreateDatabase(dbName);
+        for (const c of [1, 2, 3]) {
+          for (const d of [1, 2]) {
+            const tableName = `c${c}_d${d}_ftT_e${d}_f${c}`;
+            await con.execute(
+              `create TABLE ${dbName}.${tableName} ( id int unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY )`,
+            );
+          }
+        }
+      }
+    }
+
+    await reCreateDatabase('oradb');
+
     await con.execute(CREATE_TABLE_ORA_DEPT);
     await con.execute(CREATE_TABLE_ORA_EMP);
     for (let i = 1; i <= 10; i++) {

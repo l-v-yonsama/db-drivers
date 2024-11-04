@@ -5,7 +5,12 @@ import {
   toNum,
 } from '@l-v-yonsama/rdh';
 import { parseQuery, toCountRecordsQuery } from '../helpers';
-import { DbTable, RdsDatabase, SchemaAndTableName } from '../resource';
+import {
+  DbSchema,
+  DbTable,
+  RdsDatabase,
+  SchemaAndTableName,
+} from '../resource';
 import {
   ConnectionSetting,
   GeneralResult,
@@ -15,7 +20,7 @@ import {
   TransactionControlType,
   TransactionIsolationLevel,
 } from '../types';
-import { setRdhMetaAndStatement } from '../utils';
+import { acceptResourceFilter, setRdhMetaAndStatement } from '../utils';
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 
 export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
@@ -218,6 +223,26 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     }
 
     return undefined;
+  }
+
+  protected filterSchemas(schemas: DbSchema[]): DbSchema[] {
+    const { resourceFilter } = this.conRes;
+    if (!resourceFilter?.schema) {
+      return schemas;
+    }
+    return schemas.filter((it) =>
+      acceptResourceFilter(it.name, resourceFilter.schema),
+    );
+  }
+
+  protected filterTables(tables: DbTable[]): DbTable[] {
+    const { resourceFilter } = this.conRes;
+    if (!resourceFilter?.table) {
+      return tables;
+    }
+    return tables.filter((it) =>
+      acceptResourceFilter(it.name, resourceFilter.table),
+    );
   }
 
   resetDefaultSchema(database: RdsDatabase, hint = ''): void {

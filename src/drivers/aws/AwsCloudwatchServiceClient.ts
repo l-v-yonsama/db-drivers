@@ -36,6 +36,7 @@ import {
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
+import { acceptResourceFilter } from '../../utils';
 
 export class AwsCloudwatchServiceClient
   extends AwsServiceClient
@@ -343,6 +344,14 @@ export class AwsCloudwatchServiceClient
         );
         if (result.logGroups) {
           for (const logGroup of result.logGroups) {
+            const { resourceFilter } = this.conRes;
+            if (
+              resourceFilter?.group &&
+              !acceptResourceFilter(logGroup.logGroupName, resourceFilter.group)
+            ) {
+              continue;
+            }
+
             const res = new DbLogGroup(logGroup.logGroupName, logGroup);
             if (logGroup.storedBytes) {
               res.comment = res.getProperties().storedBytes;
