@@ -284,6 +284,38 @@ describe('MySQLDriver', () => {
           }
         }
       });
+
+      it('regex', async () => {
+        driver2 = createRDSDriver({
+          resourceFilter: {
+            schema: { type: 'regex', value: 'a[12]_B1' },
+            table: { type: 'regex', value: 'c2_d[12]' },
+          },
+        });
+        await driver2.connect();
+
+        const dbRootRes = await driver2.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe(driver.getConnectionRes().database);
+
+        const schemaRes = testDbRes.getChildByName('a1_b1_filTer_Test_c1_d1');
+        expect(schemaRes).not.toBeUndefined();
+        const schemaRes2 = testDbRes.getChildByName('a2_b1_filTer_Test_c1_d2');
+        expect(schemaRes2).not.toBeUndefined();
+
+        const tableRes = schemaRes.getChildByName('c2_d2_ftT_e2_f2');
+        expect(tableRes).not.toBeUndefined();
+        expect(tableRes.children).toHaveLength(1);
+        const tableRes2 = schemaRes.getChildByName('c2_d1_ftT_e1_f2');
+        expect(tableRes2).not.toBeUndefined();
+
+        for (const b of [2, 3]) {
+          const schemaName = `a3_b${b}_filTer_Test_c${b}_d3`;
+          const schemaRes = testDbRes.getChildByName(schemaName);
+          expect(schemaRes).toBeUndefined();
+        }
+      });
     });
   });
 

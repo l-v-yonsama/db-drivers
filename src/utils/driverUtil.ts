@@ -62,12 +62,17 @@ export const acceptResourceFilter = (
     return true;
   }
   const lowerResName = resName.toLowerCase();
+  const filterValue = filterDetail.value.toLocaleLowerCase();
+
   if (filterDetail.type === 'include') {
-    return lowerResName.includes(filterDetail.value.toLocaleLowerCase());
+    return lowerResName.includes(filterValue);
   } else if (filterDetail.type === 'prefix') {
-    return lowerResName.startsWith(filterDetail.value.toLocaleLowerCase());
+    return lowerResName.startsWith(filterValue);
   } else if (filterDetail.type === 'suffix') {
-    return lowerResName.endsWith(filterDetail.value.toLocaleLowerCase());
+    return lowerResName.endsWith(filterValue);
+  } else if (filterDetail.type === 'regex') {
+    const regex = new RegExp(filterDetail.value, 'i');
+    return regex.test(lowerResName);
   }
   return false;
 };

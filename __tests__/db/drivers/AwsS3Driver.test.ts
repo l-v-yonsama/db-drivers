@@ -226,6 +226,29 @@ describe('AwsS3Driver', () => {
 
         await driver2.disconnect();
       });
+
+      it('regex', async () => {
+        driver2 = createDriver({
+          bucket: { type: 'regex', value: 'A[23]-b1' },
+        });
+        await driver2.connect();
+
+        const dbRootRes = await driver2.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe('S3');
+
+        let table = testDbRes.getChildByName('a2-b1-filter-test.c1.d2');
+        expect(table).not.toBeUndefined();
+        table = testDbRes.getChildByName('a3-b1-filter-test.c1.d3');
+        expect(table).not.toBeUndefined();
+
+        for (const b of [2, 3]) {
+          const tableName = `a1-b${b}-filter-test.c${b}.d1`;
+          const table = testDbRes.getChildByName(tableName);
+          expect(table).toBeUndefined();
+        }
+      });
     });
   });
 

@@ -218,6 +218,29 @@ describe('AwsCloudwatchClient', () => {
 
         await driver2.disconnect();
       });
+
+      it('regex', async () => {
+        driver2 = createDriver({
+          group: { type: 'regex', value: 'a[23]-B1' },
+        });
+        await driver2.connect();
+
+        const dbRootRes = await driver2.getInfomationSchemas();
+        expect(dbRootRes).toHaveLength(1);
+        testDbRes = dbRootRes[0];
+        expect(testDbRes.name).toBe('Cloudwatch');
+
+        let table = testDbRes.getChildByName('a2-b1_filTer-Test_c1-d2');
+        expect(table).not.toBeUndefined();
+        table = testDbRes.getChildByName('a3-b1_filTer-Test_c1-d3');
+        expect(table).not.toBeUndefined();
+
+        for (const b of [2, 3]) {
+          const tableName = `a1-b${b}_filTer-Test_c${b}-d1`;
+          const table = testDbRes.getChildByName(tableName);
+          expect(table).toBeUndefined();
+        }
+      });
     });
   });
 

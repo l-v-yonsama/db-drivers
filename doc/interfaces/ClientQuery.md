@@ -21,7 +21,7 @@
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:144](https://github.com/l-v-yonsama/db-drivers/blob/d7411fa80bbe459f29f7bf46483be482369d0924/src/types/drivers/Keycloak.ts#L144)
+[src/types/drivers/Keycloak.ts:144](https://github.com/l-v-yonsama/db-drivers/blob/c4a4b07bfa6cd2e1b70dcd15bfbdef9b8c62482a/src/types/drivers/Keycloak.ts#L144)
 
 ___
 
@@ -31,7 +31,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:145](https://github.com/l-v-yonsama/db-drivers/blob/d7411fa80bbe459f29f7bf46483be482369d0924/src/types/drivers/Keycloak.ts#L145)
+[src/types/drivers/Keycloak.ts:145](https://github.com/l-v-yonsama/db-drivers/blob/c4a4b07bfa6cd2e1b70dcd15bfbdef9b8c62482a/src/types/drivers/Keycloak.ts#L145)
 
 ___
 
@@ -41,7 +41,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:146](https://github.com/l-v-yonsama/db-drivers/blob/d7411fa80bbe459f29f7bf46483be482369d0924/src/types/drivers/Keycloak.ts#L146)
+[src/types/drivers/Keycloak.ts:146](https://github.com/l-v-yonsama/db-drivers/blob/c4a4b07bfa6cd2e1b70dcd15bfbdef9b8c62482a/src/types/drivers/Keycloak.ts#L146)
 
 ___
 
@@ -51,7 +51,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:147](https://github.com/l-v-yonsama/db-drivers/blob/d7411fa80bbe459f29f7bf46483be482369d0924/src/types/drivers/Keycloak.ts#L147)
+[src/types/drivers/Keycloak.ts:147](https://github.com/l-v-yonsama/db-drivers/blob/c4a4b07bfa6cd2e1b70dcd15bfbdef9b8c62482a/src/types/drivers/Keycloak.ts#L147)
 
 ___
 
@@ -63,7 +63,7 @@ whether this is a search query or a getClientById query
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:149](https://github.com/l-v-yonsama/db-drivers/blob/d7411fa80bbe459f29f7bf46483be482369d0924/src/types/drivers/Keycloak.ts#L149)
+[src/types/drivers/Keycloak.ts:149](https://github.com/l-v-yonsama/db-drivers/blob/c4a4b07bfa6cd2e1b70dcd15bfbdef9b8c62482a/src/types/drivers/Keycloak.ts#L149)
 
 ___
 
@@ -75,4 +75,4 @@ filter clients that cannot be viewed in full by admin
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:151](https://github.com/l-v-yonsama/db-drivers/blob/d7411fa80bbe459f29f7bf46483be482369d0924/src/types/drivers/Keycloak.ts#L151)
+[src/types/drivers/Keycloak.ts:151](https://github.com/l-v-yonsama/db-drivers/blob/c4a4b07bfa6cd2e1b70dcd15bfbdef9b8c62482a/src/types/drivers/Keycloak.ts#L151)

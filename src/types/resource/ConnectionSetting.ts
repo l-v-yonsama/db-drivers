@@ -4,7 +4,7 @@ import { DBType } from './DBType';
 import { SQLServerAuthenticationType } from './SQLServerAuthenticationType';
 
 export type ResourceFilterDetail = {
-  type: 'prefix' | 'suffix' | 'include';
+  type: 'prefix' | 'suffix' | 'include' | 'regex';
   value: string;
 };
 
