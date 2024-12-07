@@ -133,10 +133,10 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
         );
 
         for (const item of response.Contents) {
-          if (startTime && item.LastModified.valueOf() < startTime) {
+          if (startTime && item.LastModified.valueOf() / 1000 < startTime) {
             continue;
           }
-          if (endTime && item.LastModified.valueOf() > endTime) {
+          if (endTime && item.LastModified.valueOf() / 1000 > endTime) {
             continue;
           }
           const key = new DbKey<S3KeyParams>(item.Key, {
