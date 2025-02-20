@@ -868,7 +868,31 @@ ORDER BY s.session_id DESC
           password: this.conRes.password,
         };
       }
-
+      case SQLServerAuthenticationType.ntlm: {
+        const opt: config = {
+          ...options,
+          authentication: {
+            type: authType,
+            options: {
+              /**
+               * User name from your windows account.
+               */
+              userName: this.conRes.user,
+              /**
+               * Password from your windows account.
+               */
+              password: this.conRes.password,
+              /**
+               * Once you set domain for ntlm authentication type, driver will connect to SQL Server using domain login.
+               *
+               * This is necessary for forming a connection using ntlm type
+               */
+              domain: sqlServer.domain,
+            },
+          },
+        };
+        return opt;
+      }
       case SQLServerAuthenticationType.azureActiveDirectoryDefault:
       case SQLServerAuthenticationType.azureActiveDirectoryMsiVm: {
         const opt: config = {

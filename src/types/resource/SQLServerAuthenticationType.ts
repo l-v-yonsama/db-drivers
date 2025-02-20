@@ -1,5 +1,6 @@
 export const SQLServerAuthenticationType = {
   default: 'default',
+  ntlm: 'ntlm',
   azureActiveDirectoryDefault: 'azure-active-directory-default',
   azureActiveDirectoryPassword: 'azure-active-directory-password',
   azureActiveDirectoryServicePrincipalSecret:

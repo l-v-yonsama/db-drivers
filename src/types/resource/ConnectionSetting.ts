@@ -79,6 +79,8 @@ export type SQLServerSetting = {
   clientSecret?: string;
   token?: string;
   connectString?: string;
+  // for ntlm
+  domain?: string;
 };
 
 export type TransactionIsolationLevel =
