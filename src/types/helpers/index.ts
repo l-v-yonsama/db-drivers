@@ -16,6 +16,7 @@ export type QNames = {
 export type QStatement = {
   ast: Statement;
   names: QNames;
+  additionalNames?: QNames[];
 };
 
 export type QueryWithBindsResult = {
@@ -62,6 +63,11 @@ export type ProposalParams = {
   lastChar: string;
   keyword: string;
   parentWord?: string;
+  db?: RdsDatabase | AwsDatabase;
+};
+
+export type CreateTableDefinitionsForPromptParams = {
+  sql: string;
   db?: RdsDatabase | AwsDatabase;
 };
 

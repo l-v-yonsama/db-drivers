@@ -34,6 +34,7 @@ import {
 import {
   BindOptions,
   BindParamPosition,
+  CreateTableDefinitionsForPromptParams,
   parseDynamoAttrType,
   Proposal,
   ProposalKind,
@@ -761,10 +762,11 @@ export const parseQuery = (sql: string): QStatement | undefined => {
       if (ast.type === 'with recursive' || ast.type === 'with') {
         ast = ast.in;
       }
-      const names = getQNames(result[0], replacedSql);
+      const { names, additionalNames } = getQNames(result[0], replacedSql);
       return {
         ast,
         names,
+        additionalNames,
       };
     }
   } catch (_) {
@@ -1031,6 +1033,87 @@ export const normalizeSimpleParametersQuery = (
   });
 
   return { query: newLines.join('\n'), binds };
+};
+
+export const createTableDefinisionsForPrompt = (
+  params: CreateTableDefinitionsForPromptParams,
+): string | undefined => {
+  const { db: idb, sql } = params;
+
+  const db = idb instanceof RdsDatabase ? idb : toRdsDatabase(idb);
+
+  try {
+    if (db) {
+      const qst = parseQuery(sql);
+      if (qst === undefined || qst.names === undefined) {
+        return undefined;
+      }
+
+      const dbTables: DbTable[] = [];
+      const qnameList: QNames[] = [qst.names];
+      if (qst.additionalNames) {
+        qnameList.push(...qst.additionalNames);
+      }
+      qnameList.forEach(({ schemaName, tableName }) => {
+        const schemas = db.children.filter((it) =>
+          schemaName ? equalsIgnoreCase(it.name, schemaName) : true,
+        );
+        for (const schema of schemas) {
+          const tbl = schema.children.find((it) =>
+            equalsIgnoreCase(it.name, tableName),
+          );
+          if (tbl) {
+            dbTables.push(tbl);
+            if (tbl.foreignKeys?.referenceTo) {
+              Object.values(tbl.foreignKeys.referenceTo).forEach((refTo) => {
+                const tblTo = schema.children.find((it) =>
+                  equalsIgnoreCase(it.name, refTo.tableName),
+                );
+                if (
+                  tblTo &&
+                  dbTables.find((it) => it.name === tblTo.name) === undefined
+                ) {
+                  dbTables.push(tblTo);
+                }
+              });
+            }
+            if (tbl.foreignKeys?.referencedFrom) {
+              Object.values(tbl.foreignKeys.referencedFrom).forEach(
+                (refFrom) => {
+                  const tblFrom = schema.children.find((it) =>
+                    equalsIgnoreCase(it.name, refFrom.tableName),
+                  );
+                  if (
+                    tblFrom &&
+                    dbTables.find((it) => it.name === tblFrom.name) ===
+                      undefined
+                  ) {
+                    dbTables.push(tblFrom);
+                  }
+                },
+              );
+            }
+            break;
+          }
+        }
+      });
+
+      if (dbTables.length === 0) {
+        return undefined;
+      }
+      const lines: string[] = [];
+      dbTables.forEach((dbTable) => {
+        const tableDef = toCreateTableDDL({ dbTable });
+        lines.push(tableDef);
+        lines.push('');
+      });
+      return lines.join('\n');
+    }
+  } catch (_) {
+    // do nothing.
+  }
+
+  return undefined;
 };
 
 export const getProposals = (params: ProposalParams): Proposal[] => {
@@ -1485,43 +1568,77 @@ const toEmbeddedStringValue = (
   return value.toString();
 };
 
-const getQNames = (ast: Statement, sql: string): QNames | undefined => {
+const getQNames = (
+  ast: Statement,
+  sql: string,
+): {
+  names?: QNames;
+  additionalNames?: QNames[];
+} => {
+  const ret = {
+    names: undefined,
+    additionalNames: undefined,
+  };
+  const qnames: QNames[] = [];
   if (ast) {
+    // console.log('ast=', JSON.stringify(ast, null, 2));
     switch (ast.type) {
       case 'select':
-        if (ast.from && ast.from[0].type === 'table') {
-          return createQNamesUsingLocation({
-            schemaName: ast.from[0].name.schema,
-            tableName: ast.from[0].name.name,
-            location: ast.from[0]._location,
-            sql,
-          });
+        if (ast.from) {
+          ast.from
+            .filter((from) => from.type === 'table')
+            .forEach((from) => {
+              const fromName = from['name'] as any;
+              qnames.push(
+                createQNamesUsingLocation({
+                  schemaName: fromName.schema,
+                  tableName: fromName.name,
+                  location: fromName._location,
+                  sql,
+                }),
+              );
+            });
         }
         break;
       case 'insert':
-        return createQNamesUsingLocation({
-          schemaName: ast.into.schema,
-          tableName: ast.into.name,
-          location: ast.into._location,
-          sql,
-        });
+        qnames.push(
+          createQNamesUsingLocation({
+            schemaName: ast.into.schema,
+            tableName: ast.into.name,
+            location: ast.into._location,
+            sql,
+          }),
+        );
+        break;
       case 'update':
-        return createQNamesUsingLocation({
-          schemaName: ast.table.schema,
-          tableName: ast.table.name,
-          location: ast.table._location,
-          sql,
-        });
+        qnames.push(
+          createQNamesUsingLocation({
+            schemaName: ast.table.schema,
+            tableName: ast.table.name,
+            location: ast.table._location,
+            sql,
+          }),
+        );
+        break;
       case 'delete':
-        return createQNamesUsingLocation({
-          schemaName: ast.from.schema,
-          tableName: ast.from.name,
-          location: ast.from._location,
-          sql,
-        });
+        qnames.push(
+          createQNamesUsingLocation({
+            schemaName: ast.from.schema,
+            tableName: ast.from.name,
+            location: ast.from._location,
+            sql,
+          }),
+        );
+        break;
     }
   }
-  return undefined;
+  if (qnames.length > 0) {
+    ret.names = qnames[0];
+    if (qnames.length > 1) {
+      ret.additionalNames = qnames.slice(1);
+    }
+  }
+  return ret;
 };
 
 const createQNamesUsingLocation = ({
@@ -1557,6 +1674,54 @@ const createQNamesUsingLocation = ({
     tableName,
     schemaName,
   };
+};
+
+const toCreateTableDDL = ({ dbTable }: { dbTable: DbTable }): string => {
+  const columns = dbTable.children;
+  const colDefs: string[] = [];
+  columns.forEach((col) => {
+    let line = `  ${col.name} ${col.colType}`;
+    if (col.primaryKey) {
+      line += ' PRIMARY KEY';
+    } else {
+      if (col.nullable === false) {
+        line += ' NOT NULL';
+      }
+    }
+    if (col.uniqKey) {
+      line += ' UNIQUE';
+    }
+    if (col.extra) {
+      if (col.extra.toLocaleLowerCase() === 'auto_increment') {
+        line += ' AUTO_INCREMENT';
+      }
+    }
+    if (col.default) {
+      line += ` DEFAULT ${col.default}`;
+    }
+    if (col.comment) {
+      line += ` COMMENT '${col.comment}'`;
+    }
+    colDefs.push(line);
+  });
+
+  if (dbTable.foreignKeys?.referenceTo) {
+    Object.entries(dbTable.foreignKeys.referenceTo).forEach(
+      ([colName, refTo]) => {
+        colDefs.push(
+          `  FOREIGN KEY ${refTo.constraintName}(${colName}) REFERENCES ${refTo.tableName}(${refTo.columnName})`,
+        );
+      },
+    );
+  }
+
+  let tableDef = `CREATE TABLE ${dbTable.name} (\n${colDefs.join(',\n')}\n)`;
+  if (dbTable.comment) {
+    tableDef += ` COMMENT '${dbTable.comment}';`;
+  } else {
+    tableDef += `;`;
+  }
+  return tableDef;
 };
 
 const toGeneralQuery = ({

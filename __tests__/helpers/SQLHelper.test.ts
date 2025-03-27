@@ -6,6 +6,7 @@ import {
   RdhKey,
 } from '@l-v-yonsama/rdh';
 import {
+  createTableDefinisionsForPrompt,
   getProposals,
   getResourcePositions,
   hasSetVariableClause,
@@ -590,6 +591,180 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
 
         expect(ast.ast.type).toBe('select');
         expect(ast.names.tableName).toBe('Orders');
+      });
+    });
+  });
+
+  describe('createTableDefinisionsForPrompt', () => {
+    const TESTTABLE_DEF = `CREATE TABLE testtable (
+        d1 date COMMENT '“Zero” Value 0000-00-00',
+        d2 time COMMENT '“Zero” Value 00:00:00',
+        d3 timestamp COMMENT '“Zero” Value 0000-00-00 00:00:00',
+        d4 timestamp COMMENT '“Zero” Value 0000-00-00 00:00:00',
+        d5 year COMMENT '“Zero” Value 0000',
+        f1 decimal,
+        f2 float,
+        f3 real,
+        g1 geometry,
+        ID integer PRIMARY KEY AUTO_INCREMENT,
+        j1 json COMMENT 'JSON data type',
+        long_column_name_long_text longtext,
+        n0 bit,
+        n1 tinyint COMMENT 'MAX 127',
+        n2 smallint COMMENT 'MAX 32767',
+        n3 mediumint COMMENT 'MAX 8388607',
+        n4 bigint COMMENT 'MAX 9223372036854775807',
+        s1 char,
+        s2 varchar,
+        s3a tinytext,
+        s3b text,
+        s3c mediumtext,
+        s4 enum COMMENT 'A list of a,b or c',
+        s5 binary,
+        s6 varbinary,
+        s7 blob,
+        s71 tinyblob,
+        s8 set
+      ) COMMENT 'table with various data types';`;
+
+    const DIFF_DEF = `CREATE TABLE diff (
+  birthday date,
+  first_name varchar PRIMARY KEY,
+  full_name varchar UNIQUE,
+  last_name varchar PRIMARY KEY,
+  note varchar
+  ) COMMENT 'test diff';`;
+    describe('Select statement', () => {
+      it('single table definition', () => {
+        const sql = 'select * from testtable';
+        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const expected = TESTTABLE_DEF;
+
+        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
+      });
+      it('table definition with foreign key tables', () => {
+        const sql = 'select * from testdb.order';
+        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const expected = `CREATE TABLE order (
+        amount integer COMMENT '受注金額',
+        customer_no integer UNIQUE COMMENT '顧客番号',
+        order_date date COMMENT '受注日',
+        order_no integer PRIMARY KEY AUTO_INCREMENT COMMENT '受注番号',
+        FOREIGN KEY order_ibfk_1(customer_no) REFERENCES customer(customer_no)
+      ) COMMENT '受注';
+      
+      CREATE TABLE customer (
+        customer_no integer PRIMARY KEY AUTO_INCREMENT COMMENT '顧客番号',
+        tel varchar COMMENT '電話番号'
+      ) COMMENT '顧客';
+      
+      CREATE TABLE order_detail (
+        amount integer COMMENT '金額',
+        detail_no integer PRIMARY KEY COMMENT '受注明細番号',
+        item_no integer COMMENT '商品番号',
+        order_no integer PRIMARY KEY COMMENT '受注番号',
+        FOREIGN KEY order_detail_ibfk_1(order_no) REFERENCES order(order_no)
+      ) COMMENT '受注明細';`;
+
+        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
+      });
+      it('table definition with joined tables', () => {
+        const sql = `SELECT E.*, D.LOC
+  FROM EMP E
+  LEFT JOIN DEPT D ON E.DEPTNO = D.DEPTNO
+  WHERE E.SAL > 1000
+  ORDER BY E.ENAME;`;
+        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const expected = `CREATE TABLE EMP (
+        COMM float,
+        DEPTNO integer UNIQUE,
+        EMPNO integer PRIMARY KEY,
+        ENAME varchar,
+        HIREDATE date,
+        JOB varchar,
+        MGR integer,
+        SAL float,
+        SEX tinyint NOT NULL DEFAULT 0
+      );
+      
+      CREATE TABLE DEPT (
+        DEPTNO integer PRIMARY KEY COMMENT '部門番号',
+        DNAME varchar COMMENT '部門名',
+        LOC varchar COMMENT 'ロケーション'
+      ) COMMENT '部門';
+      `;
+
+        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
+      });
+    });
+    describe('Insert statement', () => {
+      it('with bind', () => {
+        const sql = `INSERT INTO testdb.testtable (
+  n0, n1, n2, n3, n4, 
+  f1, f2, f3,
+  d1, d2, d3, d4, d5,
+  s1, s2, s3a, s3b, s3c, long_column_name_long_text, s4, s5, s6, s7, s8,
+  g1, j1 )
+  VALUES(
+    ?, ?, ?, ?, ?, 
+    ?, ?, ?,
+    ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, HEX(?), ?,
+    ST_GeomFromText('POINT(35.702727 100)'), ? )`;
+
+        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const expected = TESTTABLE_DEF;
+
+        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
+      });
+
+      it('without bind', () => {
+        const sql = `INSERT INTO testdb.diff (
+  last_name, first_name, full_name, note, birthday )
+  VALUES('John', 'Disney', 'John Disney', 'blah', '2001-09-12')`;
+
+        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const expected = DIFF_DEF;
+
+        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
+      });
+    });
+    describe('Update statement', () => {
+      it('with bind', () => {
+        const sql = `UPDATE testtable SET n0=? WHERE s1=?`;
+
+        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const expected = TESTTABLE_DEF;
+
+        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
+      });
+
+      it('without bind', () => {
+        const sql = `UPDATE diff SET note='blah' WHERE full_name='A'`;
+
+        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const expected = DIFF_DEF;
+
+        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
+      });
+    });
+    describe('Delete statement', () => {
+      it('with bind', () => {
+        const sql = `DELETE FROM testtable WHERE s1=?`;
+
+        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const expected = TESTTABLE_DEF;
+
+        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
+      });
+
+      it('without bind', () => {
+        const sql = `DELETE FROM diff WHERE full_name='A'`;
+
+        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const expected = DIFF_DEF;
+
+        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
       });
     });
   });

@@ -120,3 +120,21 @@ message
 | 40 | OPERATIONS | BOSTON |
 
 ```
+
+### Release
+
+for local test
+
+```sh
+npm pack
+```
+
+publish
+
+```sh
+npm publish
+
+npm notice Publishing to https://registry.npmjs.org/
+This operation requires a one-time password.
+Enter OTP: xxxxxx<ENTER>
+```
