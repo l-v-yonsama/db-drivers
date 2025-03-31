@@ -1,4 +1,4 @@
-import { GeneralColumnType, sleep, toNum } from '@l-v-yonsama/rdh';
+import { eolToSpace, GeneralColumnType, sleep, toNum } from '@l-v-yonsama/rdh';
 import {
   ConnectionSetting,
   DbColumn,
@@ -331,6 +331,76 @@ describe('MySQLDriver', () => {
     it('should not throw error', async () => {
       const query = 'SET group_concat_max_len = 10000000';
       await expect(driver.requestSql({ sql: query })).resolves.not.toThrow();
+    });
+  });
+
+  describe('getTableDDL', () => {
+    const empDDL =
+      'CREATE TABLE `EMP` (\n' +
+      '  `EMPNO` int NOT NULL,\n' +
+      '  `ENAME` varchar(10) COLLATE utf8mb4_ja_0900_as_cs DEFAULT NULL,\n' +
+      "  `SEX` tinyint NOT NULL DEFAULT '0',\n" +
+      '  `JOB` varchar(9) COLLATE utf8mb4_ja_0900_as_cs DEFAULT NULL,\n' +
+      '  `MGR` int DEFAULT NULL,\n' +
+      '  `HIREDATE` date DEFAULT NULL,\n' +
+      '  `SAL` float(7,2) DEFAULT NULL,\n' +
+      '  `COMM` float(7,2) DEFAULT NULL,\n' +
+      '  `DEPTNO` int DEFAULT NULL,\n' +
+      '  PRIMARY KEY (`EMPNO`),\n' +
+      '  KEY `newfk` (`DEPTNO`)\n' +
+      ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_ja_0900_as_cs';
+
+    const testtableDDL =
+      'CREATE TABLE `testtable` (\n' +
+      '  `ID` int NOT NULL AUTO_INCREMENT,\n' +
+      '  `n0` bit(1) DEFAULT NULL,\n' +
+      "  `n1` tinyint DEFAULT NULL COMMENT 'MAX 127',\n" +
+      "  `n2` smallint DEFAULT NULL COMMENT 'MAX 32767',\n" +
+      "  `n3` mediumint DEFAULT NULL COMMENT 'MAX 8388607',\n" +
+      "  `n4` bigint DEFAULT NULL COMMENT 'MAX 9223372036854775807',\n" +
+      '  `f1` decimal(6,4) DEFAULT NULL,\n' +
+      '  `f2` float DEFAULT NULL,\n' +
+      '  `f3` double DEFAULT NULL,\n' +
+      "  `d1` date DEFAULT NULL COMMENT '“Zero” Value 0000-00-00',\n" +
+      "  `d2` time DEFAULT NULL COMMENT '“Zero” Value 00:00:00',\n" +
+      "  `d3` datetime DEFAULT NULL COMMENT '“Zero” Value 0000-00-00 00:00:00',\n" +
+      "  `d4` timestamp NULL DEFAULT NULL COMMENT '“Zero” Value 0000-00-00 00:00:00',\n" +
+      "  `d5` year DEFAULT NULL COMMENT '“Zero” Value 0000',\n" +
+      '  `s1` char(10) COLLATE utf8mb4_ja_0900_as_cs DEFAULT NULL,\n' +
+      '  `s2` varchar(10) COLLATE utf8mb4_ja_0900_as_cs DEFAULT NULL,\n' +
+      '  `s3a` tinytext COLLATE utf8mb4_ja_0900_as_cs,\n' +
+      '  `s3b` text COLLATE utf8mb4_ja_0900_as_cs,\n' +
+      '  `s3c` mediumtext COLLATE utf8mb4_ja_0900_as_cs,\n' +
+      '  `long_column_name_long_text` longtext COLLATE utf8mb4_ja_0900_as_cs,\n' +
+      "  `s4` enum('a','b','c') COLLATE utf8mb4_ja_0900_as_cs DEFAULT NULL COMMENT 'A list of a,b or c',\n" +
+      '  `s5` binary(10) DEFAULT NULL,\n' +
+      '  `s6` varbinary(10) DEFAULT NULL,\n' +
+      '  `s7` blob,\n' +
+      '  `s71` tinyblob,\n' +
+      "  `s8` set('a','b','c') COLLATE utf8mb4_ja_0900_as_cs DEFAULT NULL,\n" +
+      '  `g1` geometry DEFAULT NULL,\n' +
+      "  `j1` json DEFAULT NULL COMMENT 'JSON data type',\n" +
+      '  PRIMARY KEY (`ID`)\n' +
+      ") ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_ja_0900_as_cs COMMENT='table with various data types'";
+
+    it('should return DDL when both schema and table name are specified', async () => {
+      const ddl = await driver.getTableDDL({
+        schemaName: 'testdb',
+        tableName: 'EMP',
+      });
+      expect(eolToSpace(ddl)).toBe(eolToSpace(empDDL));
+    });
+    it('should return DDL when schema is not specified', async () => {
+      const ddl = await driver.getTableDDL({
+        tableName: 'testtable',
+      });
+      expect(eolToSpace(ddl)).toBe(eolToSpace(testtableDDL));
+    });
+
+    it('should throw an error when tableName is empty', async () => {
+      await expect(driver.getTableDDL({ tableName: '' })).rejects.toThrow(
+        'tableName must not be empty',
+      );
     });
   });
 

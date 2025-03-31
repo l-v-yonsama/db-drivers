@@ -635,16 +635,16 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
   note varchar
   ) COMMENT 'test diff';`;
     describe('Select statement', () => {
-      it('single table definition', () => {
+      it('single table definition', async () => {
         const sql = 'select * from testtable';
-        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const promptText = await createTableDefinisionsForPrompt({ sql, db });
         const expected = TESTTABLE_DEF;
 
         expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
       });
-      it('table definition with foreign key tables', () => {
+      it('table definition with foreign key tables', async () => {
         const sql = 'select * from testdb.order';
-        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const promptText = await createTableDefinisionsForPrompt({ sql, db });
         const expected = `CREATE TABLE order (
         amount integer COMMENT '受注金額',
         customer_no integer UNIQUE COMMENT '顧客番号',
@@ -668,13 +668,13 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
 
         expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
       });
-      it('table definition with joined tables', () => {
+      it('table definition with joined tables', async () => {
         const sql = `SELECT E.*, D.LOC
   FROM EMP E
   LEFT JOIN DEPT D ON E.DEPTNO = D.DEPTNO
   WHERE E.SAL > 1000
   ORDER BY E.ENAME;`;
-        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const promptText = await createTableDefinisionsForPrompt({ sql, db });
         const expected = `CREATE TABLE EMP (
         COMM float,
         DEPTNO integer UNIQUE,
@@ -698,7 +698,7 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
       });
     });
     describe('Insert statement', () => {
-      it('with bind', () => {
+      it('with bind', async () => {
         const sql = `INSERT INTO testdb.testtable (
   n0, n1, n2, n3, n4, 
   f1, f2, f3,
@@ -712,56 +712,56 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
     ?, ?, ?, ?, ?, ?, ?, ?, ?, HEX(?), ?,
     ST_GeomFromText('POINT(35.702727 100)'), ? )`;
 
-        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const promptText = await createTableDefinisionsForPrompt({ sql, db });
         const expected = TESTTABLE_DEF;
 
         expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
       });
 
-      it('without bind', () => {
+      it('without bind', async () => {
         const sql = `INSERT INTO testdb.diff (
   last_name, first_name, full_name, note, birthday )
   VALUES('John', 'Disney', 'John Disney', 'blah', '2001-09-12')`;
 
-        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const promptText = await createTableDefinisionsForPrompt({ sql, db });
         const expected = DIFF_DEF;
 
         expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
       });
     });
     describe('Update statement', () => {
-      it('with bind', () => {
+      it('with bind', async () => {
         const sql = `UPDATE testtable SET n0=? WHERE s1=?`;
 
-        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const promptText = await createTableDefinisionsForPrompt({ sql, db });
         const expected = TESTTABLE_DEF;
 
         expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
       });
 
-      it('without bind', () => {
+      it('without bind', async () => {
         const sql = `UPDATE diff SET note='blah' WHERE full_name='A'`;
 
-        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const promptText = await createTableDefinisionsForPrompt({ sql, db });
         const expected = DIFF_DEF;
 
         expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
       });
     });
     describe('Delete statement', () => {
-      it('with bind', () => {
+      it('with bind', async () => {
         const sql = `DELETE FROM testtable WHERE s1=?`;
 
-        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const promptText = await createTableDefinisionsForPrompt({ sql, db });
         const expected = TESTTABLE_DEF;
 
         expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
       });
 
-      it('without bind', () => {
+      it('without bind', async () => {
         const sql = `DELETE FROM diff WHERE full_name='A'`;
 
-        const promptText = createTableDefinisionsForPrompt({ sql, db });
+        const promptText = await createTableDefinisionsForPrompt({ sql, db });
         const expected = DIFF_DEF;
 
         expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));

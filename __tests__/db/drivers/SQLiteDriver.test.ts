@@ -1,4 +1,4 @@
-import { GeneralColumnType, sleep } from '@l-v-yonsama/rdh';
+import { eolToSpace, GeneralColumnType, sleep } from '@l-v-yonsama/rdh';
 import path from 'path';
 import {
   ConnectionSetting,
@@ -277,6 +277,50 @@ describe('SQLiteDriver', () => {
           }
         }
       });
+    });
+  });
+
+  describe('getTableDDL', () => {
+    const empDDL = `CREATE TABLE EMP (
+      EMPNO INTEGER NOT NULL,
+      ENAME TEXT default NULL,
+      SEX tinyint NOT NULL default 0,
+      JOB TEXT default NULL,
+      MGR INTEGER default NULL,
+      HIREDATE date default NULL,
+      SAL REAL default NULL,
+      COMM REAL default NULL,
+      DEPTNO INTEGER default NULL,
+      PRIMARY KEY  (EMPNO)
+    )`;
+
+    const testtableDDL = `CREATE TABLE testtable (
+      ID INTEGER PRIMARY KEY AUTOINCREMENT, 
+      f1 REAL ,
+      s1 TEXT NOT NULL,
+      d1 DATE,
+      d2 DATETIME,
+      b1 BLOB
+    )`;
+
+    it('should return DDL when both schema and table name are specified', async () => {
+      const ddl = await driver.getTableDDL({
+        schemaName: 'testdb',
+        tableName: 'EMP',
+      });
+      expect(eolToSpace(ddl)).toBe(eolToSpace(empDDL));
+    });
+    it('should return DDL when schema is not specified', async () => {
+      const ddl = await driver.getTableDDL({
+        tableName: 'testtable',
+      });
+      expect(eolToSpace(ddl)).toBe(eolToSpace(testtableDDL));
+    });
+
+    it('should throw an error when tableName is empty', async () => {
+      await expect(driver.getTableDDL({ tableName: '' })).rejects.toThrow(
+        'tableName must not be empty',
+      );
     });
   });
 

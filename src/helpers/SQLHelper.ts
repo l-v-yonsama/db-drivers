@@ -1035,10 +1035,10 @@ export const normalizeSimpleParametersQuery = (
   return { query: newLines.join('\n'), binds };
 };
 
-export const createTableDefinisionsForPrompt = (
+export const createTableDefinisionsForPrompt = async (
   params: CreateTableDefinitionsForPromptParams,
-): string | undefined => {
-  const { db: idb, sql } = params;
+): Promise<string | undefined> => {
+  const { db: idb, sql, rdsDriver } = params;
 
   const db = idb instanceof RdsDatabase ? idb : toRdsDatabase(idb);
 
@@ -1049,7 +1049,7 @@ export const createTableDefinisionsForPrompt = (
         return undefined;
       }
 
-      const dbTables: DbTable[] = [];
+      const dbTableWithSchemas: { table: DbTable; schemaName: string }[] = [];
       const qnameList: QNames[] = [qst.names];
       if (qst.additionalNames) {
         qnameList.push(...qst.additionalNames);
@@ -1063,7 +1063,7 @@ export const createTableDefinisionsForPrompt = (
             equalsIgnoreCase(it.name, tableName),
           );
           if (tbl) {
-            dbTables.push(tbl);
+            dbTableWithSchemas.push({ table: tbl, schemaName: schema.name });
             if (tbl.foreignKeys?.referenceTo) {
               Object.values(tbl.foreignKeys.referenceTo).forEach((refTo) => {
                 const tblTo = schema.children.find((it) =>
@@ -1071,9 +1071,14 @@ export const createTableDefinisionsForPrompt = (
                 );
                 if (
                   tblTo &&
-                  dbTables.find((it) => it.name === tblTo.name) === undefined
+                  dbTableWithSchemas.find(
+                    (it) => it.table.name === tblTo.name,
+                  ) === undefined
                 ) {
-                  dbTables.push(tblTo);
+                  dbTableWithSchemas.push({
+                    table: tblTo,
+                    schemaName: schema.name,
+                  });
                 }
               });
             }
@@ -1085,10 +1090,14 @@ export const createTableDefinisionsForPrompt = (
                   );
                   if (
                     tblFrom &&
-                    dbTables.find((it) => it.name === tblFrom.name) ===
-                      undefined
+                    dbTableWithSchemas.find(
+                      (it) => it.table.name === tblFrom.name,
+                    ) === undefined
                   ) {
-                    dbTables.push(tblFrom);
+                    dbTableWithSchemas.push({
+                      table: tblFrom,
+                      schemaName: schema.name,
+                    });
                   }
                 },
               );
@@ -1098,18 +1107,31 @@ export const createTableDefinisionsForPrompt = (
         }
       });
 
-      if (dbTables.length === 0) {
+      if (dbTableWithSchemas.length === 0) {
         return undefined;
       }
       const lines: string[] = [];
-      dbTables.forEach((dbTable) => {
-        const tableDef = toCreateTableDDL({ dbTable });
-        lines.push(tableDef);
+
+      for (const dbTable of dbTableWithSchemas) {
+        let tableDDL = '';
+        if (rdsDriver && rdsDriver.supportsShowCreate()) {
+          tableDDL = await rdsDriver.getTableDDL({
+            schemaName: dbTable.schemaName,
+            tableName: dbTable.table.name,
+          });
+        }
+        if (tableDDL) {
+          lines.push(tableDDL);
+        } else {
+          const tableDef = toCreateTableDDL({ dbTable: dbTable.table });
+          lines.push(tableDef);
+        }
         lines.push('');
-      });
+      }
       return lines.join('\n');
     }
   } catch (_) {
+    console.error(_);
     // do nothing.
   }
 

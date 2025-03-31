@@ -273,6 +273,20 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     }
   }
 
+  supportsShowCreate(): boolean {
+    return false;
+  }
+
+  getTableDDL({
+    tableName,
+    schemaName,
+  }: {
+    tableName: string;
+    schemaName?: string;
+  }): Promise<string> {
+    throw new Error('Does not support Show Create statement.');
+  }
+
   abstract begin(): Promise<void>;
   abstract commit(): Promise<void>;
   abstract rollback(): Promise<void>;

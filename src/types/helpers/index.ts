@@ -6,6 +6,7 @@ import {
   DbTable,
   RdsDatabase,
 } from '../../resource';
+import { RDSBaseDriver } from '../../drivers';
 
 export type QNames = {
   tableName: string;
@@ -69,6 +70,7 @@ export type ProposalParams = {
 export type CreateTableDefinitionsForPromptParams = {
   sql: string;
   db?: RdsDatabase | AwsDatabase;
+  rdsDriver?: RDSBaseDriver;
 };
 
 export type ResourcePosition = {

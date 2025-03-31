@@ -207,7 +207,11 @@ export class SQLiteDriver extends RDSBaseDriver {
 
   async getVersion(): Promise<string> {
     const sql = 'SELECT sqlite_version() AS version';
-    const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
+    const rdb = await this.requestSqlSub({
+      sql,
+      dbTable: undefined,
+      meta: { type: 'select' },
+    });
     return rdb.rs.rows[0].values.version;
   }
 
@@ -439,6 +443,35 @@ export class SQLiteDriver extends RDSBaseDriver {
 
   isSchemaSpecificationSvailable(): boolean {
     return false;
+  }
+
+  supportsShowCreate(): boolean {
+    return true;
+  }
+
+  async getTableDDL({
+    tableName,
+    schemaName,
+  }: {
+    tableName: string;
+    schemaName?: string;
+  }): Promise<string> {
+    if (tableName.length === 0) {
+      throw new Error('tableName must not be empty');
+    }
+    const sql = `select * from sqlite_master where type='table' and name=?`;
+    const rdb = await this.requestSqlSub({
+      sql,
+      dbTable: undefined,
+      conditions: { binds: [tableName] },
+      meta: { type: 'select' },
+    });
+
+    if (rdb.rs.rows.length) {
+      return rdb.rs.rows[0].values.sql ?? '';
+    }
+
+    return '';
   }
 
   async closeSub(): Promise<string> {

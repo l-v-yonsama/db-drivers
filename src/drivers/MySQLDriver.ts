@@ -49,10 +49,7 @@ export class MySQLDriver extends RDSBaseDriver {
   }
 
   async getLockWaitTimeout(): Promise<number> {
-    if (!this.con) {
-      throw new Error('No connection');
-    }
-    const [rows] = await this.con.execute<mysql.RowDataPacket[]>(
+    const rows = await this.executeOnConnection(
       `SHOW VARIABLES LIKE 'innodb_lock_wait_timeout'`,
     );
     if (rows.length) {
@@ -641,6 +638,30 @@ ORDER BY ID DESC`;
     return false;
   }
 
+  supportsShowCreate(): boolean {
+    return true;
+  }
+
+  async getTableDDL({
+    tableName,
+    schemaName,
+  }: {
+    tableName: string;
+    schemaName?: string;
+  }): Promise<string> {
+    if (tableName.length === 0) {
+      throw new Error('tableName must not be empty');
+    }
+    const name = schemaName ? `${schemaName}.${tableName}` : tableName;
+    const rows = await this.executeOnConnection(`SHOW CREATE TABLE ${name}`);
+
+    if (rows.length && rows[0]['Create Table']) {
+      return rows[0]['Create Table'] ?? '';
+    }
+
+    return '';
+  }
+
   async closeSub(): Promise<string> {
     try {
       if (this.con) {
@@ -651,6 +672,16 @@ ORDER BY ID DESC`;
     } catch (e) {
       return e.message;
     }
+  }
+
+  private async executeOnConnection(
+    sql: string,
+  ): Promise<mysql.RowDataPacket[]> {
+    if (!this.con) {
+      throw new Error('No connection');
+    }
+    const [rows] = await this.con.execute<mysql.RowDataPacket[]>(sql);
+    return rows;
   }
 
   private async createConnection(): Promise<mysql.Connection> {
