@@ -31,4 +31,4 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:659](https://github.com/l-v-yonsama/db-drivers/blob/589f8dab34222f68a1015fcbec0cee53f0ccb545/src/resource/DbResource.ts#L659)
+[src/resource/DbResource.ts:659](https://github.com/l-v-yonsama/db-drivers/blob/df2ef4264b5fbe2f40aec54ff303a097ce350008/src/resource/DbResource.ts#L659)

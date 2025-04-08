@@ -1698,7 +1698,7 @@ const createQNamesUsingLocation = ({
   };
 };
 
-const toCreateTableDDL = ({ dbTable }: { dbTable: DbTable }): string => {
+export const toCreateTableDDL = ({ dbTable }: { dbTable: DbTable }): string => {
   const columns = dbTable.children;
   const colDefs: string[] = [];
   columns.forEach((col) => {
