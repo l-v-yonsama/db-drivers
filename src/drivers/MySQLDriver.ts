@@ -686,7 +686,7 @@ ORDER BY ID DESC`;
 
   private async createConnection(): Promise<mysql.Connection> {
     const options: mysql.ConnectionOptions = {
-      multipleStatements: true,
+      multipleStatements: false, // 複数のSQL文を禁止
       port: this.conRes.port,
       host: this.conRes.host,
       user: this.conRes.user,
