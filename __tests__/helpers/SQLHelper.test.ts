@@ -368,6 +368,43 @@ describe('SQLHelper', () => {
         expect(query).toBe('select ID, n0,n1,n2 from testtable \n');
         expect(binds).toEqual([]);
       });
+
+      describe('Do not misinterpret colons inside quotes as bind variables', () => {
+        it('Case with multiple colons inside quotes (mi, ss)', () => {
+          const SQL = `SELECT * FROM tn_h_zs_raw
+  WHERE data_tm >= (to_timestamp('2025-04-26 05:48:50.000', 'yyyy-mm-dd hh24:mi:ss.ms') - INTERVAL '6 hours')`;
+          const { query, binds } = normalizeQuery({
+            query: SQL,
+            toPositionedParameter: true,
+          });
+
+          expect(query).toBe(SQL);
+          expect(binds).toEqual([]);
+        });
+
+        it('Case with mixed single and double quotes', () => {
+          const SQL = `SELECT * FROM tn_h_zs_raw
+  WHERE data_tm >= (to_timestamp("2025-04-26 05:48:50.000", 'yyyy-mm-dd hh24:mi:ss.ms') - INTERVAL '6 hours')`;
+          const { query, binds } = normalizeQuery({
+            query: SQL,
+            toPositionedParameter: true,
+          });
+
+          expect(query).toBe(SQL);
+          expect(binds).toEqual([]);
+        });
+        it('Case where colons outside quotes are recognized as bind variables', () => {
+          const SQL = `SELECT * FROM tn_h_zs_raw WHERE id = :id AND data_tm >= '2025-04-26 05:48:50.000`;
+          const { query, binds } = normalizeQuery({
+            query: SQL,
+            toPositionedParameter: true,
+            bindParams: { id: 123 },
+          });
+
+          expect(query).toBe(SQL.replace(':id', '$1'));
+          expect(binds).toEqual([123]);
+        });
+      });
     });
 
     describe('Named query to simple query', () => {
@@ -466,6 +503,40 @@ describe('SQLHelper', () => {
           `select ID FROM EMP where schema IN (20) \nORDER BY ID`,
         );
         expect(binds).toEqual([]);
+      });
+
+      describe('Do not misinterpret colons inside quotes as bind variables', () => {
+        it('Case with multiple colons inside quotes (mi, ss)', () => {
+          const SQL = `SELECT * FROM tn_h_zs_raw
+  WHERE data_tm >= (to_timestamp('2025-04-26 05:48:50.000', 'yyyy-mm-dd hh24:mi:ss.ms') - INTERVAL '6 hours')`;
+          const { query, binds } = normalizeQuery({
+            query: SQL,
+          });
+
+          expect(query).toBe(SQL);
+          expect(binds).toEqual([]);
+        });
+
+        it('Case with mixed single and double quotes', () => {
+          const SQL = `SELECT * FROM tn_h_zs_raw
+  WHERE data_tm >= (to_timestamp("2025-04-26 05:48:50.000", 'yyyy-mm-dd hh24:mi:ss.ms') - INTERVAL '6 hours')`;
+          const { query, binds } = normalizeQuery({
+            query: SQL,
+          });
+
+          expect(query).toBe(SQL);
+          expect(binds).toEqual([]);
+        });
+        it('Case where colons outside quotes are recognized as bind variables', () => {
+          const SQL = `SELECT * FROM tn_h_zs_raw WHERE id = :id AND data_tm >= '2025-04-26 05:48:50.000`;
+          const { query, binds } = normalizeQuery({
+            query: SQL,
+            bindParams: { id: 123 },
+          });
+
+          expect(query).toBe(SQL.replace(':id', '?'));
+          expect(binds).toEqual([123]);
+        });
       });
     });
   });

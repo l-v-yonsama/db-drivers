@@ -915,7 +915,7 @@ export const normalizePositionedParametersQuery = (
   // /\S/ ユニコード空白文字以外のあらゆる文字
   lines.forEach((line) => {
     const reg = /((?<!:):([a-zA-Z_$]\w*)\b)/gi;
-    const normalized = line.replace(reg, (substring, g1, g2) => {
+    const normalized = line.replace(reg, (substring, g1, g2, offset) => {
       // g1: ((?<!:):(\w+)\b) ... simple named parameter
       // g2: (\w+)
 
@@ -924,6 +924,15 @@ export const normalizePositionedParametersQuery = (
       // console.log('g2', g2);
       // console.log('offset', offset);
       // return substring;
+
+      // Determine if inside quotes
+      const before = line.slice(0, offset);
+      const inSingleQuote = (before.match(/'/g) || []).length % 2 !== 0;
+      const inDoubleQuote = (before.match(/"/g) || []).length % 2 !== 0;
+
+      if (inSingleQuote || inDoubleQuote) {
+        return substring; // Return as is if inside quotes
+      }
 
       if (g1) {
         const word = g2;
@@ -1003,7 +1012,7 @@ export const normalizeSimpleParametersQuery = (
   // /\S/ ユニコード空白文字以外のあらゆる文字
   lines.forEach((line) => {
     const reg = /((?<!:):([a-zA-Z_$]\w*)\b)/gi;
-    const normalized = line.replace(reg, (substring, g1, g2) => {
+    const normalized = line.replace(reg, (substring, g1, g2, offset) => {
       // g1: ((?<!:):(\w+)\b) ... simple named parameter
       // g2: (\w+)
       // offset: position
@@ -1013,6 +1022,15 @@ export const normalizeSimpleParametersQuery = (
       // console.log('g2', g2);
       // console.log('offset', offset);
       // return substring;
+
+      // Determine if inside quotes
+      const before = line.slice(0, offset);
+      const inSingleQuote = (before.match(/'/g) || []).length % 2 !== 0;
+      const inDoubleQuote = (before.match(/"/g) || []).length % 2 !== 0;
+
+      if (inSingleQuote || inDoubleQuote) {
+        return substring; // Return as is if inside quotes
+      }
 
       if (g1) {
         const word = g2;
