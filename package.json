@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.10.16",
+  "version": "0.10.17",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -82,12 +82,10 @@
   "author": "l-v-yonsama <32474032+l-v-yonsama@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-cloudformation": "^3.828.0",
     "@aws-sdk/client-cloudwatch-logs": "^3.306.0",
     "@aws-sdk/client-dynamodb": "^3.654.0",
     "@aws-sdk/client-s3": "^3.279.0",
     "@aws-sdk/client-ses": "^3.398.0",
-    "@aws-sdk/client-sfn": "^3.840.0",
     "@aws-sdk/client-sqs": "^3.398.0",
     "@aws-sdk/credential-providers": "^3.279.0",
     "@aws-sdk/lib-dynamodb": "^3.656.0",
