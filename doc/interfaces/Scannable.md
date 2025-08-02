@@ -10,6 +10,7 @@
 - [`AwsS3ServiceClient`](../classes/AwsS3ServiceClient.md)
 - [`AwsSQSServiceClient`](../classes/AwsSQSServiceClient.md)
 - [`KeycloakDriver`](../classes/KeycloakDriver.md)
+- [`MqttDriver`](../classes/MqttDriver.md)
 - [`RedisDriver`](../classes/RedisDriver.md)
 
 ## Table of contents
@@ -36,4 +37,4 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/5df43d2db7b9c9448c5627604a5ca07089235197/src/drivers/BaseDriver.ts#L7)
+[src/drivers/BaseDriver.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/BaseDriver.ts#L7)

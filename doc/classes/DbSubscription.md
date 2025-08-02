@@ -1,69 +1,65 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / DbKey
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / DbSubscription
 
-# Class: DbKey\<T\>
-
-## Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends [`RedisKeyParams`](../modules.md#rediskeyparams) \| [`S3KeyParams`](../modules.md#s3keyparams) \| [`SQSMessageParams`](../modules.md#sqsmessageparams) \| [`LogMessageParams`](../modules.md#logmessageparams) = `any` |
+# Class: DbSubscription
 
 ## Hierarchy
 
 - [`DbResource`](DbResource.md)
 
-  ↳ **`DbKey`**
+  ↳ **`DbSubscription`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](DbKey.md#constructor)
+- [constructor](DbSubscription.md#constructor)
 
 ### Properties
 
-- [children](DbKey.md#children)
-- [comment](DbKey.md#comment)
-- [id](DbKey.md#id)
-- [isInProgress](DbKey.md#isinprogress)
-- [meta](DbKey.md#meta)
-- [name](DbKey.md#name)
-- [params](DbKey.md#params)
-- [resourceType](DbKey.md#resourcetype)
+- [children](DbSubscription.md#children)
+- [comment](DbSubscription.md#comment)
+- [id](DbSubscription.md#id)
+- [isInProgress](DbSubscription.md#isinprogress)
+- [isSubscribed](DbSubscription.md#issubscribed)
+- [meta](DbSubscription.md#meta)
+- [name](DbSubscription.md#name)
+- [nl](DbSubscription.md#nl)
+- [qos](DbSubscription.md#qos)
+- [rap](DbSubscription.md#rap)
+- [resourceType](DbSubscription.md#resourcetype)
+- [rh](DbSubscription.md#rh)
 
 ### Methods
 
-- [addChild](DbKey.md#addchild)
-- [clearChildren](DbKey.md#clearchildren)
-- [findChildren](DbKey.md#findchildren)
-- [getChildByName](DbKey.md#getchildbyname)
-- [getProperties](DbKey.md#getproperties)
-- [hasChildren](DbKey.md#haschildren)
-- [toJsonStringify](DbKey.md#tojsonstringify)
-- [toString](DbKey.md#tostring)
+- [addChild](DbSubscription.md#addchild)
+- [clearChildren](DbSubscription.md#clearchildren)
+- [findChildren](DbSubscription.md#findchildren)
+- [getChildByName](DbSubscription.md#getchildbyname)
+- [getProperties](DbSubscription.md#getproperties)
+- [hasChildren](DbSubscription.md#haschildren)
+- [toJsonStringify](DbSubscription.md#tojsonstringify)
+- [toString](DbSubscription.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new DbKey**\<`T`\>(`name`, `params`): [`DbKey`](DbKey.md)\<`T`\>
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends [`RedisKeyParams`](../modules.md#rediskeyparams) \| [`S3KeyParams`](../modules.md#s3keyparams) \| [`SQSMessageParams`](../modules.md#sqsmessageparams) \| [`LogMessageParams`](../modules.md#logmessageparams) = `any` |
+• **new DbSubscription**(`name`, `qos`, `options?`): [`DbSubscription`](DbSubscription.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `name` | `string` |
-| `params` | `T` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `name` | `string` | - |
+| `qos` | [`MqttQoS`](../modules.md#mqttqos) | - |
+| `options?` | `Object` | - |
+| `options.nl?` | `boolean` | No Local Default:false |
+| `options.rap?` | `boolean` | Retain As Published Default:false |
+| `options.rh?` | `number` | Retain Handling Default:0 |
 
 #### Returns
 
-[`DbKey`](DbKey.md)\<`T`\>
+[`DbSubscription`](DbSubscription.md)
 
 #### Overrides
 
@@ -71,7 +67,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:783](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L783)
+[src/resource/DbResource.ts:1077](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L1077)
 
 ## Properties
 
@@ -131,6 +127,16 @@ ___
 
 ___
 
+### isSubscribed
+
+• **isSubscribed**: `boolean` = `false`
+
+#### Defined in
+
+[src/resource/DbResource.ts:1073](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L1073)
+
+___
+
 ### meta
 
 • **meta**: `Object`
@@ -163,13 +169,33 @@ ___
 
 ___
 
-### params
+### nl
 
-• `Readonly` **params**: `T`
+• `Optional` `Readonly` **nl**: `boolean`
 
 #### Defined in
 
-[src/resource/DbResource.ts:781](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L781)
+[src/resource/DbResource.ts:1074](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L1074)
+
+___
+
+### qos
+
+• `Readonly` **qos**: [`MqttQoS`](../modules.md#mqttqos)
+
+#### Defined in
+
+[src/resource/DbResource.ts:1079](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L1079)
+
+___
+
+### rap
+
+• `Optional` `Readonly` **rap**: `boolean`
+
+#### Defined in
+
+[src/resource/DbResource.ts:1075](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L1075)
 
 ___
 
@@ -184,6 +210,16 @@ ___
 #### Defined in
 
 [src/resource/DbResource.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L181)
+
+___
+
+### rh
+
+• `Optional` `Readonly` **rh**: `number`
+
+#### Defined in
+
+[src/resource/DbResource.ts:1076](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L1076)
 
 ## Methods
 
@@ -301,7 +337,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:788](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L788)
+[src/resource/DbResource.ts:1107](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L1107)
 
 ___
 

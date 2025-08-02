@@ -183,6 +183,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         this.dynamoClient = dynamo;
       }
     }
+
     return messageList.join(',');
   }
 
@@ -245,6 +246,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         messageList.push(message);
       }
     }
+
     return messageList.join(',');
   }
 

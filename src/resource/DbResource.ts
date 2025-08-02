@@ -26,6 +26,8 @@ import {
   TransactionIsolationLevel,
   UniqueKeyConstraint,
   ResourceFilter,
+  MqttSetting,
+  MqttQoS,
 } from '../types';
 
 const uid = new ShortUniqueId();
@@ -59,6 +61,15 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
     case ResourceType.RedisDatabase:
       res = Object.assign(
         new RedisDatabase(name, castTo<RedisDatabase>(json).numOfKeys),
+        json,
+      );
+      break;
+    case ResourceType.MqttDatabase:
+      res = Object.assign(new MqttDatabase(name), json);
+      break;
+    case ResourceType.Subscription:
+      res = Object.assign(
+        new DbSubscription(name, castTo<DbSubscription>(json).qos),
         json,
       );
       break;
@@ -139,7 +150,8 @@ export type DbDatabase =
   | AwsDatabase
   | RedisDatabase
   | Auth0Database
-  | KeycloakDatabase;
+  | KeycloakDatabase
+  | MqttDatabase;
 
 export type AllSubDbResource =
   | DbDatabase
@@ -154,6 +166,7 @@ export type AllSubDbResource =
   | DbS3Owner
   | DbDynamoTable
   | DbDynamoTableColumn
+  | DbSubscription
   // IAM
   | IamRealm
   | IamClient
@@ -283,10 +296,12 @@ export class DbConnection
   public ssl?: SslSetting;
   public awsSetting?: AwsSetting;
   public iamSolution?: IamSolutionSetting;
+  public mqttSetting?: MqttSetting;
   public firebase?: FirebaseSetting;
   public sqlServer?: SQLServerSetting;
   public timezone?: string;
   public transactionIsolationLevel?: TransactionIsolationLevel;
+  public connectTimeoutMs?: number;
   public queryTimeoutMs?: number;
   public lockWaitTimeoutMs?: number;
   public resourceFilter?: ResourceFilter;
@@ -307,10 +322,12 @@ export class DbConnection
     this.ssl = prop.ssl;
     this.awsSetting = prop.awsSetting;
     this.iamSolution = prop.iamSolution;
+    this.mqttSetting = prop.mqttSetting;
     this.firebase = prop.firebase;
     this.sqlServer = prop.sqlServer;
     this.timezone = prop.timezone;
     this.transactionIsolationLevel = prop.transactionIsolationLevel;
+    this.connectTimeoutMs = prop.connectTimeoutMs;
     this.queryTimeoutMs = prop.queryTimeoutMs;
     this.lockWaitTimeoutMs = prop.lockWaitTimeoutMs;
     this.resourceFilter = prop.resourceFilter;
@@ -385,6 +402,19 @@ export class RedisDatabase extends DbResource<DbKey> {
     return {
       ...super.getProperties(),
       'number of keys': this.numOfKeys,
+    };
+  }
+}
+
+export class MqttDatabase extends DbResource<DbSubscription> {
+  constructor(name: string) {
+    super(ResourceType.MqttDatabase, name);
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      // 'number of keys': this.numOfKeys,
     };
   }
 }
@@ -1036,6 +1066,60 @@ export class DbS3Bucket extends AwsDbResource<{
       CreationDate,
     });
     this.setPropertyFormat({ dates: ['CreationDate'] });
+  }
+}
+
+export class DbSubscription extends DbResource {
+  public isSubscribed = false;
+  public readonly nl?: boolean;
+  public readonly rap?: boolean;
+  public readonly rh?: number;
+  constructor(
+    name: string,
+    public readonly qos: MqttQoS,
+    options?: {
+      /**
+       * No Local
+       * Default:false
+       */
+      nl?: boolean;
+      /**
+       * Retain As Published
+       * Default:false
+       */
+      rap?: boolean;
+      /**
+       * Retain Handling
+       * Default:0
+       */
+      rh?: number;
+    },
+  ) {
+    super(ResourceType.Subscription, name);
+    this.comment = '';
+    if (options) {
+      this.nl = options.nl;
+      this.rap = options.rap;
+      this.rh = options.rh;
+    }
+  }
+
+  getProperties(): { [key: string]: any } {
+    const prop = {
+      ...super.getProperties(),
+      isSubscribed: this.isSubscribed,
+      QoS: this.qos,
+    };
+    if (this.nl !== undefined) {
+      prop['No Local'] = this.nl;
+    }
+    if (this.rap !== undefined) {
+      prop['Retain As Published'] = this.rap;
+    }
+    if (this.rh !== undefined) {
+      prop['Retain Handling'] = this.rh;
+    }
+    return prop;
   }
 }
 

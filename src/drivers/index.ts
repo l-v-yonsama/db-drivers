@@ -6,6 +6,7 @@ export * from './DBDriverResolver';
 export * from './DBError';
 export * from './KeycloakDriver';
 export * from './MySQLDriver';
+export * from './MqttDriver';
 export * from './PostgresDriver';
 export * from './RDSBaseDriver';
 export * from './RedisDriver';

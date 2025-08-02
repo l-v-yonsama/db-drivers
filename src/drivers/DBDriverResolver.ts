@@ -17,6 +17,7 @@ import { RedisDriver } from './RedisDriver';
 import { SQLServerDriver } from './SQLServerDriver';
 import { SQLiteDriver } from './SQLiteDriver';
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
+import { MqttDriver } from './MqttDriver';
 
 const uid = new ShortUniqueId();
 
@@ -102,6 +103,9 @@ export class DBDriverResolver {
       //   break;
       case DBType.Aws:
         driver = new AwsDriver(conRes);
+        break;
+      case DBType.Mqtt:
+        driver = new MqttDriver(conRes);
         break;
       // case DBType.Mongodb:
       //   // driver = new MongoDriver(conDef)

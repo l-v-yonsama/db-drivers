@@ -3,6 +3,7 @@ export const ResourceType = {
   RdsDatabase: 'RdsDatabase',
   AwsDatabase: 'AwsDatabase',
   RedisDatabase: 'RedisDatabase',
+  MqttDatabase: 'MqttDatabase',
 
   Schema: 'Schema',
   Table: 'Table',
@@ -15,6 +16,7 @@ export const ResourceType = {
   Owner: 'Owner',
   LogGroup: 'LogGroup',
   LogStream: 'LogStream',
+  Subscription: 'Subscription',
   // IAM-KEYCLOAK
   KeycloakDatabase: 'KeycloakDatabase',
   IamRealm: 'IamRealm',

@@ -492,8 +492,10 @@ export class SQLiteDriver extends RDSBaseDriver {
   private async createConnection(): Promise<void> {
     this.interrupted = false;
     const { database } = this.conRes;
-    const buff = fs.existsSync(database)
-      ? await fs.promises.readFile(database)
+    const buff = database
+      ? fs.existsSync(database)
+        ? await fs.promises.readFile(database)
+        : null
       : null;
     const sqlite = await initSql();
     this.db = new sqlite.Database(buff);

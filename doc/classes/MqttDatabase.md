@@ -1,69 +1,55 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / DbKey
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / MqttDatabase
 
-# Class: DbKey\<T\>
-
-## Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends [`RedisKeyParams`](../modules.md#rediskeyparams) \| [`S3KeyParams`](../modules.md#s3keyparams) \| [`SQSMessageParams`](../modules.md#sqsmessageparams) \| [`LogMessageParams`](../modules.md#logmessageparams) = `any` |
+# Class: MqttDatabase
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)
+- [`DbResource`](DbResource.md)\<[`DbSubscription`](DbSubscription.md)\>
 
-  ↳ **`DbKey`**
+  ↳ **`MqttDatabase`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](DbKey.md#constructor)
+- [constructor](MqttDatabase.md#constructor)
 
 ### Properties
 
-- [children](DbKey.md#children)
-- [comment](DbKey.md#comment)
-- [id](DbKey.md#id)
-- [isInProgress](DbKey.md#isinprogress)
-- [meta](DbKey.md#meta)
-- [name](DbKey.md#name)
-- [params](DbKey.md#params)
-- [resourceType](DbKey.md#resourcetype)
+- [children](MqttDatabase.md#children)
+- [comment](MqttDatabase.md#comment)
+- [id](MqttDatabase.md#id)
+- [isInProgress](MqttDatabase.md#isinprogress)
+- [meta](MqttDatabase.md#meta)
+- [name](MqttDatabase.md#name)
+- [resourceType](MqttDatabase.md#resourcetype)
 
 ### Methods
 
-- [addChild](DbKey.md#addchild)
-- [clearChildren](DbKey.md#clearchildren)
-- [findChildren](DbKey.md#findchildren)
-- [getChildByName](DbKey.md#getchildbyname)
-- [getProperties](DbKey.md#getproperties)
-- [hasChildren](DbKey.md#haschildren)
-- [toJsonStringify](DbKey.md#tojsonstringify)
-- [toString](DbKey.md#tostring)
+- [addChild](MqttDatabase.md#addchild)
+- [clearChildren](MqttDatabase.md#clearchildren)
+- [findChildren](MqttDatabase.md#findchildren)
+- [getChildByName](MqttDatabase.md#getchildbyname)
+- [getProperties](MqttDatabase.md#getproperties)
+- [hasChildren](MqttDatabase.md#haschildren)
+- [toJsonStringify](MqttDatabase.md#tojsonstringify)
+- [toString](MqttDatabase.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new DbKey**\<`T`\>(`name`, `params`): [`DbKey`](DbKey.md)\<`T`\>
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends [`RedisKeyParams`](../modules.md#rediskeyparams) \| [`S3KeyParams`](../modules.md#s3keyparams) \| [`SQSMessageParams`](../modules.md#sqsmessageparams) \| [`LogMessageParams`](../modules.md#logmessageparams) = `any` |
+• **new MqttDatabase**(`name`): [`MqttDatabase`](MqttDatabase.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `name` | `string` |
-| `params` | `T` |
 
 #### Returns
 
-[`DbKey`](DbKey.md)\<`T`\>
+[`MqttDatabase`](MqttDatabase.md)
 
 #### Overrides
 
@@ -71,13 +57,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:783](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L783)
+[src/resource/DbResource.ts:410](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L410)
 
 ## Properties
 
 ### children
 
-• `Readonly` **children**: [`AllSubDbResource`](../modules.md#allsubdbresource)[]
+• `Readonly` **children**: [`DbSubscription`](DbSubscription.md)[]
 
 #### Inherited from
 
@@ -163,16 +149,6 @@ ___
 
 ___
 
-### params
-
-• `Readonly` **params**: `T`
-
-#### Defined in
-
-[src/resource/DbResource.ts:781](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L781)
-
-___
-
 ### resourceType
 
 • `Readonly` **resourceType**: [`ResourceType`](../modules.md#resourcetype)
@@ -189,17 +165,17 @@ ___
 
 ### addChild
 
-▸ **addChild**(`res`): [`AllSubDbResource`](../modules.md#allsubdbresource)
+▸ **addChild**(`res`): [`DbSubscription`](DbSubscription.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`AllSubDbResource`](../modules.md#allsubdbresource) |
+| `res` | [`DbSubscription`](DbSubscription.md) |
 
 #### Returns
 
-[`AllSubDbResource`](../modules.md#allsubdbresource)
+[`DbSubscription`](DbSubscription.md)
 
 #### Inherited from
 
@@ -264,7 +240,7 @@ ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`AllSubDbResource`](../modules.md#allsubdbresource)
+▸ **getChildByName**(`name`, `insensitive?`): [`DbSubscription`](DbSubscription.md)
 
 #### Parameters
 
@@ -275,7 +251,7 @@ ___
 
 #### Returns
 
-[`AllSubDbResource`](../modules.md#allsubdbresource)
+[`DbSubscription`](DbSubscription.md)
 
 #### Inherited from
 
@@ -301,7 +277,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:788](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L788)
+[src/resource/DbResource.ts:414](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/resource/DbResource.ts#L414)
 
 ___
 

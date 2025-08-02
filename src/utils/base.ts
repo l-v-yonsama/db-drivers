@@ -5,6 +5,18 @@ import { getExtension, getType } from 'mime-lite';
 import { basename } from 'path';
 import { parse } from 'url';
 
+export const isJson = (value: string): boolean => {
+  if (value === '') {
+    return false;
+  }
+  try {
+    JSON.parse(value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 const shortEnglishHumanizer = humanizeDuration.humanizer({
   language: 'shortEn',
   languages: {

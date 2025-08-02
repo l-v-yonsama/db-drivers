@@ -1461,13 +1461,16 @@ const createReservedWordProposal = (word: string): Proposal => {
 
 type QuoteChar = '"' | '`' | "'";
 
-const wrapSingleQuote = (input: string): string => wrapQuote(input, "'");
+export const wrapSingleQuote = (input: string): string => wrapQuote(input, "'");
 
-const wrapDoubleQuote = (input: string): string => wrapQuote(input, '"');
+export const wrapDoubleQuote = (input: string): string => wrapQuote(input, '"');
 
-const wrapBackQuote = (input: string): string => wrapQuote(input, '`');
+export const wrapBackQuote = (input: string): string => wrapQuote(input, '`');
 
 const wrapQuote = (input: string, quoteChar: QuoteChar): string => {
+  if (input.startsWith(quoteChar) && input.endsWith(quoteChar)) {
+    return input; // already wrapped
+  }
   switch (quoteChar) {
     case '"':
       return `"${input.replace(/"/g, '""')}"`;

@@ -5,6 +5,7 @@ import {
   parseCsvFromFile,
   parseCsvFromString,
 } from '../../src';
+import { eolToSpace } from '@l-v-yonsama/rdh';
 
 const dataFolder = path.join('__tests__', 'data');
 

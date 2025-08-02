@@ -1,12 +1,12 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / RedisDriver
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / MqttDriver
 
-# Class: RedisDriver
+# Class: MqttDriver
 
 ## Hierarchy
 
-- [`BaseDriver`](BaseDriver.md)\<[`RedisDatabase`](RedisDatabase.md)\>
+- [`BaseDriver`](BaseDriver.md)\<[`MqttDatabase`](MqttDatabase.md)\>
 
-  ↳ **`RedisDriver`**
+  ↳ **`MqttDriver`**
 
 ## Implements
 
@@ -16,47 +16,56 @@
 
 ### Constructors
 
-- [constructor](RedisDriver.md#constructor)
+- [constructor](MqttDriver.md#constructor)
 
 ### Properties
 
-- [client](RedisDriver.md#client)
-- [conRes](RedisDriver.md#conres)
-- [isConnected](RedisDriver.md#isconnected)
-- [sshLocalPort](RedisDriver.md#sshlocalport)
-- [sshServer](RedisDriver.md#sshserver)
+- [client](MqttDriver.md#client)
+- [clientId](MqttDriver.md#clientid)
+- [conRes](MqttDriver.md#conres)
+- [isConnected](MqttDriver.md#isconnected)
+- [sshLocalPort](MqttDriver.md#sshlocalport)
+- [sshServer](MqttDriver.md#sshserver)
+- [subscribedTopicMap](MqttDriver.md#subscribedtopicmap)
 
 ### Methods
 
-- [closeSub](RedisDriver.md#closesub)
-- [connect](RedisDriver.md#connect)
-- [connectSub](RedisDriver.md#connectsub)
-- [createDBError](RedisDriver.md#createdberror)
-- [delete](RedisDriver.md#delete)
-- [disconnect](RedisDriver.md#disconnect)
-- [flow](RedisDriver.md#flow)
-- [flushAll](RedisDriver.md#flushall)
-- [flushDb](RedisDriver.md#flushdb)
-- [getConnectionRes](RedisDriver.md#getconnectionres)
-- [getDbDatabases](RedisDriver.md#getdbdatabases)
-- [getFirstDbDatabase](RedisDriver.md#getfirstdbdatabase)
-- [getInfomationSchemas](RedisDriver.md#getinfomationschemas)
-- [getInfomationSchemasSub](RedisDriver.md#getinfomationschemassub)
-- [getName](RedisDriver.md#getname)
-- [getValueByKey](RedisDriver.md#getvaluebykey)
-- [initBaseStatus](RedisDriver.md#initbasestatus)
-- [isNeedsSsh](RedisDriver.md#isneedsssh)
-- [isQuery](RedisDriver.md#isquery)
-- [parseSchemaAndTableHints](RedisDriver.md#parseschemaandtablehints)
-- [scan](RedisDriver.md#scan)
-- [scanStream](RedisDriver.md#scanstream)
-- [test](RedisDriver.md#test)
+- [clearPayload](MqttDriver.md#clearpayload)
+- [closeSub](MqttDriver.md#closesub)
+- [connect](MqttDriver.md#connect)
+- [connectSub](MqttDriver.md#connectsub)
+- [createDBError](MqttDriver.md#createdberror)
+- [disconnect](MqttDriver.md#disconnect)
+- [flow](MqttDriver.md#flow)
+- [getAll](MqttDriver.md#getall)
+- [getByRdh](MqttDriver.md#getbyrdh)
+- [getClientId](MqttDriver.md#getclientid)
+- [getConnectionRes](MqttDriver.md#getconnectionres)
+- [getDbDatabases](MqttDriver.md#getdbdatabases)
+- [getFirstDbDatabase](MqttDriver.md#getfirstdbdatabase)
+- [getInfomationSchemas](MqttDriver.md#getinfomationschemas)
+- [getInfomationSchemasSub](MqttDriver.md#getinfomationschemassub)
+- [getName](MqttDriver.md#getname)
+- [getTopicSummary](MqttDriver.md#gettopicsummary)
+- [initBaseStatus](MqttDriver.md#initbasestatus)
+- [isNeedsSsh](MqttDriver.md#isneedsssh)
+- [isQuery](MqttDriver.md#isquery)
+- [isSubscribed](MqttDriver.md#issubscribed)
+- [parseSchemaAndTableHints](MqttDriver.md#parseschemaandtablehints)
+- [publish](MqttDriver.md#publish)
+- [requestSqlSub](MqttDriver.md#requestsqlsub)
+- [scan](MqttDriver.md#scan)
+- [subscribe](MqttDriver.md#subscribe)
+- [subscribes](MqttDriver.md#subscribes)
+- [test](MqttDriver.md#test)
+- [unsubscribe](MqttDriver.md#unsubscribe)
+- [unsubscribes](MqttDriver.md#unsubscribes)
 
 ## Constructors
 
 ### constructor
 
-• **new RedisDriver**(`conRes`): [`RedisDriver`](RedisDriver.md)
+• **new MqttDriver**(`conRes`): [`MqttDriver`](MqttDriver.md)
 
 #### Parameters
 
@@ -66,7 +75,7 @@
 
 #### Returns
 
-[`RedisDriver`](RedisDriver.md)
+[`MqttDriver`](MqttDriver.md)
 
 #### Overrides
 
@@ -74,17 +83,27 @@
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L21)
+src/drivers/MqttDriver.ts:48
 
 ## Properties
 
 ### client
 
-• **client**: `Redis`
+• **client**: `default`
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L19)
+src/drivers/MqttDriver.ts:44
+
+___
+
+### clientId
+
+• **clientId**: `string`
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:46
 
 ___
 
@@ -142,7 +161,37 @@ ___
 
 [src/drivers/BaseDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/BaseDriver.ts#L49)
 
+___
+
+### subscribedTopicMap
+
+• **subscribedTopicMap**: `Map`\<`string`, [`TopicStatusAndPayloads`](../modules.md#topicstatusandpayloads)\>
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:45
+
 ## Methods
+
+### clearPayload
+
+▸ **clearPayload**(`topic`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topic` | `string` |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:343
+
+___
 
 ### closeSub
 
@@ -158,7 +207,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:235](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L235)
+src/drivers/MqttDriver.ts:377
 
 ___
 
@@ -194,7 +243,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L25)
+src/drivers/MqttDriver.ts:56
 
 ___
 
@@ -220,26 +269,6 @@ ___
 #### Defined in
 
 [src/drivers/BaseDriver.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/BaseDriver.ts#L232)
-
-___
-
-### delete
-
-▸ **delete**(`key`): `Promise`\<`void`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Defined in
-
-[src/drivers/RedisDriver.ts:91](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L91)
 
 ___
 
@@ -291,31 +320,59 @@ ___
 
 ___
 
-### flushAll
+### getAll
 
-▸ **flushAll**(): `Promise`\<`void`\>
+▸ **getAll**(`topic`): [`TopicPayloadMessage`](../modules.md#topicpayloadmessage)[]
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topic` | `string` |
 
 #### Returns
 
-`Promise`\<`void`\>
+[`TopicPayloadMessage`](../modules.md#topicpayloadmessage)[]
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L83)
+src/drivers/MqttDriver.ts:207
 
 ___
 
-### flushDb
+### getByRdh
 
-▸ **flushDb**(): `Promise`\<`void`\>
+▸ **getByRdh**(`topic`, `options?`): `ResultSetData`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topic` | `string` |
+| `options?` | `Object` |
+| `options.jsonExpansion?` | `boolean` |
 
 #### Returns
 
-`Promise`\<`void`\>
+`ResultSetData`
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L87)
+src/drivers/MqttDriver.ts:219
+
+___
+
+### getClientId
+
+▸ **getClientId**(): `string`
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:52
 
 ___
 
@@ -375,11 +432,11 @@ ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
+▸ **getInfomationSchemas**(): `Promise`\<[`MqttDatabase`](MqttDatabase.md)[]\>
 
 #### Returns
 
-`Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
+`Promise`\<[`MqttDatabase`](MqttDatabase.md)[]\>
 
 #### Inherited from
 
@@ -393,11 +450,11 @@ ___
 
 ### getInfomationSchemasSub
 
-▸ **getInfomationSchemasSub**(): `Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
+▸ **getInfomationSchemasSub**(): `Promise`\<[`MqttDatabase`](MqttDatabase.md)[]\>
 
 #### Returns
 
-`Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
+`Promise`\<[`MqttDatabase`](MqttDatabase.md)[]\>
 
 #### Overrides
 
@@ -405,7 +462,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L210)
+src/drivers/MqttDriver.ts:353
 
 ___
 
@@ -427,25 +484,21 @@ ___
 
 ___
 
-### getValueByKey
+### getTopicSummary
 
-▸ **getValueByKey**(`client`, `key`, `type`): `Promise`\<`any`\>
+▸ **getTopicSummary**(): `Record`\<`string`, \{ `isSubscribed`: `boolean` ; `lastTimestamp`: `number` ; `numOfPayloads`: `number`  }\>
 
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `client` | `Redis` |
-| `key` | `string` |
-| `type` | [`RedisKeyType`](../modules.md#rediskeytype) |
+Returns an object with the length of each value array in PAYLOADS by key.
 
 #### Returns
 
-`Promise`\<`any`\>
+`Record`\<`string`, \{ `isSubscribed`: `boolean` ; `lastTimestamp`: `number` ; `numOfPayloads`: `number`  }\>
+
+An object with the same keys and the length of each array as value.
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:189](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L189)
+src/drivers/MqttDriver.ts:321
 
 ___
 
@@ -509,6 +562,26 @@ ___
 
 ___
 
+### isSubscribed
+
+▸ **isSubscribed**(`topic`): `boolean`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topic` | `string` |
+
+#### Returns
+
+`boolean`
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:339
+
+___
+
 ### parseSchemaAndTableHints
 
 ▸ **parseSchemaAndTableHints**(`sql`): [`SchemaAndTableHints`](../interfaces/SchemaAndTableHints.md)
@@ -533,6 +606,51 @@ ___
 
 ___
 
+### publish
+
+▸ **publish**(`topic`, `message`, `opts?`): `Promise`\<`Packet`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topic` | `string` |
+| `message` | `string` \| `Buffer` |
+| `opts?` | `Object` |
+| `opts.dup?` | `boolean` |
+| `opts.qos?` | [`MqttQoS`](../modules.md#mqttqos) |
+| `opts.retain?` | `boolean` |
+
+#### Returns
+
+`Promise`\<`Packet`\>
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:162
+
+___
+
+### requestSqlSub
+
+▸ **requestSqlSub**(`params`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`QueryParams`](../modules.md#queryparams) |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:211
+
+___
+
 ### scan
 
 ▸ **scan**(`params`): `Promise`\<`ResultSetData`\>
@@ -553,27 +671,47 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:139](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L139)
+src/drivers/MqttDriver.ts:347
 
 ___
 
-### scanStream
+### subscribe
 
-▸ **scanStream**(`params`): `Promise`\<[`DbKey`](DbKey.md)\<[`RedisKeyParams`](../modules.md#rediskeyparams)\>[]\>
+▸ **subscribe**(`params`): `Promise`\<`void`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `params` | [`ScanParams`](../modules.md#scanparams) |
+| `params` | [`MqttSubscriptionSetting`](../modules.md#mqttsubscriptionsetting) |
 
 #### Returns
 
-`Promise`\<[`DbKey`](DbKey.md)\<[`RedisKeyParams`](../modules.md#rediskeyparams)\>[]\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L95)
+src/drivers/MqttDriver.ts:170
+
+___
+
+### subscribes
+
+▸ **subscribes**(`list`): `Promise`\<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `list` | [`MqttSubscriptionSetting`](../modules.md#mqttsubscriptionsetting)[] |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:190
 
 ___
 
@@ -597,4 +735,44 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/6dca636a0c886e9c8a8ebcfb0637367700d5c904/src/drivers/RedisDriver.ts#L64)
+src/drivers/MqttDriver.ts:143
+
+___
+
+### unsubscribe
+
+▸ **unsubscribe**(`topic`): `Promise`\<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topic` | `string` |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:181
+
+___
+
+### unsubscribes
+
+▸ **unsubscribes**(`topics`): `Promise`\<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topics` | `string`[] |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Defined in
+
+src/drivers/MqttDriver.ts:196

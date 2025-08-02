@@ -61,6 +61,48 @@ export type FirebaseSetting = {
   serviceAccountCredentialsPath?: string;
 };
 
+export type MqttQoS = 0 | 1 | 2;
+
+export type MqttSubscriptionSetting = {
+  name: string;
+  /**
+   * QoS
+   * Default:0
+   */
+  qos: MqttQoS;
+  /**
+   * No Local
+   * Default:false
+   */
+  nl?: boolean;
+  /**
+   * Retain As Published
+   * Default:false
+   */
+  rap?: boolean;
+  /**
+   * Retain Handling
+   * Default:0
+   */
+  rh?: number;
+};
+export type MqttSetting = {
+  rejectUnauthorized?: boolean;
+  protocol: 'mqtt' | 'mqtts' | 'ws' | 'wss';
+  clientId?: string;
+  subscriptionList?: MqttSubscriptionSetting[];
+  key?: string;
+  cert?: string;
+  ca?: string;
+  /**
+   * 3:v3.1, 4:v3.1.1, 5:v5.0
+   * Default:4
+   */
+  protocolVersion?: 4 | 5 | 3;
+  /** Default:true, set to false to receive QoS 1 and 2 messages while offline */
+  clean?: boolean;
+};
+
 export type SQLServerSetting = {
   encrypt?: boolean;
   /**
@@ -138,11 +180,13 @@ export type ConnectionSetting = {
   firebase?: FirebaseSetting;
   sqlServer?: SQLServerSetting;
   iamSolution?: IamSolutionSetting;
+  mqttSetting?: MqttSetting;
   /**
    * The timezone used to store local dates.
    */
   timezone?: string;
   transactionIsolationLevel?: TransactionIsolationLevel;
+  connectTimeoutMs?: number;
   queryTimeoutMs?: number;
   lockWaitTimeoutMs?: number;
   resourceFilter?: ResourceFilter;

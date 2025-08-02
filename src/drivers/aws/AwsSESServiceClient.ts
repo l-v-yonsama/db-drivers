@@ -49,6 +49,7 @@ export class AwsSESServiceClient extends AwsServiceClient {
         new ListIdentitiesCommand({
           IdentityType: identityType,
           MaxItems: 1000,
+          NextToken,
         }),
       );
       list.push(...res.Identities);
