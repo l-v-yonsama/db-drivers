@@ -83,7 +83,7 @@
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L48)
+[src/drivers/MqttDriver.ts:65](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L65)
 
 ## Properties
 
@@ -93,7 +93,7 @@
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L44)
+[src/drivers/MqttDriver.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L61)
 
 ___
 
@@ -103,7 +103,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L46)
+[src/drivers/MqttDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L63)
 
 ___
 
@@ -117,7 +117,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L48)
+[src/drivers/BaseDriver.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L48)
 
 ___
 
@@ -131,7 +131,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L47)
+[src/drivers/BaseDriver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L47)
 
 ___
 
@@ -145,7 +145,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L50)
+[src/drivers/BaseDriver.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L50)
 
 ___
 
@@ -159,7 +159,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L49)
+[src/drivers/BaseDriver.ts:49](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L49)
 
 ___
 
@@ -169,7 +169,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L45)
+[src/drivers/MqttDriver.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L62)
 
 ## Methods
 
@@ -189,7 +189,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:343](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L343)
+[src/drivers/MqttDriver.ts:370](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L370)
 
 ___
 
@@ -207,7 +207,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:377](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L377)
+[src/drivers/MqttDriver.ts:404](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L404)
 
 ___
 
@@ -225,7 +225,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:156](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L156)
+[src/drivers/BaseDriver.ts:156](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L156)
 
 ___
 
@@ -243,7 +243,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L56)
+[src/drivers/MqttDriver.ts:73](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L73)
 
 ___
 
@@ -268,7 +268,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L232)
+[src/drivers/BaseDriver.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L232)
 
 ___
 
@@ -286,7 +286,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L181)
+[src/drivers/BaseDriver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L181)
 
 ___
 
@@ -316,7 +316,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L98)
+[src/drivers/BaseDriver.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L98)
 
 ___
 
@@ -336,7 +336,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L207)
+[src/drivers/MqttDriver.ts:234](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L234)
 
 ___
 
@@ -358,7 +358,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L219)
+[src/drivers/MqttDriver.ts:246](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L246)
 
 ___
 
@@ -372,7 +372,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L52)
+[src/drivers/MqttDriver.ts:69](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L69)
 
 ___
 
@@ -390,7 +390,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L60)
+[src/drivers/BaseDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L60)
 
 ___
 
@@ -408,7 +408,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:222](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L222)
+[src/drivers/BaseDriver.ts:222](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L222)
 
 ___
 
@@ -426,7 +426,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:226](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L226)
+[src/drivers/BaseDriver.ts:226](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L226)
 
 ___
 
@@ -444,7 +444,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L207)
+[src/drivers/BaseDriver.ts:207](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L207)
 
 ___
 
@@ -462,7 +462,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:353](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L353)
+[src/drivers/MqttDriver.ts:380](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L380)
 
 ___
 
@@ -480,7 +480,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L57)
+[src/drivers/BaseDriver.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L57)
 
 ___
 
@@ -498,7 +498,7 @@ An object with the same keys and the length of each array as value.
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:321](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L321)
+[src/drivers/MqttDriver.ts:348](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L348)
 
 ___
 
@@ -516,7 +516,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L64)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -534,7 +534,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L68)
+[src/drivers/BaseDriver.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L68)
 
 ___
 
@@ -558,7 +558,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L71)
+[src/drivers/BaseDriver.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L71)
 
 ___
 
@@ -578,7 +578,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:339](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L339)
+[src/drivers/MqttDriver.ts:366](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L366)
 
 ___
 
@@ -602,7 +602,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/BaseDriver.ts#L82)
+[src/drivers/BaseDriver.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/BaseDriver.ts#L82)
 
 ___
 
@@ -627,7 +627,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:162](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L162)
+[src/drivers/MqttDriver.ts:189](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L189)
 
 ___
 
@@ -647,7 +647,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:211](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L211)
+[src/drivers/MqttDriver.ts:238](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L238)
 
 ___
 
@@ -671,7 +671,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:347](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L347)
+[src/drivers/MqttDriver.ts:374](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L374)
 
 ___
 
@@ -691,7 +691,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L170)
+[src/drivers/MqttDriver.ts:197](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L197)
 
 ___
 
@@ -711,7 +711,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:190](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L190)
+[src/drivers/MqttDriver.ts:217](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L217)
 
 ___
 
@@ -735,7 +735,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:143](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L143)
+[src/drivers/MqttDriver.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L170)
 
 ___
 
@@ -755,7 +755,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L181)
+[src/drivers/MqttDriver.ts:208](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L208)
 
 ___
 
@@ -775,4 +775,4 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:196](https://github.com/l-v-yonsama/db-drivers/blob/3a1f947567650084d0221d011fc1037d83089c8e/src/drivers/MqttDriver.ts#L196)
+[src/drivers/MqttDriver.ts:223](https://github.com/l-v-yonsama/db-drivers/blob/159e4b0300e66858605f0ff4515da97e61eada2d/src/drivers/MqttDriver.ts#L223)

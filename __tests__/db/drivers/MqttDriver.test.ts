@@ -143,12 +143,13 @@ describe('MqttDriver', () => {
 
   describe('publish', () => {
     it('should return 1 json record', async () => {
-      const topic = 'device/cycle_time';
+      const subscribe_topic = 'device/piyo/#';
+      const publish_topic = 'device/piyo/cycle_time';
 
-      await driver.subscribe({ name: topic, qos: 1 });
+      await driver.subscribe({ name: subscribe_topic, qos: 0 });
 
       await driver.publish(
-        topic,
+        publish_topic,
         JSON.stringify({
           temp: 136,
           humid: 56.8,
@@ -158,7 +159,7 @@ describe('MqttDriver', () => {
       );
 
       for (let i = 0; i < 20; i++) {
-        const pl = driver.getTopicSummary()[topic];
+        const pl = driver.getTopicSummary()[subscribe_topic];
         if (pl.numOfPayloads > 0) {
           break;
         }
@@ -166,13 +167,13 @@ describe('MqttDriver', () => {
         await sleep(500);
       }
 
-      const rdh = driver.getByRdh(topic);
+      const rdh = driver.getByRdh(subscribe_topic);
 
       console.log(
         ResultSetDataBuilder.from(rdh).toMarkdown({ withType: true }),
       );
 
-      const rdh2 = driver.getByRdh(topic, { jsonExpansion: true });
+      const rdh2 = driver.getByRdh(subscribe_topic, { jsonExpansion: true });
 
       console.log(
         ResultSetDataBuilder.from(rdh2).toMarkdown({ withType: true }),
@@ -182,15 +183,15 @@ describe('MqttDriver', () => {
       console.log('----------------');
       const rdh3 = await driver.requestSqlSub({
         meta: { jsonExpansion: true },
-        sql: `SELECT * FROM "${topic}"`,
+        sql: `SELECT * FROM "${subscribe_topic}"`,
       });
       console.log(
         ResultSetDataBuilder.from(rdh3).toMarkdown({ withType: true }),
       );
       console.log('----------------');
       const rdh4 = await driver.requestSqlSub({
-        meta: { jsonExpansion: true },
-        sql: `SELECT messageId, "EX:clientId" FROM "${topic}" ORDER BY timestamp DESC`,
+        meta: { jsonExpansion: false },
+        sql: `SELECT * FROM "${subscribe_topic}" ORDER BY timestamp DESC`,
       });
       console.log(
         ResultSetDataBuilder.from(rdh4).toMarkdown({ withType: true }),

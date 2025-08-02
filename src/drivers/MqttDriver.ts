@@ -40,6 +40,23 @@ export type TopicStatusAndPayloads = {
   lastTimestamp: number;
 };
 
+function matchTopic(topic: string, filter: string): boolean {
+  const tParts = topic.split('/');
+  const fParts = filter.split('/');
+
+  for (let i = 0; i < fParts.length; i++) {
+    const f = fParts[i];
+    const t = tParts[i];
+
+    if (f === '#') return true;
+    if (f === '+') continue;
+    if (t === undefined || f !== t) return false;
+  }
+
+  // 完全一致の場合のみ true（filter が短すぎる場合は false）
+  return tParts.length === fParts.length;
+}
+
 export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
   client: MqttClient | undefined;
   subscribedTopicMap = new Map<string, TopicStatusAndPayloads>();
@@ -102,36 +119,46 @@ export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
           return;
         }
         const lastTimestamp = new Date().getTime();
-        if (!this.subscribedTopicMap.has(topic)) {
-          this.subscribedTopicMap.set(topic, {
-            isSubscribed: true,
-            messages: [],
-            lastTimestamp,
+        for (const topicNameOnMap of this.subscribedTopicMap.keys()) {
+          if (!matchTopic(topic, topicNameOnMap)) {
+            continue; // トピックがマップのキーと一致しない場合はスキップ
+          }
+          const status = this.subscribedTopicMap.get(topicNameOnMap);
+          if (!status.isSubscribed) {
+            continue;
+          }
+
+          if (!this.subscribedTopicMap.has(topicNameOnMap)) {
+            this.subscribedTopicMap.set(topicNameOnMap, {
+              isSubscribed: true,
+              messages: [],
+              lastTimestamp,
+            });
+          }
+          let dataType: GeneralColumnType = GeneralColumnType.JSON;
+          const payloadText = payload.toString();
+          if (!isJson(payloadText)) {
+            if (/^[\x20-\x7E\r\n\t]+$/.test(payloadText)) {
+              // 英数・改行などが含まれるか
+              dataType = GeneralColumnType.TEXT;
+            } else {
+              dataType = GeneralColumnType.BINARY;
+            }
+          }
+          const v = this.subscribedTopicMap.get(topicNameOnMap);
+          v.lastTimestamp = lastTimestamp;
+          if (v.messages.length >= 1000) {
+            v.messages.shift(); // キューが満杯の場合、先頭要素を削除
+          }
+          v.messages.push({
+            timestamp: new Date(),
+            messageId: packet.messageId,
+            qos: packet.qos,
+            isRetained: packet.retain,
+            rawData: payload,
+            dataType,
           });
         }
-        let dataType: GeneralColumnType = GeneralColumnType.JSON;
-        const payloadText = payload.toString();
-        if (!isJson(payloadText)) {
-          if (/^[\x20-\x7E\r\n\t]+$/.test(payloadText)) {
-            // 英数・改行などが含まれるか
-            dataType = GeneralColumnType.TEXT;
-          } else {
-            dataType = GeneralColumnType.BINARY;
-          }
-        }
-        const v = this.subscribedTopicMap.get(topic);
-        v.lastTimestamp = lastTimestamp;
-        if (v.messages.length >= 1000) {
-          v.messages.shift(); // キューが満杯の場合、先頭要素を削除
-        }
-        v.messages.push({
-          timestamp: new Date(),
-          messageId: packet.messageId,
-          qos: packet.qos,
-          isRetained: packet.retain,
-          rawData: payload,
-          dataType,
-        });
       });
     } catch (e) {
       return `failed to connect:${e.message}`;

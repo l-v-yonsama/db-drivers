@@ -523,6 +523,7 @@ export class SQLiteDriver extends RDSBaseDriver {
       const r = this.db.exec('SELECT last_insert_rowid() as lastId;');
       insertId = r?.[0]?.values[0][0] as number;
     }
+
     return {
       affectedRows,
       insertId,

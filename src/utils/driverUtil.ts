@@ -114,13 +114,18 @@ export const requestSqlFromRdh = async (
   if (!sourceRdh) {
     throw new Error(`Table ${tableName} not found.`);
   }
-  const driver = new SQLiteDriver({
+  if (sourceRdh.rows.length === 0) {
+    return ResultSetDataBuilder.createEmpty({
+      noRecordsReason: 'No records found',
+    }).build();
+  }
+  const sqLiteDriver = new SQLiteDriver({
     database: '',
     dbType: DBType.SQLite,
     name: 'sqlite:memory',
   });
   try {
-    await driver.connect();
+    await sqLiteDriver.connect();
 
     const ddl: string[] = [];
     const quotedTableName = wrapDoubleQuote(tableName);
@@ -160,7 +165,14 @@ export const requestSqlFromRdh = async (
       } else if (isTextLike(key.type)) {
         ddl.push(`${quotedKeyName} TEXT`);
       } else if (isJsonLike(key.type)) {
-        ddl.push(`${quotedKeyName} JSON`);
+        ddl.push(`${quotedKeyName} TEXT`);
+        sourceRdh.rows.forEach((row) => {
+          if (row.values[key.name] !== undefined) {
+            row.values[key.name] = JSON.stringify(row.values[key.name]);
+          }
+        });
+        key.type = GeneralColumnType.TEXT; // Update type to TEXT
+        // ddl.push(`${quotedKeyName} JSON`);
       } else if (isBinaryLike(key.type)) {
         ddl.push(`${quotedKeyName} BLOB`);
       } else {
@@ -168,12 +180,16 @@ export const requestSqlFromRdh = async (
       }
     });
     ddl.push(')');
-    await driver.requestSql({ sql: ddl.join(' ') });
 
-    const toPositionedParameter = driver.isPositionedParameterAvailable();
-    const toPositionalCharacter = driver.getPositionalCharacter();
-    const sqlLang = driver.getSqlLang();
+    await sqLiteDriver.requestSql({ sql: ddl.join(' ') });
+
+    const toPositionedParameter = sqLiteDriver.isPositionedParameterAvailable();
+    const toPositionalCharacter = sqLiteDriver.getPositionalCharacter();
+    const sqlLang = sqLiteDriver.getSqlLang();
     for (const row of sourceRdh.rows) {
+      Object.keys(row.values).forEach((key) => {
+        row.values[key] = row.values[key] ?? null; // Ensure no undefined values for SQLite.
+      });
       const { query, binds } = toInsertStatement({
         tableName,
         columns: sourceRdh.keys,
@@ -187,7 +203,7 @@ export const requestSqlFromRdh = async (
         sqlLang,
       });
 
-      await driver.requestSql({
+      await sqLiteDriver.requestSql({
         sql: query,
         conditions: {
           binds,
@@ -195,11 +211,11 @@ export const requestSqlFromRdh = async (
       });
     }
 
-    const rdh = await driver.requestSql(params);
-    await driver.disconnect();
+    const rdh = await sqLiteDriver.requestSql(params);
+    await sqLiteDriver.disconnect();
     return rdh;
   } catch (error) {
-    await driver.disconnect();
+    await sqLiteDriver.disconnect();
     console.error('Error parsing SQL:', error);
     throw new Error(`Failed to parse SQL: ${error.message}`);
   }

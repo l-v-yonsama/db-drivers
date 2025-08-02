@@ -100,6 +100,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       ...params,
       dbTable,
     });
+
     setRdhMetaAndStatement({
       connectionName: this.conRes.name,
       useDatabase: prepare?.useDatabaseName,
