@@ -1837,7 +1837,7 @@ export const separateMultipleQueries = (text: string): string[] => {
   text.match(pattern)?.forEach((token) => {
     if (token === ';') {
       if (currentToken.length > 0) {
-        queries.push(currentToken.join('').trim());
+        queries.push(currentToken.join('').trim() + ';'); // Add the semicolon back
         currentToken = [];
       }
     } else {
