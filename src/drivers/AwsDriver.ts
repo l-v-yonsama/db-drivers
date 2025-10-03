@@ -184,6 +184,28 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       }
     }
 
+    // SSOセッション切れエラーが含まれているかチェック
+    const ssoExpired = messageList.some(
+      (msg) =>
+        typeof msg === 'string' &&
+        (msg.includes(
+          'The SSO session associated with this profile has expired',
+        ) ||
+          msg.includes('SSO session has expired') ||
+          msg.includes('To refresh this SSO session')),
+    );
+    if (ssoExpired) {
+      if (this.conRes.awsSetting?.profile) {
+        messageList.unshift(
+          `Your AWS SSO session has expired. Please run:\naws sso login --profile ${this.conRes.awsSetting.profile}\nand then try to reconnect.`,
+        );
+      } else {
+        messageList.unshift(
+          `Your AWS SSO session has expired. Please run:\naws sso login --profile <YOUR PROFILE>\nand then try to reconnect.`,
+        );
+      }
+    }
+
     return messageList.join(',');
   }
 

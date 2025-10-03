@@ -40,6 +40,7 @@ import {
 import {
   createRdhKey,
   GeneralColumnType,
+  RdhKey,
   ResultSetData,
   ResultSetDataBuilder,
   toNum,
@@ -704,33 +705,14 @@ export class AwsDynamoServiceClient
   }): ResultSetData {
     let rdb: ResultSetDataBuilder | undefined = undefined;
 
-    if (Count === 0) {
-      const rdb = ResultSetDataBuilder.createEmpty({
-        noRecordsReason: qst?.ast?.type === 'select' ? 'No records.' : '',
-      });
-      rdb.setSummary({
-        elapsedTimeMilli,
-        selectedRows: 0,
-        capacityUnits,
-      });
-      setRdhMetaAndStatement({
-        connectionName: this.conRes.name,
-        params,
-        rdb,
-        type: qst?.ast?.type,
-        qst,
-        dbTable,
-      });
-      return rdb.build();
-    }
-    const record = Items[0];
+    const record = Count === 0 ? {} : Items[0];
     const pkAndSk = dbTable?.getPkAndSkByIndex(qst?.names?.indexName);
 
-    const keys = Object.keys(record).map((it) => {
-      const col = dbTable?.getChildByName(it);
+    const createRdhKeyFromName = (name: string): RdhKey => {
+      const col = dbTable?.getChildByName(name);
       const type = col?.attrType
         ? parseDynamoAttrType(col.attrType)
-        : allAttributeTypes.get(it);
+        : allAttributeTypes.get(name);
       let comment = '';
       let required = false;
       if (col?.name === pkAndSk?.pk) {
@@ -742,12 +724,14 @@ export class AwsDynamoServiceClient
         required = true;
       }
       return createRdhKey({
-        name: it,
+        name,
         type,
         required,
         comment,
       });
-    });
+    };
+
+    const keys = Object.keys(record).map((it) => createRdhKeyFromName(it));
 
     for (const [attrName, colType] of allAttributeTypes) {
       if (!keys.map((key) => key.name).includes(attrName)) {
@@ -767,6 +751,15 @@ export class AwsDynamoServiceClient
     ) {
       const { expr } = qst.ast.columns[0];
       if (expr.type === 'ref' && expr.name === '*') {
+        if (Count === 0 && keys.length === 0) {
+          if (pkAndSk?.pk) {
+            keys.push(createRdhKeyFromName(pkAndSk?.pk));
+          }
+          if (pkAndSk?.sk) {
+            keys.push(createRdhKeyFromName(pkAndSk?.sk));
+          }
+        }
+
         keys.sort((a, b) => {
           const n = (it): number =>
             it.name === pkAndSk?.pk ? -2 : it.name === pkAndSk?.sk ? -1 : 0;

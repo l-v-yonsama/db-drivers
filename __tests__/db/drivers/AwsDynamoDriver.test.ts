@@ -71,7 +71,7 @@ describe('AwsDynamoDBDriver', () => {
     });
     docClient = DynamoDBDocumentClient.from(client);
 
-    driver = createDriver();
+    driver = createDriver('localDynamo');
 
     try {
       await driver.connect();
@@ -262,6 +262,35 @@ describe('AwsDynamoDBDriver', () => {
           },
         }),
       );
+      await client.send(
+        new CreateTableCommand({
+          TableName: 'NoRecords',
+          AttributeDefinitions: [
+            {
+              AttributeName: 'Id',
+              AttributeType: 'S',
+            },
+            {
+              AttributeName: 'CreatedAt',
+              AttributeType: 'N',
+            },
+          ],
+          KeySchema: [
+            {
+              AttributeName: 'Id',
+              KeyType: 'HASH',
+            },
+            {
+              AttributeName: 'CreatedAt',
+              KeyType: 'RANGE',
+            },
+          ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 10,
+            WriteCapacityUnits: 5,
+          },
+        }),
+      );
 
       await waitUntilTableExists(
         { client, maxWaitTime: 1000 },
@@ -271,6 +300,11 @@ describe('AwsDynamoDBDriver', () => {
       await waitUntilTableExists(
         { client, maxWaitTime: 1000 },
         { TableName: 'testtable' },
+      );
+
+      await waitUntilTableExists(
+        { client, maxWaitTime: 1000 },
+        { TableName: 'NoRecords' },
       );
 
       await client.send(
@@ -430,7 +464,7 @@ describe('AwsDynamoDBDriver', () => {
       });
 
       it('should have DbDynamoTable resource', async () => {
-        expect(testDbRes.children).toHaveLength(15);
+        expect(testDbRes.children).toHaveLength(16);
         const music = testDbRes.getChildByName('Music') as DbDynamoTable;
         expect(music.name).toBe('Music');
         expect(music.attr?.ReadCapacityUnits).toBe(10);
@@ -474,6 +508,11 @@ describe('AwsDynamoDBDriver', () => {
           AttributeName: 'ttl',
           TimeToLiveStatus: 'ENABLED',
         });
+
+        const noRecordsTable = testDbRes.getChildByName(
+          'NoRecords',
+        ) as DbDynamoTable;
+        expect(noRecordsTable.name).toBe('NoRecords');
       });
 
       it('should have DbDynamoTableColumn resource', async () => {
@@ -522,6 +561,17 @@ describe('AwsDynamoDBDriver', () => {
         expect(season.attrType).toBe('S');
         expect(season.pk).toBe(false);
         expect(season.sk).toBe(false);
+
+        // NoRecords
+        const noRecords = testDbRes.getChildByName(
+          'NoRecords',
+        ) as DbDynamoTable;
+        const id = noRecords.getChildByName('Id');
+        expect(id.attrType).toBe('S');
+        expect(id.pk).toBe(true);
+        const createdAt = noRecords.getChildByName('CreatedAt');
+        expect(createdAt.attrType).toBe('N');
+        expect(createdAt.sk).toBe(true);
       });
     });
 
@@ -536,7 +586,7 @@ describe('AwsDynamoDBDriver', () => {
       });
 
       it('prefix', async () => {
-        driver2 = createDriver({
+        driver2 = createDriver('filterCheck', {
           table: { type: 'prefix', value: 'a2-b1' },
         });
         await driver2.connect();
@@ -559,7 +609,7 @@ describe('AwsDynamoDBDriver', () => {
       });
 
       it('inclue', async () => {
-        driver2 = createDriver({
+        driver2 = createDriver('filterCheck', {
           table: { type: 'include', value: '-B2_FiL' },
         });
         await driver2.connect();
@@ -583,7 +633,7 @@ describe('AwsDynamoDBDriver', () => {
       });
 
       it('suffix', async () => {
-        driver2 = createDriver({
+        driver2 = createDriver('filterCheck', {
           table: { type: 'suffix', value: 'c1-d2' },
         });
         await driver2.connect();
@@ -608,7 +658,7 @@ describe('AwsDynamoDBDriver', () => {
       });
 
       it('regex', async () => {
-        driver2 = createDriver({
+        driver2 = createDriver('filterCheck', {
           table: { type: 'regex', value: 'a[23]-b1' },
         });
         await driver2.connect();
@@ -922,6 +972,15 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.summary.selectedRows).toBe(1003);
       });
 
+      it('no records', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: 'SELECT * FROM NoRecords',
+        });
+        expect(rs.keys.map((it) => it.name)).toEqual(
+          expect.arrayContaining(['Id', 'CreatedAt']),
+        );
+      });
+
       it('with Limit over 1MB', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
           sql: 'SELECT * FROM MassiveRecords Limit 1000',
@@ -995,7 +1054,6 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('insert');
         expect(rs.meta.tableName).toBe('Music');
-        expect(rs.noRecordsReason).toBe('');
       });
       it('Escape-Test', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
@@ -1009,7 +1067,6 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('insert');
         expect(rs.meta.tableName).toBe('Escape-Test');
-        expect(rs.noRecordsReason).toBe('');
 
         const rs2 = await driver.dynamoClient.requestPartiql({
           sql: `SELECT * FROM "Escape-Test" WHERE id = 4`,
@@ -1039,7 +1096,6 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('insert');
         expect(rs.meta.tableName).toBe('testtable');
-        expect(rs.noRecordsReason).toBe('');
 
         const rs2 = await driver.dynamoClient.requestPartiql({
           sql: `SELECT * FROM testtable WHERE id = 3`,
@@ -1091,7 +1147,6 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('insert');
         expect(rs.meta.tableName).toBe('testtable');
-        expect(rs.noRecordsReason).toBe('');
 
         const rs2 = await driver.dynamoClient.requestPartiql({
           sql: `SELECT * FROM testtable WHERE id = 4`,
@@ -1142,7 +1197,6 @@ describe('AwsDynamoDBDriver', () => {
           expect(rs.rows).toHaveLength(0);
           expect(rs.meta.type).toBe('update');
           expect(rs.meta.tableName).toBe('testtable');
-          expect(rs.noRecordsReason).toBe('');
         });
       });
       it('testtable No returning', async () => {
@@ -1157,7 +1211,6 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('update');
         expect(rs.meta.tableName).toBe('testtable');
-        expect(rs.noRecordsReason).toBe('');
       });
       it('Escape-Test', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
@@ -1171,7 +1224,6 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('update');
         expect(rs.meta.tableName).toBe('Escape-Test');
-        expect(rs.noRecordsReason).toBe('');
 
         const rs2 = await driver.dynamoClient.requestPartiql({
           sql: `SELECT * FROM "Escape-Test" WHERE id = 3`,
@@ -1206,7 +1258,6 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('update');
         expect(rs.meta.tableName).toBe('Food');
-        expect(rs.noRecordsReason).toBe('');
 
         const rs2 = await driver.dynamoClient.requestPartiql({
           sql: `SELECT * FROM "Food" WHERE Name = 'Apple' AND "Color" = 'Green'`,
@@ -1231,7 +1282,6 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('delete');
         expect(rs.meta.tableName).toBe('Escape-Test');
-        expect(rs.noRecordsReason).toBe('');
 
         const rs2 = await driver.dynamoClient.requestPartiql({
           sql: `SELECT * FROM "Escape-Test" WHERE id = 2`,
@@ -1243,9 +1293,12 @@ describe('AwsDynamoDBDriver', () => {
     });
   });
 
-  function createDriver(resourceFilter?: ResourceFilter): AwsDriver {
+  function createDriver(
+    name: string,
+    resourceFilter?: ResourceFilter,
+  ): AwsDriver {
     const setting: ConnectionSetting = {
-      name: 'localDynamo',
+      name,
       dbType: DBType.Aws,
       awsSetting: {
         supplyCredentialType: SupplyCredentialType.ExplicitInProperty,
