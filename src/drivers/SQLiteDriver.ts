@@ -140,7 +140,7 @@ export class SQLiteDriver extends RDSBaseDriver {
           st.freemem();
           throw new Error('SQLITE_INTERRUPT');
         }
-        const values = st.getAsObject();
+        const values: any = st.getAsObject();
         fields.forEach((it) => {
           const v = values[it];
           if (v && v instanceof Uint8Array) {
@@ -478,7 +478,8 @@ export class SQLiteDriver extends RDSBaseDriver {
     const { database } = this.conRes;
     try {
       if (this.db) {
-        fs.writeFileSync(database, Buffer.from(this.db.export()));
+        // fs.writeFileSync(database, Buffer.from(this.db.export()));
+        fs.writeFileSync(database, this.db.export());
         await this.db.close();
         this.db = undefined;
         this.interrupted = false;
