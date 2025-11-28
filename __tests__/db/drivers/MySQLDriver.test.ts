@@ -17,7 +17,7 @@ const baseConnectOption = {
   port: 6001,
   user: 'testuser',
   password: 'testpass',
-  database: 'testdb',
+  database: 'test-db',
   timezone: '+00:00',
 };
 const connectOption: ConnectionSetting = {
@@ -69,7 +69,7 @@ describe('MySQLDriver', () => {
       it('should have Schema resource', async () => {
         expect(testDbRes.children).toHaveLength(9);
         testSchemaRes = testDbRes.getSchema({ isDefault: true });
-        expect(testSchemaRes.name).toBe('testdb');
+        expect(testSchemaRes.name).toBe('test-db');
       });
 
       it('should have Table resource', async () => {
@@ -385,7 +385,7 @@ describe('MySQLDriver', () => {
 
     it('should return DDL when both schema and table name are specified', async () => {
       const ddl = await driver.getTableDDL({
-        schemaName: 'testdb',
+        schemaName: 'test-db',
         tableName: 'EMP',
       });
       expect(eolToSpace(ddl)).toBe(eolToSpace(empDDL));
@@ -785,7 +785,7 @@ describe('MySQLDriver', () => {
       const sql1 = 'SELECT * FROM lock_test WHERE id = 1 FOR UPDATE';
       await driver1.begin();
       await driver1.requestSql({ sql: sql1 });
-      const result3 = await driver3.getLocks('testDb');
+      const result3 = await driver3.getLocks('test-db');
       await driver1.rollback();
 
       // TABLE_LOCK
@@ -808,7 +808,7 @@ describe('MySQLDriver', () => {
       const sql1 = 'SELECT * FROM lock_test WHERE id = 2 FOR UPDATE';
       await driver1.begin();
       await driver1.requestSql({ sql: sql1 });
-      const result3 = await driver3.getLocks('testDb');
+      const result3 = await driver3.getLocks('test-db');
       await driver1.rollback();
 
       // TABLE_LOCK
@@ -831,7 +831,7 @@ describe('MySQLDriver', () => {
       const sql1 = 'SELECT * FROM lock_test WHERE id > 5 FOR UPDATE';
       await driver1.begin();
       await driver1.requestSql({ sql: sql1 });
-      const result3 = await driver3.getLocks('testDb');
+      const result3 = await driver3.getLocks('test-db');
       await driver1.rollback();
 
       // TABLE_LOCK

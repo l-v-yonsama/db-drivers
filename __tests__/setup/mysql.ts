@@ -9,7 +9,7 @@ const baseConnectOption = {
   port: 6001,
   user: 'root',
   password: 'p@ssw0rd',
-  database: 'testdb',
+  database: 'test-db',
 };
 
 export const RES_FILE_NAMES = ['mysqlDbRes.json'] as const;
@@ -40,8 +40,8 @@ export async function init(): Promise<void> {
   const con = await mysql.createConnection(baseConnectOption);
 
   try {
-    await con.query(`GRANT ALL PRIVILEGES ON testdb.* TO 'testuser'@'%'`);
-    await con.execute('DROP TABLE IF EXISTS testdb.testtable');
+    await con.query("GRANT ALL PRIVILEGES ON `test-db`.* TO 'testuser'@'%'");
+    await con.execute('DROP TABLE IF EXISTS `test-db`.testtable');
     await con.execute<ResultSetHeader>(CREATE_TABLE_STATEMENT);
 
     const dt = new Date(2023, 10, 11, 12, 13, 14, 0);
@@ -91,7 +91,7 @@ export async function init(): Promise<void> {
       );
     }
 
-    await con.execute('DROP TABLE IF EXISTS testdb.diff');
+    await con.execute('DROP TABLE IF EXISTS `test-db`.diff');
     await con.execute(CREATE_TABLE_STATEMENT2);
     for (let i = 1; i <= 10; i++) {
       const binds = [
@@ -104,31 +104,33 @@ export async function init(): Promise<void> {
       await con.execute(INSERT_STATEMENT2, binds);
     }
 
-    await con.execute('DROP TABLE IF EXISTS testdb.diff2');
+    await con.execute('DROP TABLE IF EXISTS `test-db`.diff2');
     await con.execute(CREATE_DIFF2_TABLE_STATEMENT);
 
     for (let i = 0; i < 20; i++) {
-      await con.execute(`DROP TABLE IF EXISTS testdb.tmp${i}`);
-      await con.execute(`CREATE TABLE testdb.tmp${i} (
+      await con.execute(`DROP TABLE IF EXISTS \`test-db\`.tmp${i}`);
+      await con.execute(`CREATE TABLE \`test-db\`.tmp${i} (
         ID integer NOT NULL,
         PRIMARY KEY  (ID)
       ) `);
     }
 
-    await con.execute('DROP TABLE IF EXISTS testdb.DEPT');
-    await con.execute(CREATE_TABLE_ORA_DEPT.replace('oradb', 'testdb'));
-    await con.execute('DROP TABLE IF EXISTS testdb.EMP');
-    await con.execute(CREATE_TABLE_ORA_EMP.replace('oradb', 'testdb'));
+    await con.execute('DROP TABLE IF EXISTS `test-db`.DEPT');
+    await con.execute(CREATE_TABLE_ORA_DEPT.replace('oradb', '`test-db`'));
+    await con.execute('DROP TABLE IF EXISTS `test-db`.EMP');
+    await con.execute(CREATE_TABLE_ORA_EMP.replace('oradb', '`test-db`'));
 
     await con.execute(
-      `INSERT INTO testdb.DEPT VALUES(10, 'ACCOUNTING', 'NEW YORK')`,
+      `INSERT INTO \`test-db\`.DEPT VALUES(10, 'ACCOUNTING', 'NEW YORK')`,
     );
     await con.execute(
-      `INSERT INTO testdb.DEPT VALUES(20, 'RESEARCH', 'DALLAS')`,
+      `INSERT INTO \`test-db\`.DEPT VALUES(20, 'RESEARCH', 'DALLAS')`,
     );
-    await con.execute(`INSERT INTO testdb.DEPT VALUES(30, 'SALES', 'CHICAGO')`);
     await con.execute(
-      `INSERT INTO testdb.DEPT VALUES(40, 'OPERATIONS', 'BOSTON')`,
+      `INSERT INTO \`test-db\`.DEPT VALUES(30, 'SALES', 'CHICAGO')`,
+    );
+    await con.execute(
+      `INSERT INTO \`test-db\`.DEPT VALUES(40, 'OPERATIONS', 'BOSTON')`,
     );
 
     const empValues = [
@@ -142,7 +144,7 @@ export async function init(): Promise<void> {
 
     for (const ev of empValues) {
       await con.execute(
-        `INSERT INTO testdb.EMP 
+        `INSERT INTO \`test-db\`.EMP 
       (EMPNO,ENAME,SEX,JOB,MGR,SAL, DEPTNO) 
       VALUES(?,?,?,?,?,?,?)`,
         ev,
@@ -207,29 +209,29 @@ export async function init(): Promise<void> {
       );
     }
 
-    await con.execute('DROP TABLE IF EXISTS testdb.order_detail');
-    await con.execute('DROP TABLE IF EXISTS testdb.order');
-    await con.execute('DROP TABLE IF EXISTS testdb.customer');
+    await con.execute('DROP TABLE IF EXISTS `test-db`.order_detail');
+    await con.execute('DROP TABLE IF EXISTS `test-db`.order');
+    await con.execute('DROP TABLE IF EXISTS `test-db`.customer');
     await con.execute(CREATE_CUSTOMER_TABLE_STATEMENT);
     await con.execute(CREATE_ORDER_TABLE_STATEMENT);
     await con.execute(CREATE_ORDER_DETAIL_TABLE_STATEMENT);
     for (let i = 1; i <= 10; i++) {
       const binds = [i, `0120-11-121${i % 10}`];
       await con.execute(
-        `INSERT INTO testdb.customer (customer_no, tel) VALUES (?, ?)`,
+        `INSERT INTO \`test-db\`.customer (customer_no, tel) VALUES (?, ?)`,
         binds,
       );
 
       const binds2 = [i, i, dt, i * 100];
       await con.execute(
-        `INSERT INTO testdb.order (order_no, customer_no, order_date, amount) 
+        `INSERT INTO \`test-db\`.order (order_no, customer_no, order_date, amount) 
           VALUES (?, ?, ?, ?)`,
         binds2,
       );
 
       const binds3 = [i, i, i * 10, i * 100];
       await con.execute(
-        `INSERT INTO testdb.order_detail (order_no, detail_no, item_no, amount) 
+        `INSERT INTO \`test-db\`.order_detail (order_no, detail_no, item_no, amount) 
           VALUES (?, ?, ?, ?)`,
         binds3,
       );
@@ -242,7 +244,7 @@ export async function init(): Promise<void> {
 }
 
 const CREATE_TABLE_STATEMENT = `
-CREATE TABLE testdb.testtable (
+CREATE TABLE \`test-db\`.testtable (
   ID int auto_increment PRIMARY KEY,
   n0 BIT,
   n1 TINYINT COMMENT 'MAX 127',
@@ -280,7 +282,7 @@ CREATE TABLE testdb.testtable (
 `;
 
 const CREATE_TABLE_STATEMENT2 = `
-CREATE TABLE testdb.diff (
+CREATE TABLE \`test-db\`.diff (
   last_name VARCHAR(128),
   first_name VARCHAR(128),
   full_name VARCHAR(128) unique,
@@ -292,7 +294,7 @@ CREATE TABLE testdb.diff (
 `;
 
 const CREATE_DIFF2_TABLE_STATEMENT = `
-CREATE TABLE testdb.diff2 (
+CREATE TABLE \`test-db\`.diff2 (
   id int auto_increment PRIMARY KEY,
   last_name VARCHAR(128),
   first_name VARCHAR(128),
@@ -331,7 +333,7 @@ const CREATE_TABLE_ORA_EMP = `CREATE TABLE oradb.EMP (
   KEY newfk (DEPTNO)
 ) `;
 
-const INSERT_STATEMENT = `INSERT INTO testdb.testtable (
+const INSERT_STATEMENT = `INSERT INTO \`test-db\`.testtable (
   n0, n1, n2, n3, n4, 
   f1, f2, f3,
   d1, d2, d3, d4, d5,
@@ -344,34 +346,34 @@ const INSERT_STATEMENT = `INSERT INTO testdb.testtable (
     ?, ?, ?, ?, ?, ?, ?, ?, ?, HEX(?), ?,
     ST_GeomFromText('POINT(35.702727 100)'), ? )`;
 
-const INSERT_STATEMENT2 = `INSERT INTO testdb.diff (
+const INSERT_STATEMENT2 = `INSERT INTO \`test-db\`.diff (
   last_name, first_name, full_name, note, birthday )
   VALUES(?, ?, ?, ?, ?)`;
 
-const CREATE_CUSTOMER_TABLE_STATEMENT = `CREATE TABLE testdb.customer (
+const CREATE_CUSTOMER_TABLE_STATEMENT = `CREATE TABLE \`test-db\`.customer (
   customer_no int auto_increment PRIMARY KEY COMMENT '顧客番号',
   tel VARCHAR(20) COMMENT '電話番号'
 ) COMMENT='顧客'
 `;
 
-const CREATE_ORDER_TABLE_STATEMENT = `CREATE TABLE testdb.order (
+const CREATE_ORDER_TABLE_STATEMENT = `CREATE TABLE \`test-db\`.order (
   order_no int auto_increment PRIMARY KEY COMMENT '受注番号',
   customer_no int COMMENT '顧客番号',
   order_date DATE COMMENT '受注日',
   amount int COMMENT '受注金額',
 
-  FOREIGN KEY fk_customer_no(customer_no) REFERENCES testdb.customer(customer_no)
+  FOREIGN KEY fk_customer_no(customer_no) REFERENCES \`test-db\`.customer(customer_no)
 ) COMMENT='受注'
 `;
 
-const CREATE_ORDER_DETAIL_TABLE_STATEMENT = `CREATE TABLE testdb.order_detail (
+const CREATE_ORDER_DETAIL_TABLE_STATEMENT = `CREATE TABLE \`test-db\`.order_detail (
   order_no int COMMENT '受注番号',
   detail_no int COMMENT '受注明細番号',
   item_no int COMMENT '商品番号',
   amount int COMMENT '金額',
 
   PRIMARY KEY(order_no, detail_no),
-  FOREIGN KEY fk_order_no(order_no) REFERENCES testdb.order(order_no)
+  FOREIGN KEY fk_order_no(order_no) REFERENCES \`test-db\`.order(order_no)
 ) COMMENT='受注明細'
 `;
 

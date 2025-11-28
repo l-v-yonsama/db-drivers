@@ -19,6 +19,7 @@ import {
 } from '../types';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { QuoteChar } from '../helpers';
 
 export class MySQLDriver extends RDSBaseDriver {
   private con: mysql.Connection | undefined;
@@ -638,6 +639,10 @@ ORDER BY ID DESC`;
     return false;
   }
 
+  getIdQuoteCharacter(): QuoteChar | undefined {
+    return '`';
+  }
+
   supportsShowCreate(): boolean {
     return true;
   }
@@ -652,7 +657,9 @@ ORDER BY ID DESC`;
     if (tableName.length === 0) {
       throw new Error('tableName must not be empty');
     }
-    const name = schemaName ? `${schemaName}.${tableName}` : tableName;
+    const name = schemaName
+      ? `${this.quoteIdentifier(schemaName)}.${this.quoteIdentifier(tableName)}`
+      : this.quoteIdentifier(tableName);
     const rows = await this.executeOnConnection(`SHOW CREATE TABLE ${name}`);
 
     if (rows.length && rows[0]['Create Table']) {

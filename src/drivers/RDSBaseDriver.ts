@@ -4,7 +4,12 @@ import {
   equalsIgnoreCase,
   toNum,
 } from '@l-v-yonsama/rdh';
-import { parseQuery, toCountRecordsQuery } from '../helpers';
+import {
+  needsQuoting,
+  parseQuery,
+  toCountRecordsQuery,
+  wrapQuote,
+} from '../helpers';
 import {
   DbSchema,
   DbTable,
@@ -56,6 +61,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     const { query } = toCountRecordsQuery({
       schemaName: params.schema,
       tableRes: new DbTable(params.table, null),
+      idQuoteCharacter: this.getIdQuoteCharacter(),
     });
     return await this.countSql({
       sql: query,
@@ -276,6 +282,12 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
 
   supportsShowCreate(): boolean {
     return false;
+  }
+
+  quoteIdentifier(identifier: string): string {
+    return needsQuoting(identifier)
+      ? wrapQuote(identifier, this.getIdQuoteCharacter())
+      : identifier;
   }
 
   getTableDDL({

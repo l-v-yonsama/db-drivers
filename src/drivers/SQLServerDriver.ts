@@ -27,6 +27,7 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { QuoteChar } from '../helpers';
 
 const EXPLAIN_COLUMNS: RdhKey[] = [
   createRdhKey({
@@ -775,6 +776,10 @@ ORDER BY s.session_id DESC
 
   isLimitAsTop(): boolean {
     return true;
+  }
+
+  getIdQuoteCharacter(): QuoteChar | undefined {
+    return '"';
   }
 
   async closeSub(): Promise<string> {

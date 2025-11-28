@@ -25,6 +25,7 @@ import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
 import { AwsDynamoServiceClient } from './aws/AwsDynamoServiceClient';
 import { ResultSetData } from '@l-v-yonsama/rdh';
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
+import { QuoteChar } from '../helpers';
 
 export type ClientConfigType = {
   region?: string;
@@ -303,6 +304,10 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
 
   isSchemaSpecificationSvailable(): boolean {
     return false;
+  }
+
+  getIdQuoteCharacter(): QuoteChar | undefined {
+    return undefined;
   }
 
   async requestSql(params: QueryParams): Promise<ResultSetData> {

@@ -17,7 +17,7 @@ services:
     environment:
       TZ: 'Asia/Tokyo'
       MYSQL_ROOT_PASSWORD: p@ssw0rd
-      MYSQL_DATABASE: testdb
+      MYSQL_DATABASE: test-db
       MYSQL_USER: testuser
       MYSQL_PASSWORD: testpass
 

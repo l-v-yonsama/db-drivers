@@ -10,7 +10,7 @@ import {
 } from '@l-v-yonsama/rdh';
 import * as fs from 'fs';
 import initSql, { BindParams, type Database } from 'sql.js/dist/sql-wasm.js';
-import { parseQuery } from '../helpers';
+import { parseQuery, QuoteChar } from '../helpers';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
@@ -439,6 +439,10 @@ export class SQLiteDriver extends RDSBaseDriver {
 
   isLimitAsTop(): boolean {
     return false;
+  }
+
+  getIdQuoteCharacter(): QuoteChar | undefined {
+    return '"';
   }
 
   isSchemaSpecificationSvailable(): boolean {

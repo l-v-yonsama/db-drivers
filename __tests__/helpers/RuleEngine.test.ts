@@ -33,7 +33,7 @@ describe('ResourceHelper', () => {
       port: 6001,
       user: 'testuser',
       password: 'testpass',
-      database: 'testdb',
+      database: 'test-db',
       dbType: DBType.MySQL,
       name: 'mysql',
     };

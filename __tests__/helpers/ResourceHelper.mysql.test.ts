@@ -25,7 +25,7 @@ describe('ResourceHelper', () => {
       port: 6001,
       user: 'testuser',
       password: 'testpass',
-      database: 'testdb',
+      database: 'test-db',
       dbType: DBType.MySQL,
       name: 'mysql',
     };
@@ -276,22 +276,23 @@ describe('ResourceHelper', () => {
           bindOption: {
             specifyValuesWithBindParameters: false,
           },
+          idQuoteCharacter: driver.getIdQuoteCharacter(),
         });
 
         expect(undoStatements[0]).toEqual({
           query:
-            "INSERT INTO testdb.testtable (id,N0,n1,n2,n3,n4,f1,f2,f3,d1,d2,d3,d4,d5) VALUES (1,B'0',2,13,104,1005,12.3456,0.5,0.05,'2023-11-11 00:00:00','12:13:14','2023-11-11 12:13:14','2023-11-11 12:13:14',2023)",
+            "INSERT INTO `test-db`.testtable (id,N0,n1,n2,n3,n4,f1,f2,f3,d1,d2,d3,d4,d5) VALUES (1,B'0',2,13,104,1005,12.3456,0.5,0.05,'2023-11-11 00:00:00','12:13:14','2023-11-11 12:13:14','2023-11-11 12:13:14',2023)",
           binds: [],
         });
 
         expect(undoStatements[1]).toEqual({
           query:
-            "UPDATE testdb.testtable SET n2 = 24,f2 = 0.5,d2 = '12:13:14' WHERE id = 2",
+            "UPDATE `test-db`.testtable SET n2 = 24,f2 = 0.5,d2 = '12:13:14' WHERE id = 2",
           binds: [],
         });
 
         expect(undoStatements[2]).toEqual({
-          query: 'DELETE FROM testdb.testtable WHERE id  = 11',
+          query: 'DELETE FROM `test-db`.testtable WHERE id  = 11',
           binds: [],
         });
 
@@ -414,22 +415,23 @@ describe('ResourceHelper', () => {
           bindOption: {
             specifyValuesWithBindParameters: false,
           },
+          idQuoteCharacter: driver.getIdQuoteCharacter(),
         });
 
         expect(undoStatements[0]).toEqual({
           query:
-            "INSERT INTO testdb.testtable (ID,s1,s2,s3a,s3b,s3c,long_column_name_long_text,s4,s8) VALUES (1,'No1','s2-1','s3a-1','s3b-1','s3c-1','long_column_name_long_text-1','b','b')",
+            "INSERT INTO `test-db`.testtable (ID,s1,s2,s3a,s3b,s3c,long_column_name_long_text,s4,s8) VALUES (1,'No1','s2-1','s3a-1','s3b-1','s3c-1','long_column_name_long_text-1','b','b')",
           binds: [],
         });
 
         expect(undoStatements[1]).toEqual({
           query:
-            "UPDATE testdb.testtable SET s1 = 'No2',s3a = 's3a-2',s8 = 'b' WHERE ID = 2",
+            "UPDATE `test-db`.testtable SET s1 = 'No2',s3a = 's3a-2',s8 = 'b' WHERE ID = 2",
           binds: [],
         });
 
         expect(undoStatements[2]).toEqual({
-          query: 'DELETE FROM testdb.testtable WHERE ID  = 11',
+          query: 'DELETE FROM `test-db`.testtable WHERE ID  = 11',
           binds: [],
         });
 
@@ -549,22 +551,23 @@ describe('ResourceHelper', () => {
           bindOption: {
             specifyValuesWithBindParameters: false,
           },
+          idQuoteCharacter: driver.getIdQuoteCharacter(),
         });
 
         expect(undoStatements[0]).toEqual({
           query:
-            'INSERT INTO testdb.testtable (ID,j1,n1,s1) VALUES (1,\'{"k1":"v1"}\',2,\'No1\')',
+            'INSERT INTO `test-db`.testtable (ID,j1,n1,s1) VALUES (1,\'{"k1":"v1"}\',2,\'No1\')',
           binds: [],
         });
 
         expect(undoStatements[1]).toEqual({
           query:
-            'UPDATE testdb.testtable SET j1 = \'{"k1":"v2"}\' WHERE ID = 2',
+            'UPDATE `test-db`.testtable SET j1 = \'{"k1":"v2"}\' WHERE ID = 2',
           binds: [],
         });
 
         expect(undoStatements[2]).toEqual({
-          query: 'DELETE FROM testdb.testtable WHERE ID  = 11',
+          query: 'DELETE FROM `test-db`.testtable WHERE ID  = 11',
           binds: [],
         });
 
@@ -678,20 +681,21 @@ describe('ResourceHelper', () => {
           bindOption: {
             specifyValuesWithBindParameters: false,
           },
+          idQuoteCharacter: driver.getIdQuoteCharacter(),
         });
 
         expect(undoStatements[0]).toEqual({
-          query: 'INSERT INTO testdb.testtable (ID,n1) VALUES (1,2)',
+          query: 'INSERT INTO `test-db`.testtable (ID,n1) VALUES (1,2)',
           binds: [],
         });
 
         expect(undoStatements[1]).toEqual({
-          query: 'UPDATE testdb.testtable SET n1 = 3 WHERE ID = 2',
+          query: 'UPDATE `test-db`.testtable SET n1 = 3 WHERE ID = 2',
           binds: [],
         });
 
         expect(undoStatements[2]).toEqual({
-          query: 'DELETE FROM testdb.testtable WHERE ID  = 11',
+          query: 'DELETE FROM `test-db`.testtable WHERE ID  = 11',
           binds: [],
         });
 
@@ -822,28 +826,29 @@ describe('ResourceHelper', () => {
           bindOption: {
             specifyValuesWithBindParameters: false,
           },
+          idQuoteCharacter: driver.getIdQuoteCharacter(),
         });
 
         expect(undoStatements[0]).toEqual({
           query:
-            "INSERT INTO testdb.diff (last_name,first_name,full_name,note,birthday) VALUES ('Uchida4','Takeshi4','Uchida4 Takeshi4','note4','2023-11-04 00:00:00')",
+            "INSERT INTO `test-db`.diff (last_name,first_name,full_name,note,birthday) VALUES ('Uchida4','Takeshi4','Uchida4 Takeshi4','note4','2023-11-04 00:00:00')",
           binds: [],
         });
 
         expect(undoStatements[1]).toEqual({
           query:
-            "INSERT INTO testdb.diff (last_name,first_name,full_name,note,birthday) VALUES ('Uchida5','Takeshi5','Uchida5 Takeshi5','note5','2023-11-05 00:00:00')",
+            "INSERT INTO `test-db`.diff (last_name,first_name,full_name,note,birthday) VALUES ('Uchida5','Takeshi5','Uchida5 Takeshi5','note5','2023-11-05 00:00:00')",
           binds: [],
         });
 
         expect(undoStatements[2]).toEqual({
           query:
-            "UPDATE testdb.diff SET note = 'note6' WHERE full_name = 'Uchida6 Takeshi6'",
+            "UPDATE `test-db`.diff SET note = 'note6' WHERE full_name = 'Uchida6 Takeshi6'",
           binds: [],
         });
 
         expect(undoStatements[3]).toEqual({
-          query: "DELETE FROM testdb.diff WHERE full_name  = 'taro yamada'",
+          query: "DELETE FROM `test-db`.diff WHERE full_name  = 'taro yamada'",
           binds: [],
         });
 
@@ -856,11 +861,12 @@ describe('ResourceHelper', () => {
             specifyValuesWithBindParameters: true,
             toPositionedParameter: false,
           },
+          idQuoteCharacter: driver.getIdQuoteCharacter(),
         });
 
         expect(undoStatementWithBinds[0]).toEqual({
           query:
-            'INSERT INTO testdb.diff (last_name,first_name,full_name,note,birthday) VALUES (?,?,?,?,?)',
+            'INSERT INTO `test-db`.diff (last_name,first_name,full_name,note,birthday) VALUES (?,?,?,?,?)',
           binds: [
             'Uchida4',
             'Takeshi4',
@@ -872,7 +878,7 @@ describe('ResourceHelper', () => {
 
         expect(undoStatementWithBinds[1]).toEqual({
           query:
-            'INSERT INTO testdb.diff (last_name,first_name,full_name,note,birthday) VALUES (?,?,?,?,?)',
+            'INSERT INTO `test-db`.diff (last_name,first_name,full_name,note,birthday) VALUES (?,?,?,?,?)',
           binds: [
             'Uchida5',
             'Takeshi5',
@@ -883,12 +889,12 @@ describe('ResourceHelper', () => {
         });
 
         expect(undoStatementWithBinds[2]).toEqual({
-          query: 'UPDATE testdb.diff SET note = ? WHERE full_name = ?',
+          query: 'UPDATE `test-db`.diff SET note = ? WHERE full_name = ?',
           binds: ['note6', 'Uchida6 Takeshi6'],
         });
 
         expect(undoStatementWithBinds[3]).toEqual({
-          query: 'DELETE FROM testdb.diff WHERE full_name  = ?',
+          query: 'DELETE FROM `test-db`.diff WHERE full_name  = ?',
           binds: ['taro yamada'],
         });
       });

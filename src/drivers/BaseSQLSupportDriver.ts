@@ -2,6 +2,7 @@ import { ResultSetData } from '@l-v-yonsama/rdh';
 import { ConnectionSetting, QueryParams, SQLLang } from '../types';
 import { DbDatabase, SchemaAndTableName } from '../resource';
 import { BaseDriver } from './BaseDriver';
+import { QuoteChar } from '../helpers';
 
 export abstract class BaseSQLSupportDriver<
   T extends DbDatabase = DbDatabase,
@@ -29,6 +30,8 @@ export abstract class BaseSQLSupportDriver<
   abstract count(params: SchemaAndTableName): Promise<number | undefined>;
 
   abstract countSql(params: QueryParams): Promise<number | undefined>;
+
+  abstract getIdQuoteCharacter(): QuoteChar | undefined;
 
   /**
    * Terminate (kill) a specific session.

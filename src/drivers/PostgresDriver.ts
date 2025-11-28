@@ -19,6 +19,7 @@ import {
 } from '../types';
 import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { QuoteChar } from '../helpers';
 
 export class PostgresDriver extends RDSBaseDriver {
   private pool: pg.Pool;
@@ -648,6 +649,10 @@ ORDER BY A.pid DESC
 
   isLimitAsTop(): boolean {
     return false;
+  }
+
+  getIdQuoteCharacter(): QuoteChar | undefined {
+    return '"';
   }
 
   async closeSub(): Promise<string> {

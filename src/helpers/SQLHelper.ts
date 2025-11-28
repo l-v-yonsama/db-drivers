@@ -63,6 +63,7 @@ export const createUndoChangeSQL = ({
   bindOption,
   quote,
   sqlLang,
+  idQuoteCharacter,
 }: {
   schemaName?: string;
   tableName: string;
@@ -71,6 +72,7 @@ export const createUndoChangeSQL = ({
   bindOption: BindOptions;
   quote?: boolean;
   sqlLang?: SQLLang;
+  idQuoteCharacter?: string;
 }): QueryWithBindsResult[] => {
   const { ok, toBeInserted, toBeUpdated, toBeDeleted } = diffResult;
   if (!ok) {
@@ -90,6 +92,7 @@ export const createUndoChangeSQL = ({
         compactSql: true,
         quote,
         sqlLang,
+        idQuoteCharacter,
       }),
     ),
   );
@@ -106,6 +109,7 @@ export const createUndoChangeSQL = ({
         bindOption,
         quote,
         sqlLang,
+        idQuoteCharacter,
       }),
     ),
   );
@@ -121,6 +125,7 @@ export const createUndoChangeSQL = ({
         bindOption,
         quote,
         sqlLang,
+        idQuoteCharacter,
       }),
     ),
   );
@@ -138,6 +143,7 @@ export const toInsertStatement = ({
   withComment,
   compactSql,
   quote,
+  idQuoteCharacter,
   sqlLang,
 }: {
   schemaName?: string;
@@ -149,12 +155,13 @@ export const toInsertStatement = ({
   withComment?: boolean;
   compactSql?: boolean;
   quote?: boolean;
+  idQuoteCharacter?: string;
   sqlLang?: SQLLang;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableName,
-    quote,
+    idQuoteCharacter,
     sqlLang,
   });
   const {
@@ -280,6 +287,7 @@ export const toUpdateStatement = ({
   conditions,
   bindOption,
   quote,
+  idQuoteCharacter,
   sqlLang,
 }: {
   schemaName?: string;
@@ -289,12 +297,13 @@ export const toUpdateStatement = ({
   conditions: { [key: string]: any };
   bindOption: BindOptions;
   quote?: boolean;
+  idQuoteCharacter?: string;
   sqlLang?: SQLLang;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableName,
-    quote,
+    idQuoteCharacter,
     sqlLang,
   });
   const {
@@ -409,6 +418,7 @@ export const toDeleteStatement = ({
   conditions,
   bindOption,
   quote,
+  idQuoteCharacter,
   sqlLang,
 }: {
   schemaName?: string;
@@ -417,12 +427,13 @@ export const toDeleteStatement = ({
   conditions: { [key: string]: any };
   bindOption: BindOptions;
   quote?: boolean;
+  idQuoteCharacter?: string;
   sqlLang?: SQLLang;
 }): QueryWithBindsResult => {
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableName,
-    quote,
+    idQuoteCharacter,
     sqlLang,
   });
   const {
@@ -1459,7 +1470,7 @@ const createReservedWordProposal = (word: string): Proposal => {
   };
 };
 
-type QuoteChar = '"' | '`' | "'";
+export type QuoteChar = '"' | '`' | "'";
 
 export const wrapSingleQuote = (input: string): string => wrapQuote(input, "'");
 
@@ -1467,7 +1478,7 @@ export const wrapDoubleQuote = (input: string): string => wrapQuote(input, '"');
 
 export const wrapBackQuote = (input: string): string => wrapQuote(input, '`');
 
-const wrapQuote = (input: string, quoteChar: QuoteChar): string => {
+export const wrapQuote = (input: string, quoteChar: QuoteChar): string => {
   if (input.startsWith(quoteChar) && input.endsWith(quoteChar)) {
     return input; // already wrapped
   }
@@ -1496,23 +1507,30 @@ const unwrapQuote = (s: string): string => {
 const createTableNameWithSchema = ({
   schema,
   table,
-  quote,
+  idQuoteCharacter,
   sqlLang,
 }: {
   schema?: string;
   table: string;
-  quote?: boolean;
+  idQuoteCharacter?: string;
   sqlLang?: SQLLang;
 }): string => {
   if (sqlLang === 'partiql') {
     return wrapDoubleQuote(table);
   }
+  const convertId = (name: string): string => {
+    if (needsQuoting(name)) {
+      return idQuoteCharacter === '`'
+        ? wrapBackQuote(name)
+        : wrapDoubleQuote(name);
+    }
+    return name;
+  };
+
   if (schema) {
-    return `${quote ? wrapBackQuote(schema) : schema}.${
-      quote ? wrapBackQuote(table) : table
-    }`;
+    return `${convertId(schema)}.${convertId(table)}`;
   }
-  return `${quote ? wrapBackQuote(table) : table}`;
+  return convertId(table);
 };
 
 const FUNCTION_MATCHER = new RegExp(
@@ -1609,6 +1627,11 @@ const toEmbeddedStringValue = (
   }
 
   return value.toString();
+};
+
+export const needsQuoting = (name): boolean => {
+  const safePattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
+  return !safePattern.test(name);
 };
 
 const getQNames = (
@@ -1773,6 +1796,7 @@ const toGeneralQuery = ({
   schemaName,
   conditions,
   quote,
+  idQuoteCharacter,
   sqlLang,
   limit,
   limitAsTop,
@@ -1783,7 +1807,7 @@ const toGeneralQuery = ({
   const tableNameWithSchema = createTableNameWithSchema({
     schema: schemaName,
     table: tableRes.name,
-    quote,
+    idQuoteCharacter,
     sqlLang,
   });
   const params = {

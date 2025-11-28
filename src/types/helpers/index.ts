@@ -38,6 +38,7 @@ export type ToViewDataQueryParams = {
   schemaName?: string;
   conditions?: TopLevelCondition;
   quote?: boolean;
+  idQuoteCharacter?: string;
   sqlLang?: SQLLang;
   // toPositionedParameter?: boolean;
   // toPositionalCharacter?: string;
