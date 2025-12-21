@@ -3,6 +3,7 @@ export const ResourceType = {
   RdsDatabase: 'RdsDatabase',
   AwsDatabase: 'AwsDatabase',
   RedisDatabase: 'RedisDatabase',
+  MemcacheDatabase: 'MemcacheDatabase',
   MqttDatabase: 'MqttDatabase',
 
   Schema: 'Schema',

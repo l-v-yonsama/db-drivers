@@ -7,6 +7,10 @@ export interface Scannable {
   scan(params: ScanParams): Promise<ResultSetData>;
 }
 
+export interface Commandable {
+  executeCommand(command: string): Promise<ResultSetData>;
+}
+
 export function isScannable(arg: any): arg is Scannable {
   if (!arg) {
     return false;

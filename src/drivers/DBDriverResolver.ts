@@ -18,6 +18,7 @@ import { SQLServerDriver } from './SQLServerDriver';
 import { SQLiteDriver } from './SQLiteDriver';
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 import { MqttDriver } from './MqttDriver';
+import { MemcacheDriver } from './MemcacheDriver';
 
 const uid = new ShortUniqueId();
 
@@ -91,6 +92,9 @@ export class DBDriverResolver {
         break;
       case DBType.Redis:
         driver = new RedisDriver(conRes);
+        break;
+      case DBType.Memcache:
+        driver = new MemcacheDriver(conRes);
         break;
       case DBType.Auth0:
         driver = new Auth0Driver(conRes);

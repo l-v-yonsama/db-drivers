@@ -4,6 +4,7 @@ export const DBType = {
   SQLServer: 'SQLServer',
   SQLite: 'SQLite',
   Redis: 'Redis',
+  Memcache: 'Memcache',
   Keycloak: 'Keycloak',
   Auth0: 'Auth0',
   Aws: 'Aws',

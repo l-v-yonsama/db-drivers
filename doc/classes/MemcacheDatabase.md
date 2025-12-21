@@ -1,47 +1,49 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / RdsDatabase
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / MemcacheDatabase
 
-# Class: RdsDatabase
+# Class: MemcacheDatabase
 
 ## Hierarchy
 
-- [`DbResource`](DbResource.md)\<[`DbSchema`](DbSchema.md)\>
+- [`DbResource`](DbResource.md)\<[`DbKey`](DbKey.md)\>
 
-  ↳ **`RdsDatabase`**
+  ↳ **`MemcacheDatabase`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](RdsDatabase.md#constructor)
+- [constructor](MemcacheDatabase.md#constructor)
 
 ### Properties
 
-- [children](RdsDatabase.md#children)
-- [comment](RdsDatabase.md#comment)
-- [id](RdsDatabase.md#id)
-- [isInProgress](RdsDatabase.md#isinprogress)
-- [meta](RdsDatabase.md#meta)
-- [name](RdsDatabase.md#name)
-- [resourceType](RdsDatabase.md#resourcetype)
-- [version](RdsDatabase.md#version)
+- [children](MemcacheDatabase.md#children)
+- [cold](MemcacheDatabase.md#cold)
+- [comment](MemcacheDatabase.md#comment)
+- [hot](MemcacheDatabase.md#hot)
+- [id](MemcacheDatabase.md#id)
+- [isInProgress](MemcacheDatabase.md#isinprogress)
+- [meta](MemcacheDatabase.md#meta)
+- [name](MemcacheDatabase.md#name)
+- [resourceType](MemcacheDatabase.md#resourcetype)
+- [servers](MemcacheDatabase.md#servers)
+- [warm](MemcacheDatabase.md#warm)
 
 ### Methods
 
-- [addChild](RdsDatabase.md#addchild)
-- [clearChildren](RdsDatabase.md#clearchildren)
-- [findChildren](RdsDatabase.md#findchildren)
-- [getChildByName](RdsDatabase.md#getchildbyname)
-- [getProperties](RdsDatabase.md#getproperties)
-- [getSchema](RdsDatabase.md#getschema)
-- [hasChildren](RdsDatabase.md#haschildren)
-- [toJsonStringify](RdsDatabase.md#tojsonstringify)
-- [toString](RdsDatabase.md#tostring)
+- [addChild](MemcacheDatabase.md#addchild)
+- [clearChildren](MemcacheDatabase.md#clearchildren)
+- [findChildren](MemcacheDatabase.md#findchildren)
+- [getChildByName](MemcacheDatabase.md#getchildbyname)
+- [getProperties](MemcacheDatabase.md#getproperties)
+- [hasChildren](MemcacheDatabase.md#haschildren)
+- [toJsonStringify](MemcacheDatabase.md#tojsonstringify)
+- [toString](MemcacheDatabase.md#tostring)
 
 ## Constructors
 
 ### constructor
 
-• **new RdsDatabase**(`name`): [`RdsDatabase`](RdsDatabase.md)
+• **new MemcacheDatabase**(`name`): [`MemcacheDatabase`](MemcacheDatabase.md)
 
 #### Parameters
 
@@ -51,7 +53,7 @@
 
 #### Returns
 
-[`RdsDatabase`](RdsDatabase.md)
+[`MemcacheDatabase`](MemcacheDatabase.md)
 
 #### Overrides
 
@@ -59,13 +61,13 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:359](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L359)
+[src/resource/DbResource.ts:418](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L418)
 
 ## Properties
 
 ### children
 
-• `Readonly` **children**: [`DbSchema`](DbSchema.md)[]
+• `Readonly` **children**: [`DbKey`](DbKey.md)\<`any`\>[]
 
 #### Inherited from
 
@@ -74,6 +76,16 @@
 #### Defined in
 
 [src/resource/DbResource.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L188)
+
+___
+
+### cold
+
+• **cold**: `number`
+
+#### Defined in
+
+[src/resource/DbResource.ts:417](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L417)
 
 ___
 
@@ -88,6 +100,16 @@ ___
 #### Defined in
 
 [src/resource/DbResource.ts:187](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L187)
+
+___
+
+### hot
+
+• **hot**: `number`
+
+#### Defined in
+
+[src/resource/DbResource.ts:415](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L415)
 
 ___
 
@@ -165,29 +187,39 @@ ___
 
 ___
 
-### version
+### servers
 
-• `Optional` **version**: `number`
+• **servers**: `string`
 
 #### Defined in
 
-[src/resource/DbResource.ts:358](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L358)
+[src/resource/DbResource.ts:414](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L414)
+
+___
+
+### warm
+
+• **warm**: `number`
+
+#### Defined in
+
+[src/resource/DbResource.ts:416](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L416)
 
 ## Methods
 
 ### addChild
 
-▸ **addChild**(`res`): [`DbSchema`](DbSchema.md)
+▸ **addChild**(`res`): [`DbKey`](DbKey.md)\<`any`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `res` | [`DbSchema`](DbSchema.md) |
+| `res` | [`DbKey`](DbKey.md)\<`any`\> |
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`DbKey`](DbKey.md)\<`any`\>
 
 #### Inherited from
 
@@ -252,7 +284,7 @@ ___
 
 ### getChildByName
 
-▸ **getChildByName**(`name`, `insensitive?`): [`DbSchema`](DbSchema.md)
+▸ **getChildByName**(`name`, `insensitive?`): [`DbKey`](DbKey.md)\<`any`\>
 
 #### Parameters
 
@@ -263,7 +295,7 @@ ___
 
 #### Returns
 
-[`DbSchema`](DbSchema.md)
+[`DbKey`](DbKey.md)\<`any`\>
 
 #### Inherited from
 
@@ -289,29 +321,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:363](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L363)
-
-___
-
-### getSchema
-
-▸ **getSchema**(`option`): [`DbSchema`](DbSchema.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `option` | `Object` |
-| `option.isDefault?` | `boolean` |
-| `option.name?` | `string` |
-
-#### Returns
-
-[`DbSchema`](DbSchema.md)
-
-#### Defined in
-
-[src/resource/DbResource.ts:370](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L370)
+[src/resource/DbResource.ts:422](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/resource/DbResource.ts#L422)
 
 ___
 

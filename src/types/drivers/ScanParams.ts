@@ -18,4 +18,5 @@ export type ScanParams = {
   endTime?: number;
   targetResourceType?: ResourceType;
   jsonExpansion?: boolean;
+  matchType?: 'partial' | 'exact';
 };

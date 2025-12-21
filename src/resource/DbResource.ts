@@ -64,6 +64,9 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
         json,
       );
       break;
+    case ResourceType.MemcacheDatabase:
+      res = Object.assign(new MemcacheDatabase(name), json);
+      break;
     case ResourceType.MqttDatabase:
       res = Object.assign(new MqttDatabase(name), json);
       break;
@@ -149,6 +152,7 @@ export type DbDatabase =
   | RdsDatabase
   | AwsDatabase
   | RedisDatabase
+  | MemcacheDatabase
   | Auth0Database
   | KeycloakDatabase
   | MqttDatabase;
@@ -402,6 +406,26 @@ export class RedisDatabase extends DbResource<DbKey> {
     return {
       ...super.getProperties(),
       'number of keys': this.numOfKeys,
+    };
+  }
+}
+
+export class MemcacheDatabase extends DbResource<DbKey> {
+  public servers: string;
+  public hot: number;
+  public warm: number;
+  public cold: number;
+  constructor(name: string) {
+    super(ResourceType.MemcacheDatabase, name);
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      servers: this.servers,
+      hot: this.hot,
+      warm: this.warm,
+      cold: this.cold,
     };
   }
 }
@@ -774,6 +798,7 @@ export class DbTable extends DbResource<DbColumn> implements ITableComparable {
 export class DbKey<
   T extends
     | RedisKeyParams
+    | MemcacheKeyParams
     | S3KeyParams
     | SQSMessageParams
     | LogMessageParams = any,
@@ -797,6 +822,12 @@ export class DbKey<
 export type RedisKeyParams = {
   type: RedisKeyType;
   ttl: number;
+  val?: any;
+  base64?: string;
+};
+
+export type MemcacheKeyParams = {
+  slabId: number;
   val?: any;
   base64?: string;
 };

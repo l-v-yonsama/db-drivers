@@ -5,9 +5,9 @@
 ```sh
 cd ./docker
 
-docker-compose -f unit-test.yml build
+docker compose -f unit-test.yml build
 
-docker-compose -f unit-test.yml up -d
+docker compose -f unit-test.yml up -d
 ```
 
 ```sh

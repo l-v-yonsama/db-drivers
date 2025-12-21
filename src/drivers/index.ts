@@ -5,6 +5,7 @@ export * from './BaseDriver';
 export * from './DBDriverResolver';
 export * from './DBError';
 export * from './KeycloakDriver';
+export * from './MemcacheDriver';
 export * from './MySQLDriver';
 export * from './MqttDriver';
 export * from './PostgresDriver';

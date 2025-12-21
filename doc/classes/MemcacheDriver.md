@@ -1,62 +1,63 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / RedisDriver
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / MemcacheDriver
 
-# Class: RedisDriver
+# Class: MemcacheDriver
 
 ## Hierarchy
 
-- [`BaseDriver`](BaseDriver.md)\<[`RedisDatabase`](RedisDatabase.md)\>
+- [`BaseDriver`](BaseDriver.md)\<[`MemcacheDatabase`](MemcacheDatabase.md)\>
 
-  ↳ **`RedisDriver`**
+  ↳ **`MemcacheDriver`**
 
 ## Implements
 
 - [`Scannable`](../interfaces/Scannable.md)
+- [`Commandable`](../interfaces/Commandable.md)
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](RedisDriver.md#constructor)
+- [constructor](MemcacheDriver.md#constructor)
 
 ### Properties
 
-- [client](RedisDriver.md#client)
-- [conRes](RedisDriver.md#conres)
-- [isConnected](RedisDriver.md#isconnected)
-- [sshLocalPort](RedisDriver.md#sshlocalport)
-- [sshServer](RedisDriver.md#sshserver)
+- [conRes](MemcacheDriver.md#conres)
+- [isConnected](MemcacheDriver.md#isconnected)
+- [sshLocalPort](MemcacheDriver.md#sshlocalport)
+- [sshServer](MemcacheDriver.md#sshserver)
 
 ### Methods
 
-- [closeSub](RedisDriver.md#closesub)
-- [connect](RedisDriver.md#connect)
-- [connectSub](RedisDriver.md#connectsub)
-- [createDBError](RedisDriver.md#createdberror)
-- [delete](RedisDriver.md#delete)
-- [disconnect](RedisDriver.md#disconnect)
-- [flow](RedisDriver.md#flow)
-- [flushAll](RedisDriver.md#flushall)
-- [flushDb](RedisDriver.md#flushdb)
-- [getConnectionRes](RedisDriver.md#getconnectionres)
-- [getDbDatabases](RedisDriver.md#getdbdatabases)
-- [getFirstDbDatabase](RedisDriver.md#getfirstdbdatabase)
-- [getInfomationSchemas](RedisDriver.md#getinfomationschemas)
-- [getInfomationSchemasSub](RedisDriver.md#getinfomationschemassub)
-- [getName](RedisDriver.md#getname)
-- [getValueByKey](RedisDriver.md#getvaluebykey)
-- [initBaseStatus](RedisDriver.md#initbasestatus)
-- [isNeedsSsh](RedisDriver.md#isneedsssh)
-- [isQuery](RedisDriver.md#isquery)
-- [parseSchemaAndTableHints](RedisDriver.md#parseschemaandtablehints)
-- [scan](RedisDriver.md#scan)
-- [scanStream](RedisDriver.md#scanstream)
-- [test](RedisDriver.md#test)
+- [closeSub](MemcacheDriver.md#closesub)
+- [connect](MemcacheDriver.md#connect)
+- [connectSub](MemcacheDriver.md#connectsub)
+- [createDBError](MemcacheDriver.md#createdberror)
+- [disconnect](MemcacheDriver.md#disconnect)
+- [executeCommand](MemcacheDriver.md#executecommand)
+- [flow](MemcacheDriver.md#flow)
+- [get](MemcacheDriver.md#get)
+- [getByRdh](MemcacheDriver.md#getbyrdh)
+- [getConnectionRes](MemcacheDriver.md#getconnectionres)
+- [getDbDatabases](MemcacheDriver.md#getdbdatabases)
+- [getFirstDbDatabase](MemcacheDriver.md#getfirstdbdatabase)
+- [getInfomationSchemas](MemcacheDriver.md#getinfomationschemas)
+- [getInfomationSchemasSub](MemcacheDriver.md#getinfomationschemassub)
+- [getName](MemcacheDriver.md#getname)
+- [getVersion](MemcacheDriver.md#getversion)
+- [initBaseStatus](MemcacheDriver.md#initbasestatus)
+- [isNeedsSsh](MemcacheDriver.md#isneedsssh)
+- [isQuery](MemcacheDriver.md#isquery)
+- [listKeyWithValues](MemcacheDriver.md#listkeywithvalues)
+- [parseSchemaAndTableHints](MemcacheDriver.md#parseschemaandtablehints)
+- [scan](MemcacheDriver.md#scan)
+- [set](MemcacheDriver.md#set)
+- [test](MemcacheDriver.md#test)
 
 ## Constructors
 
 ### constructor
 
-• **new RedisDriver**(`conRes`): [`RedisDriver`](RedisDriver.md)
+• **new MemcacheDriver**(`conRes`): [`MemcacheDriver`](MemcacheDriver.md)
 
 #### Parameters
 
@@ -66,7 +67,7 @@
 
 #### Returns
 
-[`RedisDriver`](RedisDriver.md)
+[`MemcacheDriver`](MemcacheDriver.md)
 
 #### Overrides
 
@@ -74,19 +75,9 @@
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:21](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L21)
+src/drivers/MemcacheDriver.ts:42
 
 ## Properties
-
-### client
-
-• **client**: `Redis`
-
-#### Defined in
-
-[src/drivers/RedisDriver.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L19)
-
-___
 
 ### conRes
 
@@ -158,7 +149,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:235](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L235)
+src/drivers/MemcacheDriver.ts:368
 
 ___
 
@@ -194,7 +185,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L25)
+src/drivers/MemcacheDriver.ts:46
 
 ___
 
@@ -223,26 +214,6 @@ ___
 
 ___
 
-### delete
-
-▸ **delete**(`key`): `Promise`\<`void`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Defined in
-
-[src/drivers/RedisDriver.ts:91](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L91)
-
-___
-
 ### disconnect
 
 ▸ **disconnect**(): `Promise`\<`string`\>
@@ -258,6 +229,30 @@ ___
 #### Defined in
 
 [src/drivers/BaseDriver.ts:185](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/BaseDriver.ts#L185)
+
+___
+
+### executeCommand
+
+▸ **executeCommand**(`command`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `command` | `string` |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Implementation of
+
+[Commandable](../interfaces/Commandable.md).[executeCommand](../interfaces/Commandable.md#executecommand)
+
+#### Defined in
+
+src/drivers/MemcacheDriver.ts:262
 
 ___
 
@@ -291,31 +286,45 @@ ___
 
 ___
 
-### flushAll
+### get
 
-▸ **flushAll**(): `Promise`\<`void`\>
+▸ **get**(`key`): `Promise`\<[`MemcachedValue`](../modules.md#memcachedvalue)\>
+
+キーを指定して 1 件取得
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `key` | `string` |
 
 #### Returns
 
-`Promise`\<`void`\>
+`Promise`\<[`MemcachedValue`](../modules.md#memcachedvalue)\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L83)
+src/drivers/MemcacheDriver.ts:321
 
 ___
 
-### flushDb
+### getByRdh
 
-▸ **flushDb**(): `Promise`\<`void`\>
+▸ **getByRdh**(`key`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `key` | `string` |
 
 #### Returns
 
-`Promise`\<`void`\>
+`Promise`\<`ResultSetData`\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L87)
+src/drivers/MemcacheDriver.ts:140
 
 ___
 
@@ -375,11 +384,11 @@ ___
 
 ### getInfomationSchemas
 
-▸ **getInfomationSchemas**(): `Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
+▸ **getInfomationSchemas**(): `Promise`\<[`MemcacheDatabase`](MemcacheDatabase.md)[]\>
 
 #### Returns
 
-`Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
+`Promise`\<[`MemcacheDatabase`](MemcacheDatabase.md)[]\>
 
 #### Inherited from
 
@@ -393,11 +402,11 @@ ___
 
 ### getInfomationSchemasSub
 
-▸ **getInfomationSchemasSub**(): `Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
+▸ **getInfomationSchemasSub**(): `Promise`\<[`MemcacheDatabase`](MemcacheDatabase.md)[]\>
 
 #### Returns
 
-`Promise`\<[`RedisDatabase`](RedisDatabase.md)[]\>
+`Promise`\<[`MemcacheDatabase`](MemcacheDatabase.md)[]\>
 
 #### Overrides
 
@@ -405,7 +414,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:210](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L210)
+src/drivers/MemcacheDriver.ts:335
 
 ___
 
@@ -427,25 +436,17 @@ ___
 
 ___
 
-### getValueByKey
+### getVersion
 
-▸ **getValueByKey**(`client`, `key`, `type`): `Promise`\<`any`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `client` | `Redis` |
-| `key` | `string` |
-| `type` | [`RedisKeyType`](../modules.md#rediskeytype) |
+▸ **getVersion**(): `Promise`\<`string`\>
 
 #### Returns
 
-`Promise`\<`any`\>
+`Promise`\<`string`\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:189](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L189)
+src/drivers/MemcacheDriver.ts:79
 
 ___
 
@@ -509,6 +510,28 @@ ___
 
 ___
 
+### listKeyWithValues
+
+▸ **listKeyWithValues**(`options?`): `Promise`\<[`DbKey`](DbKey.md)\<[`MemcacheKeyParams`](../modules.md#memcachekeyparams)\>[]\>
+
+全キーを取得（memcached の items + cachedump を使用）
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options?` | [`ListOption`](../modules.md#listoption) |
+
+#### Returns
+
+`Promise`\<[`DbKey`](DbKey.md)\<[`MemcacheKeyParams`](../modules.md#memcachekeyparams)\>[]\>
+
+#### Defined in
+
+src/drivers/MemcacheDriver.ts:85
+
+___
+
 ### parseSchemaAndTableHints
 
 ▸ **parseSchemaAndTableHints**(`sql`): [`SchemaAndTableHints`](../interfaces/SchemaAndTableHints.md)
@@ -553,27 +576,32 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:139](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L139)
+src/drivers/MemcacheDriver.ts:148
 
 ___
 
-### scanStream
+### set
 
-▸ **scanStream**(`params`): `Promise`\<[`DbKey`](DbKey.md)\<[`RedisKeyParams`](../modules.md#rediskeyparams)\>[]\>
+▸ **set**(`key`, `value`, `options?`): `Promise`\<`boolean`\>
+
+キーと値を指定して保存
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `params` | [`ScanParams`](../modules.md#scanparams) |
+| `key` | `string` |
+| `value` | `string` \| `Buffer` |
+| `options?` | `Object` |
+| `options.lifetime?` | `number` |
 
 #### Returns
 
-`Promise`\<[`DbKey`](DbKey.md)\<[`RedisKeyParams`](../modules.md#rediskeyparams)\>[]\>
+`Promise`\<`boolean`\>
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L95)
+src/drivers/MemcacheDriver.ts:326
 
 ___
 
@@ -597,4 +625,4 @@ ___
 
 #### Defined in
 
-[src/drivers/RedisDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/RedisDriver.ts#L64)
+src/drivers/MemcacheDriver.ts:61
