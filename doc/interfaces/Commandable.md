@@ -30,4 +30,4 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/83d730c1a10bf80abc1c83bcd44065cf35fa40dc/src/drivers/BaseDriver.ts#L11)
+[src/drivers/BaseDriver.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/cec61c455c481dc5c826ace47074099184632153/src/drivers/BaseDriver.ts#L11)

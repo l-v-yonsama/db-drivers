@@ -83,7 +83,8 @@ describe('ResourceHelper', () => {
           deleted: 2,
           inserted: 1,
           updated: 1,
-          message: 'Inserted:1, Deleted:2, Updated:1',
+          updatedColumns: 1,
+          message: 'Inserted:1, Deleted:2, Updated:1 (1 column)',
         });
         expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(true);
         expect(RowHelper.hasAnnotation(rdh1.rows[4], 'Del')).toBe(true);
@@ -127,7 +128,8 @@ describe('ResourceHelper', () => {
           deleted: 2,
           inserted: 1,
           updated: 1,
-          message: 'Inserted:1, Deleted:2, Updated:1',
+          updatedColumns: 1,
+          message: 'Inserted:1, Deleted:2, Updated:1 (1 column)',
         });
         expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(true);
         expect(RowHelper.hasAnnotation(rdh1.rows[4], 'Del')).toBe(true);
@@ -170,7 +172,8 @@ describe('ResourceHelper', () => {
           deleted: 2,
           inserted: 1,
           updated: 1,
-          message: 'Inserted:1, Deleted:2, Updated:1',
+          updatedColumns: 1,
+          message: 'Inserted:1, Deleted:2, Updated:1 (1 column)',
         });
         expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(true);
         expect(RowHelper.hasAnnotation(rdh1.rows[4], 'Del')).toBe(true);
@@ -321,6 +324,7 @@ describe('ResourceHelper', () => {
           deleted: 0,
           inserted: 0,
           updated: 0,
+          updatedColumns: 0,
           message: 'No changes',
         });
       });
@@ -460,6 +464,7 @@ describe('ResourceHelper', () => {
           deleted: 0,
           inserted: 0,
           updated: 0,
+          updatedColumns: 0,
           message: 'No changes',
         });
       });
@@ -596,6 +601,7 @@ describe('ResourceHelper', () => {
           deleted: 0,
           inserted: 0,
           updated: 0,
+          updatedColumns: 0,
           message: 'No changes',
         });
       });
@@ -724,6 +730,7 @@ describe('ResourceHelper', () => {
           deleted: 0,
           inserted: 0,
           updated: 0,
+          updatedColumns: 0,
           message: 'No changes',
         });
       });
