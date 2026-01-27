@@ -44,6 +44,7 @@ import {
   QueryWithBindsResult,
   ResourcePosition,
   ResourcePositionParams,
+  ResourceType,
   SQLLang,
   ToViewDataQueryParams,
 } from '../types';
@@ -505,6 +506,27 @@ export const toCountRecordsQuery = (
     selectClause: 'COUNT(*)',
     ...params,
   });
+};
+
+export const createTableNames = (schemaRes: DbSchema): string => {
+  return schemaRes.children
+    .filter((it) => it.resourceType === ResourceType.Table)
+    .map((it) =>
+      RESERVED_WORDS.includes(it.name.toUpperCase())
+        ? '`' + it.name + '`'
+        : it.name,
+    )
+    .join(',');
+};
+
+export const createColumnNames = (tableRes: DbTable): string => {
+  return tableRes.children
+    .map((it) =>
+      RESERVED_WORDS.includes(it.name.toUpperCase())
+        ? '`' + it.name + '`'
+        : it.name,
+    )
+    .join(',');
 };
 
 export const toViewDataQuery = (
@@ -1220,7 +1242,27 @@ export const getProposals = (params: ProposalParams): Proposal[] => {
     // do nothing.
   }
 
-  return retList;
+  // Remove duplicate proposals.
+  // If multiple proposals have the same (kind + label),
+  // prefer the one that contains more information (i.e. has `detail`).
+  const uniqueRetList = Array.from(
+    retList
+      .reduce((map, p) => {
+        const key = `${p.kind}:${p.label}`;
+        const existing = map.get(key);
+
+        // Keep the proposal that provides richer details.
+        // This improves the quality of completion suggestions.
+        if (!existing || (!existing.detail && p.detail)) {
+          map.set(key, p);
+        }
+
+        return map;
+      }, new Map<string, Proposal>())
+      .values(),
+  );
+
+  return uniqueRetList;
 };
 
 export const getResourcePositions = (
