@@ -55,7 +55,9 @@ export enum ProposalKind {
 
 export type Proposal = {
   label: string;
+  /** 0:Schema, 1:Table, 2:Column, 3:ReservedWord */
   kind: ProposalKind;
+  /** Table,Column comment */
   detail?: string;
   desc?: string;
 };

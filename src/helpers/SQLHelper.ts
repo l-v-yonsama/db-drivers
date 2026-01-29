@@ -1474,10 +1474,7 @@ const getAllProposals = (db: RdsDatabase): Proposal[] => {
 };
 
 const createTableProposal = (schema: DbSchema, table: DbResource): Proposal => {
-  let detail = table.comment ?? '';
-  if (schema?.isDefault === false) {
-    detail = schema.name + ' ' + detail;
-  }
+  const detail = table.comment ?? '';
   return {
     label: table.name,
     kind: ProposalKind.Table,
@@ -1489,9 +1486,7 @@ const createColumnProposal = (
   table: DbResource,
   column: DbResource,
 ): Proposal => {
-  const detail = `${table.comment ?? table.name}.${
-    column.comment ?? column.name
-  }`;
+  const detail = column.comment ?? '';
   return {
     label: column.name,
     kind: ProposalKind.Column,
