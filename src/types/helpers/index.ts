@@ -5,6 +5,7 @@ import {
   DbDynamoTable,
   DbTable,
   RdsDatabase,
+  SchemaAndTableName,
 } from '../../resource';
 import { RDSBaseDriver } from '../../drivers';
 
@@ -32,6 +33,13 @@ export type BindOptions = {
 };
 
 export type SQLLang = 'sql' | 'partiql';
+
+export type ViewRecordsParams = {
+  schemaAndName: SchemaAndTableName;
+  limitMode: 'top' | 'last';
+  limit: number;
+  limitLastColumn?: string;
+};
 
 export type ToViewDataQueryParams = {
   tableRes: DbTable | DbDynamoTable;

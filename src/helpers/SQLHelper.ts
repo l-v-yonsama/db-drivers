@@ -496,6 +496,63 @@ export const toDeleteStatement = ({
   };
 };
 
+export function toViewRecordsQuery({
+  tableRes,
+  schemaName,
+  idQuoteCharacter,
+  sqlLang,
+  limit,
+  limitAsTop,
+  limitMode,
+  limitLastColumn
+}: ToViewDataQueryParams & {
+  limitMode: 'top' | 'last';
+  limitLastColumn?: string;
+}): string {
+  const tableNameWithSchema = createTableNameWithSchema({
+    schema: schemaName,
+    table: tableRes.name,
+    idQuoteCharacter,
+    sqlLang,
+  });
+
+  let query = '';
+
+  // -------------------------
+  // SELECT clause
+  // -------------------------
+  if (limitAsTop && limit) {
+    // SQL Server は top / last に関係なく TOP を付ける
+    query = `SELECT TOP ${limit} * FROM ${tableNameWithSchema}`;
+  } else {
+    query = `SELECT * FROM ${tableNameWithSchema}`;
+  }
+
+  // -------------------------
+  // ORDER BY (LAST用)
+  // -------------------------
+  if (limitMode === 'last') {
+    if (!limitLastColumn) {
+      throw new Error('limitLastColumn is required when limitMode is "last"');
+    }
+
+    const quotedColumn = needsQuoting(limitLastColumn)
+      ? wrapBackQuote(limitLastColumn)
+      : limitLastColumn;
+
+    query += ` ORDER BY ${quotedColumn} DESC`;
+  }
+
+  // -------------------------
+  // LIMIT (MySQL / PostgreSQL)
+  // -------------------------
+  if (!limitAsTop && limit) {
+    query += ` LIMIT ${limit}`;
+  }
+
+  return query;
+}
+
 export const toCountRecordsQuery = (
   params: ToViewDataQueryParams,
 ): {
@@ -1361,6 +1418,56 @@ const resolveAlias = (ast: Statement, alias: string): string | undefined => {
 const matchKeyword = (list: string[], keyword: string): boolean => {
   return list.some((it) => it.toUpperCase().startsWith(keyword));
 };
+
+/**
+ * LAST N 取得用に利用するカラム名を決定する
+ *
+ * 優先順位:
+ * 1. created_at / updated_at 系
+ * 2. 単一 primary key (数値系)
+ */
+export function resolveLastOrderByColumn(table: DbTable): string | undefined {
+  const columns = table.children as DbColumn[];
+
+  if (!columns?.length) {
+    return undefined;
+  }
+
+  // -----------------------------
+  // ① created_at 系優先
+  // -----------------------------
+  const dateColumn = columns.find((col) => {
+    const name = col.name.toLowerCase();
+
+    const looksLikeCreated =
+      /created(_at)?$/.test(name) ||
+      /create(d)?date$/.test(name) ||
+      /insert(ed)?(_at)?$/.test(name);
+
+    return isDateTimeOrDate(col.colType) && looksLikeCreated;
+  });
+
+  if (dateColumn) {
+    return dateColumn.name;
+  }
+
+  // -----------------------------
+  // ② 単一PK（数値型のみ）
+  // -----------------------------
+  const pks = table.getPrimaryColumnNames();
+
+  if (pks.length === 1) {
+    const pkCol = columns.find((c) => c.name === pks[0]);
+    if (pkCol && isNumericLike(pkCol.colType)) {
+      return pkCol.name;
+    }
+  }
+
+  // -----------------------------
+  // 見つからない場合
+  // -----------------------------
+  return undefined;
+}
 
 const getProposalsByKeywordWithParent = (
   db: RdsDatabase,

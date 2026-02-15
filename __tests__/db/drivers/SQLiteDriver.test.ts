@@ -8,6 +8,7 @@ import {
   DBType,
   RDSBaseDriver,
   RdsDatabase,
+  resolveLastOrderByColumn,
   SQLiteDriver,
 } from '../../../src';
 import { init } from '../../setup/sqlite';
@@ -551,6 +552,32 @@ describe('SQLiteDriver', () => {
     it('should return number of rows', async () => {
       const count = await driver.count({ table: 'customer' });
       expect(count).toEqual(10);
+    });
+  });
+
+  describe('viewRows', () => {
+    it('Top 3', async () => {
+      const rs = await driver.viewRows({
+        schemaAndName: { table: 'customer' },
+        limit: 3,
+        limitMode: 'top',
+      });
+      expect(rs.rows).toHaveLength(3);
+    });
+    it('Last 3', async () => {
+      const dbRootRes = await driver.getInfomationSchemas();
+      const testDbRes = dbRootRes[0];
+      const tableRes = testDbRes
+        .getSchema({ isDefault: true })
+        .getChildByName('customer');
+      const limitLastColumn = resolveLastOrderByColumn(tableRes);
+      const rs = await driver.viewRows({
+        schemaAndName: { table: 'customer' },
+        limit: 3,
+        limitMode: 'last',
+        limitLastColumn,
+      });
+      expect(rs.rows).toHaveLength(3);
     });
   });
 

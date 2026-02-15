@@ -7,6 +7,7 @@ import {
   DBType,
   RDSBaseDriver,
   RdsDatabase,
+  resolveLastOrderByColumn,
   SQLServerDriver,
   TransactionIsolationLevel,
 } from '../../../src';
@@ -199,6 +200,32 @@ describe('SQLServerDriver', () => {
       }
       const count = await driver.count({ table: 'EMP' });
       expect(count).toEqual(6);
+    });
+  });
+
+  describe('viewRows', () => {
+    it('Top 3', async () => {
+      const rs = await driver.viewRows({
+        schemaAndName: { table: 'EMP' },
+        limit: 3,
+        limitMode: 'top',
+      });
+      expect(rs.rows).toHaveLength(3);
+    });
+    it('Last 3', async () => {
+      const dbRootRes = await driver.getInfomationSchemas();
+      const testDbRes = dbRootRes[0];
+      const tableRes = testDbRes
+        .getSchema({ isDefault: true })
+        .getChildByName('EMP');
+      const limitLastColumn = resolveLastOrderByColumn(tableRes);
+      const rs = await driver.viewRows({
+        schemaAndName: { table: 'EMP' },
+        limit: 3,
+        limitMode: 'last',
+        limitLastColumn,
+      });
+      expect(rs.rows).toHaveLength(3);
     });
   });
 

@@ -8,6 +8,7 @@ import {
   needsQuoting,
   parseQuery,
   toCountRecordsQuery,
+  toViewRecordsQuery,
   wrapQuote,
 } from '../helpers';
 import {
@@ -24,6 +25,7 @@ import {
   SQLLang,
   TransactionControlType,
   TransactionIsolationLevel,
+  ViewRecordsParams,
 } from '../types';
 import { acceptResourceFilter, setRdhMetaAndStatement } from '../utils';
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
@@ -64,6 +66,22 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       idQuoteCharacter: this.getIdQuoteCharacter(),
     });
     return await this.countSql({
+      sql: query,
+    });
+  }
+
+  async viewRows(params: ViewRecordsParams): Promise<ResultSetData> {
+    const { schemaAndName, ...others } = params;
+
+    const query = toViewRecordsQuery({
+      schemaName: schemaAndName.schema,
+      tableRes: new DbTable(schemaAndName.table, null),
+      idQuoteCharacter: this.getIdQuoteCharacter(),
+      limitAsTop: this.isLimitAsTop(),
+      ...others,
+    });
+
+    return await this.requestSql({
       sql: query,
     });
   }

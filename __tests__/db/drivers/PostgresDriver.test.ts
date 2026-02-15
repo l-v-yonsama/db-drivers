@@ -8,6 +8,7 @@ import {
   PostgresDriver,
   RDSBaseDriver,
   RdsDatabase,
+  resolveLastOrderByColumn,
   TransactionIsolationLevel,
 } from '../../../src';
 import { init } from '../../setup/postgres';
@@ -523,6 +524,21 @@ describe('PostgresDriver', () => {
     it('should return number of rows', async () => {
       const count = await driver.count({ table: 'customer' });
       expect(count).toEqual(5);
+    });
+  });
+
+  describe('viewRows', () => {
+    it('Top 3', async () => {
+      const rs = await driver.viewRows({schemaAndName:{table:'customer'},limit:3,limitMode:'top'});
+      expect(rs.rows).toHaveLength(3);
+    });
+    it('Last 3', async () => {
+      const dbRootRes = await driver.getInfomationSchemas();
+      const testDbRes = dbRootRes[0];
+      const tableRes = testDbRes.getSchema({isDefault:true}).getChildByName('customer');
+      const limitLastColumn = resolveLastOrderByColumn(tableRes);
+      const rs = await driver.viewRows({schemaAndName:{table:'customer'},limit:3,limitMode:'last', limitLastColumn});
+      expect(rs.rows).toHaveLength(3);
     });
   });
 
