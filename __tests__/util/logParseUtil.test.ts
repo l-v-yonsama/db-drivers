@@ -32,19 +32,23 @@ const writeJSONFile = async (
 describe('createLogEventPatternText', () => {
   it('returns ok,S2Jdbc.split.fields', () => {
     const splitPattern = createLogEventPatternText({
-      fields: LOG_PARSE_CONFIG_PRESETS.S2Jdbc.split.fields,
+      ...LOG_PARSE_CONFIG_PRESETS.S2Jdbc.split,
       targetForHuman: true,
     });
 
-    expect(splitPattern).toBe('^\\[(?<timestamp>\\d{4}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\d{4})\\] △ \\[(?<level>LEVEL_WITH_PAD)\\] △ \\[(?<thread>DATA)\\] △ \\[(?<logNo>INT)\\] △ (?<logger>LOGGER) △ (?<delimiter_1>-) △ (?<message>GREEDY_MULTILINE)');
+    expect(splitPattern).toBe(
+      '^\\[(?<timestamp>\\d{4}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\d{4})\\] \\[(?<level>{LEVEL})\\] \\[(?<thread>{DATA})\\] \\[(?<logNo>{INT})\\] (?<logger>{LOGGER}) (?<delimiter_1>-) (?<message>{GREEDY_MULTILINE})',
+    );
   });
   it('returns ok,MyBatis.split.fields', () => {
     const splitPattern = createLogEventPatternText({
-      fields: LOG_PARSE_CONFIG_PRESETS.MyBatis.split.fields,
+      ...LOG_PARSE_CONFIG_PRESETS.MyBatis.split,
       targetForHuman: true,
     });
 
-    expect(splitPattern).toBe('^(?<timestamp>ISO8601_TIMESTAMP) △ \\[(?<thread>DATA)\\] △ (?<level>LEVEL_WITH_PAD) △ (?<logger>DATA) △ (?<delimiter_1>-) △ (?<message>GREEDY_MULTILINE)');
+    expect(splitPattern).toBe(
+      '^(?<timestamp>{ISO8601_TIMESTAMP}) \\[(?<thread>{DATA})\\] (?<level>{LEVEL}) (?<logger>{DATA}) (?<delimiter_1>-) (?<message>{GREEDY_MULTILINE})',
+    );
   });
 });
 

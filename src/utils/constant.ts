@@ -78,6 +78,7 @@ const DEFAULT_MYBATIS_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
       eventStartMarker: false,
     },
   ],
+  fieldSplitter: 'SPACE',
 };
 
 const DEFAULT_S2JDBC_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
@@ -129,6 +130,7 @@ const DEFAULT_S2JDBC_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
       eventStartMarker: false,
     },
   ],
+  fieldSplitter: 'SPACE',
 };
 
 export const LOG_PARSE_CONFIG_PRESETS = {
@@ -149,7 +151,8 @@ export const LOG_PARSE_CONFIG_PRESETS = {
     split: DEFAULT_S2JDBC_LOG_SPLIT_CONFIG,
     extractSql: {
       pattern: 'logger',
-      loggerPattern: /^query\.(Auto|SqlFile)(Batch)?(Select|Insert|Update|Delete)Impl$/,
+      loggerPattern:
+        /^query\.(Auto|SqlFile)(Batch)?(Select|Insert|Update|Delete)Impl$/,
     },
     logExample: `[1999/01/01 14:52:34 0502] [DEBUG] [ajp-nio-0.0.0.0-8009-exec-1] [30] jta.LogTestActionImpl - Begin LogTestAction.tx=[fid=00, gid=00/186hId=]
 [1999/01/01 14:52:34 0503] [DEBUG] [ajp-nio-0.0.0.0-8009-exec-1] [30] query.SqlFileUpdateImpl - UPDATE EMP

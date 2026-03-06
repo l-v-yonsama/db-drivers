@@ -31,6 +31,7 @@ function splitLogEvents(
   const logStartPattern = createLogEventPattern({
     fields: config.fields,
     onlyStartMarker: true,
+    fieldSplitter: config.fieldSplitter,
   });
 
   const lines = logText.split(/\r?\n/);
@@ -105,6 +106,7 @@ export async function extractSqlFromLogText(
     const { pattern } = config.extractSql;
     const fieldSplitPattern = createLogEventPattern({
       fields: config.split.fields,
+      fieldSplitter: config.split.fieldSplitter,
     });
     for (let i = 0; i < logEventLines.length; i++) {
       const lineNo = i + 1; // 1-based line number
@@ -223,7 +225,7 @@ export function createLogEventPattern(
 export function createLogEventPatternText(
   params: CreateLogEventPatternParams,
 ): string {
-  const { fields, onlyStartMarker, targetForHuman } = params;
+  const { fields, onlyStartMarker, targetForHuman, fieldSplitter } = params;
   const summary = fields
     .filter((it) => (onlyStartMarker ? it.eventStartMarker === true : true))
     .map((it) => {
@@ -233,7 +235,7 @@ export function createLogEventPatternText(
         text = it.pattern;
       } else {
         if (targetForHuman) {
-          text = it.pattern;
+          text = `{${it.pattern}}`;
         } else {
           switch (it.pattern) {
             case 'LEVEL':
@@ -288,7 +290,7 @@ export function createLogEventPatternText(
       }
       return text;
     })
-    .join(targetForHuman ? ' △ ' : '\\s+');
+    .join(fieldSplitter === 'SPACE' ? ' ' : '\\s+');
 
   return '^' + summary;
 }

@@ -51,10 +51,13 @@ type LogEventFieldBuiltIn = LogEventFieldBase & {
   pattern: BuiltInPattern;
 };
 
+type FieldSplitter='SPACE' | 'WHITE_SPACE';
+
 export type CreateLogEventPatternParams = {
   fields: LogEventField[];
   onlyStartMarker?: boolean;
   targetForHuman?: boolean;
+  fieldSplitter: FieldSplitter;
 };
 
 export type LogEventField =
@@ -64,6 +67,7 @@ export type LogEventField =
 
 export type LogEventSplitConfig = {
   fields: LogEventField[];
+  fieldSplitter: FieldSplitter;
 };
 
 export type ExtractSqlConfig =
