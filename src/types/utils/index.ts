@@ -129,6 +129,7 @@ export type LogParseConfig = {
   classify: LogClassifierRule[];
   extractors: ExtractorConfig[];
   logExample: string;
+  debug?: boolean;
 };
 
 /* ============================
@@ -159,4 +160,10 @@ export type ExtractedSqlResult = {
 export type ExtractedSqlRdhResult = {
   logEvents: ResultSetData;
   sqlEvents: ResultSetData;
+};
+
+export type LogFormatDetectionResult = {
+  presetName?: string;
+  confidence: number;
+  scores: Record<string, number>;
 };

@@ -3,5 +3,5 @@ export * from './csv';
 export * from './dbType';
 export * from './jwt';
 export * from './driverUtil';
-export * from './logParseUtil';
+export * from './log';
 export * from './constant';

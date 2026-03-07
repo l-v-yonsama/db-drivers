@@ -1,12 +1,10 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import {
-  convertExtractedSqlRdhResult,
   createLogEventPatternText,
-  ExtractedSqlResult,
-  extractSqlFromLogText,
   LOG_PARSE_CONFIG_PRESETS,
-  SqlLogEvent,
+  LogParser,
+  SqlLogEvent
 } from '../../src';
 
 const dataFolder = path.join('__tests__', 'data');
@@ -111,10 +109,9 @@ describe('extractSqlFromLogText', () => {
         expectedSqlEvents: Partial<SqlLogEvent>[],
       ) => {
         const logText = await readFile(dir, file);
-        const result = await extractSqlFromLogText(
-          logText,
-          LOG_PARSE_CONFIG_PRESETS.S2Jdbc,
-        );
+        LOG_PARSE_CONFIG_PRESETS.S2Jdbc['debug']=true;
+        const parser = new LogParser(LOG_PARSE_CONFIG_PRESETS.S2Jdbc);
+        const result = await parser.parse(logText);
         if (RESET_EXTRACTED_SQL_RESULT && result.ok) {
           await writeJSONFile(
             dir,
@@ -271,10 +268,8 @@ describe('extractSqlFromLogText', () => {
         expectedSqlEvents: Partial<SqlLogEvent>[],
       ) => {
         const logText = await readFile(dir, file);
-        const result = await extractSqlFromLogText(
-          logText,
-          LOG_PARSE_CONFIG_PRESETS.MyBatis,
-        );
+        const parser = new LogParser(LOG_PARSE_CONFIG_PRESETS.MyBatis);
+        const result = await parser.parse(logText);
         if (RESET_EXTRACTED_SQL_RESULT && result.ok) {
           await writeJSONFile(
             dir,
@@ -313,10 +308,9 @@ describe('extractSqlFromLogText', () => {
         },
       ];
       const logText = await readFile('06', 'm06.log');
-      const result = await extractSqlFromLogText(
-        logText,
-        LOG_PARSE_CONFIG_PRESETS.MyBatis,
-      );
+      const parser = new LogParser(LOG_PARSE_CONFIG_PRESETS.MyBatis);
+      const result = await parser.parse(logText);
+
       expect(result.ok).toBeTruthy();
       expect(result.logEvents.length).toBeGreaterThanOrEqual(1);
       expect(result.sqlEvents).toHaveLength(expectedSqlEvents.length);
@@ -338,58 +332,5 @@ describe('extractSqlFromLogText', () => {
         });
       }
     });
-  });
-});
-
-describe('convertExtractedSqlRdhResult', () => {
-  describe('01_Seasar_S2JDBC', () => {
-    it.each([
-      ['01', 's01.log.json', 3, 1],
-      ['02', 's02.log.json', 10, 7],
-      ['03', 's03.log.json', 5, 2],
-      ['04', 's04.log.json', 6, 3],
-      ['05', 's05.log.json', 3, 1],
-      ['06', 's06.log.json', 2, 1],
-    ])(
-      'Input dir:%s, file:%s, Output logRowCount:%d, sqlRowCount:%d',
-      async (
-        dir: string,
-        file: string,
-        logRowCount: number,
-        sqlRowCount: number,
-      ) => {
-        const input = JSON.parse(
-          await readFile(dir, file),
-        ) as ExtractedSqlResult;
-        const result = await convertExtractedSqlRdhResult(input);
-        expect(result.logEvents.rows).toHaveLength(logRowCount);
-        expect(result.sqlEvents.rows).toHaveLength(sqlRowCount);
-      },
-    );
-  });
-
-  describe('02_Spring_MyBatis', () => {
-    it.each([
-      ['01', 'm01.log.json', 7, 1],
-      ['02', 'm02.log.json', 42, 8],
-      ['03', 'm03.log.json', 16, 2],
-      ['04', 'm04.log.json', 19, 3],
-      ['05', 'm05.log.json', 10, 1],
-    ])(
-      'dir:%s, file:%s, logRowCount:%d, sqlRowCount:%d',
-      async (
-        dir: string,
-        file: string,
-        logRowCount: number,
-        sqlRowCount: number,
-      ) => {
-        const input = JSON.parse(
-          await readFile(dir, file),
-        ) as ExtractedSqlResult;
-        const result = await convertExtractedSqlRdhResult(input);
-        expect(result.logEvents.rows).toHaveLength(logRowCount);
-        expect(result.sqlEvents.rows).toHaveLength(sqlRowCount);
-      },
-    );
   });
 });
