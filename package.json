@@ -63,6 +63,7 @@
     "test0": "jest --coverage",
     "test": "npm run clean && jest --runInBand",
     "test:util": "npm run clean && jest __tests__/util/util.test.ts",
+    "test:logParserUtil": "npm run clean && jest __tests__/util/logParseUtil.test.ts",
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
     "test:driver:mssql": "npm run clean && jest __tests__/db/drivers/SQLServerDriver.test.ts",
     "test:driver:postgres": "npm run clean && jest __tests__/db/drivers/PostgresDriver.test.ts",

@@ -37,7 +37,7 @@ describe('createLogEventPatternText', () => {
     });
 
     expect(splitPattern).toBe(
-      '^\\[(?<timestamp>\\d{4}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\d{4})\\] \\[(?<level>{LEVEL})\\] \\[(?<thread>{DATA})\\] \\[(?<logNo>{INT})\\] (?<logger>{LOGGER}) (?<delimiter_1>-) (?<message>{GREEDY_MULTILINE})',
+      '^\\[(?<timestamp>\\d{4}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\d{4})\\] △ \\[(?<level>{LEVEL})\\] △ \\[(?<thread>{DATA})\\] △ \\[(?<logNo>{INT})\\] △ (?<logger>{LOGGER}) △ (?<delimiter_1>-) △ (?<message>{GREEDY_MULTILINE})',
     );
   });
   it('returns ok,MyBatis.split.fields', () => {
@@ -47,7 +47,7 @@ describe('createLogEventPatternText', () => {
     });
 
     expect(splitPattern).toBe(
-      '^(?<timestamp>{ISO8601_TIMESTAMP}) \\[(?<thread>{DATA})\\] (?<level>{LEVEL}) (?<logger>{DATA}) (?<delimiter_1>-) (?<message>{GREEDY_MULTILINE})',
+      '^(?<timestamp>{ISO8601_TIMESTAMP}) △ \\[(?<thread>{DATA})\\] △ (?<level>{LEVEL}) △ (?<logger>{DATA}) △ (?<delimiter_1>-) △ (?<message>{GREEDY_MULTILINE})',
     );
   });
 });
@@ -104,7 +104,7 @@ describe('extractSqlFromLogText', () => {
         ],
       ],
     ])(
-      'returns (type:%s, table:%s) when dir:%s, file:%s',
+      'dir:%s, file:%s',
       async (
         dir: string,
         file: string,
@@ -134,7 +134,7 @@ describe('extractSqlFromLogText', () => {
             rawSql: expect.any(String),
             normalizedSql: expect.any(String),
             bindParams: undefined,
-            total: undefined,
+            result: undefined,
             type: expectedSqlEvent.type,
             schema: undefined,
             table: expectedSqlEvent.table,
@@ -154,7 +154,7 @@ describe('extractSqlFromLogText', () => {
           {
             type: 'select',
             table: 'standard_mario_bros',
-            total: 1,
+            result: '1',
             rawParams:
               '2025-01(String), 2025-01-01(String), 2025-01-01(String), 100000034701(String), 600000006083(String), 10000(Integer)',
           },
@@ -164,50 +164,50 @@ describe('extractSqlFromLogText', () => {
         '02',
         'm02.log',
         [
-          { type: 'select', table: 'XD_trader', total: 1 },
+          { type: 'select', table: 'XD_trader', result: '1' },
           {
             type: 'select',
             table: 'tm5',
             rawParams: '12552(Integer), RAKKO1234(String)',
-            total: 1,
+            result: '1',
           },
           {
             type: 'select',
             table: 'tm5',
             rawParams: '30747344(Integer), 31(Integer)',
-            total: 1,
+            result: '1',
           },
           {
             type: 'select',
             table: 'super_mario_bros',
             rawParams: '30747344(Integer)',
-            total: 1,
+            result: '1',
           },
           {
             type: 'select',
             table: 'super_mario_bros',
             rawParams: '80001965(Integer)',
-            total: 1,
+            result: '1',
           },
           {
             type: 'select',
             table: 'sanrio',
             rawParams: '12552(Integer)',
-            total: 1,
+            result: '1',
           },
           {
             type: 'update',
             table: 'tm5',
             rawParams:
               '789##$K1LL4$=-(String), /tanuki800$=-(String), 30747344(Integer)',
-            total: 1,
+            result: '1',
           },
           {
             type: 'update',
             table: 'super_mario_bros',
             rawParams:
               '30747344(Integer), 789(String),  80001965(Integer), 36(Integer)',
-            total: 1,
+            result: '1',
           },
         ],
       ],
@@ -215,12 +215,12 @@ describe('extractSqlFromLogText', () => {
         '03',
         'm03.log',
         [
-          { type: 'select', table: 'seller', total: 2 },
+          { type: 'select', table: 'seller', result: '2' },
           {
             type: 'select',
             rawParams:
               '86(Integer), RAKKO1234(String), RAKKO1234(String), 9(Short), 1999/01/01(String), 1999/01/01(String), 030PA1DW(String), 8012020052701(String), 030PA1DW(String), 8012020052701(String), 100(String), 102(String)',
-            total: 1,
+            result: '1',
           },
         ],
       ],
@@ -232,21 +232,21 @@ describe('extractSqlFromLogText', () => {
             type: 'select',
             table: 'penguin',
             rawParams: '801test801(String)',
-            total: 0,
+            result: '0',
           },
           {
             type: 'insert',
             table: 'penguin',
             rawParams:
               '801test801(String), test(String), (String), 1999-01-19 17:16:07.672(Timestamp)',
-            total: 1,
+            result: '1',
           },
           {
             type: 'update',
             table: 'penguin',
             rawParams:
               '801test801(String), test\ntest_update(String), (String), 1999-01-19 17:16:08.0(Timestamp), 131090(Integer), 1(Integer)',
-            total: 1,
+            result: '1',
           },
         ],
       ],
@@ -259,12 +259,12 @@ describe('extractSqlFromLogText', () => {
             table: 'mail_queue',
             rawParams:
               '【TEST】Test-subject(String), Body-1\nBody-2\nBody-3\n(String), 1999-01-28 13:53:44.123(Timestamp)',
-            total: 1,
+            result: '1',
           },
         ],
       ],
     ])(
-      'returns (type:%s, table:%s) when dir:%s, file:%s',
+      'dir:%s, file:%s',
       async (
         dir: string,
         file: string,
@@ -273,7 +273,7 @@ describe('extractSqlFromLogText', () => {
         const logText = await readFile(dir, file);
         const result = await extractSqlFromLogText(
           logText,
-          LOG_PARSE_CONFIG_PRESETS.S2Jdbc,
+          LOG_PARSE_CONFIG_PRESETS.MyBatis,
         );
         if (RESET_EXTRACTED_SQL_RESULT && result.ok) {
           await writeJSONFile(
@@ -295,7 +295,7 @@ describe('extractSqlFromLogText', () => {
             normalizedSql: expect.any(String),
             errorMessage: undefined,
             rawParams: expectedSqlEvent.rawParams,
-            total: expectedSqlEvent.total,
+            result: expectedSqlEvent.result,
             type: expectedSqlEvent.type,
             schema: undefined,
             table: expectedSqlEvent.table,
@@ -305,51 +305,39 @@ describe('extractSqlFromLogText', () => {
       },
     );
 
-    it.each([
-      [
-        '06',
-        'm06.log',
-        [
-          {
-            type: 'UNKNOWN',
-            total: 1,
-          },
-        ],
-      ],
-    ])(
-      'returns (type:%s, table:%s) with error-message when dir:%s, file:%s',
-      async (
-        dir: string,
-        file: string,
-        expectedSqlEvents: Partial<SqlLogEvent>[],
-      ) => {
-        const logText = await readFile(dir, file);
-        const result = await extractSqlFromLogText(
-          logText,
-          LOG_PARSE_CONFIG_PRESETS.MyBatis,
-        );
-        expect(result.ok).toBeTruthy();
-        expect(result.logEvents.length).toBeGreaterThanOrEqual(1);
-        expect(result.sqlEvents).toHaveLength(expectedSqlEvents.length);
-        for (let i = 0; i < expectedSqlEvents.length; i++) {
-          const actualSqlEvent = result.sqlEvents[i];
-          const expectedSqlEvent = expectedSqlEvents[i];
-          expect(actualSqlEvent).toEqual({
-            lineNo: expect.any(Number),
-            timestamp: expect.any(String),
-            rawSql: expect.any(String),
-            normalizedSql: expect.any(String),
-            errorMessage: expect.any(String),
-            rawParams: expectedSqlEvent.rawParams,
-            total: expectedSqlEvent.total,
-            type: expectedSqlEvent.type,
-            schema: undefined,
-            table: expectedSqlEvent.table,
-            index: undefined,
-          });
-        }
-      },
-    );
+    it('error pattern', async () => {
+      const expectedSqlEvents: Partial<SqlLogEvent>[] = [
+        {
+          type: 'UNKNOWN',
+          result: '1',
+        },
+      ];
+      const logText = await readFile('06', 'm06.log');
+      const result = await extractSqlFromLogText(
+        logText,
+        LOG_PARSE_CONFIG_PRESETS.MyBatis,
+      );
+      expect(result.ok).toBeTruthy();
+      expect(result.logEvents.length).toBeGreaterThanOrEqual(1);
+      expect(result.sqlEvents).toHaveLength(expectedSqlEvents.length);
+      for (let i = 0; i < expectedSqlEvents.length; i++) {
+        const actualSqlEvent = result.sqlEvents[i];
+        const expectedSqlEvent = expectedSqlEvents[i];
+        expect(actualSqlEvent).toEqual({
+          lineNo: expect.any(Number),
+          timestamp: expect.any(String),
+          rawSql: expect.any(String),
+          normalizedSql: expect.any(String),
+          errorMessage: expect.any(String),
+          rawParams: expectedSqlEvent.rawParams,
+          result: expectedSqlEvent.result,
+          type: expectedSqlEvent.type,
+          schema: undefined,
+          table: expectedSqlEvent.table,
+          index: undefined,
+        });
+      }
+    });
   });
 });
 
@@ -388,7 +376,7 @@ describe('convertExtractedSqlRdhResult', () => {
       ['04', 'm04.log.json', 19, 3],
       ['05', 'm05.log.json', 10, 1],
     ])(
-      'returns (type:%s, table:%s) when dir:%s, file:%s',
+      'dir:%s, file:%s, logRowCount:%d, sqlRowCount:%d',
       async (
         dir: string,
         file: string,

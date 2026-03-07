@@ -1,5 +1,9 @@
 import { LogEventSplitConfig, LogParseConfig } from '../types';
 
+/* ======================================================
+   Timestamp patterns
+====================================================== */
+
 // 日付（YYYY-MM-DD）
 const ISO_DATE = '\\d{4}-\\d{2}-\\d{2}';
 
@@ -9,13 +13,17 @@ const ISO_TIME = '\\d{2}:\\d{2}' + '(:\\d{2})?' + '(\\.\\d+)?';
 // タイムゾーン（Z or +09:00 or +0900）
 const ISO_TZ = '(Z|[+-]\\d{2}:?\\d{2})?';
 
-// 日付＋時刻（T or space区切り）
+// 日付＋時刻
 const ISO_DATE_TIME = ISO_DATE + '[T ]' + ISO_TIME + ISO_TZ;
 
 // 時刻のみ
 const ISO_TIME_ONLY = ISO_TIME;
 
 const S2_TIMESTAMP = '\\d{4}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\d{4}';
+
+/* ======================================================
+   LOG LEVEL
+====================================================== */
 
 const LOG_LEVELS = [
   'trace',
@@ -28,15 +36,23 @@ const LOG_LEVELS = [
   'severe',
 ];
 
+/* ======================================================
+   Built-in field patterns
+====================================================== */
+
 export const LOG_FIELD_PATTERNS = {
-  LEVEL: `(${LOG_LEVELS.join('|')})`,
-  ISO8601: '(' + ISO_DATE_TIME + '|' + ISO_TIME_ONLY + ')',
+  LEVEL: `(${LOG_LEVELS.join('|')})\\s*`,
+  ISO8601_TIMESTAMP: '(' + ISO_DATE_TIME + '|' + ISO_TIME_ONLY + ')',
   GENERAL_LOGGER: '[a-zA-Z0-9_.$:/-]+',
   WORD: `\\b\\w+\\b`,
   INT: `[+-]?\\d+`,
   NUMBER: `[+-]?\\d+(\\.\\d+)?`,
   GREEDY_MULTILINE: `[\\s\\S]*`,
 } satisfies Record<string, string>;
+
+/* ======================================================
+   Default split configs
+====================================================== */
 
 const DEFAULT_MYBATIS_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
   fields: [
@@ -78,7 +94,6 @@ const DEFAULT_MYBATIS_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
       eventStartMarker: false,
     },
   ],
-  fieldSplitter: 'SPACE',
 };
 
 const DEFAULT_S2JDBC_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
@@ -130,30 +145,114 @@ const DEFAULT_S2JDBC_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
       eventStartMarker: false,
     },
   ],
-  fieldSplitter: 'SPACE',
 };
 
+/* ======================================================
+   PRESETS
+====================================================== */
+
 export const LOG_PARSE_CONFIG_PRESETS = {
+  /* ======================================================
+     MyBatis
+  ====================================================== */
+
   MyBatis: {
     split: DEFAULT_MYBATIS_LOG_SPLIT_CONFIG,
-    extractSql: {
-      pattern: 'messagePrefix',
-      startSqlPattern: /^==>\s+Preparing:/,
-      parametersPattern: /^==> Parameters:/,
-      totalPattern: /^<==\s+(Total|Updates):\s+(\d+)/,
-      endSqlPattern: /^<==\s+.+/,
-    },
+
+    classify: [
+      {
+        type: 'SQL_START',
+        pattern: /^==>\s+Preparing:/,
+        transform: [
+          {
+            pattern: /^==>\s+Preparing:\s*/,
+            replace: '',
+          },
+        ],
+      },
+      {
+        type: 'SQL_PARAMS',
+        pattern: /^==>\s+Parameters:/,
+        transform: [
+          {
+            pattern: /^==>\s+Parameters:\s*/,
+            replace: '',
+          },
+        ],
+      },
+      {
+        type: 'SQL_RESULT',
+        pattern: /^<==\s+(Total|Updates):/,
+        transform: [
+          {
+            pattern: /^<==\s+(?:Total|Updates):\s*/,
+            replace: '',
+          },
+        ],
+      },
+    ],
+
+    extractors: [
+      {
+        name: 'mybatis',
+
+        start: 'SQL_START',
+
+        steps: [
+          {
+            type: 'SQL_START',
+            action: 'captureSql',
+          },
+          {
+            type: 'SQL_PARAMS',
+            action: 'captureParams',
+            optional: true,
+          },
+          {
+            type: 'SQL_RESULT',
+            action: 'captureField',
+            field: 'result',
+          },
+        ],
+      },
+    ],
+
     logExample: `10:11:22.333 [http-nio-8080-exec-1] DEBUG test.EmpMapper.updateXxx - ==>  Preparing: UPDATE EMP SET NAME = ?, DEPT_NO = ? WHERE ID = ?
 10:11:22.444 [http-nio-8080-exec-1] DEBUG test.EmpMapper.updateXxx - ==> Parameters: YAMADA(String), 200((Integer), 1((Integer)
 10:11:22.555 [http-nio-8080-exec-1] DEBUG test.EmpMapper.updateXxx - <==  Updates: 1`,
   },
+
+  /* ======================================================
+     Seasar2 S2JDBC
+  ====================================================== */
+
   S2Jdbc: {
     split: DEFAULT_S2JDBC_LOG_SPLIT_CONFIG,
-    extractSql: {
-      pattern: 'logger',
-      loggerPattern:
-        /^query\.(Auto|SqlFile)(Batch)?(Select|Insert|Update|Delete)Impl$/,
-    },
+
+    classify: [
+      {
+        type: 'SQL_SINGLE',
+        field: 'logger',
+        pattern:
+          /^query\.(Auto|SqlFile)(Batch)?(Select|Insert|Update|Delete)Impl$/,
+      },
+    ],
+
+    extractors: [
+      {
+        name: 's2jdbc',
+
+        start: 'SQL_SINGLE',
+
+        steps: [
+          {
+            type: 'SQL_SINGLE',
+            action: 'captureSql',
+          },
+        ],
+      },
+    ],
+
     logExample: `[1999/01/01 14:52:34 0502] [DEBUG] [ajp-nio-0.0.0.0-8009-exec-1] [30] jta.LogTestActionImpl - Begin LogTestAction.tx=[fid=00, gid=00/186hId=]
 [1999/01/01 14:52:34 0503] [DEBUG] [ajp-nio-0.0.0.0-8009-exec-1] [30] query.SqlFileUpdateImpl - UPDATE EMP
 SET

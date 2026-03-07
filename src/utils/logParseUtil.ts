@@ -1,16 +1,3 @@
-import XRegExp from 'xregexp';
-import {
-  ExtractedSqlResult,
-  LogEvent,
-  SqlLogEvent,
-  LogParseConfig,
-  LogEventSplitConfig,
-  LogEventField,
-  LogEventPartBrace,
-  ExtractedSqlRdhResult,
-  OPTIONAL_LOG_EVENT_KEYS,
-  CreateLogEventPatternParams,
-} from '../types';
 import {
   createRdhKey,
   GeneralColumnType,
@@ -18,35 +5,60 @@ import {
   ResultSetData,
   ResultSetDataBuilder,
 } from '@l-v-yonsama/rdh';
+import XRegExp from 'xregexp';
 import { parseQuery } from '../helpers';
+import {
+  ClassifiedEvent,
+  CreateLogEventPatternParams,
+  ExtractedSqlRdhResult,
+  ExtractedSqlResult,
+  ExtractorConfig,
+  LogClassifierRule,
+  LogEvent,
+  LogEventField,
+  LogEventPartBrace,
+  LogEventSplitConfig,
+  LogParseConfig,
+  OPTIONAL_LOG_EVENT_KEYS,
+  SqlLogEvent,
+} from '../types';
 import { LOG_FIELD_PATTERNS } from './constant';
 
-/**
- * ISO8601開始行でイベント分割
- */
+/* =====================================================
+ split
+===================================================== */
+
 function splitLogEvents(
   logText: string,
   config: LogEventSplitConfig,
 ): string[] {
-  const logStartPattern = createLogEventPattern({
+  const startPattern = createLogEventPattern({
     fields: config.fields,
     onlyStartMarker: true,
-    fieldSplitter: config.fieldSplitter,
   });
 
   const lines = logText.split(/\r?\n/);
+
   const events: string[] = [];
   let current: string[] = [];
 
   for (const line of lines) {
-    if (XRegExp.test(line, logStartPattern)) {
+    const isStart = XRegExp.test(line, startPattern);
+
+    /* continuation 判定 */
+    const isContinuation = line.startsWith(' ') || line.startsWith('\t');
+
+    if (isStart && !isContinuation) {
       if (current.length > 0) {
         events.push(current.join('\n'));
       }
+
       current = [line];
-    } else {
-      current.push(line);
+      continue;
     }
+
+    /* 継続行 */
+    current.push(line);
   }
 
   if (current.length > 0) {
@@ -56,163 +68,348 @@ function splitLogEvents(
   return events;
 }
 
+/* =====================================================
+ classify
+===================================================== */
+
+function classifyEvent(
+  event: LogEvent,
+  rules: LogClassifierRule[],
+): ClassifiedEvent {
+  for (const r of rules) {
+    const value = r.field === 'logger' ? event.logger : event.message;
+
+    if (value && r.pattern.test(value)) {
+      let transformed: string | undefined;
+
+      if (r.transform?.length) {
+        transformed = value;
+
+        for (const t of r.transform) {
+          transformed = transformed.replace(t.pattern, t.replace);
+        }
+
+        transformed = transformed.trim();
+      }
+
+      return {
+        ...event,
+        eventType: r.type,
+        transformed,
+      };
+    }
+  }
+
+  return {
+    ...event,
+    eventType: 'NORMAL',
+  };
+}
+/* =====================================================
+ extractor state machine
+===================================================== */
+
+const DEBUG_RUN_EXTRACTOR = true;
+
+function runExtractors(
+  events: ClassifiedEvent[],
+  extractors: ExtractorConfig[],
+): Partial<SqlLogEvent>[] {
+  const results: Partial<SqlLogEvent>[] = [];
+
+  if (DEBUG_RUN_EXTRACTOR) {
+    console.debug('runExtractors, num of extractors:', extractors.length);
+    console.debug(events);
+  }
+
+  for (const extractor of extractors) {
+    if (DEBUG_RUN_EXTRACTOR) {
+      console.debug('extractor.name:', extractor.name);
+    }
+
+    let stepIndex = -1;
+    let buffer: Partial<SqlLogEvent> = {};
+
+    for (const event of events) {
+      if (DEBUG_RUN_EXTRACTOR) {
+        console.debug(
+          `event line=${event.lineNo}, type=${event.eventType}, stepIndex=${stepIndex}`,
+        );
+      }
+
+      /* ==============================
+         START detection
+      ============================== */
+
+      if (stepIndex === -1) {
+        if (event.eventType !== extractor.start) {
+          continue;
+        }
+
+        stepIndex = 0;
+
+        buffer = {
+          lineNo: event.lineNo,
+          timestamp: event.timestamp,
+        };
+
+        if (DEBUG_RUN_EXTRACTOR) {
+          console.debug('START detected', JSON.stringify(event));
+        }
+      }
+
+      /* ==============================
+         step machine
+      ============================== */
+
+      let consumed = false;
+
+      while (stepIndex !== -1 && stepIndex < extractor.steps.length) {
+        const step = extractor.steps[stepIndex];
+
+        if (DEBUG_RUN_EXTRACTOR) {
+          console.debug('current step', stepIndex, step);
+        }
+
+        /* step match */
+
+        if (event.eventType === step.type) {
+          if (DEBUG_RUN_EXTRACTOR) {
+            console.debug('step matched', step.type);
+          }
+
+          /* capture SQL */
+
+          if (step.action === 'captureSql') {
+            buffer.rawSql = event.transformed ?? event.message;
+
+            if (DEBUG_RUN_EXTRACTOR) {
+              console.debug('captureSql', buffer.rawSql);
+            }
+          }
+
+          /* capture params */
+          if (step.action === 'captureParams') {
+            const rawParams = event.transformed ?? event.message;
+            if (rawParams !== '') {
+              buffer.rawParams = rawParams;
+            }
+
+            if (DEBUG_RUN_EXTRACTOR) {
+              console.debug('captureParams', buffer.rawParams);
+            }
+          }
+
+          /* captureField */
+          if (step.action === 'captureField' && step.field) {
+            (buffer as any)[step.field] = event.transformed ?? event.message;
+
+            if (DEBUG_RUN_EXTRACTOR) {
+              console.debug('captureField', step.field, buffer[step.field]);
+            }
+          }
+
+          stepIndex++;
+
+          /* SQL completed */
+
+          if (stepIndex >= extractor.steps.length) {
+            if (DEBUG_RUN_EXTRACTOR) {
+              console.debug('SQL event completed', buffer);
+            }
+
+            results.push(buffer);
+
+            buffer = {};
+            stepIndex = -1;
+          }
+
+          consumed = true;
+          break;
+        }
+
+        /* optional step */
+
+        if (step.optional) {
+          if (DEBUG_RUN_EXTRACTOR) {
+            console.debug('optional step skipped', step.type);
+          }
+
+          stepIndex++;
+          continue;
+        }
+
+        /* mismatch */
+
+        if (DEBUG_RUN_EXTRACTOR) {
+          console.debug(
+            'event mismatch',
+            event.eventType,
+            'expected',
+            step.type,
+          );
+        }
+
+        break;
+      }
+
+      if (consumed) {
+        continue;
+      }
+    }
+
+    /* flush incomplete SQL */
+
+    if (stepIndex !== -1 && buffer.rawSql) {
+      if (DEBUG_RUN_EXTRACTOR) {
+        console.debug('flush unfinished SQL', buffer);
+      }
+
+      results.push(buffer);
+    }
+  }
+
+  if (DEBUG_RUN_EXTRACTOR) {
+    console.debug('runExtractors result size:', results.length);
+  }
+
+  return results;
+}
+
+/* =====================================================
+ main
+===================================================== */
+
 export async function extractSqlFromLogText(
   logText: string,
   config: LogParseConfig,
 ): Promise<ExtractedSqlResult> {
   const logEvents: LogEvent[] = [];
   const sqlEvents: SqlLogEvent[] = [];
+
   const result: ExtractedSqlResult = {
     ok: false,
     logEvents,
     sqlEvents,
   };
 
-  const flushExtractedSql = (sqlLogEvent: Partial<SqlLogEvent>): void => {
-    const rawSql = sqlLogEvent.rawSql ?? '';
-    const cleaned = removeSqlComments(rawSql);
-
-    try {
-      const { ast, names } = parseQuery(rawSql);
-
-      sqlEvents.push({
-        ...(sqlLogEvent as SqlLogEvent),
-        normalizedSql: cleaned,
-        schema: names?.schemaName,
-        table: names?.tableName,
-        index: names?.indexName,
-        type: ast ? ast.type : 'UNKNOWN',
-      });
-    } catch (e) {
-      const errorMessage = `SQL parse error. ${e.message}`;
-
-      sqlEvents.push({
-        ...(sqlLogEvent as SqlLogEvent),
-        normalizedSql: cleaned,
-        type: 'UNKNOWN',
-        errorMessage,
-      });
-    }
-  };
-
   try {
     const logEventLines = splitLogEvents(logText, config.split);
-    if (logEventLines.length === 0) {
-      result.error = 'ログからイベントが抽出できませんでした。';
-      return result;
-    }
 
-    let sqlLogEvent: Partial<SqlLogEvent> | null = null;
-    const { pattern } = config.extractSql;
     const fieldSplitPattern = createLogEventPattern({
       fields: config.split.fields,
-      fieldSplitter: config.split.fieldSplitter,
     });
+
+    const classifiedEvents: ClassifiedEvent[] = [];
+
     for (let i = 0; i < logEventLines.length; i++) {
-      const lineNo = i + 1; // 1-based line number
       const logEvent = parseSqlLogEvent(
         logEventLines[i],
-        lineNo,
+        i + 1,
         fieldSplitPattern,
         config.split.fields,
       );
-      console.log(
-        `LineNo[${lineNo}] message[${
-          logEventLines[i]
-        }] logEvent exists?[${!!logEvent}]`,
-      );
-      if (logEvent) {
-        const line = logEvent.message;
-        const trimmed = line.trimEnd();
-        logEvents.push(logEvent);
 
-        if (pattern === 'logger') {
-          const { loggerPattern } = config.extractSql;
-          console.log(
-            'Checking logger pattern at line ' +
-              logEvent.lineNo +
-              ': ' +
-              logEvent.logger,
-          );
-          if (loggerPattern.test(logEvent.logger ?? '')) {
-            // ロガーパターンにマッチした場合のSQL抽出ロジックをここに実装
-            console.log(
-              'Logger pattern matched at line ' +
-                logEvent.lineNo +
-                ': ' +
-                logEvent.logger,
-              logEvent.message,
-            );
-            flushExtractedSql({
-              lineNo: logEvent.lineNo,
-              timestamp: logEvent.timestamp,
-              rawSql: logEvent.message,
-            });
-            // SQL抽出処理を実装
-          }
-        } else if (pattern === 'messagePrefix') {
-          // ex: MyBatis
-          const {
-            startSqlPattern,
-            parametersPattern: bindParamsPattern,
-            totalPattern,
-            endSqlPattern,
-          } = config.extractSql;
-          // SQL抽出ロジックをここに実装
-          if (startSqlPattern.test(trimmed)) {
-            // inParameters = false;
-            // parametersBuff.splice(0, parametersBuff.length);
-            console.log('SQL start detected at line ' + logEvent.lineNo);
-            if (sqlLogEvent) {
-              flushExtractedSql(sqlLogEvent);
-            }
-            sqlLogEvent = {
-              lineNo: logEvent.lineNo,
-              timestamp: logEvent.timestamp,
-              rawSql: trimmed.replace(startSqlPattern, '').trim(),
-            };
-            // SQL抽出処理を実装
-          }
-          if (!sqlLogEvent) {
-            continue;
-          }
-          if (bindParamsPattern?.test(trimmed)) {
-            // inParameters = true;
-            const rawParams = trimmed.replace(bindParamsPattern, '').trim();
-            sqlLogEvent.rawParams = rawParams ? rawParams : undefined;
-          } else if (totalPattern?.test(trimmed)) {
-            console.log('Total detected at line ' + logEvent.lineNo);
-            sqlLogEvent.total = parseInt(
-              trimmed.match(totalPattern)?.[2] ?? '0',
-              10,
-            );
-          }
-          // if(inParameters){
-          //   const rawParams = trimmed.replace(bindParamsPattern, '').trim();
-          //   parametersBuff.push(rawParams);
-          // }
-          if (endSqlPattern?.test(trimmed)) {
-            // SQL抽出完了処理を実装
-            flushExtractedSql(sqlLogEvent);
-            console.log('SQL end detected at line ' + logEvent.lineNo);
-            sqlLogEvent = null;
-          }
-        }
-      }
+      if (!logEvent) continue;
+
+      logEvents.push(logEvent);
+      classifiedEvents.push(classifyEvent(logEvent, config.classify));
     }
-    if (sqlLogEvent) {
-      // ログの最後までSQL抽出が完了しなかった場合の処理を実装
-      flushExtractedSql(sqlLogEvent);
+
+    const partialSql = runExtractors(classifiedEvents, config.extractors);
+
+    for (const sqlLogEvent of partialSql) {
+      const rawSql = sqlLogEvent.rawSql ?? '';
+      const cleaned = removeSqlComments(rawSql);
+
+      try {
+        const { ast, names } = parseQuery(rawSql);
+
+        sqlEvents.push({
+          ...(sqlLogEvent as SqlLogEvent),
+          normalizedSql: cleaned,
+          schema: names?.schemaName,
+          table: names?.tableName,
+          index: names?.indexName,
+          type: ast ? ast.type : 'UNKNOWN',
+        });
+      } catch (e) {
+        sqlEvents.push({
+          ...(sqlLogEvent as SqlLogEvent),
+          normalizedSql: cleaned,
+          type: 'UNKNOWN',
+          errorMessage: `SQL parse error. ${(e as Error).message}`,
+        });
+      }
     }
 
     result.ok = true;
+
     return result;
   } catch (error) {
-    console.error('Error during SQL extraction:', error);
-
     result.error = (error as Error).message;
+
     return result;
   }
+}
+
+/* ===============================
+ * formatting
+ * =============================== */
+
+function removeSqlComments(sql: string): string {
+  return (
+    sql
+      // ブロックコメントは安全に除去
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      // 行頭コメントのみ除去（← ここが重要）
+      .replace(/^\s*--.*$/gm, '')
+      .trim()
+  );
+}
+
+function getArroundEndBrace(arround: LogEventPartBrace): string {
+  return arround === '(' ? ')' : ']';
+}
+
+export function sqlLogEventToRdh(events: SqlLogEvent[]): ResultSetData {
+  const logResultKeys: RdhKey[] = [
+    createRdhKey({
+      name: 'lineNo',
+      type: GeneralColumnType.INTEGER,
+      width: 80,
+    }),
+    createRdhKey({
+      name: 'timestamp',
+      type: GeneralColumnType.TEXT,
+      width: 100,
+    }),
+    createRdhKey({
+      name: 'thread',
+      type: GeneralColumnType.TEXT,
+      width: 100,
+    }),
+    createRdhKey({
+      name: 'level',
+      type: GeneralColumnType.ENUM,
+      width: 100,
+    }),
+    createRdhKey({
+      name: 'logger',
+      type: GeneralColumnType.TEXT,
+      width: 150,
+    }),
+    createRdhKey({
+      name: 'message',
+      type: GeneralColumnType.TEXT,
+      width: 500,
+    }),
+  ];
+  const builder = new ResultSetDataBuilder(logResultKeys);
+  for (const event of events) {
+    builder.addRow(event);
+  }
+  return builder.build();
 }
 
 export function createLogEventPattern(
@@ -225,7 +422,7 @@ export function createLogEventPattern(
 export function createLogEventPatternText(
   params: CreateLogEventPatternParams,
 ): string {
-  const { fields, onlyStartMarker, targetForHuman, fieldSplitter } = params;
+  const { fields, onlyStartMarker, targetForHuman } = params;
   const summary = fields
     .filter((it) => (onlyStartMarker ? it.eventStartMarker === true : true))
     .map((it) => {
@@ -239,11 +436,7 @@ export function createLogEventPatternText(
         } else {
           switch (it.pattern) {
             case 'LEVEL':
-              if (it.arround) {
-                text = LOG_FIELD_PATTERNS.LEVEL + '\\s*';
-              } else {
-                text = LOG_FIELD_PATTERNS.LEVEL;
-              }
+              text = LOG_FIELD_PATTERNS.LEVEL;
               break;
             case 'WORD':
               text = LOG_FIELD_PATTERNS.WORD;
@@ -269,7 +462,7 @@ export function createLogEventPatternText(
               text = LOG_FIELD_PATTERNS.GREEDY_MULTILINE;
               break;
             case 'ISO8601_TIMESTAMP':
-              text = LOG_FIELD_PATTERNS.ISO8601;
+              text = LOG_FIELD_PATTERNS.ISO8601_TIMESTAMP;
               break;
             case 'LOGGER':
               text = LOG_FIELD_PATTERNS.GENERAL_LOGGER;
@@ -290,7 +483,7 @@ export function createLogEventPatternText(
       }
       return text;
     })
-    .join(fieldSplitter === 'SPACE' ? ' ' : '\\s+');
+    .join(targetForHuman ? ' △ ' : '\\s+');
 
   return '^' + summary;
 }
@@ -371,7 +564,7 @@ function createSqlResultBuilder(
   sqlResultKeys.push(createRdhTextKey('rawSql', 200));
   sqlResultKeys.push(createRdhTextKey('rawParams'));
   sqlResultKeys.push(createRdhTextKey('normalizedSql'));
-  sqlResultKeys.push(createRdhIntKey('total'));
+  sqlResultKeys.push(createRdhIntKey('result'));
   sqlResultKeys.push(createRdhEnumKey('type', 80));
   sqlResultKeys.push(createRdhTextKey('schema'));
   sqlResultKeys.push(createRdhTextKey('table'));
@@ -420,63 +613,4 @@ function parseSqlLogEvent(
     });
 
   return data as LogEvent;
-}
-
-/* ===============================
- * formatting
- * =============================== */
-
-function removeSqlComments(sql: string): string {
-  return (
-    sql
-      // ブロックコメントは安全に除去
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      // 行頭コメントのみ除去（← ここが重要）
-      .replace(/^\s*--.*$/gm, '')
-      .trim()
-  );
-}
-
-function getArroundEndBrace(arround: LogEventPartBrace): string {
-  return arround === '(' ? ')' : ']';
-}
-
-export function sqlLogEventToRdh(events: SqlLogEvent[]): ResultSetData {
-  const logResultKeys: RdhKey[] = [
-    createRdhKey({
-      name: 'lineNo',
-      type: GeneralColumnType.INTEGER,
-      width: 80,
-    }),
-    createRdhKey({
-      name: 'timestamp',
-      type: GeneralColumnType.TEXT,
-      width: 100,
-    }),
-    createRdhKey({
-      name: 'thread',
-      type: GeneralColumnType.TEXT,
-      width: 100,
-    }),
-    createRdhKey({
-      name: 'level',
-      type: GeneralColumnType.ENUM,
-      width: 100,
-    }),
-    createRdhKey({
-      name: 'logger',
-      type: GeneralColumnType.TEXT,
-      width: 150,
-    }),
-    createRdhKey({
-      name: 'message',
-      type: GeneralColumnType.TEXT,
-      width: 500,
-    }),
-  ];
-  const builder = new ResultSetDataBuilder(logResultKeys);
-  for (const event of events) {
-    builder.addRow(event);
-  }
-  return builder.build();
 }

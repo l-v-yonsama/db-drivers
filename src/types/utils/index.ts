@@ -51,13 +51,10 @@ type LogEventFieldBuiltIn = LogEventFieldBase & {
   pattern: BuiltInPattern;
 };
 
-type FieldSplitter='SPACE' | 'WHITE_SPACE';
-
 export type CreateLogEventPatternParams = {
   fields: LogEventField[];
   onlyStartMarker?: boolean;
   targetForHuman?: boolean;
-  fieldSplitter: FieldSplitter;
 };
 
 export type LogEventField =
@@ -67,27 +64,76 @@ export type LogEventField =
 
 export type LogEventSplitConfig = {
   fields: LogEventField[];
-  fieldSplitter: FieldSplitter;
 };
 
-export type ExtractSqlConfig =
-  | {
-      pattern: 'logger';
-      loggerPattern: RegExp;
-    }
-  | {
-      pattern: 'messagePrefix';
-      startSqlPattern: RegExp;
-      parametersPattern?: RegExp;
-      totalPattern?: RegExp;
-      endSqlPattern?: RegExp;
-    };
+/* ============================
+   classify
+============================ */
+
+export type LogEventType =
+  | 'NORMAL'
+  | 'SQL_START'
+  | 'SQL_PARAMS'
+  | 'SQL_RESULT'
+  | 'SQL_SINGLE';
+
+export type LogTransformRule = {
+  pattern: RegExp;
+  replace: string;
+};
+
+export type LogClassifierRule = {
+  type: LogEventType;
+  field?: 'message' | 'logger';
+  pattern: RegExp;
+
+  transform?: LogTransformRule[];
+};
+
+export type ClassifiedEvent = LogEvent & {
+  eventType: LogEventType;
+  transformed?: string;
+};
+
+/* ============================
+   extractor state machine
+============================ */
+
+export type ExtractorStepAction =
+  | 'captureSql'
+  | 'captureParams'
+  | 'captureField';
+
+export type ExtractorStep = {
+  type: LogEventType;
+  action?: ExtractorStepAction;
+
+  /** captureField 用 */
+  field?: keyof SqlLogEvent;
+
+  optional?: boolean;
+};
+
+export type ExtractorConfig = {
+  name: string;
+  start: LogEventType;
+  steps: ExtractorStep[];
+};
+
+/* ============================
+   main config
+============================ */
 
 export type LogParseConfig = {
   split: LogEventSplitConfig;
-  extractSql: ExtractSqlConfig;
+  classify: LogClassifierRule[];
+  extractors: ExtractorConfig[];
   logExample: string;
 };
+
+/* ============================
+   SQL result
+============================ */
 
 export type SqlLogEvent = {
   lineNo: number;
@@ -95,7 +141,7 @@ export type SqlLogEvent = {
   rawSql: string;
   rawParams?: string;
   normalizedSql: string;
-  total?: number;
+  result?: string;
   type: string;
   schema?: string;
   table?: string;
