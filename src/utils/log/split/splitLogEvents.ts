@@ -11,7 +11,7 @@ export function splitLogEvents(
     onlyStartMarker: true,
   });
 
-  const lines = logText.split(/\r?\n/);
+  const lines = logText.split(/\r?\n|\r/);
 
   const events: string[] = [];
   let current: string[] = [];

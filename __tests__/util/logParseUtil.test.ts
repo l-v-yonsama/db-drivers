@@ -4,12 +4,12 @@ import {
   createLogEventPatternText,
   LOG_PARSE_CONFIG_PRESETS,
   LogParser,
-  SqlLogEvent
+  SqlLogEvent,
 } from '../../src';
 
 const dataFolder = path.join('__tests__', 'data');
 
-const RESET_EXTRACTED_SQL_RESULT = false;
+const RESET_EXTRACTED_SQL_RESULT = true;
 
 const readFile = async (dir: string, fileName: string): Promise<string> => {
   return await fs.readFile(path.join(dataFolder, 'logs', dir, fileName), {
@@ -35,7 +35,7 @@ describe('createLogEventPatternText', () => {
     });
 
     expect(splitPattern).toBe(
-      '^\\[(?<timestamp>\\d{4}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\d{4})\\] △ \\[(?<level>{LEVEL})\\] △ \\[(?<thread>{DATA})\\] △ \\[(?<logNo>{INT})\\] △ (?<logger>{LOGGER}) △ (?<delimiter_1>-) △ (?<message>{GREEDY_MULTILINE})',
+      '^\\[(?<timestamp>\\d{4}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\d{4})\\] △ \\[(?<level>{LEVEL})\\] △ \\[(?<thread>{DATA})\\] △ \\[(?<logNo>{INT})\\] △ (?<logger>{LOGGER}) △ (?<literal_1>-) △ (?<message>{GREEDY_MULTILINE})',
     );
   });
   it('returns ok,MyBatis.split.fields', () => {
@@ -45,7 +45,7 @@ describe('createLogEventPatternText', () => {
     });
 
     expect(splitPattern).toBe(
-      '^(?<timestamp>{ISO8601_TIMESTAMP}) △ \\[(?<thread>{DATA})\\] △ (?<level>{LEVEL}) △ (?<logger>{DATA}) △ (?<delimiter_1>-) △ (?<message>{GREEDY_MULTILINE})',
+      '^(?<timestamp>{ISO8601_TIMESTAMP}) △ \\[(?<thread>{DATA})\\] △ (?<level>{LEVEL}) △ (?<logger>{DATA}) △ (?<literal_1>-) △ (?<message>{GREEDY_MULTILINE})',
     );
   });
 });
@@ -109,9 +109,9 @@ describe('extractSqlFromLogText', () => {
         expectedSqlEvents: Partial<SqlLogEvent>[],
       ) => {
         const logText = await readFile(dir, file);
-        LOG_PARSE_CONFIG_PRESETS.S2Jdbc['debug']=true;
+        LOG_PARSE_CONFIG_PRESETS.S2Jdbc['debug'] = true;
         const parser = new LogParser(LOG_PARSE_CONFIG_PRESETS.S2Jdbc);
-        const result = await parser.parse(logText);
+        const result = await parser.parse({ logText });
         if (RESET_EXTRACTED_SQL_RESULT && result.ok) {
           await writeJSONFile(
             dir,
@@ -269,7 +269,7 @@ describe('extractSqlFromLogText', () => {
       ) => {
         const logText = await readFile(dir, file);
         const parser = new LogParser(LOG_PARSE_CONFIG_PRESETS.MyBatis);
-        const result = await parser.parse(logText);
+        const result = await parser.parse({ logText });
         if (RESET_EXTRACTED_SQL_RESULT && result.ok) {
           await writeJSONFile(
             dir,
@@ -309,7 +309,7 @@ describe('extractSqlFromLogText', () => {
       ];
       const logText = await readFile('06', 'm06.log');
       const parser = new LogParser(LOG_PARSE_CONFIG_PRESETS.MyBatis);
-      const result = await parser.parse(logText);
+      const result = await parser.parse({ logText });
 
       expect(result.ok).toBeTruthy();
       expect(result.logEvents.length).toBeGreaterThanOrEqual(1);
@@ -334,3 +334,110 @@ describe('extractSqlFromLogText', () => {
     });
   });
 });
+
+// describe('testByParams', () => {
+//   it('ok', () => {
+//     const parser = new LogParser({
+//       split: {
+//         fields: [
+//           {
+//             name: 'timestamp',
+//             type: 'builtin',
+//             pattern: 'ISO8601_TIMESTAMP',
+//             eventStartMarker: true,
+//           },
+//           {
+//             name: 'thread',
+//             type: 'builtin',
+//             pattern: 'DATA',
+//             eventStartMarker: false,
+//             enclosure: '[]',
+//           },
+//           {
+//             name: 'level',
+//             type: 'builtin',
+//             pattern: 'LEVEL',
+//             eventStartMarker: false,
+//           },
+//           {
+//             name: 'logger',
+//             type: 'builtin',
+//             pattern: 'DATA',
+//             eventStartMarker: false,
+//           },
+//           {
+//             name: 'literal_1',
+//             type: 'literal',
+//             pattern: '-',
+//             eventStartMarker: false,
+//           },
+//           {
+//             name: 'message',
+//             type: 'builtin',
+//             pattern: 'GREEDY_MULTILINE',
+//             eventStartMarker: false,
+//           },
+//         ],
+//       },
+//       classify: [
+//         {
+//           type: 'SQL_START',
+//           pattern: {},
+//           transform: [
+//             {
+//               pattern: {},
+//               replace: '',
+//             },
+//           ],
+//         },
+//         {
+//           type: 'SQL_PARAMS',
+//           pattern: {},
+//           transform: [
+//             {
+//               pattern: {},
+//               replace: '',
+//             },
+//           ],
+//         },
+//         {
+//           type: 'SQL_RESULT',
+//           pattern: {},
+//           transform: [
+//             {
+//               pattern: {},
+//               replace: '',
+//             },
+//           ],
+//         },
+//       ],
+//       extractors: [
+//         {
+//           name: 'mybatis',
+//           start: 'SQL_START',
+//           steps: [
+//             {
+//               type: 'SQL_START',
+//               action: 'captureSql',
+//             },
+//             {
+//               type: 'SQL_PARAMS',
+//               action: 'captureParams',
+//               optional: true,
+//             },
+//             {
+//               type: 'SQL_RESULT',
+//               action: 'captureField',
+//               field: 'result',
+//             },
+//           ],
+//         },
+//       ],
+//     });
+//     const result = await parser.parse({ logText });
+//     if (RESET_EXTRACTED_SQL_RESULT && result.ok) {
+//       await writeJSONFile(dir, `${file}.json`, JSON.stringify(result, null, 2));
+//     }
+//     expect(result.ok).toBeTruthy();
+//   });
+// });

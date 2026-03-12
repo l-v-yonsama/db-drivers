@@ -6,7 +6,7 @@ export function detectLogFormatWithConfidence(
   logText: string,
   presets: Record<string, LogParseConfig>,
 ): LogFormatDetectionResult {
-  const lines = logText.split(/\r?\n/).slice(0, 300);
+  const lines = logText.split(/\r?\n|\r/).slice(0, 300);
 
   const scores: Record<string, number> = {};
 
@@ -28,8 +28,14 @@ export function detectLogFormatWithConfidence(
       }
 
       for (const rule of preset.classify) {
-        if (rule.pattern.test(line)) {
-          classifyMatches++;
+        if (rule.patternType === 'literal') {
+          if (line.indexOf(rule.pattern) >= 0) {
+            classifyMatches++;
+          }
+        } else {
+          if (new RegExp(rule.pattern, 'i').test(line)) {
+            classifyMatches++;
+          }
         }
       }
     }
@@ -65,4 +71,24 @@ export function detectLogFormatWithConfidence(
     confidence,
     scores,
   };
+}
+
+export function formatLogDetectionMessage(
+  result: LogFormatDetectionResult,
+): string {
+  if (!result.presetName) {
+    return 'Log format not detected';
+  }
+
+  const percent = Math.round(result.confidence * 100);
+
+  if (result.confidence > 0.75) {
+    return `Log format: ${result.presetName} (${percent}% confidence)`;
+  }
+
+  if (result.confidence > 0.4) {
+    return `Log format likely: ${result.presetName} (${percent}%)`;
+  }
+
+  return `Log format uncertain: ${result.presetName} (${percent}%)`;
 }

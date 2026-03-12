@@ -1,8 +1,13 @@
-import { ClassifiedEvent, ExtractorConfig, SqlLogEvent } from '../../../types';
+import {
+  ClassifiedEvent,
+  ExtractorConfig,
+  LogParseConfig,
+  SqlLogEvent,
+} from '../../../types';
 
 export function runExtractors(
   events: ClassifiedEvent[],
-  extractors: ExtractorConfig[],
+  extractors: readonly ExtractorConfig[],
 ): Partial<SqlLogEvent>[] {
   const results: Partial<SqlLogEvent>[] = [];
 
@@ -80,4 +85,29 @@ export function runExtractors(
   }
 
   return results;
+}
+
+export function summarizeExtractorsOneLine(
+  extractors: LogParseConfig['extractors'],
+  maxLen = 120,
+): string {
+  const text = extractors
+    .map((ex) => {
+      const steps = ex.steps
+        .map((s) => {
+          const optional = s.optional ? '?' : '';
+
+          if (s.action === 'captureField' && s.field) {
+            return `${s.type}${optional}→${s.action}(${s.field})`;
+          }
+
+          return `${s.type}${optional}→${s.action}`;
+        })
+        .join(', ');
+
+      return `${ex.name}: ${steps}`;
+    })
+    .join(' | ');
+
+  return text.length > maxLen ? text.slice(0, maxLen - 3) + '...' : text;
 }

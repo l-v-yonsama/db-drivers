@@ -17,9 +17,9 @@ export const OPTIONAL_LOG_EVENT_KEYS = [
   'logger',
 ] as const;
 
-export type LogEventPartBrace = '(' | '[';
+export type LogEventFieldEnclosure = '()' | '[]';
 
-type BuiltInPattern =
+export type BuiltInPattern =
   | 'ISO8601_TIMESTAMP'
   | 'INT'
   | 'NUMBER'
@@ -30,24 +30,32 @@ type BuiltInPattern =
   | 'GREEDY_DATA'
   | 'GREEDY_MULTILINE';
 
+export type LogFieldPatternDefinition = {
+  type: BuiltInPattern;
+  label: string;
+  pattern: string;
+  description: string;
+  example?: string;
+};
+
 type LogEventFieldBase = {
   name: string;
-  arround?: LogEventPartBrace;
+  enclosure?: LogEventFieldEnclosure;
   eventStartMarker: boolean;
 };
 
-type LogEventFieldCustom = LogEventFieldBase & {
-  type: 'custom';
+type LogEventFieldRegex = LogEventFieldBase & {
+  type: 'regex';
   pattern: string;
 };
 
-type LogEventFieldDelimiter = LogEventFieldBase & {
-  type: 'delimiter';
+type LogEventFieldLiteral = LogEventFieldBase & {
+  type: 'literal';
   pattern: string;
 };
 
-type LogEventFieldBuiltIn = LogEventFieldBase & {
-  type: 'built-in';
+type LogEventFieldBuiltin = LogEventFieldBase & {
+  type: 'builtin';
   pattern: BuiltInPattern;
 };
 
@@ -58,9 +66,9 @@ export type CreateLogEventPatternParams = {
 };
 
 export type LogEventField =
-  | LogEventFieldCustom
-  | LogEventFieldDelimiter
-  | LogEventFieldBuiltIn;
+  | LogEventFieldRegex
+  | LogEventFieldLiteral
+  | LogEventFieldBuiltin;
 
 export type LogEventSplitConfig = {
   fields: LogEventField[];
@@ -78,16 +86,17 @@ export type LogEventType =
   | 'SQL_SINGLE';
 
 export type LogTransformRule = {
-  pattern: RegExp;
+  patternType: 'literal' | 'regex';
+  pattern: string;
   replace: string;
 };
 
 export type LogClassifierRule = {
   type: LogEventType;
-  field?: 'message' | 'logger';
-  pattern: RegExp;
-
-  transform?: LogTransformRule[];
+  field?: string;
+  patternType: 'literal' | 'regex';
+  pattern: string;
+  transform?: readonly LogTransformRule[];
 };
 
 export type ClassifiedEvent = LogEvent & {
@@ -117,7 +126,7 @@ export type ExtractorStep = {
 export type ExtractorConfig = {
   name: string;
   start: LogEventType;
-  steps: ExtractorStep[];
+  steps: readonly ExtractorStep[];
 };
 
 /* ============================
@@ -126,9 +135,15 @@ export type ExtractorConfig = {
 
 export type LogParseConfig = {
   split: LogEventSplitConfig;
-  classify: LogClassifierRule[];
-  extractors: ExtractorConfig[];
-  logExample: string;
+  classify: readonly LogClassifierRule[];
+  extractors: readonly ExtractorConfig[];
+};
+
+export type LogParseStage = 'split' | 'classify' | 'extract'; // default
+
+export type LogParseParams = {
+  logText: string;
+  stage?: LogParseStage;
   debug?: boolean;
 };
 
@@ -153,7 +168,8 @@ export type SqlLogEvent = {
 export type ExtractedSqlResult = {
   ok: boolean;
   error?: string;
-  logEvents: LogEvent[];
+  stage: LogParseStage;
+  logEvents: ClassifiedEvent[];
   sqlEvents: SqlLogEvent[];
 };
 

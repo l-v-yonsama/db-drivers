@@ -6,17 +6,13 @@ import {
   ResultSetDataBuilder,
 } from '@l-v-yonsama/rdh';
 import {
-  CreateLogEventPatternParams,
+  ClassifiedEvent,
   ExtractedSqlRdhResult,
   ExtractedSqlResult,
-  LogEvent,
-  LogEventPartBrace,
+  LogParseStage,
   OPTIONAL_LOG_EVENT_KEYS,
   SqlLogEvent,
 } from '../../../types';
-import XRegExp from 'xregexp';
-import { LOG_FIELD_PATTERNS } from '../../constant';
-import { getArroundEndBrace } from '../pattern/logEventPattern';
 
 export function sqlLogEventToRdh(events: SqlLogEvent[]): ResultSetData {
   const logResultKeys: RdhKey[] = [
@@ -58,82 +54,6 @@ export function sqlLogEventToRdh(events: SqlLogEvent[]): ResultSetData {
   return builder.build();
 }
 
-export function createLogEventPattern(
-  params: CreateLogEventPatternParams,
-): RegExp {
-  const patternText = createLogEventPatternText(params);
-  return XRegExp(patternText, 'i');
-}
-
-export function createLogEventPatternText(
-  params: CreateLogEventPatternParams,
-): string {
-  const { fields, onlyStartMarker, targetForHuman } = params;
-  const summary = fields
-    .filter((it) => (onlyStartMarker ? it.eventStartMarker === true : true))
-    .map((it) => {
-      let text = '';
-
-      if (it.type === 'custom' || it.type === 'delimiter') {
-        text = it.pattern;
-      } else {
-        if (targetForHuman) {
-          text = `{${it.pattern}}`;
-        } else {
-          switch (it.pattern) {
-            case 'LEVEL':
-              text = LOG_FIELD_PATTERNS.LEVEL;
-              break;
-            case 'WORD':
-              text = LOG_FIELD_PATTERNS.WORD;
-              break;
-            case 'INT':
-              text = LOG_FIELD_PATTERNS.INT;
-              break;
-            case 'NUMBER':
-              text = LOG_FIELD_PATTERNS.NUMBER;
-              break;
-            case 'DATA':
-            case 'GREEDY_DATA':
-              if (it.arround) {
-                text = '[^\\' + getArroundEndBrace(it.arround) + ']*';
-              } else {
-                text = '.*';
-              }
-              if (it.pattern === 'DATA') {
-                text += '?';
-              }
-              break;
-            case 'GREEDY_MULTILINE':
-              text = LOG_FIELD_PATTERNS.GREEDY_MULTILINE;
-              break;
-            case 'ISO8601_TIMESTAMP':
-              text = LOG_FIELD_PATTERNS.ISO8601_TIMESTAMP;
-              break;
-            case 'LOGGER':
-              text = LOG_FIELD_PATTERNS.GENERAL_LOGGER;
-              break;
-          }
-        }
-      }
-
-      if (!onlyStartMarker) {
-        text = `(?<${it.name}>${text})`;
-      }
-      if (it.arround) {
-        if (it.arround === '(') {
-          text = `\\(${text}\\)`;
-        } else if (it.arround === '[') {
-          text = `\\[${text}\\]`;
-        }
-      }
-      return text;
-    })
-    .join(targetForHuman ? ' △ ' : '\\s+');
-
-  return '^' + summary;
-}
-
 function createRdhTextKey(name: string, width?: number): RdhKey {
   return createRdhKey({ name, type: GeneralColumnType.TEXT, width });
 }
@@ -147,10 +67,10 @@ function createRdhIntKey(name: string, width?: number): RdhKey {
 }
 
 export function convertExtractedSqlRdhResult(
-  extractedSqlResult: ExtractedSqlResult,
+  params: ExtractedSqlResult,
 ): ExtractedSqlRdhResult {
-  const logEventRdb = createLogResultBuilder(extractedSqlResult.logEvents);
-  const sqlEventRdb = createSqlResultBuilder(extractedSqlResult.sqlEvents);
+  const logEventRdb = createLogResultBuilder(params.logEvents, params.stage);
+  const sqlEventRdb = createSqlResultBuilder(params.sqlEvents);
 
   return {
     logEvents: logEventRdb.build(),
@@ -158,14 +78,21 @@ export function convertExtractedSqlRdhResult(
   };
 }
 
-function createLogResultBuilder(logEvents: LogEvent[]): ResultSetDataBuilder {
+function createLogResultBuilder(
+  logEvents: ClassifiedEvent[],
+  stage: LogParseStage,
+): ResultSetDataBuilder {
   if (logEvents.length === 0) {
     return ResultSetDataBuilder.createEmpty();
   }
+  const stageForSplit = stage === 'split';
   const firstEvent = logEvents[0];
   const logResultKeys: RdhKey[] = [];
   logResultKeys.push(createRdhIntKey('lineNo', 80));
-  // const existsOptionalLogEventKeys: string[] = [];
+  if (!stageForSplit) {
+    logResultKeys.push(createRdhTextKey('eventType', 100));
+  }
+
   OPTIONAL_LOG_EVENT_KEYS.forEach((key) => {
     if (firstEvent[key]) {
       // existsOptionalLogEventKeys.push(key);
@@ -176,7 +103,10 @@ function createLogResultBuilder(logEvents: LogEvent[]): ResultSetDataBuilder {
       }
     }
   });
-  logResultKeys.push(createRdhTextKey('message', 200));
+  if (!stageForSplit) {
+    logResultKeys.push(createRdhTextKey('transformed'));
+  }
+  logResultKeys.push(createRdhTextKey('message', 800));
   const existsFieldKeys: string[] = [];
   if (firstEvent.fields) {
     Object.keys(firstEvent.fields).forEach((key) => {
@@ -188,10 +118,14 @@ function createLogResultBuilder(logEvents: LogEvent[]): ResultSetDataBuilder {
   const rdb = new ResultSetDataBuilder(logResultKeys);
 
   logEvents.forEach((it) => {
-    const { fields, ...others } = it;
+    const { fields, eventType, transformed, ...others } = it;
     const data: any = {
       ...others,
     };
+    if (!stageForSplit) {
+      data.eventType = eventType;
+      data.transformed = transformed;
+    }
     existsFieldKeys.forEach((key) => {
       data[key] = fields[key];
     });
@@ -207,7 +141,7 @@ function createSqlResultBuilder(
   const sqlResultKeys: RdhKey[] = [];
   sqlResultKeys.push(createRdhIntKey('lineNo', 80));
   sqlResultKeys.push(createRdhTextKey('timestamp', 100));
-  sqlResultKeys.push(createRdhTextKey('rawSql', 200));
+  sqlResultKeys.push(createRdhTextKey('rawSql', 300));
   sqlResultKeys.push(createRdhTextKey('rawParams'));
   sqlResultKeys.push(createRdhTextKey('normalizedSql'));
   sqlResultKeys.push(createRdhIntKey('result'));

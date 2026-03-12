@@ -314,7 +314,7 @@ describe('ResourceHelper', () => {
               },
             ],
           };
-          const copied = JSON.parse(JSON.stringify(condition));
+          const copied = structuredClone(condition);
           stringConditionToJsonCondition(copied, keys);
           expect(copied).toEqual(condition);
         });
@@ -349,7 +349,7 @@ describe('ResourceHelper', () => {
             ],
           };
 
-          const copied = JSON.parse(JSON.stringify(condition));
+          const copied = structuredClone(condition);
           (condition.any[0] as ConditionProperties).value = 2;
           (condition.any[2] as ConditionProperties).value = dt.valueOf();
           (condition.any[3] as ConditionProperties).value = dt.valueOf();
@@ -389,7 +389,7 @@ describe('ResourceHelper', () => {
               },
             ],
           };
-          const copied = JSON.parse(JSON.stringify(condition));
+          const copied = structuredClone(condition);
           stringConditionToJsonCondition(copied, keys);
           expect(copied).toEqual(condition);
         });
@@ -428,7 +428,7 @@ describe('ResourceHelper', () => {
             ],
           };
 
-          const copied = JSON.parse(JSON.stringify(condition));
+          const copied = structuredClone(condition);
           (condition.any[0] as ConditionProperties).value = [2, 8];
           (condition.any[1] as ConditionProperties).value = ['3', '4', 'a'];
           (condition.any[2] as ConditionProperties).value = [

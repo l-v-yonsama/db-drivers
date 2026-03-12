@@ -1,4 +1,8 @@
-import { LogEventSplitConfig, LogParseConfig } from '../types';
+import {
+  LogEventSplitConfig,
+  LogFieldPatternDefinition,
+  LogParseConfig,
+} from '../types';
 
 /* ======================================================
    Timestamp patterns
@@ -41,55 +45,134 @@ const LOG_LEVELS = [
 ====================================================== */
 
 export const LOG_FIELD_PATTERNS = {
-  LEVEL: `(${LOG_LEVELS.join('|')})\\s*`,
-  ISO8601_TIMESTAMP: '(' + ISO_DATE_TIME + '|' + ISO_TIME_ONLY + ')',
-  GENERAL_LOGGER: '[a-zA-Z0-9_.$:/-]+',
-  WORD: `\\b\\w+\\b`,
-  INT: `[+-]?\\d+`,
-  NUMBER: `[+-]?\\d+(\\.\\d+)?`,
-  GREEDY_MULTILINE: `[\\s\\S]*`,
-} satisfies Record<string, string>;
+  LEVEL: {
+    type: 'LEVEL',
+    label: 'Log level',
+    pattern: `(${LOG_LEVELS.join('|')})\\s*`,
+    description:
+      'Common log levels such as trace, debug, info, warn, error, fatal.',
+    example: 'INFO',
+  },
+
+  ISO8601_TIMESTAMP: {
+    type: 'ISO8601_TIMESTAMP',
+    label: 'ISO8601 timestamp',
+    pattern: '(' + ISO_DATE_TIME + '|' + ISO_TIME_ONLY + ')',
+    description: 'Timestamp in ISO8601 format (date and time).',
+    example: '2025-01-01 10:11:22.333',
+  },
+
+  LOGGER: {
+    type: 'LOGGER',
+    label: 'Logger name',
+    pattern: '[a-zA-Z0-9_.$:/-]+',
+    description: 'Typical logger or class name.',
+    example: 'org.example.service.UserService',
+  },
+
+  INT: {
+    type: 'INT',
+    label: 'Integer',
+    pattern: '[+-]?\\d+',
+    description: 'Signed integer number.',
+    example: '42',
+  },
+
+  NUMBER: {
+    type: 'NUMBER',
+    label: 'Number',
+    pattern: '[+-]?\\d+(\\.\\d+)?',
+    description: 'Integer or decimal number.',
+    example: '3.14',
+  },
+
+  WORD: {
+    type: 'WORD',
+    label: 'Word',
+    pattern: '\\b\\w+\\b',
+    description: 'Single word consisting of letters, digits or underscore.',
+    example: 'Thread-1',
+  },
+
+  DATA: {
+    type: 'DATA',
+    label: 'Data',
+    pattern: `[^\\s]+`,
+    description: 'Single field (until whitespace)',
+    example: '%{Hello}%',
+  },
+  GREEDY_DATA: {
+    type: 'GREEDY_DATA',
+    label: 'Greedy data',
+    pattern: '.*',
+    description: 'Any characters except newline.',
+    example: 'Full log message',
+  },
+  GREEDY_MULTILINE: {
+    type: 'GREEDY_MULTILINE',
+    label: 'Greedy multiline',
+    pattern: '[\\s\\S]*',
+    description: 'Matches any characters including line breaks.',
+    example: 'Full log message<Line breaks>  next line message',
+  },
+} satisfies Record<string, LogFieldPatternDefinition>;
 
 /* ======================================================
    Default split configs
 ====================================================== */
+const DEFAULT_SIMPLE_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
+  fields: [
+    {
+      name: 'timestamp',
+      type: 'builtin',
+      pattern: 'ISO8601_TIMESTAMP',
+      eventStartMarker: true,
+    },
+    {
+      name: 'message',
+      type: 'builtin',
+      pattern: 'GREEDY_MULTILINE',
+      eventStartMarker: false,
+    },
+  ],
+};
 
 const DEFAULT_MYBATIS_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
   fields: [
     {
       name: 'timestamp',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'ISO8601_TIMESTAMP',
       eventStartMarker: true,
     },
     {
       name: 'thread',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'DATA',
       eventStartMarker: false,
-      arround: '[',
+      enclosure: '[]',
     },
     {
       name: 'level',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'LEVEL',
       eventStartMarker: false,
     },
     {
       name: 'logger',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'DATA',
       eventStartMarker: false,
     },
     {
-      name: 'delimiter_1',
-      type: 'delimiter',
+      name: 'literal_1',
+      type: 'literal',
       pattern: '-',
       eventStartMarker: false,
     },
     {
       name: 'message',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'GREEDY_MULTILINE',
       eventStartMarker: false,
     },
@@ -100,47 +183,47 @@ const DEFAULT_S2JDBC_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
   fields: [
     {
       name: 'timestamp',
-      type: 'custom',
+      type: 'regex',
       pattern: S2_TIMESTAMP,
       eventStartMarker: true,
-      arround: '[',
+      enclosure: '[]',
     },
     {
       name: 'level',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'LEVEL',
       eventStartMarker: false,
-      arround: '[',
+      enclosure: '[]',
     },
     {
       name: 'thread',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'DATA',
       eventStartMarker: false,
-      arround: '[',
+      enclosure: '[]',
     },
     {
       name: 'logNo',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'INT',
       eventStartMarker: false,
-      arround: '[',
+      enclosure: '[]',
     },
     {
       name: 'logger',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'LOGGER',
       eventStartMarker: false,
     },
     {
-      name: 'delimiter_1',
-      type: 'delimiter',
+      name: 'literal_1',
+      type: 'literal',
       pattern: '-',
       eventStartMarker: false,
     },
     {
       name: 'message',
-      type: 'built-in',
+      type: 'builtin',
       pattern: 'GREEDY_MULTILINE',
       eventStartMarker: false,
     },
@@ -162,30 +245,36 @@ export const LOG_PARSE_CONFIG_PRESETS = {
     classify: [
       {
         type: 'SQL_START',
-        pattern: /^==>\s+Preparing:/,
+        patternType: 'regex',
+        pattern: '^==>\\s+Preparing:',
         transform: [
           {
-            pattern: /^==>\s+Preparing:\s*/,
+            patternType: 'regex',
+            pattern: '^==>\\s+Preparing:\\s*',
             replace: '',
           },
         ],
       },
       {
         type: 'SQL_PARAMS',
-        pattern: /^==>\s+Parameters:/,
+        patternType: 'regex',
+        pattern: '^==>\\s+Parameters:',
         transform: [
           {
-            pattern: /^==>\s+Parameters:\s*/,
+            patternType: 'regex',
+            pattern: '^==>\\s+Parameters:\\s*',
             replace: '',
           },
         ],
       },
       {
         type: 'SQL_RESULT',
-        pattern: /^<==\s+(Total|Updates):/,
+        patternType: 'regex',
+        pattern: '^<==\\s+(Total|Updates):',
         transform: [
           {
-            pattern: /^<==\s+(?:Total|Updates):\s*/,
+            patternType: 'regex',
+            pattern: '^<==\\s+(?:Total|Updates):\\s*',
             replace: '',
           },
         ],
@@ -233,8 +322,9 @@ export const LOG_PARSE_CONFIG_PRESETS = {
       {
         type: 'SQL_SINGLE',
         field: 'logger',
+        patternType: 'regex',
         pattern:
-          /^query\.(Auto|SqlFile)(Batch)?(Select|Insert|Update|Delete)Impl$/,
+          '^query\\.(Auto|SqlFile)(Batch)?(Select|Insert|Update|Delete)Impl$',
       },
     ],
 
@@ -261,4 +351,12 @@ SET
 WHERE ID = 1
 [1999/01/01 14:52:35 0111] [DEBUG] [ajp-nio-0.0.0.0-8009-exec-1] [30] jta.LogTestActionImpl - End LogTestAction.tx=[fid=00, gid=00/186hId=]`,
   },
-} satisfies Record<string, LogParseConfig>;
+} as const satisfies Record<string, LogParseConfig & { logExample: string }>;
+
+export type LogParsePresetName = keyof typeof LOG_PARSE_CONFIG_PRESETS;
+
+export const SIMPLE_LOG_PARSE_CONFIG: LogParseConfig = {
+  split: DEFAULT_SIMPLE_LOG_SPLIT_CONFIG,
+  classify: [],
+  extractors: [],
+};

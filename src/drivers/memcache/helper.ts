@@ -61,7 +61,7 @@ export function cachedumpAsync(
       } else if (!results) {
         resolve([]);
       } else {
-        const copied = JSON.parse(JSON.stringify(results));
+        const copied = structuredClone(results);
         resolve(Array.isArray(copied) ? copied : [copied]);
       }
     });
