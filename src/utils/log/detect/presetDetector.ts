@@ -1,17 +1,29 @@
 import XRegExp from 'xregexp';
-import { createLogEventPattern } from '../pattern/logEventPattern';
-import { LogFormatDetectionResult, LogParseConfig } from '../../../types';
 
-export function detectLogFormatWithConfidence(
+import { createLogEventPattern } from '../pattern/logEventPattern';
+import { classifyEvent } from '../classify/classifyEvent';
+
+import {
+  LogEvent,
+  LogEventSplitConfig,
+  LogClassifierRule,
+  LogFormatDetectionResult,
+} from '../../../types';
+
+/* ======================================================
+   split preset detection
+====================================================== */
+
+export function detectLogSplitPreset(
   logText: string,
-  presets: Record<string, LogParseConfig>,
+  presets: Record<string, { split: LogEventSplitConfig }>,
 ): LogFormatDetectionResult {
-  const lines = logText.split(/\r?\n|\r/).slice(0, 300);
+  const lines = logText.split(/\r?\n|\r/).slice(0, 200);
 
   const scores: Record<string, number> = {};
 
-  let bestScore = 0;
   let bestPreset: string | undefined;
+  let bestScore = 0;
 
   for (const [name, preset] of Object.entries(presets)) {
     const startPattern = createLogEventPattern({
@@ -19,39 +31,17 @@ export function detectLogFormatWithConfidence(
       onlyStartMarker: true,
     });
 
-    let startMatches = 0;
-    let classifyMatches = 0;
+    let matches = 0;
 
     for (const line of lines) {
       if (XRegExp.test(line, startPattern)) {
-        startMatches++;
-      }
-
-      for (const rule of preset.classify) {
-        if (rule.patternType === 'literal') {
-          if (line.indexOf(rule.pattern) >= 0) {
-            classifyMatches++;
-          }
-        } else {
-          if (new RegExp(rule.pattern, 'i').test(line)) {
-            classifyMatches++;
-          }
-        }
+        matches++;
       }
     }
 
-    const startScore = startMatches * 2;
-    const classifyScore = classifyMatches * 5;
+    const ratio = matches / lines.length;
 
-    const startRatio = startMatches / lines.length;
-
-    let ratioBonus = 0;
-
-    if (startRatio > 0.1) {
-      ratioBonus = 10;
-    }
-
-    const score = startScore + classifyScore + ratioBonus;
+    const score = matches + ratio * 10;
 
     scores[name] = score;
 
@@ -61,10 +51,12 @@ export function detectLogFormatWithConfidence(
     }
   }
 
-  const confidence =
-    bestScore === 0
-      ? 0
-      : bestScore / Object.values(scores).reduce((a, b) => a + b, 0);
+  const scoreValues = Object.values(scores).sort((a, b) => b - a);
+
+  const best = scoreValues[0] ?? 0;
+  const second = scoreValues[1] ?? 0;
+
+  const confidence = best === 0 ? 0 : best / (best + second);
 
   return {
     presetName: bestPreset,
@@ -72,6 +64,58 @@ export function detectLogFormatWithConfidence(
     scores,
   };
 }
+
+/* ======================================================
+   SQL parse preset detection
+====================================================== */
+
+export function detectSqlParsePreset(
+  logEvents: LogEvent[],
+  presets: Record<string, { classify: readonly LogClassifierRule[] }>,
+): LogFormatDetectionResult {
+  const scores: Record<string, number> = {};
+
+  let bestPreset: string | undefined;
+  let bestScore = 0;
+
+  const sample = logEvents.slice(0, 300);
+
+  for (const [name, preset] of Object.entries(presets)) {
+    let matches = 0;
+
+    for (const event of sample) {
+      const classified = classifyEvent(event, preset.classify);
+
+      if (classified.eventType !== 'NORMAL') {
+        matches++;
+      }
+    }
+
+    scores[name] = matches;
+
+    if (matches > bestScore) {
+      bestScore = matches;
+      bestPreset = name;
+    }
+  }
+
+  const scoreValues = Object.values(scores).sort((a, b) => b - a);
+
+  const best = scoreValues[0] ?? 0;
+  const second = scoreValues[1] ?? 0;
+
+  const confidence = best === 0 ? 0 : best / (best + second);
+
+  return {
+    presetName: bestPreset,
+    confidence,
+    scores,
+  };
+}
+
+/* ======================================================
+   helper message formatter
+====================================================== */
 
 export function formatLogDetectionMessage(
   result: LogFormatDetectionResult,
@@ -82,13 +126,13 @@ export function formatLogDetectionMessage(
 
   const percent = Math.round(result.confidence * 100);
 
-  if (result.confidence > 0.75) {
-    return `Log format: ${result.presetName} (${percent}% confidence)`;
+  if (result.confidence >= 0.6) {
+    return `Detected: ${result.presetName} (${percent}% confidence)`;
   }
 
-  if (result.confidence > 0.4) {
-    return `Log format likely: ${result.presetName} (${percent}%)`;
+  if (result.confidence >= 0.35) {
+    return `Likely: ${result.presetName} (${percent}%)`;
   }
 
-  return `Log format uncertain: ${result.presetName} (${percent}%)`;
+  return `Uncertain: ${result.presetName} (${percent}%)`;
 }

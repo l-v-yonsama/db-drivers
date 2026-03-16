@@ -4,4 +4,3 @@ export * from './dbType';
 export * from './jwt';
 export * from './driverUtil';
 export * from './log';
-export * from './constant';

@@ -5,54 +5,19 @@ import {
   ResultSetData,
   ResultSetDataBuilder,
 } from '@l-v-yonsama/rdh';
+
 import {
   ClassifiedEvent,
   ExtractedSqlRdhResult,
   ExtractedSqlResult,
   LogParseStage,
   OPTIONAL_LOG_EVENT_KEYS,
-  SqlLogEvent,
+  SqlExecutionEvent,
 } from '../../../types';
 
-export function sqlLogEventToRdh(events: SqlLogEvent[]): ResultSetData {
-  const logResultKeys: RdhKey[] = [
-    createRdhKey({
-      name: 'lineNo',
-      type: GeneralColumnType.INTEGER,
-      width: 80,
-    }),
-    createRdhKey({
-      name: 'timestamp',
-      type: GeneralColumnType.TEXT,
-      width: 100,
-    }),
-    createRdhKey({
-      name: 'thread',
-      type: GeneralColumnType.TEXT,
-      width: 100,
-    }),
-    createRdhKey({
-      name: 'level',
-      type: GeneralColumnType.ENUM,
-      width: 100,
-    }),
-    createRdhKey({
-      name: 'logger',
-      type: GeneralColumnType.TEXT,
-      width: 150,
-    }),
-    createRdhKey({
-      name: 'message',
-      type: GeneralColumnType.TEXT,
-      width: 500,
-    }),
-  ];
-  const builder = new ResultSetDataBuilder(logResultKeys);
-  for (const event of events) {
-    builder.addRow(event);
-  }
-  return builder.build();
-}
+/* ======================================================
+   helper
+====================================================== */
 
 function createRdhTextKey(name: string, width?: number): RdhKey {
   return createRdhKey({ name, type: GeneralColumnType.TEXT, width });
@@ -66,17 +31,26 @@ function createRdhIntKey(name: string, width?: number): RdhKey {
   return createRdhKey({ name, type: GeneralColumnType.INTEGER, width });
 }
 
+/* ======================================================
+   main
+====================================================== */
+
 export function convertExtractedSqlRdhResult(
   params: ExtractedSqlResult,
 ): ExtractedSqlRdhResult {
   const logEventRdb = createLogResultBuilder(params.logEvents, params.stage);
-  const sqlEventRdb = createSqlResultBuilder(params.sqlEvents);
+
+  const sqlEventRdb = createSqlResultBuilder(params.sqlExecutions);
 
   return {
     logEvents: logEventRdb.build(),
     sqlEvents: sqlEventRdb.build(),
   };
 }
+
+/* ======================================================
+   LOG EVENTS
+====================================================== */
 
 function createLogResultBuilder(
   logEvents: ClassifiedEvent[],
@@ -85,17 +59,20 @@ function createLogResultBuilder(
   if (logEvents.length === 0) {
     return ResultSetDataBuilder.createEmpty();
   }
+
   const stageForSplit = stage === 'split';
   const firstEvent = logEvents[0];
+
   const logResultKeys: RdhKey[] = [];
+
   logResultKeys.push(createRdhIntKey('lineNo', 80));
+
   if (!stageForSplit) {
     logResultKeys.push(createRdhTextKey('eventType', 100));
   }
 
   OPTIONAL_LOG_EVENT_KEYS.forEach((key) => {
     if (firstEvent[key]) {
-      // existsOptionalLogEventKeys.push(key);
       if (key === 'level') {
         logResultKeys.push(createRdhEnumKey(key, 80));
       } else {
@@ -103,11 +80,15 @@ function createLogResultBuilder(
       }
     }
   });
+
   if (!stageForSplit) {
     logResultKeys.push(createRdhTextKey('transformed'));
   }
+
   logResultKeys.push(createRdhTextKey('message', 800));
+
   const existsFieldKeys: string[] = [];
+
   if (firstEvent.fields) {
     Object.keys(firstEvent.fields).forEach((key) => {
       existsFieldKeys.push(key);
@@ -119,43 +100,61 @@ function createLogResultBuilder(
 
   logEvents.forEach((it) => {
     const { fields, eventType, transformed, ...others } = it;
+
     const data: any = {
       ...others,
     };
+
     if (!stageForSplit) {
       data.eventType = eventType;
       data.transformed = transformed;
     }
+
     existsFieldKeys.forEach((key) => {
-      data[key] = fields[key];
+      data[key] = fields?.[key];
     });
+
     rdb.addRow(data);
   });
 
   return rdb;
 }
 
+/* ======================================================
+   SQL EXECUTION EVENTS
+====================================================== */
+
 function createSqlResultBuilder(
-  sqlEvents: SqlLogEvent[],
+  sqlExecutions: SqlExecutionEvent[],
 ): ResultSetDataBuilder {
   const sqlResultKeys: RdhKey[] = [];
-  sqlResultKeys.push(createRdhIntKey('lineNo', 80));
-  sqlResultKeys.push(createRdhTextKey('timestamp', 100));
-  sqlResultKeys.push(createRdhTextKey('rawSql', 300));
-  sqlResultKeys.push(createRdhTextKey('rawParams'));
-  sqlResultKeys.push(createRdhTextKey('normalizedSql'));
-  sqlResultKeys.push(createRdhIntKey('result'));
-  sqlResultKeys.push(createRdhEnumKey('type', 80));
-  sqlResultKeys.push(createRdhTextKey('schema'));
-  sqlResultKeys.push(createRdhTextKey('table'));
-  sqlResultKeys.push(createRdhTextKey('errorMessage'));
+
+  sqlResultKeys.push(createRdhIntKey('startLine', 80));
+  sqlResultKeys.push(createRdhIntKey('endLine', 80));
+
+  sqlResultKeys.push(createRdhTextKey('timestamp', 120));
+  sqlResultKeys.push(createRdhTextKey('thread', 120));
+  sqlResultKeys.push(createRdhTextKey('framework', 120));
+
+  sqlResultKeys.push(createRdhTextKey('sql', 400));
+  sqlResultKeys.push(createRdhTextKey('params', 200));
+  sqlResultKeys.push(createRdhTextKey('result', 100));
+
+  sqlResultKeys.push(createRdhTextKey('normalizedSql', 400));
+
+  sqlResultKeys.push(createRdhTextKey('schema', 150));
+  sqlResultKeys.push(createRdhTextKey('table', 150));
+  sqlResultKeys.push(createRdhTextKey('index', 150));
+
+  sqlResultKeys.push(createRdhTextKey('type', 80));
+
+  sqlResultKeys.push(createRdhTextKey('error', 300));
 
   const rdb = new ResultSetDataBuilder(sqlResultKeys);
 
-  sqlEvents.forEach((it) => {
-    const { index, ...others } = it;
+  sqlExecutions.forEach((it) => {
     rdb.addRow({
-      ...others,
+      ...it,
     });
   });
 
