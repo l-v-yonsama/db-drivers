@@ -1,23 +1,24 @@
-import { parseQuery } from '../../helpers';
-
 import {
   ClassifiedEvent,
   ExtractedSqlResult,
   LogEvent,
   LogParseConfig,
   LogParseParams,
-  SqlExecutionBuilder,
-  SqlExecutionEvent,
   SqlFragment,
 } from '../../types';
 
 import { splitLogEvents } from './split/splitLogEvents';
-import { createLogEventPattern } from './pattern/logEventPattern';
+import {
+  createLogEventPattern,
+  createLogEventPatternText,
+} from './pattern/logEventPattern';
 import { classifyEvent, expandLogEvent } from './classify/classifyEvent';
 import { runExtractors } from './extract/runExtractors';
-import { removeSqlComments } from './sql/removeSqlComments';
 
 import XRegExp from 'xregexp';
+import { buildSqlExecutions } from './buildSqlExecutions';
+import { validateConfig } from './validator';
+import { summarizeClassifyRules, summarizeExtractors } from './logSummary';
 
 export class LogParser {
   private fieldSplitPattern: RegExp;
@@ -29,239 +30,135 @@ export class LogParser {
   }
 
   parse(params: LogParseParams): ExtractedSqlResult {
-    const { logText, debug } = params;
+    const { config } = this;
+    const { logText, withSqlFragments, linesToParse, language } = params;
 
     const stage = params.stage ?? 'sqlExecution';
+    const r = validateConfig(this.config, stage);
+    if (!r.ok) {
+      if (r.errorMessage) {
+        throw new Error(`Invalid LogParser config. ${r.errorMessage}`);
+      }
+      throw new Error(`Invalid LogParser config.`);
+    }
 
     const logEvents: ClassifiedEvent[] = [];
-    const sqlExecutions: SqlExecutionEvent[] = [];
+    let sqlFragments: SqlFragment[] | undefined;
 
     const result: ExtractedSqlResult = {
       ok: false,
       stage,
       logEvents,
-      sqlExecutions,
+      sqlFragments,
+      sqlExecutions: [],
+      inputSummary: {
+        logEventSplitPattern: createLogEventPatternText(config.split),
+        classificationSummary: summarizeClassifyRules(config.classify),
+        extractionSummary: summarizeExtractors(config.extractors),
+      },
+      outputSummary: {
+        eventTypeCounts: {},
+        sqlExecutionTypeCounts: {},
+        totalSqlExecutions: 0,
+        totalEvents: 0,
+      },
+      elapsedTimeMilli: {
+        split: 0,
+        total: 0,
+      },
     };
 
+    const startTime = new Date().getTime();
     try {
-      if (debug) {
-        console.debug('logText', logText);
-        // console.debug('logText.length', logText.length);
-      }
-
-      const logEventLines = splitLogEvents(logText, this.config.split, debug);
-
-      if (debug) {
-        console.debug(
-          'logEventLines',
-          JSON.stringify(logEventLines.slice(0, 5)),
-        );
-      }
-
+      const logEventLines = splitLogEvents(
+        logText,
+        this.config.split,
+        linesToParse,
+      );
+      const beforeClassificationTime = new Date().getTime();
+      result.elapsedTimeMilli.split = beforeClassificationTime - startTime;
       const expandMessageRules = this.config.classify.filter(
         (it) => it.expandMessage === true,
       );
-      for (const logEventLine of logEventLines) {
-        const logEvent = this.parseSqlLogEvent(logEventLine.text, logEventLine.lineNo);
-        if (debug) {
-          console.debug('parsed sqlLogEvent', JSON.stringify(logEvent));
-        }
-        if (!logEvent) {
-          continue;
-        }
 
-        if (stage === 'split') {
-          logEvents.push({ ...logEvent, eventType: 'NORMAL' });
-        } else {
-          const expanedLogEvents = expandLogEvent(logEvent, expandMessageRules);
-          for (const expanedLogEvent of expanedLogEvents) {
+      for (const logEventLine of logEventLines) {
+        const logEvent = this.parseSqlLogEvent(
+          logEventLine.text,
+          logEventLine.lineNo,
+        );
+
+        if (!logEvent) continue;
+
+        const expanedLogEvents = expandLogEvent(logEvent, expandMessageRules);
+        for (const expanedLogEvent of expanedLogEvents) {
+          if (stage === 'split') {
+            logEvents.push({ ...expanedLogEvent, eventType: 'NORMAL' });
+          } else {
             logEvents.push(
-              classifyEvent(expanedLogEvent, this.config.classify, debug),
+              classifyEvent(expanedLogEvent, this.config.classify),
             );
           }
         }
       }
+      result.outputSummary.eventTypeCounts = countBy(
+        logEvents.map((e) => e.eventType),
+      );
+      result.outputSummary.totalEvents = result.logEvents.length;
+      const afterClassificationTime = new Date().getTime();
+      if (stage !== 'split') {
+        result.elapsedTimeMilli.classification =
+          afterClassificationTime - beforeClassificationTime;
+      }
 
       if (stage === 'split' || stage === 'classify') {
         result.ok = true;
+        result.elapsedTimeMilli.total = new Date().getTime() - startTime;
         return result;
-      }
-
-      if (debug) {
-        console.debug(
-          'classifiedEvents',
-          JSON.stringify(logEvents.slice(0, 5)),
-        );
       }
 
       const fragments: SqlFragment[] = runExtractors(
         logEvents,
         this.config.extractors,
       );
-
-      if (debug) {
+      if (withSqlFragments) {
         result.sqlFragments = fragments;
-        console.debug('sqlFragments', JSON.stringify(fragments.slice(0, 5)));
       }
 
       if (stage === 'extract') {
         result.ok = true;
+        result.elapsedTimeMilli.total = new Date().getTime() - startTime;
         return result;
       }
 
-      const builders = new Map<string, SqlExecutionBuilder>();
-
-      const getBuilder = (thread?: string): SqlExecutionBuilder => {
-        const key = thread?.trim() || '__default__';
-        let builder = builders.get(key);
-        if (!builder) {
-          builder = { state: 'idle' };
-          builders.set(key, builder);
+      result.sqlExecutions = buildSqlExecutions({ fragments, language });
+      if (result.sqlExecutions) {
+        const list = result.sqlExecutions;
+        if (
+          list.length === 0 ||
+          list[0].type === undefined ||
+          list[0].type === ''
+        ) {
+          result.errorRate = 0;
+        } else {
+          const total = list.length;
+          const errors = list.filter(
+            (it) => (it.type ?? '').toLowerCase() === 'error',
+          ).length;
+          result.errorRate = (errors / total) * 100;
         }
-
-        return builder;
-      };
-
-      for (const fragment of fragments) {
-        const builder = getBuilder(fragment.thread);
-
-        if (debug) {
-          console.debug('fragment', JSON.stringify(fragment));
-          console.debug('builder.before', JSON.stringify(builder));
-        }
-
-        // SQL_SINGLE (S2Jdbc etc) -------------
-
-        if (fragment.type === 'SQL_SINGLE') {
-          const rawSql = fragment.value;
-          const cleaned = removeSqlComments(rawSql);
-
-          try {
-            const { ast, names } = parseQuery(rawSql);
-
-            sqlExecutions.push({
-              startLine: calcLine(fragment),
-              endLine: calcLine(fragment),
-              timestamp: fragment.timestamp,
-              thread: fragment.thread,
-              sql: rawSql,
-              normalizedSql: cleaned,
-              schema: names?.schemaName,
-              table: names?.tableName,
-              index: names?.indexName,
-              type: ast ? ast.type : 'UNKNOWN',
-              daoClass: fragment.daoClass,
-              daoMethod: fragment.daoMethod,
-            } as any);
-          } catch (e) {
-            sqlExecutions.push({
-              startLine: calcLine(fragment),
-              endLine: calcLine(fragment),
-              timestamp: fragment.timestamp,
-              thread: fragment.thread,
-              sql: rawSql,
-              normalizedSql: cleaned,
-              type: 'UNKNOWN',
-              daoClass: fragment.daoClass,
-              daoMethod: fragment.daoMethod,
-              error: `SQL parse error. ${(e as Error).message}`,
-            } as any);
-          }
-
-          continue;
-        }
-
-        // SQL start ---------------------------
-        if (fragment.type === 'SQL') {
-          /**
-           * Protection against unfinished SQL.
-           *
-           * Example broken log sequence:
-           *
-           *   SQL_START   select ...
-           *   SQL_PARAMS
-           *   SQL_START   update ...   ← previous SQL never finished
-           *
-           * In this case we discard the unfinished SQL and start a new one.
-           * This prevents SQL fragments from being merged incorrectly.
-           */
-          if (builder.state === 'collecting' && builder.current) {
-            builder.state = 'idle';
-            builder.current = undefined;
-          }
-
-          builder.state = 'collecting';
-
-          builder.current = {
-            startLine: calcLine(fragment),
-            endLine: calcLine(fragment),
-            timestamp: fragment.timestamp,
-            thread: fragment.thread,
-            sql: fragment.value,
-            daoClass: fragment.daoClass,
-            daoMethod: fragment.daoMethod,
-          };
-
-          continue;
-        }
-
-        if (builder.state !== 'collecting' || !builder.current) {
-          continue;
-        }
-
-        builder.current.endLine = calcLine(fragment);
-
-        if (fragment.type === 'PARAMS') {
-          builder.current.params = fragment.value;
-        }
-
-        if (fragment.type === 'RESULT') {
-          builder.current.result = fragment.value;
-        }
-
-        if (fragment.type === 'ERROR') {
-          builder.current.error = fragment.value;
-        }
-
-        if (fragment.type === 'RESULT' || fragment.type === 'ERROR') {
-          const rawSql = builder.current.sql ?? '';
-          const cleaned = removeSqlComments(rawSql);
-
-          try {
-            const { ast, names } = parseQuery(rawSql);
-
-            sqlExecutions.push({
-              ...builder.current,
-              normalizedSql: cleaned,
-              schema: names?.schemaName,
-              table: names?.tableName,
-              index: names?.indexName,
-              type: ast ? ast.type : 'UNKNOWN',
-            } as any);
-          } catch (e) {
-            sqlExecutions.push({
-              ...builder.current,
-              normalizedSql: cleaned,
-              type: 'UNKNOWN',
-              error: `SQL parse error. ${(e as Error).message}`,
-            } as any);
-          }
-
-          builder.state = 'idle';
-          builder.current = undefined;
-        }
+        result.outputSummary.totalSqlExecutions = result.sqlExecutions.length;
       }
-
-      if (debug) {
-        console.debug(
-          'sqlExecutions',
-          JSON.stringify(sqlExecutions.slice(0, 5)),
-        );
-      }
+      result.elapsedTimeMilli.sqlExecutions =
+        new Date().getTime() - afterClassificationTime;
+      result.outputSummary.sqlExecutionTypeCounts = countBy(
+        result.sqlExecutions.map((e) => e.type),
+      );
+      result.elapsedTimeMilli.total = new Date().getTime() - startTime;
 
       result.ok = true;
       return result;
     } catch (error) {
+      result.elapsedTimeMilli.total = new Date().getTime() - startTime;
       console.error(error);
       result.error = (error as Error).message;
       return result;
@@ -270,14 +167,8 @@ export class LogParser {
 
   private parseSqlLogEvent(event: string, lineNo: number): LogEvent | null {
     const match = XRegExp.exec(event, this.fieldSplitPattern);
-    console.debug(
-      'at parseSqlLogEvent, this.fieldSplitPattern=',
-      this.fieldSplitPattern,
-    );
 
-    if (!match) {
-      return null;
-    }
+    if (!match) return null;
 
     const data: Partial<LogEvent> = { lineNo, messageSeq: 1 };
 
@@ -291,15 +182,13 @@ export class LogParser {
       ) {
         continue;
       }
+
       const value = match.groups?.[field.name];
 
       if (FIX.includes(field.name)) {
         (data as any)[field.name] = value;
       } else {
-        if (!data.fields) {
-          data.fields = {};
-        }
-
+        if (!data.fields) data.fields = {};
         data.fields[field.name] = value;
       }
     }
@@ -307,7 +196,13 @@ export class LogParser {
     return data as LogEvent;
   }
 }
-
-const calcLine = (fragment: SqlFragment): number => {
-  return fragment.lineNo + fragment.messageSeq - 1;
-};
+function countBy<T extends string | undefined>(
+  list: T[],
+): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const v of list) {
+    const key = v ?? 'UNKNOWN';
+    result[key] = (result[key] ?? 0) + 1;
+  }
+  return result;
+}

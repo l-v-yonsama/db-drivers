@@ -6,64 +6,91 @@ export const SQL_LOG_PARSE_PRESETS = {
       // connection
       {
         type: 'DATA_SOURCE',
-        patternType: 'regex',
         pattern: '^Fetching JDBC Connection from DataSource',
       },
       // transaction lifecycle (Spring)
       {
         type: 'TX_BEGIN',
-        patternType: 'regex',
         pattern: '^Creating new transaction with name ',
       },
       {
         type: 'TX_COMMIT',
-        patternType: 'regex',
         pattern: '^Initiating transaction commit',
       },
       {
         type: 'TX_ROLLBACK',
-        patternType: 'regex',
         pattern: '^Initiating transaction rollback',
       },
       // optional
       {
         type: 'TX_METHOD_ENTER',
-        patternType: 'regex',
         pattern: '^Getting transaction for ',
       },
       {
         type: 'TX_METHOD_EXIT',
-        patternType: 'regex',
         pattern: '^Completing transaction for ',
       },
       {
         type: 'SQL_START',
         field: 'logger',
-        patternType: 'regex',
         pattern: '^org\\.hibernate\\.SQL$',
       },
       {
         type: 'SQL_PARAMS',
         field: 'logger',
-        patternType: 'regex',
         pattern: '^org\\.hibernate\\.orm\\.jdbc\\.bind$',
-        transform: {
-          pattern: '^binding parameter (.*)',
-          replace: '$1',
-        },
+        transforms: [
+          {
+            pattern: '^binding parameter (.*)',
+            replace: '$1',
+          },
+        ],
+      },
+      {
+        type: 'SQL_ERROR',
+        pattern: '^SQL Error: \\w+, SQLState: \\w+',
+      },
+      {
+        type: 'SQL_ERROR_DETAIL',
+        field: 'logger',
+        pattern: '.+SqlExceptionHelper$',
+      },
+      {
+        type: 'FW_ERROR',
+        pattern:
+          '(ConstraintViolationException|EntityExistsException|PersistentObjectException)',
       },
     ],
 
     extractors: [
       {
         name: 'hibernate',
-        framework: 'hibernate',
+        framework: 'Hibernate',
         start: 'SQL_START',
 
         steps: [
           { type: 'SQL_START', action: 'captureSql' },
           { type: 'SQL_PARAMS', action: 'captureParams', optional: true },
         ],
+      },
+      {
+        name: 'hibernate-sql-error',
+        framework: 'Hibernate',
+        start: 'SQL_ERROR',
+        steps: [
+          { type: 'SQL_ERROR', action: 'captureError' },
+          {
+            type: 'SQL_ERROR_DETAIL',
+            action: 'captureErrorDetail',
+            optional: true,
+          },
+        ],
+      },
+      {
+        name: 'hibernate-orm-error',
+        framework: 'Hibernate',
+        start: 'FW_ERROR',
+        steps: [{ type: 'FW_ERROR', action: 'captureError' }],
       },
     ],
   },
@@ -73,57 +100,50 @@ export const SQL_LOG_PARSE_PRESETS = {
       // connection / datasource
       {
         type: 'CONN_AUTOCOMMIT',
-        patternType: 'regex',
         pattern: 'will not be managed by Spring',
       },
       {
         type: 'CONN_TRANSACTIONAL',
-        patternType: 'regex',
         pattern: 'Registering transaction synchronization for SqlSession',
       },
       {
         type: 'DATA_SOURCE',
-        patternType: 'regex',
         pattern: '^Fetching JDBC Connection from DataSource',
         expandMessage: true,
       },
       // transaction lifecycle
       {
         type: 'TX_BEGIN',
-        patternType: 'regex',
         pattern: '^Creating new transaction with name ',
       },
       {
         type: 'TX_COMMIT',
-        patternType: 'regex',
         pattern: '^Initiating transaction commit',
       },
       {
         type: 'TX_ROLLBACK',
-        patternType: 'regex',
         pattern: '^Initiating transaction rollback',
       },
       // optional
       {
         type: 'TX_METHOD_ENTER',
-        patternType: 'regex',
         pattern: '^Getting transaction for ',
         expandMessage: true,
       },
       {
         type: 'TX_METHOD_EXIT',
-        patternType: 'regex',
         pattern: '^Completing transaction for ',
       },
       // SQL
       {
         type: 'SQL_START',
-        patternType: 'regex',
         pattern: '^==>\\s+Preparing:',
-        transform: {
-          pattern: '^==>\\s+Preparing:\\s*',
-          replace: '',
-        },
+        transforms: [
+          {
+            pattern: '^==>\\s+Preparing:\\s*',
+            replace: '',
+          },
+        ],
         context: [
           {
             contextName: 'daoClass',
@@ -141,46 +161,55 @@ export const SQL_LOG_PARSE_PRESETS = {
       },
       {
         type: 'SQL_PARAMS',
-        patternType: 'regex',
         pattern: '^==>\\s+Parameters:',
-        transform: {
-          pattern: '^==>\\s+Parameters:\\s*',
-          replace: '',
-        },
+        transforms: [
+          {
+            pattern: '^==>\\s+Parameters:\\s*',
+            replace: '',
+          },
+        ],
       },
       {
         type: 'SQL_COLUMNS',
-        patternType: 'regex',
         pattern: '^<==\\s+Columns:',
-        transform: {
-          pattern: '^<==\\s+Columns:',
-          replace: '',
-        },
+        transforms: [
+          {
+            pattern: '^<==\\s+Columns:',
+            replace: '',
+          },
+        ],
       },
       {
         type: 'SQL_ROW',
-        patternType: 'regex',
         pattern: '^<==\\s+Row:',
-        transform: {
-          pattern: '^<==\\s+Row:',
-          replace: '',
-        },
+        transforms: [
+          {
+            pattern: '^<==\\s+Row:',
+            replace: '',
+          },
+        ],
       },
       {
         type: 'SQL_RESULT',
-        patternType: 'regex',
         pattern: '^<==\\s+(Total|Updates):',
-        transform: {
-          pattern: '^<==\\s+(?:Total|Updates):\\s*',
-          replace: '',
-        },
+        transforms: [
+          {
+            pattern: '^<==\\s+(?:Total|Updates):\\s*',
+            replace: '',
+          },
+        ],
+      },
+      {
+        type: 'SQL_ERROR',
+        field: 'logger',
+        pattern: '.+SQLErrorCodeSQLExceptionTranslator$',
       },
     ],
 
     extractors: [
       {
         name: 'mybatis',
-        framework: 'mybatis',
+        framework: 'MyBatis',
         start: 'SQL_START',
 
         steps: [
@@ -191,6 +220,12 @@ export const SQL_LOG_PARSE_PRESETS = {
           { type: 'SQL_RESULT', action: 'captureResult', optional: true },
         ],
       },
+      {
+        name: 'mybatis-sql-error',
+        framework: 'MyBatis',
+        start: 'SQL_ERROR',
+        steps: [{ type: 'SQL_ERROR', action: 'captureError' }],
+      },
     ],
   },
 
@@ -199,16 +234,21 @@ export const SQL_LOG_PARSE_PRESETS = {
       {
         type: 'SQL_SINGLE',
         field: 'logger',
-        patternType: 'regex',
         pattern:
           '^query\\.(Auto|SqlFile)(Batch)?(Select|Insert|Update|Delete)Impl$',
+      },
+      {
+        type: 'ERROR',
+        field: 'level',
+        pattern: '^ERROR$',
+        expandMessage: true,
       },
     ],
 
     extractors: [
       {
         name: 's2jdbc',
-        framework: 's2jdbc',
+        framework: 'S2Jdbc',
         start: 'SQL_SINGLE',
         steps: [{ type: 'SQL_SINGLE', action: 'captureSql' }],
       },
@@ -222,7 +262,6 @@ export const SQL_LOG_PARSE_PRESETS = {
       // DAO lifecycle
       {
         type: 'TX_METHOD_ENTER',
-        patternType: 'regex',
         pattern: '^\\[DOMA2220\\] ENTER',
         context: [
           {
@@ -239,51 +278,131 @@ export const SQL_LOG_PARSE_PRESETS = {
       },
       {
         type: 'TX_METHOD_EXIT',
-        patternType: 'regex',
         pattern: '^\\[DOMA2221\\] EXIT',
       },
 
       // SQL start
       {
         type: 'SQL_SINGLE',
-        patternType: 'regex',
         pattern: '^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?',
-        transform: {
-          pattern: '^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?',
-          replace: '',
-        },
+        transforms: [
+          {
+            pattern: '^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?',
+            replace: '',
+          },
+        ],
+      },
+      {
+        type: 'SQL_ERROR',
+        pattern: '^\\[DOMA2222\\] THROW .+EXCEPTION=.+',
+        transforms: [
+          {
+            pattern: '^\\[DOMA2222\\] THROW .+EXCEPTION=(.+)',
+            replace: '$1',
+          },
+        ],
+      },
+      {
+        type: 'SQL_ERROR_DETAIL',
+        pattern: 'The( detailed)? cause is as follows:',
+        transforms: [
+          {
+            pattern: '[\\s\\S]+The( detailed)? cause is as follows: (.+)',
+            replace: '$2',
+          },
+        ],
       },
     ],
 
     extractors: [
       {
         name: 'doma',
-        framework: 'doma',
+        framework: 'Doma',
         start: 'SQL_SINGLE',
         steps: [{ type: 'SQL_SINGLE', action: 'captureSql' }],
+      },
+      {
+        name: 'doma-error',
+        framework: 'Doma',
+        start: 'SQL_ERROR',
+        steps: [
+          { type: 'SQL_ERROR', action: 'captureError' },
+          {
+            type: 'SQL_ERROR_DETAIL',
+            action: 'captureErrorDetail',
+            optional: true,
+          },
+        ],
       },
     ],
   },
 
   SpringJdbc: {
     classify: [
+      // connection
+      // transaction lifecycle (Spring)
       {
-        type: 'SQL_SINGLE',
-        patternType: 'regex',
+        type: 'TX_BEGIN',
+        pattern: '^Creating new transaction with name ',
+      },
+      {
+        type: 'TX_COMMIT',
+        pattern: '^Initiating transaction commit',
+      },
+      {
+        type: 'TX_ROLLBACK',
+        pattern: '^Initiating transaction rollback',
+      },
+      // optional
+      {
+        type: 'TX_METHOD_ENTER',
+        pattern: '^Getting transaction for ',
+      },
+      {
+        type: 'TX_METHOD_EXIT',
+        pattern: '^Completing transaction for ',
+      },
+      {
+        type: 'SQL_START',
         pattern: 'Executing prepared SQL statement',
-        transform: {
-          pattern: '^.*\\[(.*)\\]$',
-          replace: '$1',
-        },
+        transforms: [
+          {
+            pattern: '^.*\\[(.*)\\]$',
+            replace: '$1',
+          },
+        ],
+      },
+      {
+        type: 'SQL_PARAMS',
+        pattern: '^Setting SQL statement parameter value:',
+        transforms: [
+          {
+            pattern: '^Setting SQL statement parameter value: (.*)',
+            replace: '$1',
+          },
+        ],
+      },
+      {
+        type: 'SQL_ERROR',
+        pattern: 'org.springframework.(jdbc|dao).[a-zA-Z0-9]+Exception: ',
       },
     ],
 
     extractors: [
       {
         name: 'spring-jdbc',
-        framework: 'spring-jdbc',
-        start: 'SQL_SINGLE',
-        steps: [{ type: 'SQL_SINGLE', action: 'captureSql' }],
+        framework: 'SpringJdbc',
+        start: 'SQL_START',
+        steps: [
+          { type: 'SQL_START', action: 'captureSql' },
+          { type: 'SQL_PARAMS', action: 'captureParams', optional: true },
+        ],
+      },
+      {
+        name: 'spring-jdbc-error',
+        framework: 'SpringJdbc',
+        start: 'SQL_ERROR',
+        steps: [{ type: 'SQL_ERROR', action: 'captureError' }],
       },
     ],
   },

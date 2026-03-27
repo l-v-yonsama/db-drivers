@@ -1,0 +1,98 @@
+2026-03-22T17:29:17.824+09:00  INFO 5006 --- [           main] com.example.demo.DemoApplication         : ===== HIBERNATE SYNTAX ERROR TEST =====
+2026-03-22T17:29:17.860+09:00 DEBUG 5006 --- [           main] org.hibernate.SQL                        : 
+    select
+        * FORM users
+2026-03-22T17:29:17.863+09:00  WARN 5006 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 42000, SQLState: 42000
+2026-03-22T17:29:17.863+09:00 ERROR 5006 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQLステートメントに文法エラーがあります "select * [*]FORM users"
+Syntax error in SQL statement "select * [*]FORM users"; SQL statement:
+select * FORM users [42000-224]
+2026-03-22T17:29:17.864+09:00 ERROR 5006 --- [           main] com.example.demo.DemoApplication         : HIBERNATE_SYNTAX_ERROR
+
+org.hibernate.exception.SQLGrammarException: could not prepare statement [SQLステートメントに文法エラーがあります "select * [*]FORM users"
+Syntax error in SQL statement "select * [*]FORM users"; SQL statement:
+select * FORM users [42000-224]] [select * FORM users]
+        at org.hibernate.exception.internal.SQLExceptionTypeDelegate.convert(SQLExceptionTypeDelegate.java:66) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "select * [*]FORM users"
+Syntax error in SQL statement "select * [*]FORM users"; SQL statement:
+select * FORM users [42000-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:514) ~[h2-2.2.224.jar:2.2.224]
+        at org.hibernate.engine.jdbc.internal.StatementPreparerImpl$StatementPreparationTemplate.prepareStatement(StatementPreparerImpl.java:183) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+        ... 47 common frames omitted
+
+2026-03-22T17:29:17.866+09:00  INFO 5006 --- [           main] com.example.demo.DemoApplication         : ===== HIBERNATE TABLE NOT FOUND TEST =====
+2026-03-22T17:29:17.866+09:00 DEBUG 5006 --- [           main] org.hibernate.SQL                        : 
+    select
+        * 
+    from
+        not_exists_table
+2026-03-22T17:29:17.867+09:00  WARN 5006 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 42102, SQLState: 42S02
+2026-03-22T17:29:17.867+09:00 ERROR 5006 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]
+2026-03-22T17:29:17.867+09:00 ERROR 5006 --- [           main] com.example.demo.DemoApplication         : HIBERNATE_TABLE_NOT_FOUND
+
+org.hibernate.exception.SQLGrammarException: could not prepare statement [テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]] [select * from not_exists_table]
+        at org.hibernate.exception.internal.SQLExceptionTypeDelegate.convert(SQLExceptionTypeDelegate.java:66) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+        at org.hibernate.query.spi.AbstractSelectionQuery.list(AbstractSelectionQuery.java:427) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:514) ~[h2-2.2.224.jar:2.2.224]
+        at org.hibernate.engine.jdbc.internal.StatementPreparerImpl$StatementPreparationTemplate.prepareStatement(StatementPreparerImpl.java:183) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+        ... 47 common frames omitted
+
+2026-03-22T17:29:17.867+09:00  INFO 5006 --- [           main] com.example.demo.DemoApplication         : ===== HIBERNATE CONSTRAINT ERROR TEST =====
+2026-03-22T17:29:17.868+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Creating new transaction with name [com.example.demo.HibernateService.constraintViolationTest]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-03-22T17:29:17.868+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Opened new EntityManager [SessionImpl(993104125<open>)] for JPA transaction
+2026-03-22T17:29:17.869+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@1d38cdde]
+2026-03-22T17:29:17.869+09:00 TRACE 5006 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.HibernateService.constraintViolationTest]
+2026-03-22T17:29:17.870+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Found thread-bound EntityManager [SessionImpl(993104125<open>)] for JPA transaction
+2026-03-22T17:29:17.870+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Participating in existing transaction
+2026-03-22T17:29:17.870+09:00 TRACE 5006 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [org.springframework.data.jpa.repository.support.SimpleJpaRepository.save]
+2026-03-22T17:29:17.880+09:00 DEBUG 5006 --- [           main] org.hibernate.SQL                        : 
+    select
+        h1_0.id,
+        h1_0.age,
+        h1_0.created,
+        h1_0.name,
+        h1_0.updated 
+    from
+        users h1_0 
+    where
+        h1_0.id=?
+2026-03-22T17:29:17.882+09:00 TRACE 5006 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:INTEGER) <- [1]
+2026-03-22T17:29:17.897+09:00 DEBUG 5006 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        users
+        (age, created, name, updated, id) 
+    values
+        (?, ?, ?, ?, default)
+2026-03-22T17:29:17.898+09:00 TRACE 5006 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:INTEGER) <- [null]
+2026-03-22T17:29:17.898+09:00 TRACE 5006 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:TIMESTAMP) <- [null]
+2026-03-22T17:29:17.898+09:00 TRACE 5006 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [null]
+2026-03-22T17:29:17.898+09:00 TRACE 5006 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:TIMESTAMP) <- [null]
+2026-03-22T17:29:17.901+09:00 TRACE 5006 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [org.springframework.data.jpa.repository.support.SimpleJpaRepository.save]
+2026-03-22T17:29:17.901+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Found thread-bound EntityManager [SessionImpl(993104125<open>)] for JPA transaction
+2026-03-22T17:29:17.901+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Participating in existing transaction
+2026-03-22T17:29:17.901+09:00 TRACE 5006 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [org.springframework.data.jpa.repository.support.SimpleJpaRepository.flush]
+2026-03-22T17:29:17.904+09:00 TRACE 5006 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [org.springframework.data.jpa.repository.support.SimpleJpaRepository.flush]
+2026-03-22T17:29:17.904+09:00 TRACE 5006 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.HibernateService.constraintViolationTest] after exception: jakarta.persistence.EntityExistsException: detached entity passed to persist: com.example.demo.HUser
+2026-03-22T17:29:17.905+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Initiating transaction rollback
+2026-03-22T17:29:17.905+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Rolling back JPA transaction on EntityManager [SessionImpl(993104125<open>)]
+2026-03-22T17:29:17.905+09:00 DEBUG 5006 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Closing JPA EntityManager [SessionImpl(993104125<open>)] after transaction
+2026-03-22T17:29:17.905+09:00 ERROR 5006 --- [           main] com.example.demo.DemoApplication         : HIBERNATE_CONSTRAINT_ERROR
+
+jakarta.persistence.EntityExistsException: detached entity passed to persist: com.example.demo.HUser
+        at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:126) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+        at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343) ~[spring-boot-3.2.5.jar:3.2.5]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.hibernate.PersistentObjectException: detached entity passed to persist: com.example.demo.HUser
+        at org.hibernate.event.internal.DefaultPersistEventListener.persist(DefaultPersistEventListener.java:88) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+        ... 40 common frames omitted
+
+2026-03-22T17:29:17.906+09:00  INFO 5006 --- [           main] com.example.demo.DemoApplication         : ===== ↑↑↑↑↑ HIBERNATE END / MYBATIS START ↓↓↓↓↓ =====

@@ -57,28 +57,28 @@ const getLogEventValueByName = (
 export function classifyEvent(
   event: LogEvent,
   rules: readonly LogClassifierRule[],
-  debug = false,
 ): ClassifiedEvent {
   for (let i = 0; i < rules.length; i++) {
     const r = rules[i];
-    const fieldName = r.field ?? 'message';
     const value = getLogEventValueByName(event, r.field ?? 'message');
-
-    if (debug) {
-      console.log(
-        `classifyEvent targetFieldName[${fieldName}] target value[${value}]`,
-      );
-    }
 
     if (value && new RegExp(r.pattern, 'i').test(value)) {
       let transformed: string | undefined;
       let eventContext: Record<string, string> | undefined;
 
-      if (r.transform) {
+      if (r.transforms) {
         transformed = event.message;
-
-        const regex = new RegExp(r.transform.pattern, 'i');
-        transformed = transformed.replace(regex, r.transform.replace).trim();
+        r.transforms.forEach((transform) => {
+          let flags = 'i';
+          if (transform.flags?.dotAll) {
+            flags += 's';
+          }
+          if (transform.flags?.multiline) {
+            flags += 'm';
+          }
+          const regex = new RegExp(transform.pattern, flags);
+          transformed = transformed.replace(regex, transform.replace).trim();
+        });
       }
 
       if (r.context) {
@@ -107,12 +107,4 @@ export function classifyEvent(
     ...event,
     eventType: 'NORMAL',
   };
-}
-
-export function summarizeClassifyRulesOneLine(
-  rules: readonly LogClassifierRule[],
-  maxLen = 120,
-): string {
-  const text = rules.map((r) => `${r.type}:${r.pattern}`).join(', ');
-  return text.length > maxLen ? text.slice(0, maxLen - 3) + '...' : text;
 }

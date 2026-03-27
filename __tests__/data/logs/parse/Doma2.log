@@ -1,0 +1,50 @@
+2026-03-16T09:08:47.603+09:00  INFO 87788 --- [           main] com.example.demo.DemoApplication         : ===== DOMA COMMIT TEST =====
+2026-03-16T09:08:47.604+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Creating new transaction with name [com.example.demo.UserService.commitTransactionTest]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-03-16T09:08:47.604+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Opened new EntityManager [SessionImpl(1068602508<open>)] for JPA transaction
+2026-03-16T09:08:47.605+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@57a0c261]
+2026-03-16T09:08:47.605+09:00 TRACE 87788 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.UserService.commitTransactionTest]
+2026-03-16T09:08:47.610+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=insert
+2026-03-16T09:08:47.619+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+insert into users (name) values ('CommitUser')
+2026-03-16T09:08:47.623+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=insert
+2026-03-16T09:08:47.623+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=selectById
+2026-03-16T09:08:47.635+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[META-INF/com/example/demo/UserDao/selectById.sql],
+select
+  id,
+  name
+from
+  users
+where
+  id = 1
+2026-03-16T09:08:47.636+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=selectById
+2026-03-16T09:08:47.637+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=update
+2026-03-16T09:08:47.638+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+update users set name = 'CommitUser_updated' where id = 1
+2026-03-16T09:08:47.638+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=update
+2026-03-16T09:08:47.639+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=batchInsert
+2026-03-16T09:08:47.640+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+insert into users (name) values ('BatchCommit_0')
+2026-03-16T09:08:47.640+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+insert into users (name) values ('BatchCommit_1')
+2026-03-16T09:08:47.640+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=batchInsert
+2026-03-16T09:08:47.640+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=delete
+2026-03-16T09:08:47.641+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+delete from users where id = 1
+2026-03-16T09:08:47.642+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=delete
+2026-03-16T09:08:47.642+09:00 TRACE 87788 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.UserService.commitTransactionTest]
+2026-03-16T09:08:47.642+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Initiating transaction commit
+2026-03-16T09:08:47.642+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Committing JPA transaction on EntityManager [SessionImpl(1068602508<open>)]
+2026-03-16T09:08:47.642+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Closing JPA EntityManager [SessionImpl(1068602508<open>)] after transaction
+2026-03-16T09:08:47.642+09:00  INFO 87788 --- [           main] com.example.demo.DemoApplication         : ===== DOMA ROLLBACK TEST =====
+2026-03-16T09:08:47.642+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Creating new transaction with name [com.example.demo.UserService.rollbackTransactionTest]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-03-16T09:08:47.642+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Opened new EntityManager [SessionImpl(2053115425<open>)] for JPA transaction
+2026-03-16T09:08:47.643+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@69d1ad64]
+2026-03-16T09:08:47.643+09:00 TRACE 87788 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.UserService.rollbackTransactionTest]
+2026-03-16T09:08:47.643+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=insert
+2026-03-16T09:08:47.643+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+insert into users (name) values ('RollbackUser')
+2026-03-16T09:08:47.643+09:00  INFO 87788 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=insert
+2026-03-16T09:08:47.643+09:00 TRACE 87788 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.UserService.rollbackTransactionTest] after exception: java.lang.RuntimeException: Force rollback for log test
+2026-03-16T09:08:47.643+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Initiating transaction rollback
+2026-03-16T09:08:47.643+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Rolling back JPA transaction on EntityManager [SessionImpl(2053115425<open>)]
+2026-03-16T09:08:47.644+09:00 DEBUG 87788 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Closing JPA EntityManager [SessionImpl(2053115425<open>)] after transaction

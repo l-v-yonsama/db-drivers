@@ -54,6 +54,7 @@
 - [IamUser](classes/IamUser.md)
 - [KeycloakDatabase](classes/KeycloakDatabase.md)
 - [KeycloakDriver](classes/KeycloakDriver.md)
+- [LogParser](classes/LogParser.md)
 - [MemcacheDatabase](classes/MemcacheDatabase.md)
 - [MemcacheDriver](classes/MemcacheDriver.md)
 - [MqttDatabase](classes/MqttDatabase.md)
@@ -111,16 +112,25 @@
 - [AwsSetting](modules.md#awssetting)
 - [BindOptions](modules.md#bindoptions)
 - [BindParamPosition](modules.md#bindparamposition)
+- [BuiltInPattern](modules.md#builtinpattern)
+- [ClassifiedEvent](modules.md#classifiedevent)
 - [ClientConfigType](modules.md#clientconfigtype)
 - [ConnectionParam](modules.md#connectionparam)
 - [ConnectionSetting](modules.md#connectionsetting)
+- [CreateLogEventPatternParams](modules.md#createlogeventpatternparams)
 - [CreateTableDefinitionsForPromptParams](modules.md#createtabledefinitionsforpromptparams)
 - [CsvParseOptions](modules.md#csvparseoptions)
 - [DBType](modules.md#dbtype)
 - [DbDatabase](modules.md#dbdatabase)
+- [ExtractedSqlRdhResult](modules.md#extractedsqlrdhresult)
+- [ExtractedSqlResult](modules.md#extractedsqlresult)
+- [ExtractorConfig](modules.md#extractorconfig)
+- [ExtractorStep](modules.md#extractorstep)
+- [ExtractorStepAction](modules.md#extractorstepaction)
 - [FirebaseSetting](modules.md#firebasesetting)
 - [ForeignKeyConstraint](modules.md#foreignkeyconstraint)
 - [ForeignKeyConstraintDetail](modules.md#foreignkeyconstraintdetail)
+- [FrameworkName](modules.md#frameworkname)
 - [GSI](modules.md#gsi)
 - [IamResourceType](modules.md#iamresourcetype)
 - [IamSolutionSetting](modules.md#iamsolutionsetting)
@@ -130,7 +140,24 @@
 - [KeywordParamWithLimit](modules.md#keywordparamwithlimit)
 - [LSI](modules.md#lsi)
 - [ListOption](modules.md#listoption)
+- [LogClassifierRule](modules.md#logclassifierrule)
+- [LogContextRule](modules.md#logcontextrule)
+- [LogEvent](modules.md#logevent)
+- [LogEventField](modules.md#logeventfield)
+- [LogEventFieldEnclosure](modules.md#logeventfieldenclosure)
+- [LogEventSplitConfig](modules.md#logeventsplitconfig)
+- [LogEventSplitPresetName](modules.md#logeventsplitpresetname)
+- [LogEventType](modules.md#logeventtype)
+- [LogFieldPatternDefinition](modules.md#logfieldpatterndefinition)
+- [LogFormatDetectionResult](modules.md#logformatdetectionresult)
+- [LogLevel](modules.md#loglevel)
 - [LogMessageParams](modules.md#logmessageparams)
+- [LogParseConfig](modules.md#logparseconfig)
+- [LogParseInputSummary](modules.md#logparseinputsummary)
+- [LogParseOutputSummary](modules.md#logparseoutputsummary)
+- [LogParseParams](modules.md#logparseparams)
+- [LogParseStage](modules.md#logparsestage)
+- [LogTransformRule](modules.md#logtransformrule)
 - [MemcacheKeyParams](modules.md#memcachekeyparams)
 - [MemcachedValue](modules.md#memcachedvalue)
 - [MqttQoS](modules.md#mqttqos)
@@ -161,6 +188,13 @@
 - [SQSMessageParams](modules.md#sqsmessageparams)
 - [ScalarAttributeType](modules.md#scalarattributetype)
 - [ScanParams](modules.md#scanparams)
+- [SpligLogText](modules.md#spliglogtext)
+- [SqlExecutionBuilder](modules.md#sqlexecutionbuilder)
+- [SqlExecutionBuilderState](modules.md#sqlexecutionbuilderstate)
+- [SqlExecutionEvent](modules.md#sqlexecutionevent)
+- [SqlFragment](modules.md#sqlfragment)
+- [SqlFragmentType](modules.md#sqlfragmenttype)
+- [SqlLogParsePresetName](modules.md#sqllogparsepresetname)
 - [SshSetting](modules.md#sshsetting)
 - [SslSetting](modules.md#sslsetting)
 - [SupplyCredentialType](modules.md#supplycredentialtype)
@@ -182,15 +216,30 @@
 - [AwsRegionValues](modules.md#awsregionvalues)
 - [AwsServiceType](modules.md#awsservicetype-1)
 - [AwsServiceTypeValues](modules.md#awsservicetypevalues)
+- [BUILT\_IN\_PATTERNS](modules.md#built_in_patterns)
 - [DBType](modules.md#dbtype-1)
 - [DBTypeValues](modules.md#dbtypevalues)
+- [DEFAULT\_JUL\_SPLIT\_CONFIG](modules.md#default_jul_split_config)
+- [DEFAULT\_LOG4J\_MDC\_SPLIT\_CONFIG](modules.md#default_log4j_mdc_split_config)
+- [DEFAULT\_LOG4J\_SPLIT\_CONFIG](modules.md#default_log4j_split_config)
+- [DEFAULT\_LOGBACK\_SPLIT\_CONFIG](modules.md#default_logback_split_config)
+- [DEFAULT\_SIMPLE\_SPLIT\_CONFIG](modules.md#default_simple_split_config)
+- [DEFAULT\_SPRING\_BOOT\_SPLIT\_CONFIG](modules.md#default_spring_boot_split_config)
+- [EVENT\_TYPE\_DESCRIPTIONS](modules.md#event_type_descriptions)
+- [FORMATTER\_SQL\_LANGUAGES](modules.md#formatter_sql_languages)
 - [FUNCTIONS](modules.md#functions)
+- [LOG\_EVENT\_SPLIT\_PRESETS](modules.md#log_event_split_presets)
+- [LOG\_FIELD\_PATTERNS](modules.md#log_field_patterns)
+- [LOG\_LEVELS](modules.md#log_levels)
+- [OPTIONAL\_LOG\_EVENT\_KEYS](modules.md#optional_log_event_keys)
 - [RESERVED\_WORDS](modules.md#reserved_words)
 - [RedisKeyType](modules.md#rediskeytype-1)
 - [RedisKeyTypeValues](modules.md#rediskeytypevalues)
 - [ResourceType](modules.md#resourcetype-1)
+- [SIMPLE\_LOG\_PARSE\_CONFIG](modules.md#simple_log_parse_config)
 - [SQLServerAuthenticationKeys](modules.md#sqlserverauthenticationkeys)
 - [SQLServerAuthenticationType](modules.md#sqlserverauthenticationtype-1)
+- [SQL\_LOG\_PARSE\_PRESETS](modules.md#sql_log_parse_presets)
 - [ScalarAttributeType](modules.md#scalarattributetype-1)
 - [SupplyCredentialKeys](modules.md#supplycredentialkeys)
 - [SupplyCredentialType](modules.md#supplycredentialtype-1)
@@ -199,20 +248,34 @@
 ### Functions
 
 - [acceptResourceFilter](modules.md#acceptresourcefilter)
+- [buildSqlExecutions](modules.md#buildsqlexecutions)
+- [classifyEvent](modules.md#classifyevent)
 - [conditionsToString](modules.md#conditionstostring)
 - [createColumnNames](modules.md#createcolumnnames)
+- [createLogEventPattern](modules.md#createlogeventpattern)
+- [createLogEventPatternText](modules.md#createlogeventpatterntext)
+- [createLogResultBuilder](modules.md#createlogresultbuilder)
+- [createSqlResultBuilder](modules.md#createsqlresultbuilder)
 - [createTableDefinisionsForPrompt](modules.md#createtabledefinisionsforprompt)
 - [createTableNames](modules.md#createtablenames)
 - [createUndoChangeSQL](modules.md#createundochangesql)
 - [decodeJwt](modules.md#decodejwt)
+- [detectLogSplitPreset](modules.md#detectlogsplitpreset)
+- [detectSqlParsePreset](modules.md#detectsqlparsepreset)
+- [detectSqlParsePresetByText](modules.md#detectsqlparsepresetbytext)
+- [expandLogEvent](modules.md#expandlogevent)
+- [formatLogDetectionMessage](modules.md#formatlogdetectionmessage)
+- [formatQuery](modules.md#formatquery)
 - [fromJson](modules.md#fromjson)
 - [getProposals](modules.md#getproposals)
 - [getRecordRuleResults](modules.md#getrecordruleresults)
 - [getResourcePositions](modules.md#getresourcepositions)
+- [getSqlLanguage](modules.md#getsqllanguage)
 - [hasSetVariableClause](modules.md#hassetvariableclause)
 - [isAllConditions](modules.md#isallconditions)
 - [isAnyConditions](modules.md#isanyconditions)
 - [isAws](modules.md#isaws)
+- [isBuiltInPattern](modules.md#isbuiltinpattern)
 - [isConditionReference](modules.md#isconditionreference)
 - [isJson](modules.md#isjson)
 - [isNotConditions](modules.md#isnotconditions)
@@ -235,10 +298,16 @@
 - [prettyTime](modules.md#prettytime)
 - [requestSqlFromRdh](modules.md#requestsqlfromrdh)
 - [resolveLastOrderByColumn](modules.md#resolvelastorderbycolumn)
+- [runExtractors](modules.md#runextractors)
 - [runRuleEngine](modules.md#runruleengine)
 - [separateMultipleQueries](modules.md#separatemultiplequeries)
 - [setRdhMetaAndStatement](modules.md#setrdhmetaandstatement)
+- [splitMyBatisParams](modules.md#splitmybatisparams)
 - [stringConditionToJsonCondition](modules.md#stringconditiontojsoncondition)
+- [summarizeClassifyRules](modules.md#summarizeclassifyrules)
+- [summarizeClassifyRulesOneLine](modules.md#summarizeclassifyrulesoneline)
+- [summarizeExtractors](modules.md#summarizeextractors)
+- [summarizeExtractorsOneLine](modules.md#summarizeextractorsoneline)
 - [toCountRecordsQuery](modules.md#tocountrecordsquery)
 - [toCreateTableDDL](modules.md#tocreatetableddl)
 - [toDeleteStatement](modules.md#todeletestatement)
@@ -248,6 +317,7 @@
 - [toViewDataNormalizedQuery](modules.md#toviewdatanormalizedquery)
 - [toViewDataQuery](modules.md#toviewdataquery)
 - [toViewRecordsQuery](modules.md#toviewrecordsquery)
+- [validateConfig](modules.md#validateconfig)
 - [wrapBackQuote](modules.md#wrapbackquote)
 - [wrapDoubleQuote](modules.md#wrapdoublequote)
 - [wrapQuote](modules.md#wrapquote)
@@ -261,7 +331,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:160](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/resource/DbResource.ts#L160)
+[src/resource/DbResource.ts:160](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/resource/DbResource.ts#L160)
 
 ___
 
@@ -290,7 +360,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L25)
+[src/types/resource/AwsDynamoTableAttributes.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L25)
 
 ___
 
@@ -300,9 +370,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsRegion.ts#L1)
+[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsRegion.ts#L1)
 
-[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsRegion.ts#L44)
+[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsRegion.ts#L44)
 
 ___
 
@@ -338,7 +408,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSQSAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsSQSAttributes.ts#L1)
+[src/types/resource/AwsSQSAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsSQSAttributes.ts#L1)
 
 ___
 
@@ -348,9 +418,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsServiceType.ts#L1)
+[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsServiceType.ts#L1)
 
-[src/types/resource/AwsServiceType.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsServiceType.ts#L8)
+[src/types/resource/AwsServiceType.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsServiceType.ts#L8)
 
 ___
 
@@ -370,7 +440,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L37)
+[src/types/resource/ConnectionSetting.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L37)
 
 ___
 
@@ -388,7 +458,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L29)
+[src/types/helpers/index.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L30)
 
 ___
 
@@ -406,7 +476,27 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:100](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L100)
+[src/types/helpers/index.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L101)
+
+___
+
+### BuiltInPattern
+
+Ƭ **BuiltInPattern**: typeof [`BUILT_IN_PATTERNS`](modules.md#built_in_patterns)[`number`]
+
+#### Defined in
+
+[src/types/utils/index.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L45)
+
+___
+
+### ClassifiedEvent
+
+Ƭ **ClassifiedEvent**: [`LogEvent`](modules.md#logevent) & \{ `eventContext?`: `Record`\<`string`, `string`\> ; `eventType`: [`LogEventType`](modules.md#logeventtype) ; `transformed?`: `string`  }
+
+#### Defined in
+
+[src/types/utils/index.ts:219](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L219)
 
 ___
 
@@ -424,7 +514,7 @@ ___
 
 #### Defined in
 
-[src/drivers/AwsDriver.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/drivers/AwsDriver.ts#L30)
+[src/drivers/AwsDriver.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/drivers/AwsDriver.ts#L30)
 
 ___
 
@@ -440,7 +530,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/drivers/Auth0Driver.ts#L36)
+[src/drivers/Auth0Driver.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/drivers/Auth0Driver.ts#L36)
 
 ___
 
@@ -480,7 +570,25 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L164)
+[src/types/resource/ConnectionSetting.ts:164](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L164)
+
+___
+
+### CreateLogEventPatternParams
+
+Ƭ **CreateLogEventPatternParams**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `fields` | [`LogEventField`](modules.md#logeventfield)[] |
+| `onlyStartMarker?` | `boolean` |
+| `targetForHuman?` | `boolean` |
+
+#### Defined in
+
+[src/types/utils/index.ts:107](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L107)
 
 ___
 
@@ -498,7 +606,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:81](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L81)
+[src/types/helpers/index.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L82)
 
 ___
 
@@ -522,7 +630,7 @@ ___
 
 #### Defined in
 
-[src/utils/csv.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/csv.ts#L7)
+[src/utils/csv.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/csv.ts#L7)
 
 ___
 
@@ -532,9 +640,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/DBType.ts#L1)
+[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/DBType.ts#L1)
 
-[src/types/resource/DBType.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/DBType.ts#L14)
+[src/types/resource/DBType.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/DBType.ts#L14)
 
 ___
 
@@ -544,7 +652,105 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:151](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/resource/DbResource.ts#L151)
+[src/resource/DbResource.ts:151](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/resource/DbResource.ts#L151)
+
+___
+
+### ExtractedSqlRdhResult
+
+Ƭ **ExtractedSqlRdhResult**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `logEvents` | `ResultSetData` |
+| `sqlEvents?` | `ResultSetData` |
+
+#### Defined in
+
+[src/types/utils/index.ts:446](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L446)
+
+___
+
+### ExtractedSqlResult
+
+Ƭ **ExtractedSqlResult**: `Object`
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `elapsedTimeMilli` | \{ `classification?`: `number` ; `split`: `number` ; `sqlExecutions?`: `number` ; `total`: `number`  } | - |
+| `elapsedTimeMilli.classification?` | `number` | - |
+| `elapsedTimeMilli.split` | `number` | - |
+| `elapsedTimeMilli.sqlExecutions?` | `number` | - |
+| `elapsedTimeMilli.total` | `number` | - |
+| `error?` | `string` | - |
+| `errorRate?` | `number` | エラー率（%） |
+| `inputSummary` | [`LogParseInputSummary`](modules.md#logparseinputsummary) | - |
+| `logEvents` | [`ClassifiedEvent`](modules.md#classifiedevent)[] | - |
+| `ok` | `boolean` | - |
+| `outputSummary` | [`LogParseOutputSummary`](modules.md#logparseoutputsummary) | 集計情報（追加） |
+| `sqlExecutions` | [`SqlExecutionEvent`](modules.md#sqlexecutionevent)[] | - |
+| `sqlFragments?` | [`SqlFragment`](modules.md#sqlfragment)[] | - |
+| `stage` | [`LogParseStage`](modules.md#logparsestage) | - |
+
+#### Defined in
+
+[src/types/utils/index.ts:422](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L422)
+
+___
+
+### ExtractorConfig
+
+Ƭ **ExtractorConfig**: `Object`
+
+SQL extractor definition using a simple state machine.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `framework?` | [`FrameworkName`](modules.md#frameworkname) | Optional framework name associated with the extractor. Known frameworks will appear in IDE completion. |
+| `name` | `string` | Unique name of the extractor. |
+| `start` | [`LogEventType`](modules.md#logeventtype) | Event type that starts SQL extraction. |
+| `steps` | readonly [`ExtractorStep`](modules.md#extractorstep)[] | Sequence of steps used to collect SQL fragments. |
+
+#### Defined in
+
+[src/types/utils/index.ts:278](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L278)
+
+___
+
+### ExtractorStep
+
+Ƭ **ExtractorStep**: `Object`
+
+Single step in the SQL extraction state machine.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `action?` | [`ExtractorStepAction`](modules.md#extractorstepaction) | Action performed when the step is triggered. |
+| `field?` | keyof [`SqlExecutionEvent`](modules.md#sqlexecutionevent) | Target field where extracted value will be stored. |
+| `optional?` | `boolean` | Whether this step is optional. |
+| `type` | [`LogEventType`](modules.md#logeventtype) | Event type that triggers this step. |
+
+#### Defined in
+
+[src/types/utils/index.ts:242](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L242)
+
+___
+
+### ExtractorStepAction
+
+Ƭ **ExtractorStepAction**: ``"captureSql"`` \| ``"captureParams"`` \| ``"captureColumns"`` \| ``"captureRow"`` \| ``"captureResult"`` \| ``"captureError"`` \| ``"captureErrorDetail"`` \| ``"captureField"``
+
+#### Defined in
+
+[src/types/utils/index.ts:229](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L229)
 
 ___
 
@@ -564,7 +770,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L56)
+[src/types/resource/ConnectionSetting.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L56)
 
 ___
 
@@ -581,7 +787,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ForeignKeyConstraint.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ForeignKeyConstraint.ts#L7)
+[src/types/resource/ForeignKeyConstraint.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ForeignKeyConstraint.ts#L7)
 
 ___
 
@@ -599,7 +805,20 @@ ___
 
 #### Defined in
 
-[src/types/resource/ForeignKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ForeignKeyConstraint.ts#L1)
+[src/types/resource/ForeignKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ForeignKeyConstraint.ts#L1)
+
+___
+
+### FrameworkName
+
+Ƭ **FrameworkName**: ``"Hibernate"`` \| ``"MyBatis"`` \| ``"S2Jdbc"`` \| ``"Doma"`` \| ``"SpringJdbc"``
+
+Known SQL framework names used by built-in extractors.
+Custom names are also allowed.
+
+#### Defined in
+
+[src/types/utils/index.ts:268](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L268)
 
 ___
 
@@ -620,7 +839,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:73](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L73)
+[src/types/resource/AwsDynamoTableAttributes.ts:73](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L73)
 
 ___
 
@@ -630,7 +849,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:182](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/resource/DbResource.ts#L182)
+[src/resource/DbResource.ts:182](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/resource/DbResource.ts#L182)
 
 ___
 
@@ -650,7 +869,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L48)
+[src/types/resource/ConnectionSetting.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L48)
 
 ___
 
@@ -667,7 +886,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L82)
+[src/types/resource/AwsDynamoTableAttributes.ts:82](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L82)
 
 ___
 
@@ -684,7 +903,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/Keycloak.ts#L5)
+[src/types/drivers/Keycloak.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/Keycloak.ts#L5)
 
 ___
 
@@ -700,7 +919,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/Keycloak.ts#L10)
+[src/types/drivers/Keycloak.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/Keycloak.ts#L10)
 
 ___
 
@@ -717,7 +936,7 @@ ___
 
 #### Defined in
 
-[src/drivers/Auth0Driver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/drivers/Auth0Driver.ts#L40)
+[src/drivers/Auth0Driver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/drivers/Auth0Driver.ts#L40)
 
 ___
 
@@ -737,7 +956,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:65](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L65)
+[src/types/resource/AwsDynamoTableAttributes.ts:65](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L65)
 
 ___
 
@@ -754,7 +973,181 @@ ___
 
 #### Defined in
 
-[src/types/drivers/MemcachedParams.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/MemcachedParams.ts#L10)
+[src/types/drivers/MemcachedParams.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/MemcachedParams.ts#L10)
+
+___
+
+### LogClassifierRule
+
+Ƭ **LogClassifierRule**: `Object`
+
+Rule used to classify a log event into a semantic event type.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `context?` | readonly [`LogContextRule`](modules.md#logcontextrule)[] | Optional context extraction rules. |
+| `expandMessage?` | `boolean` | Expands message to include following lines. |
+| `field?` | `string` | Optional log event field to apply the rule to. |
+| `pattern` | `string` | Regular expression used to detect the event. |
+| `transforms?` | readonly [`LogTransformRule`](modules.md#logtransformrule)[] | Optional transformation rule applied to the matched message. |
+| `type` | [`LogEventType`](modules.md#logeventtype) | Target event type when the rule matches. |
+
+#### Defined in
+
+[src/types/utils/index.ts:187](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L187)
+
+___
+
+### LogContextRule
+
+Ƭ **LogContextRule**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `contextName` | `string` |
+| `eventFieldName?` | `string` |
+| `pattern` | `string` |
+| `replace` | `string` |
+
+#### Defined in
+
+[src/types/utils/index.ts:177](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L177)
+
+___
+
+### LogEvent
+
+Ƭ **LogEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `fields?` | `Record`\<`string`, `string`\> |
+| `level?` | `string` |
+| `lineNo` | `number` |
+| `logger?` | `string` |
+| `message` | `string` |
+| `messageSeq` | `number` |
+| `thread?` | `string` |
+| `timestamp?` | `string` |
+
+#### Defined in
+
+[src/types/utils/index.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L9)
+
+___
+
+### LogEventField
+
+Ƭ **LogEventField**: `LogEventFieldRegex` \| `LogEventFieldLiteral` \| `LogEventFieldLineBreakLiteral` \| `LogEventFieldBuiltin`
+
+Defines a single field in a log event.
+Each field can be a regex, literal text, builtin pattern, or line-break marker.
+
+#### Defined in
+
+[src/types/utils/index.ts:117](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L117)
+
+___
+
+### LogEventFieldEnclosure
+
+Ƭ **LogEventFieldEnclosure**: ``"()"`` \| ``"[]"``
+
+#### Defined in
+
+[src/types/utils/index.ts:27](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L27)
+
+___
+
+### LogEventSplitConfig
+
+Ƭ **LogEventSplitConfig**: `Object`
+
+Defines how a log line should be split into structured fields.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `fields` | [`LogEventField`](modules.md#logeventfield)[] | Ordered list of field definitions used to parse a log line. |
+
+#### Defined in
+
+[src/types/utils/index.ts:126](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L126)
+
+___
+
+### LogEventSplitPresetName
+
+Ƭ **LogEventSplitPresetName**: keyof typeof [`LOG_EVENT_SPLIT_PRESETS`](modules.md#log_event_split_presets)
+
+#### Defined in
+
+[src/utils/log/constant/logEventSplitPreset.ts:340](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/logEventSplitPreset.ts#L340)
+
+___
+
+### LogEventType
+
+Ƭ **LogEventType**: ``"DATA_SOURCE"`` \| ``"CONN_AUTOCOMMIT"`` \| ``"CONN_TRANSACTIONAL"`` \| ``"TX_BEGIN"`` \| ``"TX_COMMIT"`` \| ``"TX_ROLLBACK"`` \| ``"TX_METHOD_ENTER"`` \| ``"TX_METHOD_EXIT"`` \| ``"SQL_START"`` \| ``"SQL_PARAMS"`` \| ``"SQL_COLUMNS"`` \| ``"SQL_ROW"`` \| ``"SQL_RESULT"`` \| ``"SQL_SINGLE"`` \| ``"DDL"`` \| ``"NORMAL"`` \| ``"ERROR"`` \| ``"FW_ERROR"`` \| ``"SQL_ERROR"`` \| ``"SQL_ERROR_DETAIL"``
+
+#### Defined in
+
+[src/types/utils/index.ts:137](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L137)
+
+___
+
+### LogFieldPatternDefinition
+
+Ƭ **LogFieldPatternDefinition**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `description` | `string` |
+| `example?` | `string` |
+| `label` | `string` |
+| `pattern` | `string` |
+| `type` | [`BuiltInPattern`](modules.md#builtinpattern) |
+
+#### Defined in
+
+[src/types/utils/index.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L51)
+
+___
+
+### LogFormatDetectionResult
+
+Ƭ **LogFormatDetectionResult**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `confidence` | `number` |
+| `presetNames` | `string`[] |
+| `scores` | `Record`\<`string`, `number`\> |
+
+#### Defined in
+
+[src/types/utils/index.ts:451](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L451)
+
+___
+
+### LogLevel
+
+Ƭ **LogLevel**: typeof [`LOG_LEVELS`](modules.md#log_levels)[`number`]
+
+#### Defined in
+
+[src/utils/log/constant/base.ts:50](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/base.ts#L50)
 
 ___
 
@@ -770,7 +1163,117 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:881](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/resource/DbResource.ts#L881)
+[src/resource/DbResource.ts:881](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/resource/DbResource.ts#L881)
+
+___
+
+### LogParseConfig
+
+Ƭ **LogParseConfig**: `Object`
+
+Root configuration for the log parser.
+Defines how logs are split into events, classified, and converted into SQL executions.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `classify` | readonly [`LogClassifierRule`](modules.md#logclassifierrule)[] | Rules used to classify log events into semantic event types. |
+| `extractors` | readonly [`ExtractorConfig`](modules.md#extractorconfig)[] | SQL extraction state machines used to build SQL execution events. |
+| `split` | [`LogEventSplitConfig`](modules.md#logeventsplitconfig) | Configuration used to split raw log text into structured log events. |
+
+#### Defined in
+
+[src/types/utils/index.ts:361](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L361)
+
+___
+
+### LogParseInputSummary
+
+Ƭ **LogParseInputSummary**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `classificationSummary` | `string` |
+| `extractionSummary` | `string` |
+| `logEventSplitPattern` | `string` |
+
+#### Defined in
+
+[src/types/utils/index.ts:391](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L391)
+
+___
+
+### LogParseOutputSummary
+
+Ƭ **LogParseOutputSummary**: `Object`
+
+ログ解析結果の集計情報
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `eventTypeCounts` | `Record`\<`string`, `number`\> | eventTypeごとの件数 例: { NORMAL: 100, SQL: 50, ERROR: 3 } |
+| `sqlExecutionTypeCounts` | `Record`\<`string`, `number`\> | SQL実行タイプごとの件数 例: { SELECT: 30, INSERT: 10, ERROR: 2 } |
+| `totalEvents` | `number` | 総ログイベント数 |
+| `totalSqlExecutions` | `number` | SQL実行数 |
+
+#### Defined in
+
+[src/types/utils/index.ts:399](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L399)
+
+___
+
+### LogParseParams
+
+Ƭ **LogParseParams**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `language?` | `SqlLanguage` |
+| `linesToParse?` | `number` |
+| `logText` | `string` |
+| `stage?` | [`LogParseStage`](modules.md#logparsestage) |
+| `withSqlFragments?` | `boolean` |
+
+#### Defined in
+
+[src/types/utils/index.ts:380](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L380)
+
+___
+
+### LogParseStage
+
+Ƭ **LogParseStage**: ``"split"`` \| ``"classify"`` \| ``"extract"`` \| ``"sqlExecution"``
+
+#### Defined in
+
+[src/types/utils/index.ts:378](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L378)
+
+___
+
+### LogTransformRule
+
+Ƭ **LogTransformRule**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `flags?` | \{ `dotAll?`: `boolean` ; `multiline?`: `boolean`  } |
+| `flags.dotAll?` | `boolean` |
+| `flags.multiline?` | `boolean` |
+| `pattern` | `string` |
+| `replace` | `string` |
+
+#### Defined in
+
+[src/types/utils/index.ts:168](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L168)
 
 ___
 
@@ -788,7 +1291,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:829](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/resource/DbResource.ts#L829)
+[src/resource/DbResource.ts:829](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/resource/DbResource.ts#L829)
 
 ___
 
@@ -804,7 +1307,7 @@ Value returned from memcached.
 
 #### Defined in
 
-[src/types/drivers/MemcachedParams.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/MemcachedParams.ts#L8)
+[src/types/drivers/MemcachedParams.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/MemcachedParams.ts#L8)
 
 ___
 
@@ -814,7 +1317,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L64)
+[src/types/resource/ConnectionSetting.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L64)
 
 ___
 
@@ -838,7 +1341,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L89)
+[src/types/resource/ConnectionSetting.ts:89](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L89)
 
 ___
 
@@ -858,7 +1361,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:66](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L66)
+[src/types/resource/ConnectionSetting.ts:66](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L66)
 
 ___
 
@@ -868,7 +1371,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/MemcachedParams.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/MemcachedParams.ts#L15)
+[src/types/drivers/MemcachedParams.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/MemcachedParams.ts#L15)
 
 ___
 
@@ -887,7 +1390,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L64)
+[src/types/helpers/index.ts:65](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L65)
 
 ___
 
@@ -907,7 +1410,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:73](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L73)
+[src/types/helpers/index.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L74)
 
 ___
 
@@ -925,7 +1428,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:12](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L12)
+[src/types/helpers/index.ts:13](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L13)
 
 ___
 
@@ -943,7 +1446,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L18)
+[src/types/helpers/index.ts:19](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L19)
 
 ___
 
@@ -953,7 +1456,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/drivers/aws/AwsDynamoServiceClient.ts#L70)
+[src/drivers/aws/AwsDynamoServiceClient.ts:70](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/drivers/aws/AwsDynamoServiceClient.ts#L70)
 
 ___
 
@@ -973,7 +1476,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/QueryParams.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/QueryParams.ts#L3)
+[src/types/drivers/QueryParams.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/QueryParams.ts#L3)
 
 ___
 
@@ -990,7 +1493,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L24)
+[src/types/helpers/index.ts:25](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L25)
 
 ___
 
@@ -1000,7 +1503,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1617](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1617)
+[src/helpers/SQLHelper.ts:1678](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1678)
 
 ___
 
@@ -1016,7 +1519,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/Keycloak.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/Keycloak.ts#L1)
+[src/types/drivers/Keycloak.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/Keycloak.ts#L1)
 
 ___
 
@@ -1035,7 +1538,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:822](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/resource/DbResource.ts#L822)
+[src/resource/DbResource.ts:822](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/resource/DbResource.ts#L822)
 
 ___
 
@@ -1045,9 +1548,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/RedisKeyType.ts#L1)
+[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/RedisKeyType.ts#L1)
 
-[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/RedisKeyType.ts#L9)
+[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/RedisKeyType.ts#L9)
 
 ___
 
@@ -1066,7 +1569,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L11)
+[src/types/resource/ConnectionSetting.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L11)
 
 ___
 
@@ -1083,7 +1586,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:6](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L6)
+[src/types/resource/ConnectionSetting.ts:6](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L6)
 
 ___
 
@@ -1103,7 +1606,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L87)
+[src/types/helpers/index.ts:88](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L88)
 
 ___
 
@@ -1120,7 +1623,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L95)
+[src/types/helpers/index.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L96)
 
 ___
 
@@ -1130,9 +1633,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ResourceType.ts#L1)
+[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ResourceType.ts#L1)
 
-[src/types/resource/ResourceType.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ResourceType.ts#L35)
+[src/types/resource/ResourceType.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ResourceType.ts#L35)
 
 ___
 
@@ -1158,7 +1661,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/SQLServer.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/SQLServer.ts#L3)
+[src/types/drivers/SQLServer.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/SQLServer.ts#L3)
 
 ___
 
@@ -1187,7 +1690,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:835](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/resource/DbResource.ts#L835)
+[src/resource/DbResource.ts:835](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/resource/DbResource.ts#L835)
 
 ___
 
@@ -1197,7 +1700,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L35)
+[src/types/helpers/index.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L36)
 
 ___
 
@@ -1207,9 +1710,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerAuthenticationType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/SQLServerAuthenticationType.ts#L1)
+[src/types/resource/SQLServerAuthenticationType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/SQLServerAuthenticationType.ts#L1)
 
-[src/types/resource/SQLServerAuthenticationType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/SQLServerAuthenticationType.ts#L11)
+[src/types/resource/SQLServerAuthenticationType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/SQLServerAuthenticationType.ts#L11)
 
 ___
 
@@ -1234,7 +1737,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:106](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L106)
+[src/types/resource/ConnectionSetting.ts:106](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L106)
 
 ___
 
@@ -1254,7 +1757,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:873](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/resource/DbResource.ts#L873)
+[src/resource/DbResource.ts:873](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/resource/DbResource.ts#L873)
 
 ___
 
@@ -1264,9 +1767,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L87)
+[src/types/resource/AwsDynamoTableAttributes.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L87)
 
-[src/types/resource/AwsDynamoTableAttributes.ts:93](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L93)
+[src/types/resource/AwsDynamoTableAttributes.ts:93](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L93)
 
 ___
 
@@ -1292,7 +1795,126 @@ ___
 
 #### Defined in
 
-[src/types/drivers/ScanParams.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/ScanParams.ts#L3)
+[src/types/drivers/ScanParams.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/ScanParams.ts#L3)
+
+___
+
+### SpligLogText
+
+Ƭ **SpligLogText**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `lineNo` | `number` |
+| `text` | `string` |
+
+#### Defined in
+
+[src/types/utils/index.ts:4](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L4)
+
+___
+
+### SqlExecutionBuilder
+
+Ƭ **SqlExecutionBuilder**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `current?` | [`SqlExecutionEvent`](modules.md#sqlexecutionevent) |
+| `state` | [`SqlExecutionBuilderState`](modules.md#sqlexecutionbuilderstate) |
+
+#### Defined in
+
+[src/types/utils/index.ts:348](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L348)
+
+___
+
+### SqlExecutionBuilderState
+
+Ƭ **SqlExecutionBuilderState**: ``"idle"`` \| ``"collecting"``
+
+#### Defined in
+
+[src/types/utils/index.ts:346](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L346)
+
+___
+
+### SqlExecutionEvent
+
+Ƭ **SqlExecutionEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `daoClass?` | `string` |
+| `daoMethod?` | `string` |
+| `endLine` | `number` |
+| `error?` | `string` |
+| `errorDetail?` | `string` |
+| `formattedSql?` | `string` |
+| `framework?` | [`FrameworkName`](modules.md#frameworkname) |
+| `params?` | `string`[] |
+| `result?` | `string` |
+| `schema?` | `string` |
+| `sql?` | `string` |
+| `startLine` | `number` |
+| `table?` | `string` |
+| `thread?` | `string` |
+| `timestamp?` | `string` |
+| `type?` | `string` |
+
+#### Defined in
+
+[src/types/utils/index.ts:326](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L326)
+
+___
+
+### SqlFragment
+
+Ƭ **SqlFragment**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `daoClass?` | `string` |
+| `daoMethod?` | `string` |
+| `framework?` | [`FrameworkName`](modules.md#frameworkname) |
+| `lineNo` | `number` |
+| `messageSeq` | `number` |
+| `thread?` | `string` |
+| `timestamp?` | `string` |
+| `type` | [`SqlFragmentType`](modules.md#sqlfragmenttype) |
+| `value` | `string` |
+
+#### Defined in
+
+[src/types/utils/index.ts:314](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L314)
+
+___
+
+### SqlFragmentType
+
+Ƭ **SqlFragmentType**: ``"SQL"`` \| ``"PARAMS"`` \| ``"COLUMNS"`` \| ``"ROW"`` \| ``"RESULT"`` \| ``"FW_ERROR"`` \| ``"SQL_ERROR"`` \| ``"SQL_ERROR_DETAIL"`` \| ``"SQL_SINGLE"``
+
+#### Defined in
+
+[src/types/utils/index.ts:303](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L303)
+
+___
+
+### SqlLogParsePresetName
+
+Ƭ **SqlLogParsePresetName**: keyof typeof [`SQL_LOG_PARSE_PRESETS`](modules.md#sql_log_parse_presets)
+
+#### Defined in
+
+[src/utils/log/constant/sqlLogParsePreset.ts:417](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/sqlLogParsePreset.ts#L417)
 
 ___
 
@@ -1318,7 +1940,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L18)
+[src/types/resource/ConnectionSetting.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L18)
 
 ___
 
@@ -1334,7 +1956,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L33)
+[src/types/resource/ConnectionSetting.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L33)
 
 ___
 
@@ -1344,9 +1966,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsSupplyCredentialType.ts#L1)
+[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsSupplyCredentialType.ts#L1)
 
-[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsSupplyCredentialType.ts#L15)
+[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsSupplyCredentialType.ts#L15)
 
 ___
 
@@ -1363,7 +1985,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L17)
+[src/types/resource/AwsDynamoTableAttributes.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L17)
 
 ___
 
@@ -1373,7 +1995,7 @@ ___
 
 #### Defined in
 
-[src/drivers/aws/AwsDynamoServiceClient.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/drivers/aws/AwsDynamoServiceClient.ts#L72)
+[src/drivers/aws/AwsDynamoServiceClient.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/drivers/aws/AwsDynamoServiceClient.ts#L72)
 
 ___
 
@@ -1383,9 +2005,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L1)
+[src/types/resource/AwsDynamoTableAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L1)
 
-[src/types/resource/AwsDynamoTableAttributes.ts:22](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L22)
+[src/types/resource/AwsDynamoTableAttributes.ts:22](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L22)
 
 ___
 
@@ -1395,7 +2017,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L11)
+[src/types/resource/AwsDynamoTableAttributes.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L11)
 
 ___
 
@@ -1418,7 +2040,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L44)
+[src/types/helpers/index.ts:45](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L45)
 
 ___
 
@@ -1439,7 +2061,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/drivers/MqttDriver.ts#L28)
+[src/drivers/MqttDriver.ts:28](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/drivers/MqttDriver.ts#L28)
 
 ___
 
@@ -1457,7 +2079,7 @@ ___
 
 #### Defined in
 
-[src/drivers/MqttDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/drivers/MqttDriver.ts#L37)
+[src/drivers/MqttDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/drivers/MqttDriver.ts#L37)
 
 ___
 
@@ -1467,7 +2089,7 @@ ___
 
 #### Defined in
 
-[src/types/drivers/TransactionControlType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/drivers/TransactionControlType.ts#L1)
+[src/types/drivers/TransactionControlType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/drivers/TransactionControlType.ts#L1)
 
 ___
 
@@ -1477,7 +2099,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/ConnectionSetting.ts:128](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ConnectionSetting.ts#L128)
+[src/types/resource/ConnectionSetting.ts:128](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ConnectionSetting.ts#L128)
 
 ___
 
@@ -1494,7 +2116,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/UniqueKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/UniqueKeyConstraint.ts#L1)
+[src/types/resource/UniqueKeyConstraint.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/UniqueKeyConstraint.ts#L1)
 
 ___
 
@@ -1513,7 +2135,7 @@ ___
 
 #### Defined in
 
-[src/types/helpers/index.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/helpers/index.ts#L37)
+[src/types/helpers/index.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L38)
 
 ## Variables
 
@@ -1555,9 +2177,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsRegion.ts#L1)
+[src/types/resource/AwsRegion.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsRegion.ts#L1)
 
-[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsRegion.ts#L44)
+[src/types/resource/AwsRegion.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsRegion.ts#L44)
 
 ___
 
@@ -1567,7 +2189,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsRegion.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsRegion.ts#L46)
+[src/types/resource/AwsRegion.ts:46](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsRegion.ts#L46)
 
 ___
 
@@ -1587,9 +2209,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsServiceType.ts#L1)
+[src/types/resource/AwsServiceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsServiceType.ts#L1)
 
-[src/types/resource/AwsServiceType.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsServiceType.ts#L8)
+[src/types/resource/AwsServiceType.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsServiceType.ts#L8)
 
 ___
 
@@ -1599,7 +2221,17 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsServiceType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsServiceType.ts#L11)
+[src/types/resource/AwsServiceType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsServiceType.ts#L11)
+
+___
+
+### BUILT\_IN\_PATTERNS
+
+• `Const` **BUILT\_IN\_PATTERNS**: readonly [``"ISO8601_STRICT"``, ``"ISO8601_LENIENT"``, ``"JUL_TIMESTAMP"``, ``"SLASH_TIMESTAMP"``, ``"EPOCH_TIMESTAMP"``, ``"INT"``, ``"NUMBER"``, ``"LEVEL"``, ``"LOGGER"``, ``"WORD"``, ``"DATA"``, ``"GREEDY_DATA"``, ``"GREEDY_MULTILINE"``]
+
+#### Defined in
+
+[src/types/utils/index.ts:29](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L29)
 
 ___
 
@@ -1624,9 +2256,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/DBType.ts#L1)
+[src/types/resource/DBType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/DBType.ts#L1)
 
-[src/types/resource/DBType.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/DBType.ts#L14)
+[src/types/resource/DBType.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/DBType.ts#L14)
 
 ___
 
@@ -1636,7 +2268,91 @@ ___
 
 #### Defined in
 
-[src/types/resource/DBType.ts:16](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/DBType.ts#L16)
+[src/types/resource/DBType.ts:16](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/DBType.ts#L16)
+
+___
+
+### DEFAULT\_JUL\_SPLIT\_CONFIG
+
+• `Const` **DEFAULT\_JUL\_SPLIT\_CONFIG**: [`LogEventSplitConfig`](modules.md#logeventsplitconfig)
+
+#### Defined in
+
+[src/utils/log/constant/logEventSplitPreset.ts:190](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/logEventSplitPreset.ts#L190)
+
+___
+
+### DEFAULT\_LOG4J\_MDC\_SPLIT\_CONFIG
+
+• `Const` **DEFAULT\_LOG4J\_MDC\_SPLIT\_CONFIG**: [`LogEventSplitConfig`](modules.md#logeventsplitconfig)
+
+#### Defined in
+
+[src/utils/log/constant/logEventSplitPreset.ts:134](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/logEventSplitPreset.ts#L134)
+
+___
+
+### DEFAULT\_LOG4J\_SPLIT\_CONFIG
+
+• `Const` **DEFAULT\_LOG4J\_SPLIT\_CONFIG**: [`LogEventSplitConfig`](modules.md#logeventsplitconfig)
+
+#### Defined in
+
+[src/utils/log/constant/logEventSplitPreset.ts:93](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/logEventSplitPreset.ts#L93)
+
+___
+
+### DEFAULT\_LOGBACK\_SPLIT\_CONFIG
+
+• `Const` **DEFAULT\_LOGBACK\_SPLIT\_CONFIG**: [`LogEventSplitConfig`](modules.md#logeventsplitconfig)
+
+#### Defined in
+
+[src/utils/log/constant/logEventSplitPreset.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/logEventSplitPreset.ts#L47)
+
+___
+
+### DEFAULT\_SIMPLE\_SPLIT\_CONFIG
+
+• `Const` **DEFAULT\_SIMPLE\_SPLIT\_CONFIG**: [`LogEventSplitConfig`](modules.md#logeventsplitconfig)
+
+#### Defined in
+
+[src/utils/log/constant/logEventSplitPreset.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/logEventSplitPreset.ts#L8)
+
+___
+
+### DEFAULT\_SPRING\_BOOT\_SPLIT\_CONFIG
+
+• `Const` **DEFAULT\_SPRING\_BOOT\_SPLIT\_CONFIG**: [`LogEventSplitConfig`](modules.md#logeventsplitconfig)
+
+#### Defined in
+
+[src/utils/log/constant/logEventSplitPreset.ts:234](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/logEventSplitPreset.ts#L234)
+
+___
+
+### EVENT\_TYPE\_DESCRIPTIONS
+
+• `Const` **EVENT\_TYPE\_DESCRIPTIONS**: `Record`\<[`LogEventType`](modules.md#logeventtype), `string`\>
+
+Human-readable descriptions for event types
+
+#### Defined in
+
+src/utils/log/logSummary.ts:11
+
+___
+
+### FORMATTER\_SQL\_LANGUAGES
+
+• `Const` **FORMATTER\_SQL\_LANGUAGES**: readonly `SqlLanguage`[]
+
+Supported SQL languages for formatter (source of truth)
+
+#### Defined in
+
+[src/types/helpers/index.ts:110](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/helpers/index.ts#L110)
 
 ___
 
@@ -1646,7 +2362,153 @@ ___
 
 #### Defined in
 
-[src/helpers/constant.ts:228](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/constant.ts#L228)
+[src/helpers/constant.ts:228](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/constant.ts#L228)
+
+___
+
+### LOG\_EVENT\_SPLIT\_PRESETS
+
+• `Const` **LOG\_EVENT\_SPLIT\_PRESETS**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `JavaUtilLogging` | \{ `logExample`: ``"Mar 12, 2026 10:11:22 AM com.example.UserService execute\nINFO: Executing query\nMar 12, 2026 10:11:22 AM com.example.UserService execute\nSEVERE: SQL execution failed"`` ; `split`: [`LogEventSplitConfig`](modules.md#logeventsplitconfig) = DEFAULT\_JUL\_SPLIT\_CONFIG } |
+| `JavaUtilLogging.logExample` | ``"Mar 12, 2026 10:11:22 AM com.example.UserService execute\nINFO: Executing query\nMar 12, 2026 10:11:22 AM com.example.UserService execute\nSEVERE: SQL execution failed"`` |
+| `JavaUtilLogging.split` | [`LogEventSplitConfig`](modules.md#logeventsplitconfig) |
+| `Log4j` | \{ `logExample`: ``"2026-03-12 10:11:22,333 [http-nio-8080-exec-1] DEBUG com.example.UserService - Executing query\n2026-03-12 10:11:22,444 [http-nio-8080-exec-1] INFO  com.example.UserService - Query finished\n2026-03-12 10:11:22,555 [http-nio-8080-exec-1] ERROR com.example.UserService - SQL execution failed"`` ; `split`: [`LogEventSplitConfig`](modules.md#logeventsplitconfig) = DEFAULT\_LOG4J\_SPLIT\_CONFIG } |
+| `Log4j.logExample` | ``"2026-03-12 10:11:22,333 [http-nio-8080-exec-1] DEBUG com.example.UserService - Executing query\n2026-03-12 10:11:22,444 [http-nio-8080-exec-1] INFO  com.example.UserService - Query finished\n2026-03-12 10:11:22,555 [http-nio-8080-exec-1] ERROR com.example.UserService - SQL execution failed"`` |
+| `Log4j.split` | [`LogEventSplitConfig`](modules.md#logeventsplitconfig) |
+| `Log4jMdc` | \{ `logExample`: ``"[1999/01/01 14:52:34 0502] [DEBUG] [http-nio-8080-exec-1] [30] com.example.UserService - Executing query\n[1999/01/01 14:52:34 0503] [INFO ] [http-nio-8080-exec-1] [30] com.example.UserService - Query finished\n[1999/01/01 14:52:34 0510] [ERROR] [http-nio-8080-exec-1] [30] com.example.UserService - SQL execution failed"`` ; `split`: [`LogEventSplitConfig`](modules.md#logeventsplitconfig) = DEFAULT\_LOG4J\_MDC\_SPLIT\_CONFIG } |
+| `Log4jMdc.logExample` | ``"[1999/01/01 14:52:34 0502] [DEBUG] [http-nio-8080-exec-1] [30] com.example.UserService - Executing query\n[1999/01/01 14:52:34 0503] [INFO ] [http-nio-8080-exec-1] [30] com.example.UserService - Query finished\n[1999/01/01 14:52:34 0510] [ERROR] [http-nio-8080-exec-1] [30] com.example.UserService - SQL execution failed"`` |
+| `Log4jMdc.split` | [`LogEventSplitConfig`](modules.md#logeventsplitconfig) |
+| `Logback` | \{ `logExample`: ``"10:11:22.333 [http-nio-8080-exec-1] DEBUG com.example.UserService - Executing query\n10:11:22.444 [http-nio-8080-exec-1] INFO  com.example.UserService - Query finished\n10:11:22.555 [http-nio-8080-exec-1] ERROR com.example.UserService - SQL execution failed"`` ; `split`: [`LogEventSplitConfig`](modules.md#logeventsplitconfig) = DEFAULT\_LOGBACK\_SPLIT\_CONFIG } |
+| `Logback.logExample` | ``"10:11:22.333 [http-nio-8080-exec-1] DEBUG com.example.UserService - Executing query\n10:11:22.444 [http-nio-8080-exec-1] INFO  com.example.UserService - Query finished\n10:11:22.555 [http-nio-8080-exec-1] ERROR com.example.UserService - SQL execution failed"`` |
+| `Logback.split` | [`LogEventSplitConfig`](modules.md#logeventsplitconfig) |
+| `Simple` | \{ `logExample`: ``"2026-03-12 10:11:22 DEBUG com.example.UserService - Executing query\n2026-03-12 10:11:22 INFO com.example.UserService - Query finished\n2026-03-12 10:11:23 ERROR com.example.UserService - SQL execution failed"`` ; `split`: [`LogEventSplitConfig`](modules.md#logeventsplitconfig) = DEFAULT\_SIMPLE\_SPLIT\_CONFIG } |
+| `Simple.logExample` | ``"2026-03-12 10:11:22 DEBUG com.example.UserService - Executing query\n2026-03-12 10:11:22 INFO com.example.UserService - Query finished\n2026-03-12 10:11:23 ERROR com.example.UserService - SQL execution failed"`` |
+| `Simple.split` | [`LogEventSplitConfig`](modules.md#logeventsplitconfig) |
+| `SpringBoot` | \{ `logExample`: ``"2026-03-12 10:11:22.333  INFO 12345 --- [nio-8080-exec-1] c.example.demo.UserService : Executing query\n2026-03-12 10:11:22.444 DEBUG 12345 --- [nio-8080-exec-1] c.example.demo.UserService : Binding parameters\n2026-03-12 10:11:22.555 ERROR 12345 --- [nio-8080-exec-1] c.example.demo.UserService : SQL execution failed"`` ; `split`: [`LogEventSplitConfig`](modules.md#logeventsplitconfig) = DEFAULT\_SPRING\_BOOT\_SPLIT\_CONFIG } |
+| `SpringBoot.logExample` | ``"2026-03-12 10:11:22.333  INFO 12345 --- [nio-8080-exec-1] c.example.demo.UserService : Executing query\n2026-03-12 10:11:22.444 DEBUG 12345 --- [nio-8080-exec-1] c.example.demo.UserService : Binding parameters\n2026-03-12 10:11:22.555 ERROR 12345 --- [nio-8080-exec-1] c.example.demo.UserService : SQL execution failed"`` |
+| `SpringBoot.split` | [`LogEventSplitConfig`](modules.md#logeventsplitconfig) |
+
+#### Defined in
+
+[src/utils/log/constant/logEventSplitPreset.ts:297](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/logEventSplitPreset.ts#L297)
+
+___
+
+### LOG\_FIELD\_PATTERNS
+
+• `Const` **LOG\_FIELD\_PATTERNS**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `DATA` | \{ `description`: `string` = 'Single field (until whitespace)'; `example`: `string` = '%\{Hello}%'; `label`: `string` = 'Data'; `pattern`: `string` ; `type`: ``"DATA"`` = 'DATA' } |
+| `DATA.description` | `string` |
+| `DATA.example` | `string` |
+| `DATA.label` | `string` |
+| `DATA.pattern` | `string` |
+| `DATA.type` | ``"DATA"`` |
+| `EPOCH_TIMESTAMP` | \{ `description`: `string` = 'Unix epoch timestamp in milliseconds since 1970-01-01 UTC. Common in cloud and structured logs.'; `example`: `string` = '1710241882000'; `label`: `string` = 'Unix epoch timestamp (milliseconds)'; `pattern`: `string` = '\\d\{13}'; `type`: ``"EPOCH_TIMESTAMP"`` = 'EPOCH\_TIMESTAMP' } |
+| `EPOCH_TIMESTAMP.description` | `string` |
+| `EPOCH_TIMESTAMP.example` | `string` |
+| `EPOCH_TIMESTAMP.label` | `string` |
+| `EPOCH_TIMESTAMP.pattern` | `string` |
+| `EPOCH_TIMESTAMP.type` | ``"EPOCH_TIMESTAMP"`` |
+| `GREEDY_DATA` | \{ `description`: `string` = 'Any characters except newline.'; `example`: `string` = 'Full log message'; `label`: `string` = 'Greedy data'; `pattern`: `string` = '.*'; `type`: ``"GREEDY_DATA"`` = 'GREEDY\_DATA' } |
+| `GREEDY_DATA.description` | `string` |
+| `GREEDY_DATA.example` | `string` |
+| `GREEDY_DATA.label` | `string` |
+| `GREEDY_DATA.pattern` | `string` |
+| `GREEDY_DATA.type` | ``"GREEDY_DATA"`` |
+| `GREEDY_MULTILINE` | \{ `description`: `string` = 'Matches any characters including line breaks.'; `example`: `string` = 'Full log message\<Line breaks\>  next line message'; `label`: `string` = 'Greedy multiline'; `pattern`: `string` = '[\\s\\S]*'; `type`: ``"GREEDY_MULTILINE"`` = 'GREEDY\_MULTILINE' } |
+| `GREEDY_MULTILINE.description` | `string` |
+| `GREEDY_MULTILINE.example` | `string` |
+| `GREEDY_MULTILINE.label` | `string` |
+| `GREEDY_MULTILINE.pattern` | `string` |
+| `GREEDY_MULTILINE.type` | ``"GREEDY_MULTILINE"`` |
+| `INT` | \{ `description`: `string` = 'Signed integer number.'; `example`: `string` = '42'; `label`: `string` = 'Integer'; `pattern`: `string` = '[+-]?\\d+'; `type`: ``"INT"`` = 'INT' } |
+| `INT.description` | `string` |
+| `INT.example` | `string` |
+| `INT.label` | `string` |
+| `INT.pattern` | `string` |
+| `INT.type` | ``"INT"`` |
+| `ISO8601_LENIENT` | \{ `description`: `string` = 'Lenient ISO8601-like timestamp allowing "." or "," for milliseconds.'; `example`: `string` = '2025-01-01 10:11:22,333'; `label`: `string` = 'ISO8601 timestamp (lenient)'; `pattern`: `string` ; `type`: ``"ISO8601_LENIENT"`` = 'ISO8601\_LENIENT' } |
+| `ISO8601_LENIENT.description` | `string` |
+| `ISO8601_LENIENT.example` | `string` |
+| `ISO8601_LENIENT.label` | `string` |
+| `ISO8601_LENIENT.pattern` | `string` |
+| `ISO8601_LENIENT.type` | ``"ISO8601_LENIENT"`` |
+| `ISO8601_STRICT` | \{ `description`: `string` = 'Strict ISO8601 timestamp using "." for milliseconds.'; `example`: `string` = '2025-01-01 10:11:22.333'; `label`: `string` = 'ISO8601 timestamp (strict)'; `pattern`: `string` ; `type`: ``"ISO8601_STRICT"`` = 'ISO8601\_STRICT' } |
+| `ISO8601_STRICT.description` | `string` |
+| `ISO8601_STRICT.example` | `string` |
+| `ISO8601_STRICT.label` | `string` |
+| `ISO8601_STRICT.pattern` | `string` |
+| `ISO8601_STRICT.type` | ``"ISO8601_STRICT"`` |
+| `JUL_TIMESTAMP` | \{ `description`: `string` = 'Timestamp used by java.util.logging SimpleFormatter.'; `example`: `string` = 'Mar 12, 2026 10:11:22 AM'; `label`: `string` = 'Java Util Logging timestamp'; `pattern`: `string` = '[A-Z][a-z]\{2}\\s+\\d\{1,2},\\s+\\d\{4}\\s+\\d\{2}:\\d\{2}:\\d\{2}\\s+(AM\|PM)'; `type`: ``"JUL_TIMESTAMP"`` = 'JUL\_TIMESTAMP' } |
+| `JUL_TIMESTAMP.description` | `string` |
+| `JUL_TIMESTAMP.example` | `string` |
+| `JUL_TIMESTAMP.label` | `string` |
+| `JUL_TIMESTAMP.pattern` | `string` |
+| `JUL_TIMESTAMP.type` | ``"JUL_TIMESTAMP"`` |
+| `LEVEL` | \{ `description`: `string` = 'Common log levels such as trace, debug, info, warn, error, fatal.'; `example`: `string` = 'INFO'; `label`: `string` = 'Log level'; `pattern`: `string` ; `type`: ``"LEVEL"`` = 'LEVEL' } |
+| `LEVEL.description` | `string` |
+| `LEVEL.example` | `string` |
+| `LEVEL.label` | `string` |
+| `LEVEL.pattern` | `string` |
+| `LEVEL.type` | ``"LEVEL"`` |
+| `LOGGER` | \{ `description`: `string` = 'Typical logger or class name.'; `example`: `string` = 'org.example.service.UserService'; `label`: `string` = 'Logger name'; `pattern`: `string` = '[a-zA-Z0-9\_.$:/-]+'; `type`: ``"LOGGER"`` = 'LOGGER' } |
+| `LOGGER.description` | `string` |
+| `LOGGER.example` | `string` |
+| `LOGGER.label` | `string` |
+| `LOGGER.pattern` | `string` |
+| `LOGGER.type` | ``"LOGGER"`` |
+| `NUMBER` | \{ `description`: `string` = 'Integer or decimal number.'; `example`: `string` = '3.14'; `label`: `string` = 'Number'; `pattern`: `string` = '[+-]?\\d+(\\.\\d+)?'; `type`: ``"NUMBER"`` = 'NUMBER' } |
+| `NUMBER.description` | `string` |
+| `NUMBER.example` | `string` |
+| `NUMBER.label` | `string` |
+| `NUMBER.pattern` | `string` |
+| `NUMBER.type` | ``"NUMBER"`` |
+| `SLASH_TIMESTAMP` | \{ `description`: `string` = 'Timestamp using slash date and space separated milliseconds. Often seen in legacy log4j layouts and Seasar applications.'; `example`: `string` = '1999/01/01 14:52:34 0502'; `label`: `string` = 'Slash separated timestamp (legacy log4j / Seasar style)'; `pattern`: `string` = '\\d\{4}\\/\\d\{1,2}\\/\\d\{1,2}\\s+\\d\{2}:\\d\{2}:\\d\{2}\\s+\\d\{3,6}'; `type`: ``"SLASH_TIMESTAMP"`` = 'SLASH\_TIMESTAMP' } |
+| `SLASH_TIMESTAMP.description` | `string` |
+| `SLASH_TIMESTAMP.example` | `string` |
+| `SLASH_TIMESTAMP.label` | `string` |
+| `SLASH_TIMESTAMP.pattern` | `string` |
+| `SLASH_TIMESTAMP.type` | ``"SLASH_TIMESTAMP"`` |
+| `WORD` | \{ `description`: `string` = 'Single word consisting of letters, digits or underscore.'; `example`: `string` = 'Thread-1'; `label`: `string` = 'Word'; `pattern`: `string` = '\\b\\w+\\b'; `type`: ``"WORD"`` = 'WORD' } |
+| `WORD.description` | `string` |
+| `WORD.example` | `string` |
+| `WORD.label` | `string` |
+| `WORD.pattern` | `string` |
+| `WORD.type` | ``"WORD"`` |
+
+#### Defined in
+
+[src/utils/log/constant/base.ts:56](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/base.ts#L56)
+
+___
+
+### LOG\_LEVELS
+
+• `Const` **LOG\_LEVELS**: readonly [``"trace"``, ``"debug"``, ``"info"``, ``"warn"``, ``"warning"``, ``"error"``, ``"fatal"``, ``"severe"``]
+
+#### Defined in
+
+[src/utils/log/constant/base.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/base.ts#L39)
+
+___
+
+### OPTIONAL\_LOG\_EVENT\_KEYS
+
+• `Const` **OPTIONAL\_LOG\_EVENT\_KEYS**: readonly [``"timestamp"``, ``"thread"``, ``"level"``, ``"logger"``]
+
+#### Defined in
+
+[src/types/utils/index.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L20)
 
 ___
 
@@ -1656,7 +2518,7 @@ ___
 
 #### Defined in
 
-[src/helpers/constant.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/constant.ts#L1)
+[src/helpers/constant.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/constant.ts#L1)
 
 ___
 
@@ -1677,9 +2539,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/RedisKeyType.ts#L1)
+[src/types/resource/RedisKeyType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/RedisKeyType.ts#L1)
 
-[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/RedisKeyType.ts#L9)
+[src/types/resource/RedisKeyType.ts:9](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/RedisKeyType.ts#L9)
 
 ___
 
@@ -1689,7 +2551,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/RedisKeyType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/RedisKeyType.ts#L11)
+[src/types/resource/RedisKeyType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/RedisKeyType.ts#L11)
 
 ___
 
@@ -1731,9 +2593,19 @@ ___
 
 #### Defined in
 
-[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ResourceType.ts#L1)
+[src/types/resource/ResourceType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ResourceType.ts#L1)
 
-[src/types/resource/ResourceType.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/ResourceType.ts#L35)
+[src/types/resource/ResourceType.ts:35](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/ResourceType.ts#L35)
+
+___
+
+### SIMPLE\_LOG\_PARSE\_CONFIG
+
+• `Const` **SIMPLE\_LOG\_PARSE\_CONFIG**: [`LogParseConfig`](modules.md#logparseconfig)
+
+#### Defined in
+
+[src/utils/log/constant/base.ts:180](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/base.ts#L180)
 
 ___
 
@@ -1743,7 +2615,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerAuthenticationType.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/SQLServerAuthenticationType.ts#L14)
+[src/types/resource/SQLServerAuthenticationType.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/SQLServerAuthenticationType.ts#L14)
 
 ___
 
@@ -1765,9 +2637,39 @@ ___
 
 #### Defined in
 
-[src/types/resource/SQLServerAuthenticationType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/SQLServerAuthenticationType.ts#L1)
+[src/types/resource/SQLServerAuthenticationType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/SQLServerAuthenticationType.ts#L1)
 
-[src/types/resource/SQLServerAuthenticationType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/SQLServerAuthenticationType.ts#L11)
+[src/types/resource/SQLServerAuthenticationType.ts:11](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/SQLServerAuthenticationType.ts#L11)
+
+___
+
+### SQL\_LOG\_PARSE\_PRESETS
+
+• `Const` **SQL\_LOG\_PARSE\_PRESETS**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `Doma` | \{ `classify`: readonly [\{ `context`: readonly [\{ `contextName`: ``"daoClass"`` = 'daoClass'; `pattern`: ``"^.*CLASS=([^\\s]+).*"`` = '^.*CLASS=([^\\s]+).*'; `replace`: ``"$1"`` = '$1' }, \{ `contextName`: ``"daoMethod"`` = 'daoMethod'; `pattern`: ``"^.*METHOD=([^\\s]+).*"`` = '^.*METHOD=([^\\s]+).*'; `replace`: ``"$1"`` = '$1' }] ; `pattern`: ``"^\\[DOMA2220\\] ENTER"`` = '^\\[DOMA2220\\] ENTER'; `type`: ``"TX_METHOD_ENTER"`` = 'TX\_METHOD\_ENTER' }, \{ `pattern`: ``"^\\[DOMA2221\\] EXIT"`` = '^\\[DOMA2221\\] EXIT'; `type`: ``"TX_METHOD_EXIT"`` = 'TX\_METHOD\_EXIT' }, \{ `pattern`: ``"^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?"`` = '^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?'; `transforms`: readonly [\{ `pattern`: ``"^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?"`` = '^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE' }, \{ `pattern`: ``"^\\[DOMA2222\\] THROW .+EXCEPTION=.+"`` = '^\\[DOMA2222\\] THROW .+EXCEPTION=.+'; `transforms`: readonly [\{ `pattern`: ``"^\\[DOMA2222\\] THROW .+EXCEPTION=(.+)"`` = '^\\[DOMA2222\\] THROW .+EXCEPTION=(.+)'; `replace`: ``"$1"`` = '$1' }] ; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }, \{ `pattern`: ``"The( detailed)? cause is as follows:"`` = 'The( detailed)? cause is as follows:'; `transforms`: readonly [\{ `pattern`: ``"[\\s\\S]+The( detailed)? cause is as follows: (.+)"`` = '[\\s\\S]+The( detailed)? cause is as follows: (.+)'; `replace`: ``"$2"`` = '$2' }] ; `type`: ``"SQL_ERROR_DETAIL"`` = 'SQL\_ERROR\_DETAIL' }] ; `extractors`: readonly [\{ `framework`: ``"Doma"`` = 'Doma'; `name`: ``"doma"`` = 'doma'; `start`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE' }]  }, \{ `framework`: ``"Doma"`` = 'Doma'; `name`: ``"doma-error"`` = 'doma-error'; `start`: ``"SQL_ERROR"`` = 'SQL\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }, \{ `action`: ``"captureErrorDetail"`` = 'captureErrorDetail'; `optional`: ``true`` = true; `type`: ``"SQL_ERROR_DETAIL"`` = 'SQL\_ERROR\_DETAIL' }]  }]  } |
+| `Doma.classify` | readonly [\{ `context`: readonly [\{ `contextName`: ``"daoClass"`` = 'daoClass'; `pattern`: ``"^.*CLASS=([^\\s]+).*"`` = '^.*CLASS=([^\\s]+).*'; `replace`: ``"$1"`` = '$1' }, \{ `contextName`: ``"daoMethod"`` = 'daoMethod'; `pattern`: ``"^.*METHOD=([^\\s]+).*"`` = '^.*METHOD=([^\\s]+).*'; `replace`: ``"$1"`` = '$1' }] ; `pattern`: ``"^\\[DOMA2220\\] ENTER"`` = '^\\[DOMA2220\\] ENTER'; `type`: ``"TX_METHOD_ENTER"`` = 'TX\_METHOD\_ENTER' }, \{ `pattern`: ``"^\\[DOMA2221\\] EXIT"`` = '^\\[DOMA2221\\] EXIT'; `type`: ``"TX_METHOD_EXIT"`` = 'TX\_METHOD\_EXIT' }, \{ `pattern`: ``"^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?"`` = '^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?'; `transforms`: readonly [\{ `pattern`: ``"^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?"`` = '^\\[DOMA2076\\] SQL LOG( : PATH=\\[[^\\]]+\\],)?'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE' }, \{ `pattern`: ``"^\\[DOMA2222\\] THROW .+EXCEPTION=.+"`` = '^\\[DOMA2222\\] THROW .+EXCEPTION=.+'; `transforms`: readonly [\{ `pattern`: ``"^\\[DOMA2222\\] THROW .+EXCEPTION=(.+)"`` = '^\\[DOMA2222\\] THROW .+EXCEPTION=(.+)'; `replace`: ``"$1"`` = '$1' }] ; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }, \{ `pattern`: ``"The( detailed)? cause is as follows:"`` = 'The( detailed)? cause is as follows:'; `transforms`: readonly [\{ `pattern`: ``"[\\s\\S]+The( detailed)? cause is as follows: (.+)"`` = '[\\s\\S]+The( detailed)? cause is as follows: (.+)'; `replace`: ``"$2"`` = '$2' }] ; `type`: ``"SQL_ERROR_DETAIL"`` = 'SQL\_ERROR\_DETAIL' }] |
+| `Doma.extractors` | readonly [\{ `framework`: ``"Doma"`` = 'Doma'; `name`: ``"doma"`` = 'doma'; `start`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE' }]  }, \{ `framework`: ``"Doma"`` = 'Doma'; `name`: ``"doma-error"`` = 'doma-error'; `start`: ``"SQL_ERROR"`` = 'SQL\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }, \{ `action`: ``"captureErrorDetail"`` = 'captureErrorDetail'; `optional`: ``true`` = true; `type`: ``"SQL_ERROR_DETAIL"`` = 'SQL\_ERROR\_DETAIL' }]  }] |
+| `Hibernate` | \{ `classify`: readonly [\{ `pattern`: ``"^Fetching JDBC Connection from DataSource"`` = '^Fetching JDBC Connection from DataSource'; `type`: ``"DATA_SOURCE"`` = 'DATA\_SOURCE' }, \{ `pattern`: ``"^Creating new transaction with name "`` = '^Creating new transaction with name '; `type`: ``"TX_BEGIN"`` = 'TX\_BEGIN' }, \{ `pattern`: ``"^Initiating transaction commit"`` = '^Initiating transaction commit'; `type`: ``"TX_COMMIT"`` = 'TX\_COMMIT' }, \{ `pattern`: ``"^Initiating transaction rollback"`` = '^Initiating transaction rollback'; `type`: ``"TX_ROLLBACK"`` = 'TX\_ROLLBACK' }, \{ `pattern`: ``"^Getting transaction for "`` = '^Getting transaction for '; `type`: ``"TX_METHOD_ENTER"`` = 'TX\_METHOD\_ENTER' }, \{ `pattern`: ``"^Completing transaction for "`` = '^Completing transaction for '; `type`: ``"TX_METHOD_EXIT"`` = 'TX\_METHOD\_EXIT' }, \{ `field`: ``"logger"`` = 'logger'; `pattern`: ``"^org\\.hibernate\\.SQL$"`` = '^org\\.hibernate\\.SQL$'; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `field`: ``"logger"`` = 'logger'; `pattern`: ``"^org\\.hibernate\\.orm\\.jdbc\\.bind$"`` = '^org\\.hibernate\\.orm\\.jdbc\\.bind$'; `transforms`: readonly [\{ `pattern`: ``"^binding parameter (.*)"`` = '^binding parameter (.*)'; `replace`: ``"$1"`` = '$1' }] ; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }, \{ `pattern`: ``"^SQL Error: \\w+, SQLState: \\w+"`` = '^SQL Error: \\w+, SQLState: \\w+'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }, \{ `field`: ``"logger"`` = 'logger'; `pattern`: ``".+SqlExceptionHelper$"`` = '.+SqlExceptionHelper$'; `type`: ``"SQL_ERROR_DETAIL"`` = 'SQL\_ERROR\_DETAIL' }, \{ `pattern`: ``"(ConstraintViolationException\|EntityExistsException\|PersistentObjectException)"`` = '(ConstraintViolationException\|EntityExistsException\|PersistentObjectException)'; `type`: ``"FW_ERROR"`` = 'FW\_ERROR' }] ; `extractors`: readonly [\{ `framework`: ``"Hibernate"`` = 'Hibernate'; `name`: ``"hibernate"`` = 'hibernate'; `start`: ``"SQL_START"`` = 'SQL\_START'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `action`: ``"captureParams"`` = 'captureParams'; `optional`: ``true`` = true; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }]  }, \{ `framework`: ``"Hibernate"`` = 'Hibernate'; `name`: ``"hibernate-sql-error"`` = 'hibernate-sql-error'; `start`: ``"SQL_ERROR"`` = 'SQL\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }, \{ `action`: ``"captureErrorDetail"`` = 'captureErrorDetail'; `optional`: ``true`` = true; `type`: ``"SQL_ERROR_DETAIL"`` = 'SQL\_ERROR\_DETAIL' }]  }, \{ `framework`: ``"Hibernate"`` = 'Hibernate'; `name`: ``"hibernate-orm-error"`` = 'hibernate-orm-error'; `start`: ``"FW_ERROR"`` = 'FW\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"FW_ERROR"`` = 'FW\_ERROR' }]  }]  } |
+| `Hibernate.classify` | readonly [\{ `pattern`: ``"^Fetching JDBC Connection from DataSource"`` = '^Fetching JDBC Connection from DataSource'; `type`: ``"DATA_SOURCE"`` = 'DATA\_SOURCE' }, \{ `pattern`: ``"^Creating new transaction with name "`` = '^Creating new transaction with name '; `type`: ``"TX_BEGIN"`` = 'TX\_BEGIN' }, \{ `pattern`: ``"^Initiating transaction commit"`` = '^Initiating transaction commit'; `type`: ``"TX_COMMIT"`` = 'TX\_COMMIT' }, \{ `pattern`: ``"^Initiating transaction rollback"`` = '^Initiating transaction rollback'; `type`: ``"TX_ROLLBACK"`` = 'TX\_ROLLBACK' }, \{ `pattern`: ``"^Getting transaction for "`` = '^Getting transaction for '; `type`: ``"TX_METHOD_ENTER"`` = 'TX\_METHOD\_ENTER' }, \{ `pattern`: ``"^Completing transaction for "`` = '^Completing transaction for '; `type`: ``"TX_METHOD_EXIT"`` = 'TX\_METHOD\_EXIT' }, \{ `field`: ``"logger"`` = 'logger'; `pattern`: ``"^org\\.hibernate\\.SQL$"`` = '^org\\.hibernate\\.SQL$'; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `field`: ``"logger"`` = 'logger'; `pattern`: ``"^org\\.hibernate\\.orm\\.jdbc\\.bind$"`` = '^org\\.hibernate\\.orm\\.jdbc\\.bind$'; `transforms`: readonly [\{ `pattern`: ``"^binding parameter (.*)"`` = '^binding parameter (.*)'; `replace`: ``"$1"`` = '$1' }] ; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }, \{ `pattern`: ``"^SQL Error: \\w+, SQLState: \\w+"`` = '^SQL Error: \\w+, SQLState: \\w+'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }, \{ `field`: ``"logger"`` = 'logger'; `pattern`: ``".+SqlExceptionHelper$"`` = '.+SqlExceptionHelper$'; `type`: ``"SQL_ERROR_DETAIL"`` = 'SQL\_ERROR\_DETAIL' }, \{ `pattern`: ``"(ConstraintViolationException\|EntityExistsException\|PersistentObjectException)"`` = '(ConstraintViolationException\|EntityExistsException\|PersistentObjectException)'; `type`: ``"FW_ERROR"`` = 'FW\_ERROR' }] |
+| `Hibernate.extractors` | readonly [\{ `framework`: ``"Hibernate"`` = 'Hibernate'; `name`: ``"hibernate"`` = 'hibernate'; `start`: ``"SQL_START"`` = 'SQL\_START'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `action`: ``"captureParams"`` = 'captureParams'; `optional`: ``true`` = true; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }]  }, \{ `framework`: ``"Hibernate"`` = 'Hibernate'; `name`: ``"hibernate-sql-error"`` = 'hibernate-sql-error'; `start`: ``"SQL_ERROR"`` = 'SQL\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }, \{ `action`: ``"captureErrorDetail"`` = 'captureErrorDetail'; `optional`: ``true`` = true; `type`: ``"SQL_ERROR_DETAIL"`` = 'SQL\_ERROR\_DETAIL' }]  }, \{ `framework`: ``"Hibernate"`` = 'Hibernate'; `name`: ``"hibernate-orm-error"`` = 'hibernate-orm-error'; `start`: ``"FW_ERROR"`` = 'FW\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"FW_ERROR"`` = 'FW\_ERROR' }]  }] |
+| `MyBatis` | \{ `classify`: readonly [\{ `pattern`: ``"will not be managed by Spring"`` = 'will not be managed by Spring'; `type`: ``"CONN_AUTOCOMMIT"`` = 'CONN\_AUTOCOMMIT' }, \{ `pattern`: ``"Registering transaction synchronization for SqlSession"`` = 'Registering transaction synchronization for SqlSession'; `type`: ``"CONN_TRANSACTIONAL"`` = 'CONN\_TRANSACTIONAL' }, \{ `expandMessage`: ``true`` = true; `pattern`: ``"^Fetching JDBC Connection from DataSource"`` = '^Fetching JDBC Connection from DataSource'; `type`: ``"DATA_SOURCE"`` = 'DATA\_SOURCE' }, \{ `pattern`: ``"^Creating new transaction with name "`` = '^Creating new transaction with name '; `type`: ``"TX_BEGIN"`` = 'TX\_BEGIN' }, \{ `pattern`: ``"^Initiating transaction commit"`` = '^Initiating transaction commit'; `type`: ``"TX_COMMIT"`` = 'TX\_COMMIT' }, \{ `pattern`: ``"^Initiating transaction rollback"`` = '^Initiating transaction rollback'; `type`: ``"TX_ROLLBACK"`` = 'TX\_ROLLBACK' }, \{ `expandMessage`: ``true`` = true; `pattern`: ``"^Getting transaction for "`` = '^Getting transaction for '; `type`: ``"TX_METHOD_ENTER"`` = 'TX\_METHOD\_ENTER' }, \{ `pattern`: ``"^Completing transaction for "`` = '^Completing transaction for '; `type`: ``"TX_METHOD_EXIT"`` = 'TX\_METHOD\_EXIT' }, \{ `context`: readonly [\{ `contextName`: ``"daoClass"`` = 'daoClass'; `eventFieldName`: ``"logger"`` = 'logger'; `pattern`: ``"^(.+)\\.([^.]+)$"`` = '^(.+)\\.([^.]+)$'; `replace`: ``"$1"`` = '$1' }, \{ `contextName`: ``"daoMethod"`` = 'daoMethod'; `eventFieldName`: ``"logger"`` = 'logger'; `pattern`: ``"^(.+)\\.([^.]+)$"`` = '^(.+)\\.([^.]+)$'; `replace`: ``"$2"`` = '$2' }] ; `pattern`: ``"^==>\\s+Preparing:"`` = '^==\>\\s+Preparing:'; `transforms`: readonly [\{ `pattern`: ``"^==>\\s+Preparing:\\s*"`` = '^==\>\\s+Preparing:\\s*'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `pattern`: ``"^==>\\s+Parameters:"`` = '^==\>\\s+Parameters:'; `transforms`: readonly [\{ `pattern`: ``"^==>\\s+Parameters:\\s*"`` = '^==\>\\s+Parameters:\\s*'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }, \{ `pattern`: ``"^<==\\s+Columns:"`` = '^\<==\\s+Columns:'; `transforms`: readonly [\{ `pattern`: ``"^<==\\s+Columns:"`` = '^\<==\\s+Columns:'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_COLUMNS"`` = 'SQL\_COLUMNS' }, \{ `pattern`: ``"^<==\\s+Row:"`` = '^\<==\\s+Row:'; `transforms`: readonly [\{ `pattern`: ``"^<==\\s+Row:"`` = '^\<==\\s+Row:'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_ROW"`` = 'SQL\_ROW' }, \{ `pattern`: ``"^<==\\s+(Total\|Updates):"`` = '^\<==\\s+(Total\|Updates):'; `transforms`: readonly [\{ `pattern`: ``"^<==\\s+(?:Total\|Updates):\\s*"`` = '^\<==\\s+(?:Total\|Updates):\\s*'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_RESULT"`` = 'SQL\_RESULT' }, \{ `field`: ``"logger"`` = 'logger'; `pattern`: ``".+SQLErrorCodeSQLExceptionTranslator$"`` = '.+SQLErrorCodeSQLExceptionTranslator$'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }] ; `extractors`: readonly [\{ `framework`: ``"MyBatis"`` = 'MyBatis'; `name`: ``"mybatis"`` = 'mybatis'; `start`: ``"SQL_START"`` = 'SQL\_START'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `action`: ``"captureParams"`` = 'captureParams'; `optional`: ``true`` = true; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }, \{ `action`: ``"captureColumns"`` = 'captureColumns'; `optional`: ``true`` = true; `type`: ``"SQL_COLUMNS"`` = 'SQL\_COLUMNS' }, \{ `action`: ``"captureRow"`` = 'captureRow'; `optional`: ``true`` = true; `type`: ``"SQL_ROW"`` = 'SQL\_ROW' }, \{ `action`: ``"captureResult"`` = 'captureResult'; `optional`: ``true`` = true; `type`: ``"SQL_RESULT"`` = 'SQL\_RESULT' }]  }, \{ `framework`: ``"MyBatis"`` = 'MyBatis'; `name`: ``"mybatis-sql-error"`` = 'mybatis-sql-error'; `start`: ``"SQL_ERROR"`` = 'SQL\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }]  }]  } |
+| `MyBatis.classify` | readonly [\{ `pattern`: ``"will not be managed by Spring"`` = 'will not be managed by Spring'; `type`: ``"CONN_AUTOCOMMIT"`` = 'CONN\_AUTOCOMMIT' }, \{ `pattern`: ``"Registering transaction synchronization for SqlSession"`` = 'Registering transaction synchronization for SqlSession'; `type`: ``"CONN_TRANSACTIONAL"`` = 'CONN\_TRANSACTIONAL' }, \{ `expandMessage`: ``true`` = true; `pattern`: ``"^Fetching JDBC Connection from DataSource"`` = '^Fetching JDBC Connection from DataSource'; `type`: ``"DATA_SOURCE"`` = 'DATA\_SOURCE' }, \{ `pattern`: ``"^Creating new transaction with name "`` = '^Creating new transaction with name '; `type`: ``"TX_BEGIN"`` = 'TX\_BEGIN' }, \{ `pattern`: ``"^Initiating transaction commit"`` = '^Initiating transaction commit'; `type`: ``"TX_COMMIT"`` = 'TX\_COMMIT' }, \{ `pattern`: ``"^Initiating transaction rollback"`` = '^Initiating transaction rollback'; `type`: ``"TX_ROLLBACK"`` = 'TX\_ROLLBACK' }, \{ `expandMessage`: ``true`` = true; `pattern`: ``"^Getting transaction for "`` = '^Getting transaction for '; `type`: ``"TX_METHOD_ENTER"`` = 'TX\_METHOD\_ENTER' }, \{ `pattern`: ``"^Completing transaction for "`` = '^Completing transaction for '; `type`: ``"TX_METHOD_EXIT"`` = 'TX\_METHOD\_EXIT' }, \{ `context`: readonly [\{ `contextName`: ``"daoClass"`` = 'daoClass'; `eventFieldName`: ``"logger"`` = 'logger'; `pattern`: ``"^(.+)\\.([^.]+)$"`` = '^(.+)\\.([^.]+)$'; `replace`: ``"$1"`` = '$1' }, \{ `contextName`: ``"daoMethod"`` = 'daoMethod'; `eventFieldName`: ``"logger"`` = 'logger'; `pattern`: ``"^(.+)\\.([^.]+)$"`` = '^(.+)\\.([^.]+)$'; `replace`: ``"$2"`` = '$2' }] ; `pattern`: ``"^==>\\s+Preparing:"`` = '^==\>\\s+Preparing:'; `transforms`: readonly [\{ `pattern`: ``"^==>\\s+Preparing:\\s*"`` = '^==\>\\s+Preparing:\\s*'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `pattern`: ``"^==>\\s+Parameters:"`` = '^==\>\\s+Parameters:'; `transforms`: readonly [\{ `pattern`: ``"^==>\\s+Parameters:\\s*"`` = '^==\>\\s+Parameters:\\s*'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }, \{ `pattern`: ``"^<==\\s+Columns:"`` = '^\<==\\s+Columns:'; `transforms`: readonly [\{ `pattern`: ``"^<==\\s+Columns:"`` = '^\<==\\s+Columns:'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_COLUMNS"`` = 'SQL\_COLUMNS' }, \{ `pattern`: ``"^<==\\s+Row:"`` = '^\<==\\s+Row:'; `transforms`: readonly [\{ `pattern`: ``"^<==\\s+Row:"`` = '^\<==\\s+Row:'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_ROW"`` = 'SQL\_ROW' }, \{ `pattern`: ``"^<==\\s+(Total\|Updates):"`` = '^\<==\\s+(Total\|Updates):'; `transforms`: readonly [\{ `pattern`: ``"^<==\\s+(?:Total\|Updates):\\s*"`` = '^\<==\\s+(?:Total\|Updates):\\s*'; `replace`: ``""`` = '' }] ; `type`: ``"SQL_RESULT"`` = 'SQL\_RESULT' }, \{ `field`: ``"logger"`` = 'logger'; `pattern`: ``".+SQLErrorCodeSQLExceptionTranslator$"`` = '.+SQLErrorCodeSQLExceptionTranslator$'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }] |
+| `MyBatis.extractors` | readonly [\{ `framework`: ``"MyBatis"`` = 'MyBatis'; `name`: ``"mybatis"`` = 'mybatis'; `start`: ``"SQL_START"`` = 'SQL\_START'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `action`: ``"captureParams"`` = 'captureParams'; `optional`: ``true`` = true; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }, \{ `action`: ``"captureColumns"`` = 'captureColumns'; `optional`: ``true`` = true; `type`: ``"SQL_COLUMNS"`` = 'SQL\_COLUMNS' }, \{ `action`: ``"captureRow"`` = 'captureRow'; `optional`: ``true`` = true; `type`: ``"SQL_ROW"`` = 'SQL\_ROW' }, \{ `action`: ``"captureResult"`` = 'captureResult'; `optional`: ``true`` = true; `type`: ``"SQL_RESULT"`` = 'SQL\_RESULT' }]  }, \{ `framework`: ``"MyBatis"`` = 'MyBatis'; `name`: ``"mybatis-sql-error"`` = 'mybatis-sql-error'; `start`: ``"SQL_ERROR"`` = 'SQL\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }]  }] |
+| `S2Jdbc` | \{ `classify`: readonly [\{ `field`: ``"logger"`` = 'logger'; `pattern`: ``"^query\\.(Auto\|SqlFile)(Batch)?(Select\|Insert\|Update\|Delete)Impl$"`` = '^query\\.(Auto\|SqlFile)(Batch)?(Select\|Insert\|Update\|Delete)Impl$'; `type`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE' }, \{ `expandMessage`: ``true`` = true; `field`: ``"level"`` = 'level'; `pattern`: ``"^ERROR$"`` = '^ERROR$'; `type`: ``"ERROR"`` = 'ERROR' }] ; `extractors`: readonly [\{ `framework`: ``"S2Jdbc"`` = 'S2Jdbc'; `name`: ``"s2jdbc"`` = 's2jdbc'; `start`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE' }]  }]  } |
+| `S2Jdbc.classify` | readonly [\{ `field`: ``"logger"`` = 'logger'; `pattern`: ``"^query\\.(Auto\|SqlFile)(Batch)?(Select\|Insert\|Update\|Delete)Impl$"`` = '^query\\.(Auto\|SqlFile)(Batch)?(Select\|Insert\|Update\|Delete)Impl$'; `type`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE' }, \{ `expandMessage`: ``true`` = true; `field`: ``"level"`` = 'level'; `pattern`: ``"^ERROR$"`` = '^ERROR$'; `type`: ``"ERROR"`` = 'ERROR' }] |
+| `S2Jdbc.extractors` | readonly [\{ `framework`: ``"S2Jdbc"`` = 'S2Jdbc'; `name`: ``"s2jdbc"`` = 's2jdbc'; `start`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_SINGLE"`` = 'SQL\_SINGLE' }]  }] |
+| `SpringJdbc` | \{ `classify`: readonly [\{ `pattern`: ``"^Creating new transaction with name "`` = '^Creating new transaction with name '; `type`: ``"TX_BEGIN"`` = 'TX\_BEGIN' }, \{ `pattern`: ``"^Initiating transaction commit"`` = '^Initiating transaction commit'; `type`: ``"TX_COMMIT"`` = 'TX\_COMMIT' }, \{ `pattern`: ``"^Initiating transaction rollback"`` = '^Initiating transaction rollback'; `type`: ``"TX_ROLLBACK"`` = 'TX\_ROLLBACK' }, \{ `pattern`: ``"^Getting transaction for "`` = '^Getting transaction for '; `type`: ``"TX_METHOD_ENTER"`` = 'TX\_METHOD\_ENTER' }, \{ `pattern`: ``"^Completing transaction for "`` = '^Completing transaction for '; `type`: ``"TX_METHOD_EXIT"`` = 'TX\_METHOD\_EXIT' }, \{ `pattern`: ``"Executing prepared SQL statement"`` = 'Executing prepared SQL statement'; `transforms`: readonly [\{ `pattern`: ``"^.*\\[(.*)\\]$"`` = '^.*\\[(.*)\\]$'; `replace`: ``"$1"`` = '$1' }] ; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `pattern`: ``"^Setting SQL statement parameter value:"`` = '^Setting SQL statement parameter value:'; `transforms`: readonly [\{ `pattern`: ``"^Setting SQL statement parameter value: (.*)"`` = '^Setting SQL statement parameter value: (.*)'; `replace`: ``"$1"`` = '$1' }] ; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }, \{ `pattern`: ``"org.springframework.(jdbc\|dao).[a-zA-Z0-9]+Exception: "`` = 'org.springframework.(jdbc\|dao).[a-zA-Z0-9]+Exception: '; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }] ; `extractors`: readonly [\{ `framework`: ``"SpringJdbc"`` = 'SpringJdbc'; `name`: ``"spring-jdbc"`` = 'spring-jdbc'; `start`: ``"SQL_START"`` = 'SQL\_START'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `action`: ``"captureParams"`` = 'captureParams'; `optional`: ``true`` = true; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }]  }, \{ `framework`: ``"SpringJdbc"`` = 'SpringJdbc'; `name`: ``"spring-jdbc-error"`` = 'spring-jdbc-error'; `start`: ``"SQL_ERROR"`` = 'SQL\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }]  }]  } |
+| `SpringJdbc.classify` | readonly [\{ `pattern`: ``"^Creating new transaction with name "`` = '^Creating new transaction with name '; `type`: ``"TX_BEGIN"`` = 'TX\_BEGIN' }, \{ `pattern`: ``"^Initiating transaction commit"`` = '^Initiating transaction commit'; `type`: ``"TX_COMMIT"`` = 'TX\_COMMIT' }, \{ `pattern`: ``"^Initiating transaction rollback"`` = '^Initiating transaction rollback'; `type`: ``"TX_ROLLBACK"`` = 'TX\_ROLLBACK' }, \{ `pattern`: ``"^Getting transaction for "`` = '^Getting transaction for '; `type`: ``"TX_METHOD_ENTER"`` = 'TX\_METHOD\_ENTER' }, \{ `pattern`: ``"^Completing transaction for "`` = '^Completing transaction for '; `type`: ``"TX_METHOD_EXIT"`` = 'TX\_METHOD\_EXIT' }, \{ `pattern`: ``"Executing prepared SQL statement"`` = 'Executing prepared SQL statement'; `transforms`: readonly [\{ `pattern`: ``"^.*\\[(.*)\\]$"`` = '^.*\\[(.*)\\]$'; `replace`: ``"$1"`` = '$1' }] ; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `pattern`: ``"^Setting SQL statement parameter value:"`` = '^Setting SQL statement parameter value:'; `transforms`: readonly [\{ `pattern`: ``"^Setting SQL statement parameter value: (.*)"`` = '^Setting SQL statement parameter value: (.*)'; `replace`: ``"$1"`` = '$1' }] ; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }, \{ `pattern`: ``"org.springframework.(jdbc\|dao).[a-zA-Z0-9]+Exception: "`` = 'org.springframework.(jdbc\|dao).[a-zA-Z0-9]+Exception: '; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }] |
+| `SpringJdbc.extractors` | readonly [\{ `framework`: ``"SpringJdbc"`` = 'SpringJdbc'; `name`: ``"spring-jdbc"`` = 'spring-jdbc'; `start`: ``"SQL_START"`` = 'SQL\_START'; `steps`: readonly [\{ `action`: ``"captureSql"`` = 'captureSql'; `type`: ``"SQL_START"`` = 'SQL\_START' }, \{ `action`: ``"captureParams"`` = 'captureParams'; `optional`: ``true`` = true; `type`: ``"SQL_PARAMS"`` = 'SQL\_PARAMS' }]  }, \{ `framework`: ``"SpringJdbc"`` = 'SpringJdbc'; `name`: ``"spring-jdbc-error"`` = 'spring-jdbc-error'; `start`: ``"SQL_ERROR"`` = 'SQL\_ERROR'; `steps`: readonly [\{ `action`: ``"captureError"`` = 'captureError'; `type`: ``"SQL_ERROR"`` = 'SQL\_ERROR' }]  }] |
+
+#### Defined in
+
+[src/utils/log/constant/sqlLogParsePreset.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/constant/sqlLogParsePreset.ts#L3)
 
 ___
 
@@ -1785,9 +2687,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L87)
+[src/types/resource/AwsDynamoTableAttributes.ts:87](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L87)
 
-[src/types/resource/AwsDynamoTableAttributes.ts:93](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L93)
+[src/types/resource/AwsDynamoTableAttributes.ts:93](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L93)
 
 ___
 
@@ -1797,7 +2699,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSupplyCredentialType.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsSupplyCredentialType.ts#L18)
+[src/types/resource/AwsSupplyCredentialType.ts:18](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsSupplyCredentialType.ts#L18)
 
 ___
 
@@ -1815,9 +2717,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsSupplyCredentialType.ts#L1)
+[src/types/resource/AwsSupplyCredentialType.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsSupplyCredentialType.ts#L1)
 
-[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsSupplyCredentialType.ts#L15)
+[src/types/resource/AwsSupplyCredentialType.ts:15](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsSupplyCredentialType.ts#L15)
 
 ___
 
@@ -1839,9 +2741,9 @@ ___
 
 #### Defined in
 
-[src/types/resource/AwsDynamoTableAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L1)
+[src/types/resource/AwsDynamoTableAttributes.ts:1](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L1)
 
-[src/types/resource/AwsDynamoTableAttributes.ts:22](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/AwsDynamoTableAttributes.ts#L22)
+[src/types/resource/AwsDynamoTableAttributes.ts:22](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/AwsDynamoTableAttributes.ts#L22)
 
 ## Functions
 
@@ -1862,7 +2764,50 @@ ___
 
 #### Defined in
 
-[src/utils/driverUtil.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/driverUtil.ts#L75)
+[src/utils/driverUtil.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/driverUtil.ts#L75)
+
+___
+
+### buildSqlExecutions
+
+▸ **buildSqlExecutions**(`«destructured»`): [`SqlExecutionEvent`](modules.md#sqlexecutionevent)[]
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `«destructured»` | `Object` |
+| › `fragments` | [`SqlFragment`](modules.md#sqlfragment)[] |
+| › `language?` | ``"sql"`` \| ``"bigquery"`` \| ``"clickhouse"`` \| ``"db2"`` \| ``"db2i"`` \| ``"duckdb"`` \| ``"hive"`` \| ``"mariadb"`` \| ``"mysql"`` \| ``"tidb"`` \| ``"n1ql"`` \| ``"plsql"`` \| ``"postgresql"`` \| ``"redshift"`` \| ``"spark"`` \| ``"sqlite"`` \| ``"trino"`` \| ``"transactsql"`` \| ``"singlestoredb"`` \| ``"snowflake"`` \| ``"tsql"`` |
+
+#### Returns
+
+[`SqlExecutionEvent`](modules.md#sqlexecutionevent)[]
+
+#### Defined in
+
+src/utils/log/buildSqlExecutions.ts:11
+
+___
+
+### classifyEvent
+
+▸ **classifyEvent**(`event`, `rules`): [`ClassifiedEvent`](modules.md#classifiedevent)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | [`LogEvent`](modules.md#logevent) |
+| `rules` | readonly [`LogClassifierRule`](modules.md#logclassifierrule)[] |
+
+#### Returns
+
+[`ClassifiedEvent`](modules.md#classifiedevent)
+
+#### Defined in
+
+[src/utils/log/classify/classifyEvent.ts:57](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/classify/classifyEvent.ts#L57)
 
 ___
 
@@ -1884,7 +2829,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:251](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L251)
+[src/helpers/RuleEngine.ts:251](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L251)
 
 ___
 
@@ -1904,7 +2849,95 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:579](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L579)
+[src/helpers/SQLHelper.ts:640](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L640)
+
+___
+
+### createLogEventPattern
+
+▸ **createLogEventPattern**(`params`): `RegExp`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`CreateLogEventPatternParams`](modules.md#createlogeventpatternparams) |
+
+#### Returns
+
+`RegExp`
+
+#### Defined in
+
+[src/utils/log/pattern/logEventPattern.ts:6](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/pattern/logEventPattern.ts#L6)
+
+___
+
+### createLogEventPatternText
+
+▸ **createLogEventPatternText**(`params`): `string`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`CreateLogEventPatternParams`](modules.md#createlogeventpatternparams) |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+[src/utils/log/pattern/logEventPattern.ts:17](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/pattern/logEventPattern.ts#L17)
+
+___
+
+### createLogResultBuilder
+
+▸ **createLogResultBuilder**(`logEvents`, `stage`, `options?`): `ResultSetDataBuilder`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `logEvents` | [`ClassifiedEvent`](modules.md#classifiedevent)[] |
+| `stage` | [`LogParseStage`](modules.md#logparsestage) |
+| `options?` | `Object` |
+| `options.classificationSummary` | `string` |
+| `options.elapsedTimeMilli` | `number` |
+| `options.logEventSplitPattern` | `string` |
+
+#### Returns
+
+`ResultSetDataBuilder`
+
+#### Defined in
+
+[src/utils/log/rdh/convertExtractedSqlRdhResult.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/rdh/convertExtractedSqlRdhResult.ts#L36)
+
+___
+
+### createSqlResultBuilder
+
+▸ **createSqlResultBuilder**(`sqlExecutions`, `options?`): `ResultSetDataBuilder`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sqlExecutions` | [`SqlExecutionEvent`](modules.md#sqlexecutionevent)[] |
+| `options?` | `Object` |
+| `options.elapsedTimeMilli` | `number` |
+| `options.extractionSummary` | `string` |
+
+#### Returns
+
+`ResultSetDataBuilder`
+
+#### Defined in
+
+[src/utils/log/rdh/convertExtractedSqlRdhResult.ts:160](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/rdh/convertExtractedSqlRdhResult.ts#L160)
 
 ___
 
@@ -1924,7 +2957,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1146](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1146)
+[src/helpers/SQLHelper.ts:1207](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1207)
 
 ___
 
@@ -1944,7 +2977,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:568](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L568)
+[src/helpers/SQLHelper.ts:629](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L629)
 
 ___
 
@@ -1972,7 +3005,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:59](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L59)
+[src/helpers/SQLHelper.ts:120](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L120)
 
 ___
 
@@ -1997,7 +3030,133 @@ ___
 
 #### Defined in
 
-[src/utils/jwt.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/jwt.ts#L3)
+[src/utils/jwt.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/jwt.ts#L3)
+
+___
+
+### detectLogSplitPreset
+
+▸ **detectLogSplitPreset**(`logText`, `presets`): [`LogFormatDetectionResult`](modules.md#logformatdetectionresult)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `logText` | `string` |
+| `presets` | `Record`\<`string`, \{ `split`: [`LogEventSplitConfig`](modules.md#logeventsplitconfig)  }\> |
+
+#### Returns
+
+[`LogFormatDetectionResult`](modules.md#logformatdetectionresult)
+
+#### Defined in
+
+[src/utils/log/detect/presetDetector.ts:20](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/detect/presetDetector.ts#L20)
+
+___
+
+### detectSqlParsePreset
+
+▸ **detectSqlParsePreset**(`logEvents`, `presets`): [`LogFormatDetectionResult`](modules.md#logformatdetectionresult)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `logEvents` | [`LogEvent`](modules.md#logevent)[] |
+| `presets` | `Record`\<`string`, \{ `classify`: readonly [`LogClassifierRule`](modules.md#logclassifierrule)[]  }\> |
+
+#### Returns
+
+[`LogFormatDetectionResult`](modules.md#logformatdetectionresult)
+
+#### Defined in
+
+[src/utils/log/detect/presetDetector.ts:110](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/detect/presetDetector.ts#L110)
+
+___
+
+### detectSqlParsePresetByText
+
+▸ **detectSqlParsePresetByText**(`logText`, `config`, `presets`): `Promise`\<[`LogFormatDetectionResult`](modules.md#logformatdetectionresult) \| ``null``\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `logText` | `string` |
+| `config` | [`LogParseConfig`](modules.md#logparseconfig) |
+| `presets` | `Record`\<`string`, \{ `classify`: readonly [`LogClassifierRule`](modules.md#logclassifierrule)[]  }\> |
+
+#### Returns
+
+`Promise`\<[`LogFormatDetectionResult`](modules.md#logformatdetectionresult) \| ``null``\>
+
+#### Defined in
+
+[src/utils/log/detect/presetDetector.ts:94](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/detect/presetDetector.ts#L94)
+
+___
+
+### expandLogEvent
+
+▸ **expandLogEvent**(`event`, `rules`): [`LogEvent`](modules.md#logevent)[]
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | [`LogEvent`](modules.md#logevent) |
+| `rules` | readonly [`LogClassifierRule`](modules.md#logclassifierrule)[] |
+
+#### Returns
+
+[`LogEvent`](modules.md#logevent)[]
+
+#### Defined in
+
+[src/utils/log/classify/classifyEvent.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/classify/classifyEvent.ts#L3)
+
+___
+
+### formatLogDetectionMessage
+
+▸ **formatLogDetectionMessage**(`result`): `string`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `result` | [`LogFormatDetectionResult`](modules.md#logformatdetectionresult) |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+[src/utils/log/detect/presetDetector.ts:186](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/detect/presetDetector.ts#L186)
+
+___
+
+### formatQuery
+
+▸ **formatQuery**(`query`, `cfg?`): `string`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `query` | `string` |
+| `cfg?` | `Partial`\<`FormatOptionsWithLanguage`\> & \{ `dbType?`: [`DBType`](modules.md#dbtype)  } |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+[src/helpers/SQLHelper.ts:99](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L99)
 
 ___
 
@@ -2023,7 +3182,7 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/resource/DbResource.ts#L44)
+[src/resource/DbResource.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/resource/DbResource.ts#L44)
 
 ___
 
@@ -2043,7 +3202,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1249](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1249)
+[src/helpers/SQLHelper.ts:1310](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1310)
 
 ___
 
@@ -2063,7 +3222,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RdhRecordRuleHelper.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RdhRecordRuleHelper.ts#L10)
+[src/helpers/RdhRecordRuleHelper.ts:10](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RdhRecordRuleHelper.ts#L10)
 
 ___
 
@@ -2083,7 +3242,27 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1325](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1325)
+[src/helpers/SQLHelper.ts:1386](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1386)
+
+___
+
+### getSqlLanguage
+
+▸ **getSqlLanguage**(`dbType`): ``"sql"`` \| ``"bigquery"`` \| ``"clickhouse"`` \| ``"db2"`` \| ``"db2i"`` \| ``"duckdb"`` \| ``"hive"`` \| ``"mariadb"`` \| ``"mysql"`` \| ``"tidb"`` \| ``"n1ql"`` \| ``"plsql"`` \| ``"postgresql"`` \| ``"redshift"`` \| ``"spark"`` \| ``"sqlite"`` \| ``"trino"`` \| ``"transactsql"`` \| ``"singlestoredb"`` \| ``"snowflake"`` \| ``"tsql"``
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dbType` | [`DBType`](modules.md#dbtype) |
+
+#### Returns
+
+``"sql"`` \| ``"bigquery"`` \| ``"clickhouse"`` \| ``"db2"`` \| ``"db2i"`` \| ``"duckdb"`` \| ``"hive"`` \| ``"mariadb"`` \| ``"mysql"`` \| ``"tidb"`` \| ``"n1ql"`` \| ``"plsql"`` \| ``"postgresql"`` \| ``"redshift"`` \| ``"spark"`` \| ``"sqlite"`` \| ``"trino"`` \| ``"transactsql"`` \| ``"singlestoredb"`` \| ``"snowflake"`` \| ``"tsql"``
+
+#### Defined in
+
+[src/helpers/SQLHelper.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L95)
 
 ___
 
@@ -2103,7 +3282,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:822](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L822)
+[src/helpers/SQLHelper.ts:883](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L883)
 
 ___
 
@@ -2123,7 +3302,7 @@ item is AllConditions
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L23)
+[src/helpers/RuleEngine.ts:23](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L23)
 
 ___
 
@@ -2143,7 +3322,7 @@ item is AnyConditions
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:27](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L27)
+[src/helpers/RuleEngine.ts:27](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L27)
 
 ___
 
@@ -2163,7 +3342,27 @@ ___
 
 #### Defined in
 
-[src/utils/dbType.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/dbType.ts#L3)
+[src/utils/dbType.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/dbType.ts#L3)
+
+___
+
+### isBuiltInPattern
+
+▸ **isBuiltInPattern**(`value`): value is "ISO8601\_STRICT" \| "ISO8601\_LENIENT" \| "JUL\_TIMESTAMP" \| "SLASH\_TIMESTAMP" \| "EPOCH\_TIMESTAMP" \| "INT" \| "NUMBER" \| "LEVEL" \| "LOGGER" \| "WORD" \| "DATA" \| "GREEDY\_DATA" \| "GREEDY\_MULTILINE"
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `value` | `string` |
+
+#### Returns
+
+value is "ISO8601\_STRICT" \| "ISO8601\_LENIENT" \| "JUL\_TIMESTAMP" \| "SLASH\_TIMESTAMP" \| "EPOCH\_TIMESTAMP" \| "INT" \| "NUMBER" \| "LEVEL" \| "LOGGER" \| "WORD" \| "DATA" \| "GREEDY\_DATA" \| "GREEDY\_MULTILINE"
+
+#### Defined in
+
+[src/types/utils/index.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/utils/index.ts#L47)
 
 ___
 
@@ -2183,7 +3382,7 @@ item is ConditionReference
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L33)
+[src/helpers/RuleEngine.ts:33](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L33)
 
 ___
 
@@ -2203,7 +3402,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/base.ts#L8)
+[src/utils/base.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/base.ts#L8)
 
 ___
 
@@ -2223,7 +3422,7 @@ item is NotConditions
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L30)
+[src/helpers/RuleEngine.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L30)
 
 ___
 
@@ -2244,7 +3443,7 @@ ___
 
 #### Defined in
 
-[src/utils/dbType.ts:16](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/dbType.ts#L16)
+[src/utils/dbType.ts:16](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/dbType.ts#L16)
 
 ___
 
@@ -2264,7 +3463,7 @@ ___
 
 #### Defined in
 
-[src/utils/dbType.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/dbType.ts#L5)
+[src/utils/dbType.ts:5](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/dbType.ts#L5)
 
 ___
 
@@ -2284,7 +3483,7 @@ arg is Scannable
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/drivers/BaseDriver.ts#L14)
+[src/drivers/BaseDriver.ts:14](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/drivers/BaseDriver.ts#L14)
 
 ___
 
@@ -2304,7 +3503,7 @@ item is TopLevelCondition
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L36)
+[src/helpers/RuleEngine.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L36)
 
 ___
 
@@ -2324,7 +3523,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1776](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1776)
+[src/helpers/SQLHelper.ts:1837](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1837)
 
 ___
 
@@ -2351,7 +3550,7 @@ positionals parameters (i.e. $1, $2, etc...)
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:944](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L944)
+[src/helpers/SQLHelper.ts:1005](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1005)
 
 ___
 
@@ -2375,7 +3574,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:917](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L917)
+[src/helpers/SQLHelper.ts:978](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L978)
 
 ___
 
@@ -2401,7 +3600,7 @@ simple parameters (i.e. ?, ?, etc...)
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1077](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1077)
+[src/helpers/SQLHelper.ts:1138](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1138)
 
 ___
 
@@ -2421,7 +3620,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:243](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L243)
+[src/helpers/RuleEngine.ts:243](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L243)
 
 ___
 
@@ -2441,7 +3640,7 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:247](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L247)
+[src/helpers/RuleEngine.ts:247](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L247)
 
 ___
 
@@ -2463,7 +3662,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/base.ts#L36)
+[src/utils/base.ts:36](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/base.ts#L36)
 
 ___
 
@@ -2484,7 +3683,7 @@ ___
 
 #### Defined in
 
-[src/utils/csv.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/csv.ts#L52)
+[src/utils/csv.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/csv.ts#L52)
 
 ___
 
@@ -2505,7 +3704,7 @@ ___
 
 #### Defined in
 
-[src/utils/csv.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/csv.ts#L61)
+[src/utils/csv.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/csv.ts#L61)
 
 ___
 
@@ -2525,7 +3724,7 @@ ___
 
 #### Defined in
 
-[src/types/resource/PartiQLAttrType.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/types/resource/PartiQLAttrType.ts#L3)
+[src/types/resource/PartiQLAttrType.ts:3](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/types/resource/PartiQLAttrType.ts#L3)
 
 ___
 
@@ -2550,7 +3749,7 @@ parse result
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:838](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L838)
+[src/helpers/SQLHelper.ts:899](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L899)
 
 ___
 
@@ -2570,7 +3769,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:154](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/base.ts#L154)
+[src/utils/base.ts:154](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/base.ts#L154)
 
 ___
 
@@ -2590,7 +3789,7 @@ ___
 
 #### Defined in
 
-[src/utils/base.ts:161](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/base.ts#L161)
+[src/utils/base.ts:161](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/base.ts#L161)
 
 ___
 
@@ -2611,7 +3810,7 @@ ___
 
 #### Defined in
 
-[src/utils/driverUtil.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/driverUtil.ts#L98)
+[src/utils/driverUtil.ts:98](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/driverUtil.ts#L98)
 
 ___
 
@@ -2637,7 +3836,32 @@ LAST N 取得用に利用するカラム名を決定する
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1429](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1429)
+[src/helpers/SQLHelper.ts:1490](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1490)
+
+___
+
+### runExtractors
+
+▸ **runExtractors**(`events`, `extractors`): [`SqlFragment`](modules.md#sqlfragment)[]
+
+Extract SQL related fragments from classified log events.
+
+Robust against noisy logs and broken sequences.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `events` | [`ClassifiedEvent`](modules.md#classifiedevent)[] |
+| `extractors` | readonly [`ExtractorConfig`](modules.md#extractorconfig)[] |
+
+#### Returns
+
+[`SqlFragment`](modules.md#sqlfragment)[]
+
+#### Defined in
+
+[src/utils/log/extract/runExtractors.ts:8](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/log/extract/runExtractors.ts#L8)
 
 ___
 
@@ -2661,7 +3885,7 @@ https://github.com/CacheControl/json-rules-engine/blob/beb656df2502c8716ffab9dc3
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L71)
+[src/helpers/RuleEngine.ts:71](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L71)
 
 ___
 
@@ -2681,7 +3905,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1990](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1990)
+[src/helpers/SQLHelper.ts:2051](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L2051)
 
 ___
 
@@ -2709,7 +3933,27 @@ ___
 
 #### Defined in
 
-[src/utils/driverUtil.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/utils/driverUtil.ts#L24)
+[src/utils/driverUtil.ts:24](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/utils/driverUtil.ts#L24)
+
+___
+
+### splitMyBatisParams
+
+▸ **splitMyBatisParams**(`body`): `string`[]
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `body` | `string` |
+
+#### Returns
+
+`string`[]
+
+#### Defined in
+
+src/utils/log/buildSqlExecutions.ts:292
 
 ___
 
@@ -2730,7 +3974,91 @@ ___
 
 #### Defined in
 
-[src/helpers/RuleEngine.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/RuleEngine.ts#L188)
+[src/helpers/RuleEngine.ts:188](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/RuleEngine.ts#L188)
+
+___
+
+### summarizeClassifyRules
+
+▸ **summarizeClassifyRules**(`rules`): `string`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `rules` | readonly [`LogClassifierRule`](modules.md#logclassifierrule)[] |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+src/utils/log/logSummary.ts:38
+
+___
+
+### summarizeClassifyRulesOneLine
+
+▸ **summarizeClassifyRulesOneLine**(`rules`, `maxLen?`): `string`
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `rules` | readonly [`LogClassifierRule`](modules.md#logclassifierrule)[] | `undefined` |
+| `maxLen` | `number` | `120` |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+src/utils/log/logSummary.ts:120
+
+___
+
+### summarizeExtractors
+
+▸ **summarizeExtractors**(`extractors`): `string`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `extractors` | readonly [`ExtractorConfig`](modules.md#extractorconfig)[] |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+src/utils/log/logSummary.ts:63
+
+___
+
+### summarizeExtractorsOneLine
+
+▸ **summarizeExtractorsOneLine**(`extractors`, `maxLen?`): `string`
+
+Debug summary for UI
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `extractors` | readonly [`ExtractorConfig`](modules.md#extractorconfig)[] | `undefined` |
+| `maxLen` | `number` | `120` |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+src/utils/log/logSummary.ts:95
 
 ___
 
@@ -2755,7 +4083,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:556](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L556)
+[src/helpers/SQLHelper.ts:617](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L617)
 
 ___
 
@@ -2776,7 +4104,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1889](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1889)
+[src/helpers/SQLHelper.ts:1950](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1950)
 
 ___
 
@@ -2804,7 +4132,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:415](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L415)
+[src/helpers/SQLHelper.ts:476](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L476)
 
 ___
 
@@ -2835,7 +4163,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:137](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L137)
+[src/helpers/SQLHelper.ts:198](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L198)
 
 ___
 
@@ -2859,7 +4187,7 @@ set global general_log = on; => set general_log TO 1;
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:772](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L772)
+[src/helpers/SQLHelper.ts:833](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L833)
 
 ___
 
@@ -2888,7 +4216,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:283](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L283)
+[src/helpers/SQLHelper.ts:344](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L344)
 
 ___
 
@@ -2908,7 +4236,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:601](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L601)
+[src/helpers/SQLHelper.ts:662](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L662)
 
 ___
 
@@ -2933,7 +4261,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:589](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L589)
+[src/helpers/SQLHelper.ts:650](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L650)
 
 ___
 
@@ -2953,7 +4281,34 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:499](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L499)
+[src/helpers/SQLHelper.ts:560](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L560)
+
+___
+
+### validateConfig
+
+▸ **validateConfig**(`config`, `state?`): `Object`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `unknown` |
+| `state?` | [`LogParseStage`](modules.md#logparsestage) |
+
+#### Returns
+
+`Object`
+
+| Name | Type |
+| :------ | :------ |
+| `availableStage?` | [`LogParseStage`](modules.md#logparsestage) |
+| `errorMessage` | `string` |
+| `ok` | `boolean` |
+
+#### Defined in
+
+src/utils/log/validator.ts:10
 
 ___
 
@@ -2973,7 +4328,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1623](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1623)
+[src/helpers/SQLHelper.ts:1684](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1684)
 
 ___
 
@@ -2993,7 +4348,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1621](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1621)
+[src/helpers/SQLHelper.ts:1682](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1682)
 
 ___
 
@@ -3014,7 +4369,7 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1625](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1625)
+[src/helpers/SQLHelper.ts:1686](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1686)
 
 ___
 
@@ -3034,4 +4389,4 @@ ___
 
 #### Defined in
 
-[src/helpers/SQLHelper.ts:1619](https://github.com/l-v-yonsama/db-drivers/blob/b68a68006895170bff21f072c074618fef160291/src/helpers/SQLHelper.ts#L1619)
+[src/helpers/SQLHelper.ts:1680](https://github.com/l-v-yonsama/db-drivers/blob/745e130454f4820c702a07e194f67bd1a97e43a7/src/helpers/SQLHelper.ts#L1680)

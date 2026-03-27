@@ -98,6 +98,9 @@ export function createLogEventPatternText(
         text = `\\[\\s*${text}\\s*\\]`;
       }
     }
+    if (field.type === 'line-break-literal' && targetForHuman) {
+      text += '\n';
+    }
     summary += text;
     if (i < fields.length - 1) {
       if (

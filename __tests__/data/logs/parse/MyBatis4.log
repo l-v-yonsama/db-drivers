@@ -1,0 +1,160 @@
+2026-03-21T18:16:50.025+09:00  INFO 26892 --- [           main] com.example.demo.DemoApplication         : ===== MYBATIS SYNTAX ERROR TEST =====
+2026-03-21T18:16:50.028+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-21T18:16:50.030+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@4724b2c1] was not registered for synchronization because synchronization is not active
+2026-03-21T18:16:50.033+09:00 DEBUG 26892 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-21T18:16:50.034+09:00 DEBUG 26892 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@1322600748 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+2026-03-21T18:16:50.035+09:00 DEBUG 26892 --- [           main] c.e.d.M.selectSyntaxError                : ==>  Preparing: select id, name FORM users
+2026-03-21T18:16:50.035+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@4724b2c1]
+2026-03-21T18:16:50.035+09:00 DEBUG 26892 --- [           main] o.s.jdbc.support.SQLErrorCodesFactory    : Looking up default SQLErrorCodes for DataSource [com.zaxxer.hikari.HikariDataSource@1816e24a]
+2026-03-21T18:16:50.035+09:00 DEBUG 26892 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-21T18:16:50.036+09:00 DEBUG 26892 --- [           main] o.s.jdbc.support.SQLErrorCodesFactory    : SQL error codes for 'H2' found
+2026-03-21T18:16:50.036+09:00 DEBUG 26892 --- [           main] o.s.jdbc.support.SQLErrorCodesFactory    : Caching SQL error codes for DataSource [com.zaxxer.hikari.HikariDataSource@1816e24a]: database product name is 'H2'
+2026-03-21T18:16:50.036+09:00 DEBUG 26892 --- [           main] s.j.s.SQLErrorCodeSQLExceptionTranslator : Translating SQLException with SQL state '42000', error code '42000', message [SQLステートメントに文法エラーがあります "select id, name FORM [*]users"
+Syntax error in SQL statement "select id, name FORM [*]users"; SQL statement:
+select id, name FORM users [42000-224]] for task [
+### Error querying database.  Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "select id, name FORM [*]users"
+Syntax error in SQL statement "select id, name FORM [*]users"; SQL statement:
+select id, name FORM users [42000-224]
+### The error may exist in com/example/demo/MyBatisUserMapper.java (best guess)
+### The error may involve com.example.demo.MyBatisUserMapper.selectSyntaxError
+### The error occurred while executing a query
+### SQL: select id, name FORM users
+### Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "select id, name FORM [*]users"
+Syntax error in SQL statement "select id, name FORM [*]users"; SQL statement:
+select id, name FORM users [42000-224]
+]
+2026-03-21T18:16:50.036+09:00 ERROR 26892 --- [           main] com.example.demo.DemoApplication         : MYBATIS_SYNTAX_ERROR
+
+org.springframework.jdbc.BadSqlGrammarException: 
+### Error querying database.  Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "select id, name FORM [*]users"
+Syntax error in SQL statement "select id, name FORM [*]users"; SQL statement:
+select id, name FORM users [42000-224]
+### The error may exist in com/example/demo/MyBatisUserMapper.java (best guess)
+### The error may involve com.example.demo.MyBatisUserMapper.selectSyntaxError
+### The error occurred while executing a query
+### SQL: select id, name FORM users
+### Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "select id, name FORM [*]users"
+Syntax error in SQL statement "select id, name FORM [*]users"; SQL statement:
+select id, name FORM users [42000-224]
+; bad SQL grammar []
+        at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:246) ~[spring-jdbc-6.1.6.jar:6.1.6]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "select id, name FORM [*]users"
+Syntax error in SQL statement "select id, name FORM [*]users"; SQL statement:
+select id, name FORM users [42000-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:514) ~[h2-2.2.224.jar:2.2.224]
+        ... 34 common frames omitted
+
+2026-03-21T18:16:50.037+09:00  INFO 26892 --- [           main] com.example.demo.DemoApplication         : ===== MYBATIS TABLE NOT FOUND TEST =====
+2026-03-21T18:16:50.037+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-21T18:16:50.037+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@2dd46693] was not registered for synchronization because synchronization is not active
+2026-03-21T18:16:50.037+09:00 DEBUG 26892 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-21T18:16:50.037+09:00 DEBUG 26892 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@655391383 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+2026-03-21T18:16:50.037+09:00 DEBUG 26892 --- [           main] c.e.d.M.selectTableNotFound              : ==>  Preparing: select * from not_exists_table
+2026-03-21T18:16:50.038+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@2dd46693]
+2026-03-21T18:16:50.038+09:00 DEBUG 26892 --- [           main] s.j.s.SQLErrorCodeSQLExceptionTranslator : Translating SQLException with SQL state '42S02', error code '42102', message [テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]] for task [
+### Error querying database.  Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]
+### The error may exist in com/example/demo/MyBatisUserMapper.java (best guess)
+### The error may involve com.example.demo.MyBatisUserMapper.selectTableNotFound
+### The error occurred while executing a query
+### SQL: select * from not_exists_table
+### Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]
+]
+2026-03-21T18:16:50.038+09:00 ERROR 26892 --- [           main] com.example.demo.DemoApplication         : MYBATIS_TABLE_NOT_FOUND
+
+org.springframework.jdbc.BadSqlGrammarException: 
+### Error querying database.  Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]
+### The error may exist in com/example/demo/MyBatisUserMapper.java (best guess)
+### The error may involve com.example.demo.MyBatisUserMapper.selectTableNotFound
+### The error occurred while executing a query
+### SQL: select * from not_exists_table
+### Cause: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]
+; bad SQL grammar []
+        at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:246) ~[spring-jdbc-6.1.6.jar:6.1.6]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:514) ~[h2-2.2.224.jar:2.2.224]
+        ... 34 common frames omitted
+
+2026-03-21T18:16:50.039+09:00  INFO 26892 --- [           main] com.example.demo.DemoApplication         : ===== MYBATIS CONSTRAINT ERROR TEST =====
+2026-03-21T18:16:50.039+09:00 DEBUG 26892 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Creating new transaction with name [com.example.demo.MyBatisService.constraintViolationTest]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-03-21T18:16:50.039+09:00 DEBUG 26892 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Opened new EntityManager [SessionImpl(2135547685<open>)] for JPA transaction
+2026-03-21T18:16:50.039+09:00 DEBUG 26892 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@5b29d699]
+2026-03-21T18:16:50.039+09:00 TRACE 26892 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.MyBatisService.constraintViolationTest]
+2026-03-21T18:16:50.040+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-21T18:16:50.040+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : Registering transaction synchronization for SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@61c3d7ac]
+2026-03-21T18:16:50.042+09:00 DEBUG 26892 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@29063342 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will be managed by Spring
+2026-03-21T18:16:50.042+09:00 DEBUG 26892 --- [           main] c.e.d.M.insertDuplicateKey               : ==>  Preparing: insert into users(id, name) values(?, ?)
+2026-03-21T18:16:50.052+09:00 DEBUG 26892 --- [           main] c.e.d.M.insertDuplicateKey               : ==> Parameters: 1(Integer), dup(String)
+2026-03-21T18:16:50.053+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@61c3d7ac]
+2026-03-21T18:16:50.053+09:00 DEBUG 26892 --- [           main] s.j.s.SQLErrorCodeSQLExceptionTranslator : Translating SQLException with SQL state '23505', error code '23505', message [ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]] for task [
+### Error updating database.  Cause: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+### The error may exist in com/example/demo/MyBatisUserMapper.java (best guess)
+### The error may involve com.example.demo.MyBatisUserMapper.insertDuplicateKey-Inline
+### The error occurred while setting parameters
+### SQL: insert into users(id, name) values(?, ?)
+### Cause: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+]
+2026-03-21T18:16:50.053+09:00 TRACE 26892 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.MyBatisService.constraintViolationTest] after exception: org.springframework.dao.DuplicateKeyException: 
+### Error updating database.  Cause: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+### The error may exist in com/example/demo/MyBatisUserMapper.java (best guess)
+### The error may involve com.example.demo.MyBatisUserMapper.insertDuplicateKey-Inline
+### The error occurred while setting parameters
+### SQL: insert into users(id, name) values(?, ?)
+### Cause: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+; ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+2026-03-21T18:16:50.054+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : Transaction synchronization deregistering SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@61c3d7ac]
+2026-03-21T18:16:50.054+09:00 DEBUG 26892 --- [           main] org.mybatis.spring.SqlSessionUtils       : Transaction synchronization closing SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@61c3d7ac]
+2026-03-21T18:16:50.054+09:00 DEBUG 26892 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Initiating transaction rollback
+2026-03-21T18:16:50.054+09:00 DEBUG 26892 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Rolling back JPA transaction on EntityManager [SessionImpl(2135547685<open>)]
+2026-03-21T18:16:50.054+09:00 DEBUG 26892 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Closing JPA EntityManager [SessionImpl(2135547685<open>)] after transaction
+2026-03-21T18:16:50.054+09:00 ERROR 26892 --- [           main] com.example.demo.DemoApplication         : MYBATIS_CONSTRAINT_ERROR
+
+org.springframework.dao.DuplicateKeyException: 
+### Error updating database.  Cause: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+### The error may exist in com/example/demo/MyBatisUserMapper.java (best guess)
+### The error may involve com.example.demo.MyBatisUserMapper.insertDuplicateKey-Inline
+### The error occurred while setting parameters
+### SQL: insert into users(id, name) values(?, ?)
+### Cause: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+; ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+        at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:254) ~[spring-jdbc-6.1.6.jar:6.1.6]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:520) ~[h2-2.2.224.jar:2.2.224]
+        at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:425) ~[mybatis-spring-3.0.3.jar:3.0.3]
+        ... 41 common frames omitted
+
+2026-03-21T18:16:50.055+09:00  INFO 26892 --- [           main] com.example.demo.DemoApplication         : ===== ↑↑↑↑↑ MYBATIS END / SPRING JDBC START ↓↓↓↓↓ =====

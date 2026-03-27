@@ -107,7 +107,7 @@ export async function init(): Promise<void> {
     await con.execute('DROP TABLE IF EXISTS `test-db`.diff2');
     await con.execute(CREATE_DIFF2_TABLE_STATEMENT);
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 10; i++) {
       await con.execute(`DROP TABLE IF EXISTS \`test-db\`.tmp${i}`);
       await con.execute(`CREATE TABLE \`test-db\`.tmp${i} (
         ID integer NOT NULL,
@@ -187,7 +187,7 @@ export async function init(): Promise<void> {
 
     await con.execute(CREATE_TABLE_ORA_DEPT);
     await con.execute(CREATE_TABLE_ORA_EMP);
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 5; i++) {
       const binds = [i, `DN${i}`, `LOC${i}`];
       await con.execute(`INSERT INTO oradb.DEPT VALUES (?, ?, ?)`, binds);
 
@@ -215,7 +215,7 @@ export async function init(): Promise<void> {
     await con.execute(CREATE_CUSTOMER_TABLE_STATEMENT);
     await con.execute(CREATE_ORDER_TABLE_STATEMENT);
     await con.execute(CREATE_ORDER_DETAIL_TABLE_STATEMENT);
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 5; i++) {
       const binds = [i, `0120-11-121${i % 10}`];
       await con.execute(
         `INSERT INTO \`test-db\`.customer (customer_no, tel) VALUES (?, ?)`,

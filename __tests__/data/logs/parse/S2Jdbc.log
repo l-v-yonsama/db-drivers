@@ -1,0 +1,20 @@
+1999-01-01T14:52:34.502+09:00 DEBUG 30 --- [ajp-nio-0.0.0.0-8009-exec-1] jta.LogTestActionImpl : Begin LogTestAction.tx=[fid=00, gid=00/186hId=]
+1999-01-01T14:52:34.502+09:00 INFO  30 --- [ajp-nio-0.0.0.0-8009-exec-1] interceptor.ActionInterceptor : ##### Start Action[LogTestAction] Function[testAA] LoginId[testKing01] ####################
+1999-01-01T14:52:34.503+09:00 DEBUG 30 --- [ajp-nio-0.0.0.0-8009-exec-1] query.SqlFileUpdateImpl : UPDATE
+  super_mario_bros
+  AS o
+  SET
+  o.sf_mon9 = '2025-01', 
+  o.standard_mario_bros_pp_gener = (select pp_gener from standard_mario_bros where id = o.standard_mario_bros_id)
+-- Com-Google
+  WHERE (bi_type6 IN (1 ,9) OR (bi_type6 = 2 AND usg_type = 3))
+-- Common Clause
+AND tanaka_pny >= 6
+  AND (sf_mon9 = "" OR sf_mon9 IS NULL)
+  AND t8_date >= '2025-01-01' 
+  AND t8_date <= '2025-01-01' 
+  AND hj999id LIKE CONCAT('%', '100000034701', '%') 
+  AND pid IN ('600000006083') 
+  LIMIT 10000 
+1999-01-01T14:52:34.513+09:00 INFO  30 --- [ajp-nio-0.0.0.0-8009-exec-1] interceptor.ActionInterceptor : ##### End   Action[LogTestAction] Function[testAA] LoginId[testKing01] ####################
+1999-01-01T14:52:34.522+09:00 DEBUG 30 --- [ajp-nio-0.0.0.0-8009-exec-1] jta.LogTestActionImpl : End LogTestAction.tx=[fid=00, gid=00/186

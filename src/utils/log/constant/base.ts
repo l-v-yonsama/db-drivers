@@ -36,7 +36,7 @@ const ISO_TIME_ONLY_LENIENT = ISO_TIME_LENIENT;
    LOG LEVEL
 ====================================================== */
 
-const LOG_LEVELS = [
+export const LOG_LEVELS = [
   'trace',
   'debug',
   'info',
@@ -45,7 +45,9 @@ const LOG_LEVELS = [
   'error',
   'fatal',
   'severe',
-];
+] as const;
+
+export type LogLevel = (typeof LOG_LEVELS)[number];
 
 /* ======================================================
    Built-in field patterns

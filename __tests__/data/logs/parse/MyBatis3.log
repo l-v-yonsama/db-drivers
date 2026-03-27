@@ -1,0 +1,116 @@
+2026-03-16T14:28:24.183+09:00  INFO 39698 --- [           main] com.example.demo.DemoApplication         : ===== MYBATIS COMMIT NONE-TRANSACTIONAL TEST =====
+2026-03-16T14:28:24.185+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-16T14:28:24.186+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@12478b4e] was not registered for synchronization because synchronization is not active
+2026-03-16T14:28:24.188+09:00 DEBUG 39698 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-16T14:28:24.189+09:00 DEBUG 39698 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@817463247 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+2026-03-16T14:28:24.189+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==>  Preparing: insert into users(name) values(?)
+2026-03-16T14:28:24.195+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==> Parameters: MyBatisCommitUser(String)
+2026-03-16T14:28:24.196+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : <==    Updates: 1
+2026-03-16T14:28:24.196+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@12478b4e]
+2026-03-16T14:28:24.197+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-16T14:28:24.197+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@799206ad] was not registered for synchronization because synchronization is not active
+2026-03-16T14:28:24.197+09:00 DEBUG 39698 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-16T14:28:24.197+09:00 DEBUG 39698 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@773610783 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+2026-03-16T14:28:24.197+09:00 DEBUG 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : ==>  Preparing: select id, name, age, created, updated from users where id = ?
+2026-03-16T14:28:24.198+09:00 DEBUG 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : ==> Parameters: 10(Integer)
+2026-03-16T14:28:24.203+09:00 TRACE 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : <==    Columns: ID, NAME, AGE, CREATED, UPDATED
+2026-03-16T14:28:24.203+09:00 TRACE 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : <==        Row: 10, MyBatisCommitUser, null, null, null
+2026-03-16T14:28:24.204+09:00 DEBUG 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : <==      Total: 1
+2026-03-16T14:28:24.204+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@799206ad]
+2026-03-16T14:28:24.204+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-16T14:28:24.204+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@5b76b891] was not registered for synchronization because synchronization is not active
+2026-03-16T14:28:24.204+09:00 DEBUG 39698 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-16T14:28:24.204+09:00 DEBUG 39698 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@1629131231 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+2026-03-16T14:28:24.204+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.update  : ==>  Preparing: update users set name = ?, age = ?, updated = ? where id = ?
+2026-03-16T14:28:24.204+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.update  : ==> Parameters: MyBatisCommitUser_,,upd
+ated(String), null, 2026-03-16 14:28:24.204(Timestamp), 10(Integer)
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.update  : <==    Updates: 1
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@5b76b891]
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@15651402] was not registered for synchronization because synchronization is not active
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@1545160274 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==>  Preparing: insert into users(name) values(?)
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==> Parameters: MyBatisBatch_0(String)
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : <==    Updates: 1
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@15651402]
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@1f02b6d1] was not registered for synchronization because synchronization is not active
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@1722092691 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==>  Preparing: insert into users(name) values(?)
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==> Parameters: MyBatisBatch_1(String)
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : <==    Updates: 1
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@1f02b6d1]
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-16T14:28:24.205+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@5bddd141] was not registered for synchronization because synchronization is not active
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@1298147262 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.delete  : ==>  Preparing: delete from users where id = ?
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.delete  : ==> Parameters: 10(Integer)
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.delete  : <==    Updates: 1
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@5bddd141]
+2026-03-16T14:28:24.206+09:00  INFO 39698 --- [           main] com.example.demo.DemoApplication         : ===== MYBATIS COMMIT TRANSACTIONAL TEST =====
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Creating new transaction with name [com.example.demo.MyBatisService.commitTransactionTest]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Opened new EntityManager [SessionImpl(1197389053<open>)] for JPA transaction
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@951e911]
+2026-03-16T14:28:24.206+09:00 TRACE 39698 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.MyBatisService.commitTransactionTest]
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Registering transaction synchronization for SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@533689273 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will be managed by Spring
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==>  Preparing: insert into users(name) values(?)
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==> Parameters: MyBatisCommitUser(String)
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : <==    Updates: 1
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c] from current transaction
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : ==>  Preparing: select id, name, age, created, updated from users where id = ?
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : ==> Parameters: 13(Integer)
+2026-03-16T14:28:24.207+09:00 TRACE 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : <==    Columns: ID, NAME, AGE, CREATED, UPDATED
+2026-03-16T14:28:24.207+09:00 TRACE 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : <==        Row: 13, MyBatisCommitUser, null, null, null
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : <==      Total: 1
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c] from current transaction
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.update  : ==>  Preparing: update users set name = ?, age = ?, updated = ? where id = ?
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.update  : ==> Parameters: MyBatisCommitUser_updated(String), 20(Integer), 2026-03-16 14:28:24.207(Timestamp), 13(Integer)
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.update  : <==    Updates: 1
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c] from current transaction
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==>  Preparing: insert into users(name) values(?)
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==> Parameters: MyBatisBatch_0(String)
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : <==    Updates: 1
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c] from current transaction
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==>  Preparing: insert into users(name) values(?)
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==> Parameters: MyBatisBatch_1(String)
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : <==    Updates: 1
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c] from current transaction
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.delete  : ==>  Preparing: delete from users where id = ?
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.delete  : ==> Parameters: 13(Integer)
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.delete  : <==    Updates: 1
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.208+09:00 TRACE 39698 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.MyBatisService.commitTransactionTest]
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Transaction synchronization committing SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.208+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Transaction synchronization deregistering SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Transaction synchronization closing SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7022fb5c]
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Initiating transaction commit
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Committing JPA transaction on EntityManager [SessionImpl(1197389053<open>)]
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Closing JPA EntityManager [SessionImpl(1197389053<open>)] after transaction
+2026-03-16T14:28:24.209+09:00  INFO 39698 --- [           main] com.example.demo.DemoApplication         : ===== MYBATIS ROLLBACK TEST =====
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Creating new transaction with name [com.example.demo.MyBatisService.rollbackTransactionTest]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Opened new EntityManager [SessionImpl(1282386874<open>)] for JPA transaction
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@3f2ab6ec]
+2026-03-16T14:28:24.209+09:00 TRACE 39698 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.MyBatisService.rollbackTransactionTest]
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Creating a new SqlSession
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Registering transaction synchronization for SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@1f1e15de]
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] o.m.s.t.SpringManagedTransaction         : JDBC Connection [HikariProxyConnection@522410506 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will be managed by Spring
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==>  Preparing: insert into users(name) values(?)
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : ==> Parameters: MyBatisRollbackUser(String)
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] c.example.demo.MyBatisUserMapper.insert  : <==    Updates: 1
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@1f1e15de]
+2026-03-16T14:28:24.209+09:00 TRACE 39698 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.MyBatisService.rollbackTransactionTest] after exception: java.lang.RuntimeException: MyBatis rollback test
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Transaction synchronization deregistering SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@1f1e15de]
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] org.mybatis.spring.SqlSessionUtils       : Transaction synchronization closing SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@1f1e15de]
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Initiating transaction rollback
+2026-03-16T14:28:24.209+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Rolling back JPA transaction on EntityManager [SessionImpl(1282386874<open>)]
+2026-03-16T14:28:24.210+09:00 DEBUG 39698 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Closing JPA EntityManager [SessionImpl(1282386874<open>)] after transaction

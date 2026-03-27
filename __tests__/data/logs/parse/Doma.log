@@ -1,0 +1,38 @@
+2026-03-13T11:20:54.301+09:00  INFO 389 --- [           main] com.example.demo.DemoApplication         : ===== DOMA COMMIT TEST =====
+2026-03-13T11:20:54.304+09:00 TRACE 389 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.UserService.commitTransactionTest]
+2026-03-13T11:20:54.312+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=insert
+2026-03-13T11:20:54.334+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+insert into users (name) values ('CommitUser')
+2026-03-13T11:20:54.339+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=insert
+2026-03-13T11:20:54.339+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=selectById
+2026-03-13T11:20:54.354+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[META-INF/com/example/demo/UserDao/selectById.sql],
+select
+  id,
+  name
+from
+  users
+where
+  id = 1
+2026-03-13T11:20:54.356+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=selectById
+2026-03-13T11:20:54.357+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=update
+2026-03-13T11:20:54.358+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+update users set name = 'CommitUser_updated' where id = 1
+2026-03-13T11:20:54.359+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=update
+2026-03-13T11:20:54.360+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=batchInsert
+2026-03-13T11:20:54.362+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+insert into users (name) values ('BatchCommit_0')
+2026-03-13T11:20:54.362+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+insert into users (name) values ('BatchCommit_1')
+2026-03-13T11:20:54.363+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=batchInsert
+2026-03-13T11:20:54.363+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=delete
+2026-03-13T11:20:54.364+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+delete from users where id = 1
+2026-03-13T11:20:54.365+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=delete
+2026-03-13T11:20:54.365+09:00 TRACE 389 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.UserService.commitTransactionTest]
+2026-03-13T11:20:54.366+09:00  INFO 389 --- [           main] com.example.demo.DemoApplication         : ===== DOMA ROLLBACK TEST =====
+2026-03-13T11:20:54.366+09:00 TRACE 389 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.UserService.rollbackTransactionTest]
+2026-03-13T11:20:54.367+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=insert
+2026-03-13T11:20:54.367+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[null],
+insert into users (name) values ('RollbackUser')
+2026-03-13T11:20:54.367+09:00  INFO 389 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=insert
+2026-03-13T11:20:54.367+09:00 TRACE 389 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.UserService.rollbackTransactionTest] after exception: java.lang.RuntimeException: Force rollback for log test

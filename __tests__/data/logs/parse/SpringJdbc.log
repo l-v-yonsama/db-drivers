@@ -1,0 +1,45 @@
+2026-03-16T13:02:38.883+09:00  INFO 67419 --- [           main] com.example.demo.DemoApplication         : ===== SPRING JDBC COMMIT TEST =====
+2026-03-16T13:02:38.883+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Creating new transaction with name [com.example.demo.SpringJdbcService.commitTransactionTest]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-03-16T13:02:38.883+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Opened new EntityManager [SessionImpl(1675625850<open>)] for JPA transaction
+2026-03-16T13:02:38.883+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@5b76b891]
+2026-03-16T13:02:38.884+09:00 TRACE 67419 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.SpringJdbcService.commitTransactionTest]
+2026-03-16T13:02:38.885+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL update
+2026-03-16T13:02:38.886+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL statement [insert into users(name, age) values(?, ?)]
+2026-03-16T13:02:38.888+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 1, parameter value [JdbcCommitUser], value class [java.lang.String], SQL type unknown
+2026-03-16T13:02:38.888+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 2, parameter value [20], value class [java.lang.Integer], SQL type unknown
+2026-03-16T13:02:38.888+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : SQL update affected 1 rows
+2026-03-16T13:02:38.890+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL query
+2026-03-16T13:02:38.890+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL statement [select name from users where name = ?]
+2026-03-16T13:02:38.890+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 1, parameter value [JdbcCommitUser], value class [java.lang.String], SQL type unknown
+2026-03-16T13:02:38.890+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL update
+2026-03-16T13:02:38.890+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL statement [update users set name=? where name=?]
+2026-03-16T13:02:38.890+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 1, parameter value [JdbcCommitUser_updated], value class [java.lang.String], SQL type unknown
+2026-03-16T13:02:38.890+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 2, parameter value [JdbcCommitUser], value class [java.lang.String], SQL type unknown
+2026-03-16T13:02:38.891+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : SQL update affected 1 rows
+2026-03-16T13:02:38.891+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing SQL batch update [insert into users(name) values(?)]
+2026-03-16T13:02:38.891+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL statement [insert into users(name) values(?)]
+2026-03-16T13:02:38.891+09:00 DEBUG 67419 --- [           main] o.s.jdbc.support.JdbcUtils               : JDBC driver supports batch updates
+2026-03-16T13:02:38.891+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 1, parameter value [JdbcBatch_0], value class [java.lang.String], SQL type unknown
+2026-03-16T13:02:38.891+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 1, parameter value [JdbcBatch_1], value class [java.lang.String], SQL type unknown
+2026-03-16T13:02:38.891+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL update
+2026-03-16T13:02:38.891+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL statement [delete from users where name=?]
+2026-03-16T13:02:38.891+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 1, parameter value [JdbcCommitUser_updated], value class [java.lang.String], SQL type unknown
+2026-03-16T13:02:38.891+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : SQL update affected 1 rows
+2026-03-16T13:02:38.891+09:00 TRACE 67419 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.SpringJdbcService.commitTransactionTest]
+2026-03-16T13:02:38.891+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Initiating transaction commit
+2026-03-16T13:02:38.891+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Committing JPA transaction on EntityManager [SessionImpl(1675625850<open>)]
+2026-03-16T13:02:38.891+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Closing JPA EntityManager [SessionImpl(1675625850<open>)] after transaction
+2026-03-16T13:02:38.892+09:00  INFO 67419 --- [           main] com.example.demo.DemoApplication         : ===== SPRING JDBC ROLLBACK TEST =====
+2026-03-16T13:02:38.892+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Creating new transaction with name [com.example.demo.SpringJdbcService.rollbackTransactionTest]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-03-16T13:02:38.892+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Opened new EntityManager [SessionImpl(1221430897<open>)] for JPA transaction
+2026-03-16T13:02:38.892+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@43b3b1b0]
+2026-03-16T13:02:38.892+09:00 TRACE 67419 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.SpringJdbcService.rollbackTransactionTest]
+2026-03-16T13:02:38.892+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL update
+2026-03-16T13:02:38.892+09:00 DEBUG 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL statement [insert into users(name) values(?)]
+2026-03-16T13:02:38.892+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 1, parameter value [JdbcRollbackUser], value class [java.lang.String], SQL type unknown
+2026-03-16T13:02:38.892+09:00 TRACE 67419 --- [           main] o.s.jdbc.core.JdbcTemplate               : SQL update affected 1 rows
+2026-03-16T13:02:38.892+09:00 TRACE 67419 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.SpringJdbcService.rollbackTransactionTest] after exception: java.lang.RuntimeException: Spring JDBC rollback test
+2026-03-16T13:02:38.892+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Initiating transaction rollback
+2026-03-16T13:02:38.892+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Rolling back JPA transaction on EntityManager [SessionImpl(1221430897<open>)]
+2026-03-16T13:02:38.892+09:00 DEBUG 67419 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Closing JPA EntityManager [SessionImpl(1221430897<open>)] after transaction
+2026-03-16T13:02:38.894+09:00  INFO 67419 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'

@@ -1,0 +1,48 @@
+2026-03-21T18:16:50.056+09:00  INFO 26892 --- [           main] com.example.demo.DemoApplication         : ===== SPRING JDBC SYNTAX ERROR TEST =====
+2026-03-21T18:16:50.056+09:00 DEBUG 26892 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing SQL query [select * FORM users]
+2026-03-21T18:16:50.056+09:00 DEBUG 26892 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-21T18:16:50.057+09:00 ERROR 26892 --- [           main] com.example.demo.DemoApplication         : SPRING JDBC_SYNTAX_ERROR
+
+org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [select * FORM users]
+        at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:103) ~[spring-jdbc-6.1.6.jar:6.1.6]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "select * [*]FORM users"
+Syntax error in SQL statement "select * [*]FORM users"; SQL statement:
+select * FORM users [42000-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:514) ~[h2-2.2.224.jar:2.2.224]
+        ... 30 common frames omitted
+
+2026-03-21T18:16:50.057+09:00  INFO 26892 --- [           main] com.example.demo.DemoApplication         : ===== SPRING JDBC TABLE NOT FOUND TEST =====
+2026-03-21T18:16:50.057+09:00 DEBUG 26892 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing SQL query [select * from not_exists_table]
+2026-03-21T18:16:50.057+09:00 DEBUG 26892 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-21T18:16:50.057+09:00 ERROR 26892 --- [           main] com.example.demo.DemoApplication         : SPRING JDBC_TABLE_NOT_FOUND
+
+org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [select * from not_exists_table]
+        at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:103) ~[spring-jdbc-6.1.6.jar:6.1.6]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:514) ~[h2-2.2.224.jar:2.2.224]
+        ... 30 common frames omitted
+
+2026-03-21T18:16:50.059+09:00  INFO 26892 --- [           main] com.example.demo.DemoApplication         : ===== SPRING JDBC CONSTRAINT ERROR TEST =====
+2026-03-21T18:16:50.060+09:00 DEBUG 26892 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL update
+2026-03-21T18:16:50.060+09:00 DEBUG 26892 --- [           main] o.s.jdbc.core.JdbcTemplate               : Executing prepared SQL statement [insert into users(id, name) values(?, ?)]
+2026-03-21T18:16:50.060+09:00 DEBUG 26892 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-21T18:16:50.062+09:00 TRACE 26892 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 1, parameter value [1], value class [java.lang.Integer], SQL type unknown
+2026-03-21T18:16:50.065+09:00 TRACE 26892 --- [           main] o.s.jdbc.core.StatementCreatorUtils      : Setting SQL statement parameter value: column index 2, parameter value [dup], value class [java.lang.String], SQL type unknown
+2026-03-21T18:16:50.066+09:00 ERROR 26892 --- [           main] com.example.demo.DemoApplication         : SPRING JDBC_CONSTRAINT_ERROR
+
+org.springframework.dao.DuplicateKeyException: PreparedStatementCallback; SQL [insert into users(id, name) values(?, ?)]; ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+        at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:95) ~[spring-jdbc-6.1.6.jar:6.1.6]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ 99, 1, TIMESTAMP '2026-03-21 18:16:49.973', TIMESTAMP '2026-03-21 18:16:49.973', 'HibernateDup')"; SQL statement:
+insert into users(id, name) values(?, ?) [23505-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:520) ~[h2-2.2.224.jar:2.2.224]
+        ... 30 common frames omitted
+
+2026-03-21T18:16:50.068+09:00  INFO 26892 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'

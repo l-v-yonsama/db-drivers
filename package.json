@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.12.25",
+  "version": "0.13.20",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -33,18 +33,21 @@
     "tsutils": "~3.21",
     "typedoc": "^0.25.1",
     "typedoc-plugin-markdown": "^3.16.0",
-    "typescript": "~4.9"
+    "typescript": "~4.9",
+    "typescript-json-schema": "^0.67.1"
   },
   "scripts": {
     "start": "node built/src/index.js",
-    "clean": "rimraf coverage built tmp *.tgz",
+    "clean": "rimraf coverage built tmp *.tgz __tests__/data/logs/parse/*.json",
     "clean:examples": "rimraf built/src/examples",
     "prebuild": "npm run lint",
     "doc": "typedoc --cleanOutputDir --excludePrivate --plugin typedoc-plugin-markdown --out doc src",
     "build": "npm run clean && tsc -p tsconfig.json",
     "build:watch": "npm run clean && tsc -w -p tsconfig.json",
-    "build:pack": "npm run clean && tsc -p tsconfig.release.json && npm run clean:examples && npm pack",
-    "build:release": "npm run clean && tsc -p tsconfig.release.json && npm run clean:examples && npm run doc",
+    "build:schema": "typescript-json-schema tsconfig.json LogParseConfig --required --noExtraProps --out schema/log-parse-config.schema.json",
+    "build:core": "npm run clean && tsc -p tsconfig.release.json && npm run build:schema && cp -r schema built/schema",
+    "build:pack": "npm run build:core && npm run clean:examples && npm pack",
+    "build:release": "npm run build:core && npm run clean:examples && npm run doc",
     "prepublishOnly": "npm run build:release",
     "lint": "eslint . --ext .ts --ext .mts",
     "lint:fix": "eslint --fix . --ext .ts --ext .mts",
@@ -95,7 +98,7 @@
     "@aws-sdk/credential-providers": "^3.279.0",
     "@aws-sdk/lib-dynamodb": "^3.656.0",
     "@aws-sdk/s3-request-presigner": "^3.427.0",
-    "@l-v-yonsama/rdh": "^0.2.10",
+    "@l-v-yonsama/rdh": "^0.2.13",
     "auth0": "^3.7.1",
     "axios": "^1.6.0",
     "bytes": "^3.1.2",
@@ -119,6 +122,7 @@
     "pgsql-ast-parser": "^11.0.1",
     "pluralize": "^8.0.0",
     "short-unique-id": "^4.4.4",
+    "sql-formatter": "^15.7.2",
     "sql.js": "^1.10.3",
     "xregexp": "^5.1.2"
   },
@@ -128,7 +132,8 @@
   "main": "built/src/index.js",
   "types": "built/src/index.d.ts",
   "files": [
-    "built/src"
+    "built/src",
+    "built/schema"
   ],
   "repository": {
     "type": "git",

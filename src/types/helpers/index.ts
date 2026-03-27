@@ -8,6 +8,7 @@ import {
   SchemaAndTableName,
 } from '../../resource';
 import { RDSBaseDriver } from '../../drivers';
+import { SqlLanguage, supportedDialects } from 'sql-formatter';
 
 export type QNames = {
   tableName: string;
@@ -102,3 +103,9 @@ export type BindParamPosition = {
   numOfBinds: number;
   kind: 'single' | 'multiple';
 };
+
+/**
+ * Supported SQL languages for formatter (source of truth)
+ */
+export const FORMATTER_SQL_LANGUAGES: readonly SqlLanguage[] =
+  supportedDialects as SqlLanguage[];

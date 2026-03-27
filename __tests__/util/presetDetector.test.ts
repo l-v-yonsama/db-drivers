@@ -2,85 +2,104 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 
 import {
-  detectLogFormatWithConfidence,
-  LOG_PARSE_CONFIG_PRESETS,
+  ClassifiedEvent,
+  detectLogSplitPreset,
+  detectSqlParsePreset,
+  formatLogDetectionMessage,
+  LOG_EVENT_SPLIT_PRESETS,
+  LogParser,
+  SQL_LOG_PARSE_PRESETS,
+  SqlLogParsePresetName,
 } from '../../src';
 
 const dataFolder = path.join('__tests__', 'data');
 
-const readFile = async (dir: string, fileName: string): Promise<string> => {
-  return await fs.readFile(path.join(dataFolder, 'logs', dir, fileName), {
-    encoding: 'utf-8',
+const getLogEvent = async (
+  fileName: string,
+  sqlLogPreset: SqlLogParsePresetName,
+): Promise<ClassifiedEvent[]> => {
+  const logText = await fs.readFile(
+    path.join(dataFolder, 'logs', 'parse', fileName),
+    {
+      encoding: 'utf-8',
+    },
+  );
+  const { split } = LOG_EVENT_SPLIT_PRESETS['SpringBoot'];
+  const { classify, extractors } = SQL_LOG_PARSE_PRESETS[sqlLogPreset];
+  const parser = new LogParser({
+    split,
+    classify,
+    extractors,
   });
+  const result = await parser.parse({
+    logText,
+    stage: 'split',
+  });
+  return result.logEvents;
 };
 
-describe('detectLogFormatWithConfidence', () => {
-  describe('S2Jdbc detection', () => {
-    it.each([
-      ['01', 's01.log'],
-      ['02', 's02.log'],
-      ['03', 's03.log'],
-      ['04', 's04.log'],
-      ['05', 's05.log'],
-      ['06', 's06.log'],
-    ])('detects S2Jdbc dir:%s file:%s', async (dir: string, file: string) => {
-      const logText = await readFile(dir, file);
+describe('detectLogSplitPreset', () => {
+  it.each([
+    ['Simple', ['Simple']],
+    ['Logback', ['Logback', 'Log4j']],
+    ['Log4j', ['Log4j']],
+    ['Log4jMdc', ['Log4jMdc']],
+    ['JavaUtilLogging', ['JavaUtilLogging']],
+    ['SpringBoot', ['Simple', 'SpringBoot']],
+  ])(
+    'should detect %s preset from sample log',
+    async (iPresetName: string, detectedPresetNames: string[]) => {
+      const { logExample } = LOG_EVENT_SPLIT_PRESETS[iPresetName];
 
-      const result = detectLogFormatWithConfidence(
-        logText,
-        LOG_PARSE_CONFIG_PRESETS,
-      );
+      const result = detectLogSplitPreset(logExample, LOG_EVENT_SPLIT_PRESETS);
 
-      expect(result.presetName).toBe('S2Jdbc');
-
+      expect(result.presetNames).toEqual(detectedPresetNames);
       expect(result.confidence).toBeGreaterThanOrEqual(0.4);
+    },
+  );
+});
 
-      expect(result.scores['S2Jdbc']).toBeGreaterThan(
-        result.scores['MyBatis'] ?? 0,
-      );
-    });
+describe('detectSqlParsePreset', () => {
+  it.each([
+    ['Hibernate.log', 'Hibernate', ['Hibernate']],
+    ['Doma.log', 'Doma', ['Doma']],
+    ['Doma2.log', 'Doma', ['Doma']],
+    ['MyBatis.log', 'MyBatis', ['MyBatis']],
+    ['MyBatis2.log', 'MyBatis', ['MyBatis']],
+    ['MyBatis3.log', 'MyBatis', ['MyBatis']],
+    ['SpringJdbc.log', 'SpringJdbc', ['SpringJdbc']],
+    ['S2Jdbc.log', 'S2Jdbc', ['S2Jdbc']],
+  ])(
+    'should detect SQL preset %s from log file %s',
+    async (
+      fileName: string,
+      sqlLogPresetName: SqlLogParsePresetName,
+      detectedPresetNames: string[],
+    ) => {
+      const logEvents = await getLogEvent(fileName, sqlLogPresetName);
+      const result = detectSqlParsePreset(logEvents, SQL_LOG_PARSE_PRESETS);
+
+      expect(result.presetNames).toEqual(detectedPresetNames);
+      expect(result.confidence).toBeGreaterThanOrEqual(0.4);
+    },
+  );
+});
+
+describe('formatLogDetectionMessage', () => {
+  it('should format detection message for log split preset', async () => {
+    const { logExample } = LOG_EVENT_SPLIT_PRESETS.Logback;
+
+    const result = detectLogSplitPreset(logExample, LOG_EVENT_SPLIT_PRESETS);
+    const text = formatLogDetectionMessage(result);
+
+    expect(text).toBe('Likely: Logback,Log4j (50%)');
   });
 
-  describe('MyBatis detection', () => {
-    it.each([
-      ['01', 'm01.log'],
-      ['02', 'm02.log'],
-      // ['03', 'm03.log'],
-      // ['04', 'm04.log'],
-      // ['05', 'm05.log'],
-    ])('detects MyBatis dir:%s file:%s', async (dir: string, file: string) => {
-      const logText = await readFile(dir, file);
+  it('should format detection message for SQL parse preset', async () => {
+    const logEvents = await getLogEvent('Hibernate.log', 'Hibernate');
+    const result = detectSqlParsePreset(logEvents, SQL_LOG_PARSE_PRESETS);
+    const text = formatLogDetectionMessage(result);
 
-      const result = detectLogFormatWithConfidence(
-        logText,
-        LOG_PARSE_CONFIG_PRESETS,
-      );
-
-      expect(result.presetName).toBe('MyBatis');
-
-      expect(result.confidence).toBeGreaterThanOrEqual(0.4);
-
-      expect(result.scores['MyBatis']).toBeGreaterThan(
-        result.scores['S2Jdbc'] ?? 0,
-      );
-    });
-  });
-
-  describe('unknown format', () => {
-    it('returns low confidence for random log', () => {
-      const randomLog = `
-Hello world
-This is random log
-Something happened
-Stack trace maybe
-`;
-
-      const result = detectLogFormatWithConfidence(
-        randomLog,
-        LOG_PARSE_CONFIG_PRESETS,
-      );
-
-      expect(result.confidence).toBeLessThanOrEqual(0.4);
-    });
+    expect(text).toMatch(/Detected: Hibernate \(\d+% confidence\)/);
   });
 });

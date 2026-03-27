@@ -5,15 +5,13 @@ import { createLogEventPattern } from '../pattern/logEventPattern';
 export function splitLogEvents(
   logText: string,
   config: LogEventSplitConfig,
-  debug = false,
+  linesToParse?: number,
 ): SpligLogText[] {
   const startPattern = createLogEventPattern({
     fields: config.fields,
     onlyStartMarker: true,
   });
-  if (debug) {
-    console.debug('startPattern=', startPattern);
-  }
+
   const lines = logText.split(/\r?\n|\r/);
 
   const events: SpligLogText[] = [];
@@ -21,15 +19,13 @@ export function splitLogEvents(
   let current: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
+    if (linesToParse && linesToParse > 0 && i >= linesToParse) {
+      break;
+    }
     const line = lines[i];
     const isStart = XRegExp.test(line, startPattern);
-    if (debug) {
-      console.debug('line=', JSON.stringify(line), 'isStart=', isStart);
-    }
-    // const isContinuation = line.startsWith(' ') || line.startsWith('\t');
 
     if (isStart) {
-      // if (isStart && !isContinuation) {
       if (current.length > 0) {
         events.push({ lineNo, text: current.join('\n') });
       }

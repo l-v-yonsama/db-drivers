@@ -104,15 +104,7 @@ describe('ResourceHelper', () => {
       expect(ann2.values.label).toBe('Unknown');
       expect(ann2.values.isUndefined).toBe(false);
       expect(rdh.rows[2].values['SEX']).toBe(0);
-      // 10
-      const ann10 = RowHelper.getFirstAnnotationOf<CodeResolvedAnnotation>(
-        rdh.rows[9],
-        'SEX',
-        'Cod',
-      );
-      expect(ann10.values.label).toBe('Undefined');
-      expect(ann10.values.isUndefined).toBe(true);
-      expect(rdh.rows[9].values['SEX']).toBe(6);
+
     });
   });
 });

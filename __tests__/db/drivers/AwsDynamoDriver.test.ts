@@ -496,7 +496,7 @@ describe('AwsDynamoDBDriver', () => {
           ItemCount: 6,
           IndexStatus: 'ACTIVE',
         });
-        console.log(food.getProperties());
+        // console.log(food.getProperties());
 
         const testtable = testDbRes.getChildByName(
           'testtable',
@@ -1175,15 +1175,9 @@ describe('AwsDynamoDBDriver', () => {
       describe('variable attribute types', () => {
         it('testtable No returning', async () => {
           await driver.getInfomationSchemas();
-          const rs0 = await driver.dynamoClient.requestPartiql({
-            sql: 'SELECT * FROM testtable',
-          });
-          console.log(
-            ResultSetDataBuilder.from(rs0).toMarkdown({
-              withType: true,
-              withComment: true,
-            }),
-          );
+          // const rs0 = await driver.dynamoClient.requestPartiql({
+          //   sql: 'SELECT * FROM testtable',
+          // });
 
           const rs = await driver.dynamoClient.requestPartiql({
             sql: `UPDATE

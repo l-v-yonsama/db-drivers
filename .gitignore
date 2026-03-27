@@ -2,6 +2,11 @@
 logs
 *.log
 npm-debug.log*
+!__tests__/
+!__tests__/data/
+!__tests__/data/logs/
+!__tests__/data/logs/parse/
+!__tests__/data/logs/parse/*.log
 
 # Dependencies
 node_modules/

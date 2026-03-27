@@ -1,0 +1,51 @@
+2026-03-13T16:36:42.168+09:00  INFO 49862 --- [           main] com.example.demo.DemoApplication         : ===== MYBATIS COMMIT NONE-TRANSACTIONAL TEST =====
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@61f08aa9] was not registered for synchronization because synchronization is not active
+2026-03-13T16:36:42.174+09:00 DEBUG 49862 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+JDBC Connection [HikariProxyConnection@123869694 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+==>  Preparing: insert into users(name) values(?)
+==> Parameters: MyBatisCommitUser(String)
+<==    Updates: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@61f08aa9]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@44df834c] was not registered for synchronization because synchronization is not active
+2026-03-13T16:36:42.182+09:00 DEBUG 49862 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+JDBC Connection [HikariProxyConnection@1733285169 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+==>  Preparing: select id, name from users where id = ?
+==> Parameters: 9(Integer)
+<==    Columns: ID, NAME
+<==        Row: 9, MyBatisCommitUser
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@44df834c]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@3a00237d] was not registered for synchronization because synchronization is not active
+2026-03-13T16:36:42.189+09:00 DEBUG 49862 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+JDBC Connection [HikariProxyConnection@197690005 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+==>  Preparing: update users set name = ? where id = ?
+==> Parameters: MyBatisCommitUser_updated(String), 9(Integer)
+<==    Updates: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@3a00237d]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@341df373] was not registered for synchronization because synchronization is not active
+2026-03-13T16:36:42.190+09:00 DEBUG 49862 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+JDBC Connection [HikariProxyConnection@2124338399 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+==>  Preparing: insert into users(name) values(?)
+==> Parameters: MyBatisBatch_0(String)
+<==    Updates: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@341df373]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@453e1bba] was not registered for synchronization because synchronization is not active
+2026-03-13T16:36:42.190+09:00 DEBUG 49862 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+JDBC Connection [HikariProxyConnection@179168674 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+==>  Preparing: insert into users(name) values(?)
+==> Parameters: MyBatisBatch_1(String)
+<==    Updates: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@453e1bba]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@51f009ef] was not registered for synchronization because synchronization is not active
+2026-03-13T16:36:42.190+09:00 DEBUG 49862 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+JDBC Connection [HikariProxyConnection@1505756962 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will not be managed by Spring
+==>  Preparing: delete from users where id = ?
+==> Parameters: 9(Integer)
+<==    Updates: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@51f009ef]

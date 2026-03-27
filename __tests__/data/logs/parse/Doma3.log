@@ -1,0 +1,107 @@
+2026-03-21T16:56:47.088+09:00  INFO 12756 --- [           main] com.example.demo.DemoApplication         : ===== DOMA SYNTAX ERROR TEST =====
+2026-03-21T16:56:47.088+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=selectSyntaxError
+2026-03-21T16:56:47.091+09:00 DEBUG 12756 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-21T16:56:47.092+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2222] THROW  : CLASS=com.example.demo.UserDaoImpl, METHOD=selectSyntaxError, EXCEPTION=org.seasar.doma.jdbc.JdbcException
+2026-03-21T16:56:47.098+09:00 DEBUG 12756 --- [           main] s.j.s.SQLErrorCodeSQLExceptionTranslator : Translating SQLException with SQL state '42S02', error code '42102', message [テーブル "USERSS" が見つかりません
+Table "USERSS" not found; SQL statement:
+select id, name from userss wheeer id = 6 [42102-224]] for task [[DOMA2016] Cannot get java.sql.PreparedStatement.
+PATH=[META-INF/com/example/demo/UserDao/selectSyntaxError.sql].
+SQL=[select id, name from userss wheeer id = 6].
+The cause is as follows: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "USERSS" が見つかりません
+Table "USERSS" not found; SQL statement:
+select id, name from userss wheeer id = 6 [42102-224]]
+2026-03-21T16:56:47.098+09:00 ERROR 12756 --- [           main] com.example.demo.DemoApplication         : DOMA_SYNTAX_ERROR
+
+org.springframework.jdbc.BadSqlGrammarException: [DOMA2016] Cannot get java.sql.PreparedStatement.
+PATH=[META-INF/com/example/demo/UserDao/selectSyntaxError.sql].
+SQL=[select id, name from userss wheeer id = 6].
+The cause is as follows: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "USERSS" が見つかりません
+Table "USERSS" not found; SQL statement:
+select id, name from userss wheeer id = 6 [42102-224]; bad SQL grammar []
+        at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:246) ~[spring-jdbc-6.1.6.jar:6.1.6]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "USERSS" が見つかりません
+Table "USERSS" not found; SQL statement:
+select id, name from userss wheeer id = 6 [42102-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:514) ~[h2-2.2.224.jar:2.2.224]
+        at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:137) ~[spring-tx-6.1.6.jar:6.1.6]
+        ... 31 common frames omitted
+
+2026-03-21T16:56:47.106+09:00  INFO 12756 --- [           main] com.example.demo.DemoApplication         : ===== DOMA TABLE NOT FOUND TEST =====
+2026-03-21T16:56:47.106+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=selectTableNotFound
+2026-03-21T16:56:47.107+09:00 DEBUG 12756 --- [           main] o.s.jdbc.datasource.DataSourceUtils      : Fetching JDBC Connection from DataSource
+2026-03-21T16:56:47.107+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2222] THROW  : CLASS=com.example.demo.UserDaoImpl, METHOD=selectTableNotFound, EXCEPTION=org.seasar.doma.jdbc.JdbcException
+2026-03-21T16:56:47.107+09:00 DEBUG 12756 --- [           main] s.j.s.SQLErrorCodeSQLExceptionTranslator : Translating SQLException with SQL state '42S02', error code '42102', message [テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]] for task [[DOMA2016] Cannot get java.sql.PreparedStatement.
+PATH=[META-INF/com/example/demo/UserDao/selectTableNotFound.sql].
+SQL=[select * from not_exists_table].
+The cause is as follows: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]]
+2026-03-21T16:56:47.107+09:00 ERROR 12756 --- [           main] com.example.demo.DemoApplication         : DOMA_TABLE_NOT_FOUND
+
+org.springframework.jdbc.BadSqlGrammarException: [DOMA2016] Cannot get java.sql.PreparedStatement.
+PATH=[META-INF/com/example/demo/UserDao/selectTableNotFound.sql].
+SQL=[select * from not_exists_table].
+The cause is as follows: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]; bad SQL grammar []
+        at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:246) ~[spring-jdbc-6.1.6.jar:6.1.6]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: テーブル "NOT_EXISTS_TABLE" が見つかりません
+Table "NOT_EXISTS_TABLE" not found; SQL statement:
+select * from not_exists_table [42102-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:514) ~[h2-2.2.224.jar:2.2.224]
+        at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:137) ~[spring-tx-6.1.6.jar:6.1.6]
+        ... 31 common frames omitted
+
+2026-03-21T16:56:47.108+09:00  INFO 12756 --- [           main] com.example.demo.DemoApplication         : ===== DOMA CONSTRAINT ERROR TEST =====
+2026-03-21T16:56:47.108+09:00 DEBUG 12756 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Creating new transaction with name [com.example.demo.DomaUserService.constraintViolationTest]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-03-21T16:56:47.108+09:00 DEBUG 12756 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Opened new EntityManager [SessionImpl(1925514831<open>)] for JPA transaction
+2026-03-21T16:56:47.108+09:00 DEBUG 12756 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@4a0c04ab]
+2026-03-21T16:56:47.108+09:00 TRACE 12756 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.DomaUserService.constraintViolationTest]
+2026-03-21T16:56:47.108+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=insertWithId
+2026-03-21T16:56:47.111+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[META-INF/com/example/demo/UserDao/insertWithId.sql],
+insert into users (id, name) values (1, 'DomaDup')
+2026-03-21T16:56:47.111+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2221] EXIT   : CLASS=com.example.demo.UserDaoImpl, METHOD=insertWithId
+2026-03-21T16:56:47.111+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2220] ENTER  : CLASS=com.example.demo.UserDaoImpl, METHOD=insertWithId
+2026-03-21T16:56:47.111+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2076] SQL LOG : PATH=[META-INF/com/example/demo/UserDao/insertWithId.sql],
+insert into users (id, name) values (1, 'DomaDup')
+2026-03-21T16:56:47.112+09:00  INFO 12756 --- [           main] o.s.doma.jdbc.UtilLoggingJdbcLogger      : [DOMA2222] THROW  : CLASS=com.example.demo.UserDaoImpl, METHOD=insertWithId, EXCEPTION=org.seasar.doma.jdbc.UniqueConstraintException
+2026-03-21T16:56:47.112+09:00 TRACE 12756 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.DomaUserService.constraintViolationTest] after exception: org.springframework.dao.DuplicateKeyException: [DOMA2004] The SQL execution is failed because of unique constraint violation.
+PATH=[META-INF/com/example/demo/UserDao/insertWithId.sql].
+SQL=[].
+The detailed cause is as follows: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ NULL, 1, NULL, NULL, 'DomaDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ NULL, 1, NULL, NULL, 'DomaDup')"; SQL statement:
+insert into users (id, name) values (?, ?) [23505-224]
+2026-03-21T16:56:47.112+09:00 DEBUG 12756 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Initiating transaction rollback
+2026-03-21T16:56:47.112+09:00 DEBUG 12756 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Rolling back JPA transaction on EntityManager [SessionImpl(1925514831<open>)]
+2026-03-21T16:56:47.112+09:00 DEBUG 12756 --- [           main] o.s.orm.jpa.JpaTransactionManager        : Closing JPA EntityManager [SessionImpl(1925514831<open>)] after transaction
+2026-03-21T16:56:47.112+09:00 ERROR 12756 --- [           main] com.example.demo.DemoApplication         : DOMA_CONSTRAINT_ERROR
+
+org.springframework.dao.DuplicateKeyException: [DOMA2004] The SQL execution is failed because of unique constraint violation.
+PATH=[META-INF/com/example/demo/UserDao/insertWithId.sql].
+SQL=[].
+The detailed cause is as follows: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ NULL, 1, NULL, NULL, 'DomaDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ NULL, 1, NULL, NULL, 'DomaDup')"; SQL statement:
+insert into users (id, name) values (?, ?) [23505-224]
+        at org.seasar.doma.boot.DomaPersistenceExceptionTranslator.translateExceptionIfPossible(DomaPersistenceExceptionTranslator.java:49) ~[doma-spring-boot-core-1.7.0.jar:na]
+        at com.example.demo.DemoApplication.main(DemoApplication.java:16) ~[classes/:na]
+Caused by: org.seasar.doma.jdbc.UniqueConstraintException: [DOMA2004] The SQL execution is failed because of unique constraint violation.
+PATH=[META-INF/com/example/demo/UserDao/insertWithId.sql].
+SQL=[].
+The detailed cause is as follows: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ NULL, 1, NULL, NULL, 'DomaDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ NULL, 1, NULL, NULL, 'DomaDup')"; SQL statement:
+insert into users (id, name) values (?, ?) [23505-224]
+        at org.seasar.doma.jdbc.command.ModifyCommand.executeUpdate(ModifyCommand.java:104) ~[doma-core-2.57.0.jar:2.57.0]
+        at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:137) ~[spring-tx-6.1.6.jar:6.1.6]
+        ... 39 common frames omitted
+Caused by: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: ユニークインデックス、またはプライマリキー違反: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ NULL, 1, NULL, NULL, 'DomaDup')"
+Unique index or primary key violation: "PRIMARY KEY ON PUBLIC.USERS(ID) ( /* key:1 */ NULL, 1, NULL, NULL, 'DomaDup')"; SQL statement:
+insert into users (id, name) values (?, ?) [23505-224]
+        at org.h2.message.DbException.getJdbcSQLException(DbException.java:520) ~[h2-2.2.224.jar:2.2.224]
+        at org.seasar.doma.jdbc.command.ModifyCommand.executeUpdate(ModifyCommand.java:98) ~[doma-core-2.57.0.jar:2.57.0]
+        ... 49 common frames omitted
+
+2026-03-21T16:56:47.113+09:00  INFO 12756 --- [           main] com.example.demo.DemoApplication         : ===== ↑↑↑↑↑ DOMA END / HIBERNATE START ↓↓↓↓↓ =====

@@ -2,17 +2,15 @@ import {
   createRdhKey,
   GeneralColumnType,
   RdhKey,
-  ResultSetData,
   ResultSetDataBuilder,
+  RowHelper,
 } from '@l-v-yonsama/rdh';
 
 import {
   ClassifiedEvent,
-  ExtractedSqlRdhResult,
-  ExtractedSqlResult,
   LogParseStage,
   OPTIONAL_LOG_EVENT_KEYS,
-  SqlExecutionEvent,
+  SqlExecutionEvent
 } from '../../../types';
 
 /* ======================================================
@@ -32,34 +30,24 @@ function createRdhIntKey(name: string, width?: number): RdhKey {
 }
 
 /* ======================================================
-   main
-====================================================== */
-
-export function convertExtractedSqlRdhResult(
-  params: ExtractedSqlResult,
-): ExtractedSqlRdhResult {
-  const logEventRdb = createLogResultBuilder(params.logEvents, params.stage);
-
-  const sqlEventRdb = createSqlResultBuilder(params.sqlExecutions);
-
-  return {
-    logEvents: logEventRdb.build(),
-    sqlEvents: sqlEventRdb.build(),
-  };
-}
-
-/* ======================================================
    LOG EVENTS
 ====================================================== */
 
-function createLogResultBuilder(
+export function createLogResultBuilder(
   logEvents: ClassifiedEvent[],
   stage: LogParseStage,
+  options?: {
+    elapsedTimeMilli: number;
+    logEventSplitPattern: string;
+    classificationSummary: string;
+  },
 ): ResultSetDataBuilder {
   if (logEvents.length === 0) {
     return ResultSetDataBuilder.createEmpty();
   }
-
+  const elapsedTimeMilli = options?.elapsedTimeMilli;
+  const logEventSplitPattern = options?.logEventSplitPattern;
+  const classificationSummary = options?.classificationSummary;
   const stageForSplit = stage === 'split';
   const firstEvent = logEvents[0];
 
@@ -115,18 +103,69 @@ function createLogResultBuilder(
     });
 
     rdb.addRow(data);
+    const row = rdb.rs.rows[rdb.rs.rows.length - 1];
+    if (
+      eventType === 'ERROR' ||
+      eventType === 'FW_ERROR' ||
+      eventType === 'SQL_ERROR' ||
+      eventType === 'SQL_ERROR_DETAIL'
+    ) {
+      RowHelper.pushAnnotation(row, 'eventType', { type: 'Err' });
+    }
+    if (
+      others &&
+      others.level &&
+      others.level &&
+      isErrorLikeLevel(others.level)
+    ) {
+      RowHelper.pushAnnotation(row, 'level', { type: 'Err' });
+    }
   });
 
+  if (stageForSplit) {
+    updateMetaParams({ rdb, type: 'split', title: 'SPLIT-LOG-EVENT' });
+  } else {
+    updateMetaParams({ rdb, type: 'classify', title: 'EVENT-CLASSIFICATION' });
+  }
+
+  if (logEventSplitPattern) {
+    const lines: string[] = [];
+    lines.push('-- logEventSplitPattern');
+    lines.push(logEventSplitPattern);
+    if (classificationSummary) {
+      lines.push('\n');
+      lines.push('-- classificationSummary');
+      lines.push(classificationSummary);
+    }
+    rdb.setSqlStatement(lines.join('\n'));
+  }
+  if (elapsedTimeMilli !== undefined) {
+    rdb.setSummary({
+      elapsedTimeMilli,
+      selectedRows: rdb.rs.rows.length,
+    });
+  }
+
   return rdb;
+}
+
+function isErrorLikeLevel(level: string): boolean {
+  return ['error', 'fatal', 'sever'].includes(level.toLocaleLowerCase());
 }
 
 /* ======================================================
    SQL EXECUTION EVENTS
 ====================================================== */
 
-function createSqlResultBuilder(
+export function createSqlResultBuilder(
   sqlExecutions: SqlExecutionEvent[],
+  options?: {
+    elapsedTimeMilli: number;
+    extractionSummary: string;
+  },
 ): ResultSetDataBuilder {
+  const elapsedTimeMilli = options?.elapsedTimeMilli;
+  const extractionSummary = options?.extractionSummary;
   const sqlResultKeys: RdhKey[] = [];
 
   sqlResultKeys.push(createRdhIntKey('startLine', 80));
@@ -134,29 +173,71 @@ function createSqlResultBuilder(
 
   sqlResultKeys.push(createRdhTextKey('timestamp', 120));
   sqlResultKeys.push(createRdhTextKey('thread', 120));
-  sqlResultKeys.push(createRdhTextKey('framework', 120));
 
-  sqlResultKeys.push(createRdhTextKey('sql', 400));
-  sqlResultKeys.push(createRdhTextKey('params', 200));
-  sqlResultKeys.push(createRdhTextKey('result', 100));
-
-  sqlResultKeys.push(createRdhTextKey('normalizedSql', 400));
+  sqlResultKeys.push(createRdhTextKey('daoClass', 100));
+  sqlResultKeys.push(createRdhTextKey('daoMethod', 100));
 
   sqlResultKeys.push(createRdhTextKey('schema', 150));
   sqlResultKeys.push(createRdhTextKey('table', 150));
-  sqlResultKeys.push(createRdhTextKey('index', 150));
-
   sqlResultKeys.push(createRdhTextKey('type', 80));
 
-  sqlResultKeys.push(createRdhTextKey('error', 300));
+  sqlResultKeys.push(createRdhTextKey('content', 400));
+  sqlResultKeys.push(createRdhTextKey('detail', 400));
+
+  sqlResultKeys.push(createRdhTextKey('params', 200));
+  sqlResultKeys.push(createRdhTextKey('result', 100));
+  sqlResultKeys.push(createRdhTextKey('framework', 120));
 
   const rdb = new ResultSetDataBuilder(sqlResultKeys);
 
   sqlExecutions.forEach((it) => {
-    rdb.addRow({
-      ...it,
-    });
+    const { sql, formattedSql, error, errorDetail, ...rest } = it;
+    if ((rest.type ?? '').toLowerCase() === 'error') {
+      rdb.addRow({
+        content: error,
+        detail: errorDetail,
+        ...rest,
+      });
+      const row = rdb.rs.rows[rdb.rs.rows.length - 1];
+      RowHelper.pushAnnotation(row, 'type', { type: 'Err' });
+      RowHelper.pushAnnotation(row, 'content', { type: 'Err' });
+      RowHelper.pushAnnotation(row, 'detail', { type: 'Err' });
+    } else {
+      rdb.addRow({
+        content: sql,
+        detail: formattedSql,
+        ...rest,
+      });
+    }
   });
+  updateMetaParams({ rdb, type: 'sqlExecution', title: 'SQL-EXECUTION' });
+  if (extractionSummary) {
+    const lines: string[] = [];
+    lines.push('-- extractionSummary');
+    lines.push(extractionSummary);
+    rdb.setSqlStatement(lines.join('\n'));
+  }
+  if (elapsedTimeMilli !== undefined) {
+    rdb.setSummary({
+      elapsedTimeMilli,
+      selectedRows: rdb.rs.rows.length,
+    });
+  }
 
   return rdb;
+}
+
+type MetaParams = { rdb: ResultSetDataBuilder; title: string; type: string };
+
+function updateMetaParams({ rdb, title, type }: MetaParams): void {
+  rdb.updateMeta({
+    // connectionName,
+    // useDatabase,
+    // comment,
+    // schemaName,
+    tableName: title,
+    // compareKeys,
+    type,
+    // editable: meta?.editable,
+  });
 }

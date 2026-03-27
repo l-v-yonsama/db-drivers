@@ -8,6 +8,11 @@ cd ./docker
 docker compose -f unit-test.yml build
 
 docker compose -f unit-test.yml up -d
+
+cd ..
+cat __tests__/setup/mssql/init.sql| docker exec -i mssql_container \
+  /opt/mssql-tools/bin/sqlcmd \
+  -S localhost -U sa -P 'Pass123zxcv!'
 ```
 
 ```sh

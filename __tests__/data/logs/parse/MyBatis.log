@@ -1,0 +1,52 @@
+2026-03-13T11:20:54.404+09:00  INFO 389 --- [           main] com.example.demo.DemoApplication         : ===== MYBATIS COMMIT TEST =====
+2026-03-13T11:20:54.404+09:00 TRACE 389 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.MyBatisService.commitTransactionTest]
+Creating a new SqlSession
+Registering transaction synchronization for SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+JDBC Connection [HikariProxyConnection@1079430578 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will be managed by Spring
+==>  Preparing: insert into users(name) values(?)
+==> Parameters: MyBatisCommitUser(String)
+<==    Updates: 1
+Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6] from current transaction
+==>  Preparing: select id, name from users where id = ?
+==> Parameters: 9(Integer)
+<==    Columns: ID, NAME
+<==        Row: 9, MyBatisCommitUser
+<==      Total: 1
+Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6] from current transaction
+==>  Preparing: update users set name = ? where id = ?
+==> Parameters: MyBatisCommitUser_updated(String), 9(Integer)
+<==    Updates: 1
+Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6] from current transaction
+==>  Preparing: insert into users(name) values(?)
+==> Parameters: MyBatisBatch_0(String)
+<==    Updates: 1
+Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6] from current transaction
+==>  Preparing: insert into users(name) values(?)
+==> Parameters: MyBatisBatch_1(String)
+<==    Updates: 1
+Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+Fetched SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6] from current transaction
+==>  Preparing: delete from users where id = ?
+==> Parameters: 9(Integer)
+<==    Updates: 1
+Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+2026-03-13T11:20:54.448+09:00 TRACE 389 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.MyBatisService.commitTransactionTest]
+Transaction synchronization committing SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+Transaction synchronization deregistering SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+Transaction synchronization closing SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@63af52a6]
+2026-03-13T11:20:54.449+09:00  INFO 389 --- [           main] com.example.demo.DemoApplication         : ===== MYBATIS ROLLBACK TEST =====
+2026-03-13T11:20:54.449+09:00 TRACE 389 --- [           main] o.s.t.i.TransactionInterceptor           : Getting transaction for [com.example.demo.MyBatisService.rollbackTransactionTest]
+Creating a new SqlSession
+Registering transaction synchronization for SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@70a24463]
+JDBC Connection [HikariProxyConnection@1189814880 wrapping conn0: url=jdbc:h2:mem:testdb user=SA] will be managed by Spring
+==>  Preparing: insert into users(name) values(?)
+==> Parameters: MyBatisRollbackUser(String)
+<==    Updates: 1
+Releasing transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@70a24463]
+2026-03-13T11:20:54.450+09:00 TRACE 389 --- [           main] o.s.t.i.TransactionInterceptor           : Completing transaction for [com.example.demo.MyBatisService.rollbackTransactionTest] after exception: java.lang.RuntimeException: MyBatis rollback test
+Transaction synchronization deregistering SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@70a24463]
+Transaction synchronization closing SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@70a24463]

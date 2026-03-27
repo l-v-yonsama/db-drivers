@@ -263,14 +263,14 @@ describe('ResourceHelper', () => {
           n4: 8012,
         });
         expect(n1n2Result.errorRows[0].rowNo).toBe(8);
-        console.log(n1n2Result.conditionText);
+        // console.log(n1n2Result.conditionText);
 
-        const rdb = ResultSetDataBuilder.from(rdh);
-        console.log(
-          rdb.toMarkdown({
-            withRuleViolation: true,
-          }),
-        );
+        // const rdb = ResultSetDataBuilder.from(rdh);
+        // console.log(
+        //   rdb.toMarkdown({
+        //     withRuleViolation: true,
+        //   }),
+        // );
       });
     });
     describe('stringConditionToJsonCondition', () => {

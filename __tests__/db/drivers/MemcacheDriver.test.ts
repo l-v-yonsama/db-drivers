@@ -46,10 +46,9 @@ describe('MemcacheDriver', () => {
     );
 
     memjsClient.end();
-    console.log('quit result:');
 
     const setting: ConnectionSetting = {
-      host: 'localhost:11211',
+      host: 'localhost:6211',
       dbType: DBType.Memcache,
       name: 'localMemcache',
     };
@@ -85,7 +84,7 @@ describe('MemcacheDriver', () => {
 
       expect(ok).toBe(true);
       expect(message).toBe('');
-      console.log(ResultSetDataBuilder.from(result).toMarkdown({withType:true,maxPrintLines:30}));
+      // console.log(ResultSetDataBuilder.from(result).toMarkdown({withType:true,maxPrintLines:30}));
     });
 
     it('should return exact match value',async () => {
@@ -102,7 +101,7 @@ describe('MemcacheDriver', () => {
 
       expect(ok).toBe(true);
       expect(message).toBe('');
-      console.log(ResultSetDataBuilder.from(result).toMarkdown({withType:true}));
+      // console.log(ResultSetDataBuilder.from(result).toMarkdown({withType:true}));
     });
   });
 
@@ -120,7 +119,7 @@ describe('MemcacheDriver', () => {
       expect(dbRootRes).toHaveLength(1);
       testMemcacheDb0Res = dbRootRes[0];
       expect(testMemcacheDb0Res.name).toBe('Server');
-      console.log(testMemcacheDb0Res.children);
+      // console.log(testMemcacheDb0Res.children);
     });
   });
 });

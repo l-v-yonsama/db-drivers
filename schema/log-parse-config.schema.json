@@ -1,0 +1,406 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "definitions": {
+        "BuiltInPattern": {
+            "enum": [
+                "DATA",
+                "EPOCH_TIMESTAMP",
+                "GREEDY_DATA",
+                "GREEDY_MULTILINE",
+                "INT",
+                "ISO8601_LENIENT",
+                "ISO8601_STRICT",
+                "JUL_TIMESTAMP",
+                "LEVEL",
+                "LOGGER",
+                "NUMBER",
+                "SLASH_TIMESTAMP",
+                "WORD"
+            ],
+            "type": "string"
+        },
+        "ExtractorStepAction": {
+            "enum": [
+                "captureColumns",
+                "captureError",
+                "captureErrorDetail",
+                "captureField",
+                "captureParams",
+                "captureResult",
+                "captureRow",
+                "captureSql"
+            ],
+            "type": "string"
+        },
+        "FrameworkName": {
+            "description": "Known SQL framework names used by built-in extractors.\nCustom names are also allowed.",
+            "enum": [
+                "Doma",
+                "Hibernate",
+                "MyBatis",
+                "S2Jdbc",
+                "SpringJdbc"
+            ],
+            "type": "string"
+        },
+        "LogEventField": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/LogEventFieldRegex",
+                    "description": "Field parsed using a custom regular expression."
+                },
+                {
+                    "$ref": "#/definitions/LogEventFieldLiteral",
+                    "description": "Field representing a fixed literal string."
+                },
+                {
+                    "$ref": "#/definitions/LogEventFieldLineBreakLiteral",
+                    "description": "Field representing a line break in multiline logs."
+                },
+                {
+                    "$ref": "#/definitions/LogEventFieldBuiltin",
+                    "description": "Field parsed using a built-in pattern."
+                }
+            ],
+            "description": "Defines a single field in a log event.\nEach field can be a regex, literal text, builtin pattern, or line-break marker."
+        },
+        "LogEventFieldBuiltin": {
+            "additionalProperties": false,
+            "description": "Field parsed using a built-in pattern.",
+            "properties": {
+                "enclosure": {
+                    "$ref": "#/definitions/LogEventFieldEnclosure",
+                    "description": "Optional enclosure characters around the field."
+                },
+                "eventStartMarker": {
+                    "description": "Indicates that this field marks the start of a log event.",
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pattern": {
+                    "$ref": "#/definitions/BuiltInPattern"
+                },
+                "type": {
+                    "const": "builtin",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "eventStartMarker",
+                "name",
+                "pattern",
+                "type"
+            ],
+            "type": "object"
+        },
+        "LogEventFieldEnclosure": {
+            "enum": [
+                "()",
+                "[]"
+            ],
+            "type": "string"
+        },
+        "LogEventFieldLineBreakLiteral": {
+            "additionalProperties": false,
+            "description": "Field representing a line break in multiline logs.",
+            "properties": {
+                "enclosure": {
+                    "$ref": "#/definitions/LogEventFieldEnclosure",
+                    "description": "Optional enclosure characters around the field."
+                },
+                "eventStartMarker": {
+                    "description": "Indicates that this field marks the start of a log event.",
+                    "type": "boolean"
+                },
+                "type": {
+                    "const": "line-break-literal",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "eventStartMarker",
+                "type"
+            ],
+            "type": "object"
+        },
+        "LogEventFieldLiteral": {
+            "additionalProperties": false,
+            "description": "Field representing a fixed literal string.",
+            "properties": {
+                "enclosure": {
+                    "$ref": "#/definitions/LogEventFieldEnclosure",
+                    "description": "Optional enclosure characters around the field."
+                },
+                "eventStartMarker": {
+                    "description": "Indicates that this field marks the start of a log event.",
+                    "type": "boolean"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "type": {
+                    "const": "literal",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "eventStartMarker",
+                "pattern",
+                "type"
+            ],
+            "type": "object"
+        },
+        "LogEventFieldRegex": {
+            "additionalProperties": false,
+            "description": "Field parsed using a custom regular expression.",
+            "properties": {
+                "enclosure": {
+                    "$ref": "#/definitions/LogEventFieldEnclosure",
+                    "description": "Optional enclosure characters around the field."
+                },
+                "eventStartMarker": {
+                    "description": "Indicates that this field marks the start of a log event.",
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "type": {
+                    "const": "regex",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "eventStartMarker",
+                "name",
+                "pattern",
+                "type"
+            ],
+            "type": "object"
+        },
+        "LogEventType": {
+            "enum": [
+                "CONN_AUTOCOMMIT",
+                "CONN_TRANSACTIONAL",
+                "DATA_SOURCE",
+                "DDL",
+                "ERROR",
+                "FW_ERROR",
+                "NORMAL",
+                "SQL_COLUMNS",
+                "SQL_ERROR",
+                "SQL_ERROR_DETAIL",
+                "SQL_PARAMS",
+                "SQL_RESULT",
+                "SQL_ROW",
+                "SQL_SINGLE",
+                "SQL_START",
+                "TX_BEGIN",
+                "TX_COMMIT",
+                "TX_METHOD_ENTER",
+                "TX_METHOD_EXIT",
+                "TX_ROLLBACK"
+            ],
+            "type": "string"
+        }
+    },
+    "description": "Root configuration for the log parser.\nDefines how logs are split into events, classified, and converted into SQL executions.",
+    "properties": {
+        "classify": {
+            "description": "Rules used to classify log events into semantic event types.",
+            "items": {
+                "additionalProperties": false,
+                "description": "Rule used to classify a log event into a semantic event type.",
+                "properties": {
+                    "context": {
+                        "description": "Optional context extraction rules.",
+                        "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "contextName": {
+                                    "type": "string"
+                                },
+                                "eventFieldName": {
+                                    "type": "string"
+                                },
+                                "pattern": {
+                                    "type": "string"
+                                },
+                                "replace": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "contextName",
+                                "pattern",
+                                "replace"
+                            ],
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "expandMessage": {
+                        "description": "Expands message to include following lines.",
+                        "type": "boolean"
+                    },
+                    "field": {
+                        "description": "Optional log event field to apply the rule to.",
+                        "type": "string"
+                    },
+                    "pattern": {
+                        "description": "Regular expression used to detect the event.",
+                        "type": "string"
+                    },
+                    "transforms": {
+                        "description": "Optional transformation rule applied to the matched message.",
+                        "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "flags": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "dotAll": {
+                                            "type": "boolean"
+                                        },
+                                        "multiline": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "pattern": {
+                                    "type": "string"
+                                },
+                                "replace": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "pattern",
+                                "replace"
+                            ],
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "type": {
+                        "$ref": "#/definitions/LogEventType",
+                        "description": "Target event type when the rule matches."
+                    }
+                },
+                "required": [
+                    "pattern",
+                    "type"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "extractors": {
+            "description": "SQL extraction state machines used to build SQL execution events.",
+            "items": {
+                "additionalProperties": false,
+                "description": "SQL extractor definition using a simple state machine.",
+                "properties": {
+                    "framework": {
+                        "$ref": "#/definitions/FrameworkName",
+                        "description": "Optional framework name associated with the extractor.\nKnown frameworks will appear in IDE completion."
+                    },
+                    "name": {
+                        "description": "Unique name of the extractor.",
+                        "type": "string"
+                    },
+                    "start": {
+                        "$ref": "#/definitions/LogEventType",
+                        "description": "Event type that starts SQL extraction."
+                    },
+                    "steps": {
+                        "description": "Sequence of steps used to collect SQL fragments.",
+                        "items": {
+                            "additionalProperties": false,
+                            "description": "Single step in the SQL extraction state machine.",
+                            "properties": {
+                                "action": {
+                                    "$ref": "#/definitions/ExtractorStepAction",
+                                    "description": "Action performed when the step is triggered."
+                                },
+                                "field": {
+                                    "description": "Target field where extracted value will be stored.",
+                                    "enum": [
+                                        "daoClass",
+                                        "daoMethod",
+                                        "endLine",
+                                        "error",
+                                        "errorDetail",
+                                        "formattedSql",
+                                        "framework",
+                                        "params",
+                                        "result",
+                                        "schema",
+                                        "sql",
+                                        "startLine",
+                                        "table",
+                                        "thread",
+                                        "timestamp",
+                                        "type"
+                                    ],
+                                    "type": "string"
+                                },
+                                "optional": {
+                                    "description": "Whether this step is optional.",
+                                    "type": "boolean"
+                                },
+                                "type": {
+                                    "$ref": "#/definitions/LogEventType",
+                                    "description": "Event type that triggers this step."
+                                }
+                            },
+                            "required": [
+                                "type"
+                            ],
+                            "type": "object"
+                        },
+                        "type": "array"
+                    }
+                },
+                "required": [
+                    "name",
+                    "start",
+                    "steps"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "split": {
+            "additionalProperties": false,
+            "description": "Configuration used to split raw log text into structured log events.",
+            "properties": {
+                "fields": {
+                    "description": "Ordered list of field definitions used to parse a log line.",
+                    "items": {
+                        "$ref": "#/definitions/LogEventField"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": [
+                "fields"
+            ],
+            "type": "object"
+        }
+    },
+    "required": [
+        "classify",
+        "extractors",
+        "split"
+    ],
+    "type": "object"
+}
+
