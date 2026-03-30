@@ -30,7 +30,7 @@
 
 #### Defined in
 
-[src/utils/log/LogParser.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/f445f518f13c04cf0cb1d41eb943c6c0820623d9/src/utils/log/LogParser.ts#L26)
+[src/utils/log/LogParser.ts:26](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/utils/log/LogParser.ts#L26)
 
 ## Methods
 
@@ -50,4 +50,4 @@
 
 #### Defined in
 
-[src/utils/log/LogParser.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/f445f518f13c04cf0cb1d41eb943c6c0820623d9/src/utils/log/LogParser.ts#L32)
+[src/utils/log/LogParser.ts:32](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/utils/log/LogParser.ts#L32)
