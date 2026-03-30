@@ -52,7 +52,15 @@ export class LogParser {
       sqlFragments,
       sqlExecutions: [],
       inputSummary: {
-        logEventSplitPattern: createLogEventPatternText(config.split),
+        logEventSplitPattern: createLogEventPatternText({
+          ...config.split,
+          onlyStartMarker: true,
+          targetForHuman: true,
+        }),
+        logEventFieldsPattern: createLogEventPatternText({
+          ...config.split,
+          targetForHuman: true,
+        }),
         classificationSummary: summarizeClassifyRules(config.classify),
         extractionSummary: summarizeExtractors(config.extractors),
       },

@@ -19,12 +19,10 @@ export function createLogEventPatternText(
 ): string {
   const { fields, onlyStartMarker, targetForHuman } = params;
   let summary = '';
-  for (let i = 0; i < fields.length; i++) {
-    const field = fields[i];
-    const nextField = i < fields.length - 1 ? fields[i + 1] : null;
-    if (onlyStartMarker && field.eventStartMarker !== true) {
-      continue;
-    }
+  const targetFields = onlyStartMarker ? fields.filter((field) => field.eventStartMarker === true) : fields;
+  for (let i = 0; i < targetFields.length; i++) {
+    const field = targetFields[i];
+    const nextField = i < targetFields.length - 1 ? targetFields[i + 1] : null;
     let text = '';
 
     if (field.type === 'regex' || field.type === 'literal') {
@@ -102,7 +100,7 @@ export function createLogEventPatternText(
       text += '\n';
     }
     summary += text;
-    if (i < fields.length - 1) {
+    if (i < targetFields.length - 1) {
       if (
         field.type === 'line-break-literal' ||
         nextField?.type === 'line-break-literal'

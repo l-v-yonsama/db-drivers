@@ -10,7 +10,7 @@ import {
   ClassifiedEvent,
   LogParseStage,
   OPTIONAL_LOG_EVENT_KEYS,
-  SqlExecutionEvent
+  SqlExecutionEvent,
 } from '../../../types';
 
 /* ======================================================
@@ -39,6 +39,7 @@ export function createLogResultBuilder(
   options?: {
     elapsedTimeMilli: number;
     logEventSplitPattern: string;
+    logEventFieldsPattern: string;
     classificationSummary: string;
   },
 ): ResultSetDataBuilder {
@@ -47,6 +48,7 @@ export function createLogResultBuilder(
   }
   const elapsedTimeMilli = options?.elapsedTimeMilli;
   const logEventSplitPattern = options?.logEventSplitPattern;
+  const logEventFieldsPattern = options?.logEventFieldsPattern;
   const classificationSummary = options?.classificationSummary;
   const stageForSplit = stage === 'split';
   const firstEvent = logEvents[0];
@@ -128,17 +130,26 @@ export function createLogResultBuilder(
     updateMetaParams({ rdb, type: 'classify', title: 'EVENT-CLASSIFICATION' });
   }
 
+  const lines: string[] = [];
   if (logEventSplitPattern) {
-    const lines: string[] = [];
     lines.push('-- logEventSplitPattern');
     lines.push(logEventSplitPattern);
-    if (classificationSummary) {
-      lines.push('\n');
-      lines.push('-- classificationSummary');
-      lines.push(classificationSummary);
-    }
+    lines.push('\n');
+  }
+  if (logEventFieldsPattern) {
+    lines.push('-- logEventFieldsPattern');
+    lines.push(logEventFieldsPattern);
+    lines.push('\n');
+  }
+  if (classificationSummary) {
+    lines.push('-- classificationSummary');
+    lines.push(classificationSummary);
+    lines.push('\n');
+  }
+  if (lines.length > 0) {
     rdb.setSqlStatement(lines.join('\n'));
   }
+
   if (elapsedTimeMilli !== undefined) {
     rdb.setSummary({
       elapsedTimeMilli,
@@ -177,11 +188,11 @@ export function createSqlResultBuilder(
   sqlResultKeys.push(createRdhTextKey('daoClass', 100));
   sqlResultKeys.push(createRdhTextKey('daoMethod', 100));
 
-  sqlResultKeys.push(createRdhTextKey('schema', 150));
+  sqlResultKeys.push(createRdhTextKey('schema', 80));
   sqlResultKeys.push(createRdhTextKey('table', 150));
   sqlResultKeys.push(createRdhTextKey('type', 80));
 
-  sqlResultKeys.push(createRdhTextKey('content', 400));
+  sqlResultKeys.push(createRdhTextKey('content', 350));
   sqlResultKeys.push(createRdhTextKey('detail', 400));
 
   sqlResultKeys.push(createRdhTextKey('params', 200));

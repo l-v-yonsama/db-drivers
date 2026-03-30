@@ -45,7 +45,7 @@ export abstract class AwsServiceClient {
       try {
         await this.testSub();
       } catch (e) {
-        console.error('Test error:', e);
+        // console.error('Test error:', e);
         errorReason = `${this.getServiceName()}:Test Error:${e.message}`;
       }
       if (with_connect) {

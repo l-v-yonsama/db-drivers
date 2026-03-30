@@ -967,8 +967,8 @@ export const parseQuery = (sql: string): QStatement | undefined => {
       };
     }
 
-    console.log('sql=', sql);
-    console.log('replacedSql=', replacedSql);
+    // console.log('sql=', sql);
+    // console.log('replacedSql=', replacedSql);
     // console.error(_);
     // do nothing.
   }

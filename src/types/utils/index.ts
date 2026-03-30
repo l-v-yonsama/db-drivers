@@ -390,6 +390,7 @@ export type LogParseParams = {
 ============================ */
 export type LogParseInputSummary = {
   logEventSplitPattern: string;
+  logEventFieldsPattern: string;
   extractionSummary: string;
   classificationSummary: string;
 };
