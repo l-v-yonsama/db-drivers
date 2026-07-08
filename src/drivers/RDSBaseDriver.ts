@@ -60,8 +60,9 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
   }
 
   async count(params: SchemaAndTableName): Promise<number | undefined> {
+    const schemaName = this.isSchemaSpecificationSvailable() ? params.schema : undefined;
     const { query } = toCountRecordsQuery({
-      schemaName: params.schema,
+      schemaName,
       tableRes: new DbTable(params.table, null),
       idQuoteCharacter: this.getIdQuoteCharacter(),
     });
