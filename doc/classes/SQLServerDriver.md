@@ -107,7 +107,7 @@
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:112](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L112)
+[src/drivers/SQLServerDriver.ts:112](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L112)
 
 ## Properties
 
@@ -121,7 +121,7 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L52)
+[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L52)
 
 ___
 
@@ -135,7 +135,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L51)
+[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L51)
 
 ___
 
@@ -149,7 +149,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L54)
+[src/drivers/BaseDriver.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L54)
 
 ___
 
@@ -163,7 +163,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L53)
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L53)
 
 ## Methods
 
@@ -181,7 +181,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:116](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L116)
+[src/drivers/SQLServerDriver.ts:116](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L116)
 
 ___
 
@@ -199,7 +199,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:785](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L785)
+[src/drivers/SQLServerDriver.ts:794](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L794)
 
 ___
 
@@ -217,7 +217,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:145](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L145)
+[src/drivers/SQLServerDriver.ts:145](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L145)
 
 ___
 
@@ -235,7 +235,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:160](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L160)
+[src/drivers/BaseDriver.ts:160](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L160)
 
 ___
 
@@ -259,7 +259,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:333](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L333)
+[src/drivers/RDSBaseDriver.ts:334](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L334)
 
 ___
 
@@ -277,7 +277,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L232)
+[src/drivers/SQLServerDriver.ts:232](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L232)
 
 ___
 
@@ -301,7 +301,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L62)
+[src/drivers/RDSBaseDriver.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L62)
 
 ___
 
@@ -325,7 +325,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:142](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L142)
+[src/drivers/RDSBaseDriver.ts:143](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L143)
 
 ___
 
@@ -350,7 +350,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:236](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L236)
+[src/drivers/BaseDriver.ts:236](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L236)
 
 ___
 
@@ -368,7 +368,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:185](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L185)
+[src/drivers/BaseDriver.ts:185](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L185)
 
 ___
 
@@ -392,7 +392,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:193](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L193)
+[src/drivers/RDSBaseDriver.ts:194](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L194)
 
 ___
 
@@ -416,7 +416,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:416](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L416)
+[src/drivers/SQLServerDriver.ts:425](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L425)
 
 ___
 
@@ -440,7 +440,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:157](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L157)
+[src/drivers/RDSBaseDriver.ts:158](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L158)
 
 ___
 
@@ -464,7 +464,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:388](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L388)
+[src/drivers/SQLServerDriver.ts:388](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L388)
 
 ___
 
@@ -486,7 +486,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L203)
+[src/drivers/SQLServerDriver.ts:203](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L203)
 
 ___
 
@@ -510,7 +510,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:253](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L253)
+[src/drivers/RDSBaseDriver.ts:254](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L254)
 
 ___
 
@@ -534,7 +534,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:263](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L263)
+[src/drivers/RDSBaseDriver.ts:264](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L264)
 
 ___
 
@@ -564,7 +564,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:102](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L102)
+[src/drivers/BaseDriver.ts:102](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L102)
 
 ___
 
@@ -596,7 +596,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:346](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L346)
+[src/drivers/RDSBaseDriver.ts:347](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L347)
 
 ___
 
@@ -614,7 +614,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L64)
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L64)
 
 ___
 
@@ -628,7 +628,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:513](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L513)
+[src/drivers/SQLServerDriver.ts:522](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L522)
 
 ___
 
@@ -646,7 +646,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:226](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L226)
+[src/drivers/BaseDriver.ts:226](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L226)
 
 ___
 
@@ -664,7 +664,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:230](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L230)
+[src/drivers/BaseDriver.ts:230](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L230)
 
 ___
 
@@ -682,7 +682,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:781](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L781)
+[src/drivers/SQLServerDriver.ts:790](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L790)
 
 ___
 
@@ -700,7 +700,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:211](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L211)
+[src/drivers/BaseDriver.ts:211](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L211)
 
 ___
 
@@ -718,7 +718,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:481](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L481)
+[src/drivers/SQLServerDriver.ts:490](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L490)
 
 ___
 
@@ -732,7 +732,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L170)
+[src/drivers/SQLServerDriver.ts:170](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L170)
 
 ___
 
@@ -756,7 +756,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:429](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L429)
+[src/drivers/SQLServerDriver.ts:438](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L438)
 
 ___
 
@@ -774,7 +774,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:328](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L328)
+[src/drivers/RDSBaseDriver.ts:329](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L329)
 
 ___
 
@@ -792,7 +792,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L61)
+[src/drivers/BaseDriver.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L61)
 
 ___
 
@@ -810,7 +810,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:773](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L773)
+[src/drivers/SQLServerDriver.ts:782](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L782)
 
 ___
 
@@ -828,7 +828,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:95](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L95)
+[src/drivers/RDSBaseDriver.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L96)
 
 ___
 
@@ -848,7 +848,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:519](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L519)
+[src/drivers/SQLServerDriver.ts:528](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L528)
 
 ___
 
@@ -872,7 +872,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:450](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L450)
+[src/drivers/SQLServerDriver.ts:459](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L459)
 
 ___
 
@@ -890,7 +890,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L40)
+[src/drivers/RDSBaseDriver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L40)
 
 ___
 
@@ -916,7 +916,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:311](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L311)
+[src/drivers/RDSBaseDriver.ts:312](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L312)
 
 ___
 
@@ -936,7 +936,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:538](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L538)
+[src/drivers/SQLServerDriver.ts:547](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L547)
 
 ___
 
@@ -954,7 +954,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:317](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L317)
+[src/drivers/SQLServerDriver.ts:317](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L317)
 
 ___
 
@@ -972,7 +972,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L181)
+[src/drivers/SQLServerDriver.ts:181](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L181)
 
 ___
 
@@ -990,7 +990,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:423](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L423)
+[src/drivers/SQLServerDriver.ts:432](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L432)
 
 ___
 
@@ -1008,7 +1008,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L68)
+[src/drivers/BaseDriver.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L68)
 
 ___
 
@@ -1026,7 +1026,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:777](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L777)
+[src/drivers/SQLServerDriver.ts:786](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L786)
 
 ___
 
@@ -1044,7 +1044,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L72)
+[src/drivers/BaseDriver.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L72)
 
 ___
 
@@ -1062,7 +1062,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:769](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L769)
+[src/drivers/SQLServerDriver.ts:778](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L778)
 
 ___
 
@@ -1086,7 +1086,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L75)
+[src/drivers/BaseDriver.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L75)
 
 ___
 
@@ -1104,7 +1104,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:91](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L91)
+[src/drivers/RDSBaseDriver.ts:92](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L92)
 
 ___
 
@@ -1131,7 +1131,7 @@ If sesssionOrPid is not specified, cancel the running request.
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:260](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L260)
+[src/drivers/SQLServerDriver.ts:260](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L260)
 
 ___
 
@@ -1155,7 +1155,7 @@ ___
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/BaseDriver.ts#L86)
+[src/drivers/BaseDriver.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L86)
 
 ___
 
@@ -1179,7 +1179,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:305](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L305)
+[src/drivers/RDSBaseDriver.ts:306](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L306)
 
 ___
 
@@ -1203,7 +1203,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:103](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L103)
+[src/drivers/RDSBaseDriver.ts:104](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L104)
 
 ___
 
@@ -1227,7 +1227,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:321](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L321)
+[src/drivers/SQLServerDriver.ts:321](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L321)
 
 ___
 
@@ -1252,7 +1252,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:273](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L273)
+[src/drivers/RDSBaseDriver.ts:274](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L274)
 
 ___
 
@@ -1270,7 +1270,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:155](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L155)
+[src/drivers/SQLServerDriver.ts:155](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L155)
 
 ___
 
@@ -1294,7 +1294,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:166](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L166)
+[src/drivers/SQLServerDriver.ts:166](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L166)
 
 ___
 
@@ -1314,7 +1314,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:574](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L574)
+[src/drivers/SQLServerDriver.ts:583](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L583)
 
 ___
 
@@ -1334,7 +1334,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:701](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L701)
+[src/drivers/SQLServerDriver.ts:710](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L710)
 
 ___
 
@@ -1354,7 +1354,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:658](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L658)
+[src/drivers/SQLServerDriver.ts:667](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L667)
 
 ___
 
@@ -1372,7 +1372,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:301](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L301)
+[src/drivers/RDSBaseDriver.ts:302](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L302)
 
 ___
 
@@ -1396,7 +1396,7 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L44)
+[src/drivers/RDSBaseDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L44)
 
 ___
 
@@ -1420,7 +1420,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLServerDriver.ts:198](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/SQLServerDriver.ts#L198)
+[src/drivers/SQLServerDriver.ts:198](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/SQLServerDriver.ts#L198)
 
 ___
 
@@ -1444,4 +1444,4 @@ ___
 
 #### Defined in
 
-[src/drivers/RDSBaseDriver.ts:73](https://github.com/l-v-yonsama/db-drivers/blob/32c8a2503691648cab78a1a83d35dd78ed150ba9/src/drivers/RDSBaseDriver.ts#L73)
+[src/drivers/RDSBaseDriver.ts:74](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/RDSBaseDriver.ts#L74)
