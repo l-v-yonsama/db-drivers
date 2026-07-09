@@ -93,7 +93,7 @@ const parseCsvFromReadable = async (
     throw new Error('Parse failure');
   }
 
-  if (options.cast) {
+  if (options?.cast) {
     rdb.resetKeyTypeByRows();
     rdb.normalizeValuesByTypes();
   }

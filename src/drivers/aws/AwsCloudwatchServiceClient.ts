@@ -396,10 +396,6 @@ export class AwsCloudwatchServiceClient
       }
       nextToken = result.nextToken;
     } while (nextToken);
-    list[0].firstEventTimestamp;
-    list[0].lastEventTimestamp;
-    list[0].lastIngestionTime;
-    list[0].firstEventTimestamp;
     return list;
   }
 

@@ -27,7 +27,7 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
-import { QuoteChar } from '../helpers';
+import { QuoteChar, wrapSingleQuote } from '../helpers';
 
 const EXPLAIN_COLUMNS: RdhKey[] = [
   createRdhKey({
@@ -392,12 +392,21 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     await req.batch(`SET SHOWPLAN_ALL ON`);
 
     try {
+      // SQL Server rejects "SET SHOWPLAN_ALL ON" together with a parameterized
+      // query in the same batch ("SET SHOWPLAN statements must be the only
+      // statements in the batch"). req.query() always sends bound parameters
+      // through sp_executesql, which counts as more than one statement, so we
+      // can't use req.input()/req.query() here like requestSqlSub() does.
+      // Instead we substitute each bind value directly into the SQL text
+      // (escaping it as a string literal) and execute it as a plain batch via
+      // req.batch(), which never goes through sp_executesql.
       const binds = params.conditions?.binds ?? [];
-      binds.forEach((bind, idx) => {
-        this.req.input(`${idx + 1}`, bind);
-      });
+      const sql = binds.reduce<string>((acc, bind, idx) => {
+        const placeholder = new RegExp(`@${idx + 1}(?!\\d)`, 'g');
+        return acc.replace(placeholder, wrapSingleQuote(bind));
+      }, params.sql);
 
-      const result = await req.query(params.sql);
+      const result = await req.batch(sql);
       const rdb = new ResultSetDataBuilder(EXPLAIN_COLUMNS);
       result.recordset.forEach((recordValues) => {
         const values: any = {};

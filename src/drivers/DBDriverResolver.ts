@@ -154,13 +154,13 @@ export class DBDriverResolver {
 
   async closeAll(): Promise<string> {
     let errorMessage = '';
-    this.driverMap.forEach(async (driver: BaseDriver) => {
+    for (const driver of this.driverMap.values()) {
       try {
         await driver.disconnect();
       } catch (e) {
         errorMessage += e.message + '\n';
       }
-    });
+    }
     this.driverMap.clear();
     return errorMessage;
   }

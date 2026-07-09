@@ -397,7 +397,7 @@ export class KeycloakDriver
       const client = await this.getAxiosClient();
       // Get a specific role’s representation
       const res = await client.get(
-        `/admin/realms/${realmId}/roles-by-id//${id}`,
+        `/admin/realms/${realmId}/roles-by-id/${id}`,
       );
       const errorMessage = this.getErrorMessage(res);
       if (errorMessage) {

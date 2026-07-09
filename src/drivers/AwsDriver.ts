@@ -282,6 +282,9 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       this.s3Client,
       this.dynamoClient,
     ]) {
+      if (!client) {
+        continue;
+      }
       const message = await client.disconnect();
       if (message) {
         messageList.push(message);

@@ -161,7 +161,7 @@ export function createLogResultBuilder(
 }
 
 function isErrorLikeLevel(level: string): boolean {
-  return ['error', 'fatal', 'sever'].includes(level.toLocaleLowerCase());
+  return ['error', 'fatal', 'severe'].includes(level.toLocaleLowerCase());
 }
 
 /* ======================================================

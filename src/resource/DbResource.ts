@@ -198,7 +198,7 @@ export abstract class DbResource<T extends DbResource = AllSubDbResource> {
   getProperties(): { [key: string]: any } {
     return {
       name: this.name,
-      commnet: this.comment,
+      comment: this.comment,
     };
   }
 
@@ -502,7 +502,7 @@ export class Auth0Database extends DbResource<
   getGroupByName(name: string): IamGroup | undefined {
     return this.findChildren<IamGroup>({
       keyword: name,
-      resourceType: ResourceType.IamUser,
+      resourceType: ResourceType.IamGroup,
       recursively: false,
     })?.[0];
   }
@@ -510,7 +510,7 @@ export class Auth0Database extends DbResource<
   getRoleByName(name: string): IamRole | undefined {
     return this.findChildren<IamRole>({
       keyword: name,
-      resourceType: ResourceType.IamUser,
+      resourceType: ResourceType.IamRole,
       recursively: false,
     })?.[0];
   }
@@ -556,7 +556,7 @@ export class IamRealm extends DbResource<
   getGroupByName(name: string): IamGroup | undefined {
     return this.findChildren<IamGroup>({
       keyword: name,
-      resourceType: ResourceType.IamUser,
+      resourceType: ResourceType.IamGroup,
       recursively: false,
     })?.[0];
   }
@@ -564,7 +564,7 @@ export class IamRealm extends DbResource<
   getRoleByName(name: string): IamRole | undefined {
     return this.findChildren<IamRole>({
       keyword: name,
-      resourceType: ResourceType.IamUser,
+      resourceType: ResourceType.IamRole,
       recursively: false,
     })?.[0];
   }

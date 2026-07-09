@@ -1803,7 +1803,7 @@ const toEmbeddedStringValue = (
   }
 
   if (isJsonLike(colType)) {
-    return `'${JSON.stringify(value)}'`;
+    return wrapSingleQuote(JSON.stringify(value));
   }
 
   if (value.length === 0) {
@@ -1811,7 +1811,7 @@ const toEmbeddedStringValue = (
   }
 
   if (isUUIDType(colType)) {
-    return `'${value}'`;
+    return wrapSingleQuote(value);
   }
 
   if (colType == GeneralColumnType.BIT) {
@@ -1823,7 +1823,7 @@ const toEmbeddedStringValue = (
     const v = toNum(value);
     return v === undefined ? 'NULL' : v.toString();
   } else if (isTime(colType)) {
-    return value === undefined ? 'NULL' : `'${value}'`;
+    return value === undefined ? 'NULL' : wrapSingleQuote(value);
   } else if (isDateTimeOrDate(colType)) {
     const v = toDate(value);
     return v === undefined

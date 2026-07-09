@@ -481,9 +481,9 @@ export class AwsDynamoServiceClient
     return rs;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async scan(params: ScanParams): Promise<ResultSetData> {
-    const { target, limit, keyword, startTime, endTime, withValue } = params;
-    return null;
+    throw new Error('Not implemented');
   }
 
   async executeStatementAtDocClient(
