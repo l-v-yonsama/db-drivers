@@ -16,6 +16,7 @@ import {
   RdsDatabase,
   separateMultipleQueries,
   toInsertStatement,
+  toSafeQueryForPgsqlAst,
   toViewDataNormalizedQuery,
   toViewDataQuery,
 } from '../../src';
@@ -1635,6 +1636,31 @@ EXIT
       expect(queries).toHaveLength(2);
       expect(queries[0]).toBe("select * from table1 where col1 = 'ab\\'c;de'");
       expect(queries[1]).toBe('select * from table2');
+    });
+  });
+
+  describe('toSafeQueryForPgsqlAst', () => {
+    it('replaces the standalone DATETIME keyword with TIMESTAMP', () => {
+      const sql = 'CREATE TABLE t (created_at DATETIME)';
+      expect(toSafeQueryForPgsqlAst(sql)).toBe(
+        'CREATE TABLE t (created_at TIMESTAMP)',
+      );
+    });
+
+    it('replaces DATETIME2 with TIMESTAMP (not TIMESTAMP2)', () => {
+      const sql = 'CREATE TABLE t (created_at DATETIME2)';
+      expect(toSafeQueryForPgsqlAst(sql)).toBe(
+        'CREATE TABLE t (created_at TIMESTAMP)',
+      );
+    });
+
+    it('does not touch SMALLDATETIME or DATETIMEOFFSET', () => {
+      expect(
+        toSafeQueryForPgsqlAst('CREATE TABLE t (c SMALLDATETIME)'),
+      ).toBe('CREATE TABLE t (c SMALLDATETIME)');
+      expect(
+        toSafeQueryForPgsqlAst('CREATE TABLE t (c DATETIMEOFFSET)'),
+      ).toBe('CREATE TABLE t (c DATETIMEOFFSET)');
     });
   });
 });

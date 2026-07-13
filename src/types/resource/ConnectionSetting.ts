@@ -119,6 +119,11 @@ export type SQLServerSetting = {
    * The created `client secret` for this registered Azure application
    */
   clientSecret?: string;
+  /**
+   * Pre-acquired Entra ID access token, used when authenticationType is
+   * `azure-active-directory-access-token` (e.g. obtained via an interactive
+   * browser sign-in flow outside of this driver).
+   */
   token?: string;
   connectString?: string;
   // for ntlm

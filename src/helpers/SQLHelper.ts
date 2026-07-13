@@ -857,7 +857,7 @@ export const toSafeQueryForPgsqlAst = (query: string): string => {
   replacedSql = replacedSql.replace(/\bWITHIN\s+GROUP\s*\([^)]+?\)/gi, ' ');
   // for sqlite information schema
   replacedSql = replacedSql.replace(/\.\[(notnull|from|table|to)\]/gi, '.a1');
-  replacedSql = replacedSql.replace(/\bDATETIME/gi, 'TIMESTAMP');
+  replacedSql = replacedSql.replace(/\bDATETIME2?\b/gi, 'TIMESTAMP');
   replacedSql = replacedSql.replace(/\bAUTOINCREMENT/gi, '');
 
   // Unexpected kw_authorization token: "authorization".

@@ -38,4 +38,4 @@
 
 #### Defined in
 
-[src/drivers/BaseDriver.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/93f8def6dace8415c183358483c868b4d117057a/src/drivers/BaseDriver.ts#L7)
+[src/drivers/BaseDriver.ts:7](https://github.com/l-v-yonsama/db-drivers/blob/ffda0244cff7b512a8eb977d2491e0e1e433c911/src/drivers/BaseDriver.ts#L7)

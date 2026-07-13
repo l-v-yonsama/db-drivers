@@ -6,6 +6,7 @@ export const SQLServerAuthenticationType = {
   azureActiveDirectoryServicePrincipalSecret:
     'azure-active-directory-service-principal-secret',
   azureActiveDirectoryMsiVm: 'azure-active-directory-msi-vm',
+  azureActiveDirectoryAccessToken: 'azure-active-directory-access-token',
   useConnectString: 'Use Connect String',
 } as const;
 export type SQLServerAuthenticationType =

@@ -947,6 +947,21 @@ ORDER BY s.session_id DESC
           },
         };
       }
+      case SQLServerAuthenticationType.azureActiveDirectoryAccessToken: {
+        return {
+          ...options,
+          options: {
+            ...options.options,
+            encrypt: true, // Azure SQL Databaseは暗号化必須のため強制
+          },
+          authentication: {
+            type: authType,
+            options: {
+              token: sqlServer.token,
+            },
+          },
+        };
+      }
     }
     throw new Error('Not supported' + authType);
   }
