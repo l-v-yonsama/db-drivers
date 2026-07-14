@@ -14,9 +14,17 @@ import {
 } from 'json-rules-engine';
 import {
   ConnectionSetting,
+  conditionsToString,
   DBType,
   getRecordRuleResults,
+  isAllConditions,
+  isAnyConditions,
+  isConditionReference,
+  isNotConditions,
+  isTopLevelCondition,
   MySQLDriver,
+  operatorToLabelString,
+  operatorToSQLString,
   runRuleEngine,
   stringConditionToJsonCondition,
 } from '../../src';
@@ -272,7 +280,307 @@ describe('ResourceHelper', () => {
         //   }),
         // );
       });
+
+      it('isNull/isNotNull operators reflect actual null column state', async () => {
+        // d1 is NULL only for id=9 (see __tests__/setup/mysql.ts)
+        const query = 'select id,d1 from testtable';
+
+        const isNullRdh = await driver.requestSql({ sql: query });
+        isNullRdh.meta.tableRule = {
+          table: 'testtable',
+          details: [
+            {
+              ruleName: 'd1 isNull',
+              conditions: {
+                any: [{ fact: 'd1', operator: 'isNull', value: null }],
+              },
+              error: { column: 'd1', limit: 100 },
+            },
+          ],
+        };
+        const isNullOk = await runRuleEngine(isNullRdh);
+        expect(isNullOk).toBe(false);
+        const isNullViolatedIds = isNullRdh.rows
+          .filter((row) =>
+            RowHelper.getFirstAnnotationOf<RuleAnnotation>(row, 'd1', 'Rul'),
+          )
+          .map((row) => row.values.id)
+          .sort((a, b) => a - b);
+        expect(isNullViolatedIds).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 10]);
+
+        const isNotNullRdh = await driver.requestSql({ sql: query });
+        isNotNullRdh.meta.tableRule = {
+          table: 'testtable',
+          details: [
+            {
+              ruleName: 'd1 isNotNull',
+              conditions: {
+                any: [{ fact: 'd1', operator: 'isNotNull', value: null }],
+              },
+              error: { column: 'd1', limit: 100 },
+            },
+          ],
+        };
+        const isNotNullOk = await runRuleEngine(isNotNullRdh);
+        expect(isNotNullOk).toBe(false);
+        const isNotNullViolatedIds = isNotNullRdh.rows
+          .filter((row) =>
+            RowHelper.getFirstAnnotationOf<RuleAnnotation>(row, 'd1', 'Rul'),
+          )
+          .map((row) => row.values.id)
+          .sort((a, b) => a - b);
+        expect(isNotNullViolatedIds).toEqual([9]);
+      });
+
+      it('isNil/isNotNil operators reflect actual null column state', async () => {
+        const query = 'select id,d1 from testtable';
+
+        const isNilRdh = await driver.requestSql({ sql: query });
+        isNilRdh.meta.tableRule = {
+          table: 'testtable',
+          details: [
+            {
+              ruleName: 'd1 isNil',
+              conditions: {
+                any: [{ fact: 'd1', operator: 'isNil', value: null }],
+              },
+              error: { column: 'd1', limit: 100 },
+            },
+          ],
+        };
+        const isNilOk = await runRuleEngine(isNilRdh);
+        expect(isNilOk).toBe(false);
+        const nilViolatedIds = isNilRdh.rows
+          .filter((row) =>
+            RowHelper.getFirstAnnotationOf<RuleAnnotation>(row, 'd1', 'Rul'),
+          )
+          .map((row) => row.values.id);
+        expect(nilViolatedIds.sort((a, b) => a - b)).toEqual([
+          1, 2, 3, 4, 5, 6, 7, 8, 10,
+        ]);
+
+        const isNotNilRdh = await driver.requestSql({ sql: query });
+        isNotNilRdh.meta.tableRule = {
+          table: 'testtable',
+          details: [
+            {
+              ruleName: 'd1 isNotNil',
+              conditions: {
+                any: [{ fact: 'd1', operator: 'isNotNil', value: null }],
+              },
+              error: { column: 'd1', limit: 100 },
+            },
+          ],
+        };
+        const isNotNilOk = await runRuleEngine(isNotNilRdh);
+        expect(isNotNilOk).toBe(false);
+        const notNilViolatedIds = isNotNilRdh.rows
+          .filter((row) =>
+            RowHelper.getFirstAnnotationOf<RuleAnnotation>(row, 'd1', 'Rul'),
+          )
+          .map((row) => row.values.id);
+        expect(notNilViolatedIds).toEqual([9]);
+      });
+
+      it('startsWith operator matches only rows with the given prefix', async () => {
+        // s1 values are 'No1'..'No10'
+        const query = 'select id,s1 from testtable';
+        const rdh = await driver.requestSql({ sql: query });
+
+        rdh.meta.tableRule = {
+          table: 'testtable',
+          details: [
+            {
+              ruleName: 's1 startsWith No1',
+              conditions: {
+                any: [{ fact: 's1', operator: 'startsWith', value: 'No1' }],
+              },
+              error: { column: 's1', limit: 100 },
+            },
+          ],
+        };
+        const ok = await runRuleEngine(rdh);
+        expect(ok).toBe(false);
+
+        const violatedIds = rdh.rows
+          .filter((row) =>
+            RowHelper.getFirstAnnotationOf<RuleAnnotation>(row, 's1', 'Rul'),
+          )
+          .map((row) => row.values.id)
+          .sort((a, b) => a - b);
+        // 'No1' and 'No10' both start with 'No1'; 'No2'..'No9' do not
+        expect(violatedIds).toEqual([2, 3, 4, 5, 6, 7, 8, 9]);
+      });
+
+      it('endsWith operator matches only rows with the given suffix', async () => {
+        // s1 values are 'No1'..'No10'
+        const query = 'select id,s1 from testtable';
+        const rdh = await driver.requestSql({ sql: query });
+
+        rdh.meta.tableRule = {
+          table: 'testtable',
+          details: [
+            {
+              ruleName: 's1 endsWith 0',
+              conditions: {
+                any: [{ fact: 's1', operator: 'endsWith', value: '0' }],
+              },
+              error: { column: 's1', limit: 100 },
+            },
+          ],
+        };
+        const ok = await runRuleEngine(rdh);
+        expect(ok).toBe(false);
+
+        const violatedIds = rdh.rows
+          .filter((row) =>
+            RowHelper.getFirstAnnotationOf<RuleAnnotation>(row, 's1', 'Rul'),
+          )
+          .map((row) => row.values.id)
+          .sort((a, b) => a - b);
+        // only 'No10' ends with '0'
+        expect(violatedIds).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      });
+
+      it('between operator matches only rows within the numeric range', async () => {
+        // n4 = 4 + i + i*1000 for id=i => 1005, 2006, 3007, ..., 10014
+        const query = 'select id,n4 from testtable';
+        const rdh = await driver.requestSql({ sql: query });
+
+        rdh.meta.tableRule = {
+          table: 'testtable',
+          details: [
+            {
+              ruleName: 'n4 between 1000 and 2500',
+              conditions: {
+                any: [
+                  { fact: 'n4', operator: 'between', value: [1000, 2500] },
+                ],
+              },
+              error: { column: 'n4', limit: 100 },
+            },
+          ],
+        };
+        const ok = await runRuleEngine(rdh);
+        expect(ok).toBe(false);
+
+        const violatedIds = rdh.rows
+          .filter((row) =>
+            RowHelper.getFirstAnnotationOf<RuleAnnotation>(row, 'n4', 'Rul'),
+          )
+          .map((row) => row.values.id)
+          .sort((a, b) => a - b);
+        // only id=1 (1005) and id=2 (2006) fall within [1000, 2500]
+        expect(violatedIds).toEqual([3, 4, 5, 6, 7, 8, 9, 10]);
+      });
+
+      it('stops evaluating once the error limit is reached for every rule', async () => {
+        const query = 'select id,s1 from testtable';
+        const rdh = await driver.requestSql({ sql: query });
+
+        rdh.meta.tableRule = {
+          table: 'testtable',
+          details: [
+            {
+              ruleName: 's1 startsWith ZZZ',
+              conditions: {
+                any: [{ fact: 's1', operator: 'startsWith', value: 'ZZZ' }],
+              },
+              error: { column: 's1', limit: 1 },
+            },
+          ],
+        };
+        const ok = await runRuleEngine(rdh);
+        expect(ok).toBe(false);
+        expect(rdh.meta.ruleViolationSummary['s1 startsWith ZZZ']).toBe(1);
+
+        const rReulst = getRecordRuleResults(rdh);
+        const detail = rReulst.details.find(
+          (it) => it.ruleDetail.ruleName === 's1 startsWith ZZZ',
+        );
+        expect(detail?.errorRows.length).toBe(1);
+        expect(detail?.errorRows[0].rowNo).toBe(1);
+      });
     });
+
+    describe('condition type guards', () => {
+      it('isAllConditions/isAnyConditions/isNotConditions/isConditionReference', () => {
+        expect(isAllConditions({ all: [] })).toBe(true);
+        expect(isAllConditions({ any: [] })).toBeFalsy();
+
+        expect(isAnyConditions({ any: [] })).toBe(true);
+        expect(isAnyConditions({ all: [] })).toBeFalsy();
+
+        expect(isNotConditions({ not: { fact: 'n1', operator: 'equal', value: 1 } })).toBe(true);
+        expect(isNotConditions({ all: [] })).toBe(false);
+
+        expect(isConditionReference({ condition: 'someCondition' })).toBe(true);
+        expect(isConditionReference({ all: [] })).toBeFalsy();
+      });
+
+      it('isTopLevelCondition distinguishes conditions from plain properties', () => {
+        expect(isTopLevelCondition({ all: [] })).toBe(true);
+        expect(isTopLevelCondition({ any: [] })).toBe(true);
+        expect(
+          isTopLevelCondition({ not: { fact: 'n1', operator: 'equal', value: 1 } }),
+        ).toBe(true);
+        expect(isTopLevelCondition({ condition: 'someCondition' })).toBe(true);
+        expect(
+          isTopLevelCondition({ fact: 'n1', operator: 'equal', value: 1 }),
+        ).toBeFalsy();
+      });
+    });
+
+    describe('operatorToLabelString / operatorToSQLString', () => {
+      it('maps known operators to their label and SQL representation', () => {
+        expect(operatorToLabelString('equal')).toBe('=');
+        expect(operatorToLabelString('between')).toBe('BETWEEN');
+        expect(operatorToLabelString('startsWith')).toBe('STARTS WITH');
+        expect(operatorToSQLString('equal')).toBe('=');
+        expect(operatorToSQLString('in')).toBe('IN');
+        expect(operatorToSQLString('startsWith')).toBe('LIKE');
+      });
+
+      it('returns an empty string for unknown operators', () => {
+        expect(operatorToLabelString('notAnOperator')).toBe('');
+        expect(operatorToSQLString('notAnOperator')).toBe('');
+      });
+    });
+
+    describe('conditionsToString', () => {
+      const keys: RdhKey[] = [
+        { name: 'n1', type: GeneralColumnType.INTEGER, comment: 'MAX 127' },
+        { name: 'n2', type: GeneralColumnType.INTEGER, comment: '' },
+      ];
+
+      it('renders nested any/all conditions with operator labels and column comments', () => {
+        const condition: TopLevelCondition = {
+          any: [
+            {
+              fact: 'n1',
+              operator: 'equal',
+              value: 5,
+            },
+            {
+              all: [
+                {
+                  fact: 'n2',
+                  operator: 'greaterThan',
+                  value: { fact: 'n1' },
+                },
+              ],
+            },
+          ],
+        };
+
+        const text = conditionsToString(condition, keys);
+        expect(text).toContain('OR');
+        expect(text).toContain('n1(MAX 127) = 5');
+        expect(text).toContain('AND');
+        expect(text).toContain('n2 > n1(MAX 127)');
+      });
+    });
+
     describe('stringConditionToJsonCondition', () => {
       const keys: RdhKey[] = [
         { name: 'n1', type: GeneralColumnType.INTEGER, comment: '' },
