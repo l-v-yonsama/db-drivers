@@ -8,6 +8,7 @@ import {
   SchemaAndTableName,
 } from '../../resource';
 import { RDSBaseDriver } from '../../drivers';
+import { AwsServiceType } from '../resource';
 import { SqlLanguage, supportedDialects } from 'sql-formatter';
 
 export type QNames = {
@@ -83,6 +84,19 @@ export type CreateTableDefinitionsForPromptParams = {
   sql: string;
   db?: RdsDatabase | AwsDatabase;
   rdsDriver?: RDSBaseDriver;
+};
+
+export type CreateRdsSchemaDefinitionsForPromptParams = {
+  db: RdsDatabase | RdsDatabase[];
+  rdsDriver?: RDSBaseDriver;
+  schemaName?: string;
+  tableName?: string;
+};
+
+export type CreateAwsSchemaDefinitionsForPromptParams = {
+  db: AwsDatabase | AwsDatabase[];
+  resourceName?: string;
+  serviceType?: AwsServiceType;
 };
 
 export type ResourcePosition = {

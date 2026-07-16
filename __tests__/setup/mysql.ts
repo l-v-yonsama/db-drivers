@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import * as mysql from 'mysql2/promise';
 import { ResultSetHeader } from 'mysql2/promise';
 import * as path from 'path';
-import { DbResource, fromJson } from '../../src';
+import { DbResource, fromJson, RdsDatabase } from '../../src';
 
 const baseConnectOption = {
   host: '127.0.0.1',
@@ -34,6 +34,14 @@ export async function loadRes<T extends DbResource>(
     encoding: 'utf8',
   });
   return fromJson<T>(JSON.parse(jsonString));
+}
+
+/**
+ * Shared fixture used across the SQLHelper/SchemaPromptHelper/ProposalHelper
+ * test suites, so each file doesn't have to repeat its own `loadRes` call.
+ */
+export async function loadMysqlDbFixture(): Promise<RdsDatabase> {
+  return loadRes<RdsDatabase>('mysqlDbRes.json');
 }
 
 export async function init(): Promise<void> {

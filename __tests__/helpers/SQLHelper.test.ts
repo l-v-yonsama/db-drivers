@@ -6,13 +6,10 @@ import {
   RdhKey,
 } from '@l-v-yonsama/rdh';
 import {
-  createTableDefinisionsForPrompt,
-  getProposals,
-  getResourcePositions,
   hasSetVariableClause,
+  isReadOnlyQuery,
   normalizeQuery,
   parseQuery,
-  ProposalKind,
   RdsDatabase,
   separateMultipleQueries,
   toInsertStatement,
@@ -20,266 +17,34 @@ import {
   toViewDataNormalizedQuery,
   toViewDataQuery,
 } from '../../src';
-import { loadRes } from '../setup/mysql';
+import * as SQLHelperExports from '../../src';
+import { loadMysqlDbFixture } from '../setup/mysql';
 
 describe('SQLHelper', () => {
   let db: RdsDatabase;
 
   beforeAll(async () => {
-    db = await loadRes<RdsDatabase>('mysqlDbRes.json');
+    db = await loadMysqlDbFixture();
   });
 
-  describe('getProposals', () => {
-    describe('Select statement', () => {
-      it('should return reserved word proposals', () => {
-        const list = getProposals({
-          db: undefined,
-          sql: 'SELECT * FROM testtable as tbl WHERE c',
-          lastChar: 'c',
-          keyword: 'c',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'CURRENT_DATE');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.ReservedWord);
-      });
+  describe('module exports', () => {
+    // Guard against the package barrel (src/index.ts) silently dropping a
+    // re-export of a function this file's describe blocks exercise below.
+    it('still exposes every function tested in this file', () => {
+      const exportedFunctionNames = [
+        'normalizeQuery',
+        'parseQuery',
+        'isReadOnlyQuery',
+        'toViewDataQuery',
+        'toViewDataNormalizedQuery',
+        'toInsertStatement',
+        'hasSetVariableClause',
+        'separateMultipleQueries',
+        'toSafeQueryForPgsqlAst',
+      ];
 
-      it('should return table proposals', () => {
-        const list = getProposals({
-          db,
-          sql: 'SELECT * FROM t',
-          lastChar: 't',
-          keyword: 't',
-        });
-        const o = list.find((it) => it.label === 'testtable');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Table);
-        expect(o.detail).toEqual(expect.any(String));
-      });
-
-      it('should return column proposals', () => {
-        const list = getProposals({
-          db,
-          sql: 'SELECT * FROM testtable WHERE d',
-          lastChar: 'd',
-          keyword: 'd',
-        });
-        const d1 = list.find((it) => it.label === 'd1');
-        expect(d1).not.toBeUndefined();
-        expect(d1.kind).toBe(ProposalKind.Column);
-        expect(d1.detail).toEqual(expect.any(String));
-      });
-
-      it('should return column proposals2', () => {
-        const list = getProposals({
-          db,
-          sql: 'SELECT * FROM testtable as tbl WHERE tbl.d',
-          lastChar: 'd',
-          keyword: 'd',
-          parentWord: 'tbl',
-        });
-        const d1 = list.find((it) => it.label === 'd1');
-        expect(d1).not.toBeUndefined();
-        expect(d1.kind).toBe(ProposalKind.Column);
-        expect(d1.detail).toEqual(expect.any(String));
-      });
-
-      it('should return column proposals3', () => {
-        const list = getProposals({
-          db,
-          sql:
-            'SELECT * FROM DEPT as d ' +
-            'inner join EMP e ON (d.DEPTNO = e.DEPTNO) ' +
-            'WHERE d.l',
-          lastChar: 'l',
-          keyword: 'l',
-          parentWord: 'd',
-        });
-        const loc = list.find((it) => it.label === 'LOC');
-        expect(loc).not.toBeUndefined();
-        expect(loc.kind).toBe(ProposalKind.Column);
-      });
-
-      it('should return column proposals4', () => {
-        const list = getProposals({
-          db,
-          sql:
-            'SELECT * FROM DEPT as d ' +
-            'inner join EMP e ON (d.DEPTNO = e.DEPTNO) ' +
-            'WHERE e.em',
-          lastChar: 'm',
-          keyword: 'em',
-          parentWord: 'e',
-        });
-        const loc = list.find((it) => it.label === 'EMPNO');
-        expect(loc).not.toBeUndefined();
-        expect(loc.kind).toBe(ProposalKind.Column);
-      });
-    });
-
-    describe('Insert statement', () => {
-      it('should return table proposals', () => {
-        const list = getProposals({
-          db,
-          sql: 'INSERT INTO ',
-          lastChar: ' ',
-          keyword: 'INTO',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'EMP');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Table);
-      });
-
-      it('should return table proposals2', () => {
-        const list = getProposals({
-          db,
-          sql: 'INSERT INTO D',
-          lastChar: 'D',
-          keyword: 'D',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'DEPT');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Table);
-      });
-
-      it('should return column proposals', () => {
-        const list = getProposals({
-          db,
-          sql: 'INSERT INTO DEPT ( DEPT',
-          lastChar: 'T',
-          keyword: 'DEPT',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'DEPTNO');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Column);
-      });
-    });
-
-    describe('Update statement', () => {
-      it('should return table proposals', () => {
-        const list = getProposals({
-          db,
-          sql: 'UPDATE ',
-          lastChar: ' ',
-          keyword: 'UPDATE',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'EMP');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Table);
-      });
-
-      it('should return table proposals2', () => {
-        const list = getProposals({
-          db,
-          sql: 'UPDATE D',
-          lastChar: 'D',
-          keyword: 'D',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'DEPT');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Table);
-      });
-
-      it('should return column proposals', () => {
-        const list = getProposals({
-          db,
-          sql: 'UPDATE DEPT SET DEPT',
-          lastChar: 'T',
-          keyword: 'DEPT',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'DEPTNO');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Column);
-      });
-
-      it('should return column proposals2', () => {
-        const list = getProposals({
-          db,
-          sql: 'UPDATE DEPT as d SET d.DEPT',
-          lastChar: 'T',
-          keyword: 'DEPT',
-          parentWord: 'd',
-        });
-        const o = list.find((it) => it.label === 'DEPTNO');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Column);
-      });
-    });
-
-    describe('Delete statement', () => {
-      it('should return reserved word proposals', () => {
-        const list = getProposals({
-          db,
-          sql: 'DELETE ',
-          lastChar: ' ',
-          keyword: 'DELETE',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'FROM');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.ReservedWord);
-      });
-
-      it('should return table proposals', () => {
-        const list = getProposals({
-          db,
-          sql: 'DELETE FROM ',
-          lastChar: ' ',
-          keyword: 'FROM',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'DEPT');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Table);
-      });
-
-      it('should return table proposals2', () => {
-        const list = getProposals({
-          db,
-          sql: 'DELETE FROM D',
-          lastChar: 'D',
-          keyword: 'D',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'DEPT');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Table);
-      });
-
-      it('should return column proposals', () => {
-        const list = getProposals({
-          db,
-          sql: 'DELETE FROM DEPT WHERE DEPT',
-          lastChar: 'T',
-          keyword: 'DEPT',
-          parentWord: undefined,
-        });
-        const o = list.find((it) => it.label === 'DEPTNO');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Column);
-      });
-
-      it('should return column proposals2', () => {
-        const list = getProposals({
-          db,
-          sql:
-            'DELETE FROM e, d ' +
-            'USING EMP AS e INNER JOIN DEPT AS d ' +
-            'ON e.DEPT_NO = d.DEPT_NO ' +
-            'WHERE e.EM',
-          lastChar: 'M',
-          keyword: 'EM',
-          parentWord: 'e',
-        });
-        const o = list.find((it) => it.label === 'EMPNO');
-        expect(o).not.toBeUndefined();
-        expect(o.kind).toBe(ProposalKind.Column);
+      exportedFunctionNames.forEach((name) => {
+        expect(typeof (SQLHelperExports as any)[name]).toBe('function');
       });
     });
   });
@@ -616,9 +381,9 @@ describe('SQLHelper', () => {
     });
     describe('Unexpected keyword tokens for DynamoDB', () => {
       it('update', () => {
-        const sql = `UPDATE "Music" 
-SET AwardsWon=1 
-SET AwardDetail={'Grammys':[2020, 2018]}  
+        const sql = `UPDATE "Music"
+SET AwardsWon=1
+SET AwardDetail={'Grammys':[2020, 2018]}
 WHERE Artist='Acme Band' AND SongTitle='PartiQL Rocks'`;
         const ast = parseQuery(sql);
         expect(ast).toEqual({
@@ -631,8 +396,8 @@ WHERE Artist='Acme Band' AND SongTitle='PartiQL Rocks'`;
         });
       });
       it('delete', () => {
-        const sql = `DELETE FROM 
-"Music" 
+        const sql = `DELETE FROM
+"Music"
 WHERE Artist='Acme Band' AND SongTitle='PartiQL Rocks'
 RETURNING ALL OLD`;
         const ast = parseQuery(sql);
@@ -646,7 +411,7 @@ RETURNING ALL OLD`;
         });
       });
       it('insert', () => {
-        const sql = `INSERT  
+        const sql = `INSERT
 INTO Music (a)
 values (`;
         const ast = parseQuery(sql);
@@ -667,213 +432,37 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
     });
   });
 
-  describe('createTableDefinisionsForPrompt', () => {
-    const TESTTABLE_DEF = `CREATE TABLE testtable (
-        d1 date COMMENT '“Zero” Value 0000-00-00',
-        d2 time COMMENT '“Zero” Value 00:00:00',
-        d3 timestamp COMMENT '“Zero” Value 0000-00-00 00:00:00',
-        d4 timestamp COMMENT '“Zero” Value 0000-00-00 00:00:00',
-        d5 year COMMENT '“Zero” Value 0000',
-        f1 decimal,
-        f2 float,
-        f3 real,
-        g1 geometry,
-        ID integer PRIMARY KEY AUTO_INCREMENT,
-        j1 json COMMENT 'JSON data type',
-        long_column_name_long_text longtext,
-        n0 bit,
-        n1 tinyint COMMENT 'MAX 127',
-        n2 smallint COMMENT 'MAX 32767',
-        n3 mediumint COMMENT 'MAX 8388607',
-        n4 bigint COMMENT 'MAX 9223372036854775807',
-        s1 char,
-        s2 varchar,
-        s3a tinytext,
-        s3b text,
-        s3c mediumtext,
-        s4 enum COMMENT 'A list of a,b or c',
-        s5 binary,
-        s6 varbinary,
-        s7 blob,
-        s71 tinyblob,
-        s8 set
-      ) COMMENT 'table with various data types';`;
-
-    const DIFF_DEF = `CREATE TABLE diff (
-  birthday date,
-  first_name varchar PRIMARY KEY,
-  full_name varchar UNIQUE,
-  last_name varchar PRIMARY KEY,
-  note varchar
-  ) COMMENT 'test diff';`;
-    describe('Select statement', () => {
-      it('single table definition', async () => {
-        const sql = 'select * from testtable';
-        const promptText = await createTableDefinisionsForPrompt({ sql, db });
-        const expected = TESTTABLE_DEF;
-
-        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
-      });
-      it('table definition with foreign key tables', async () => {
-        const sql = 'select * from testdb.order';
-        const promptText = await createTableDefinisionsForPrompt({ sql, db });
-        const expected = `CREATE TABLE order (
-        amount integer COMMENT '受注金額',
-        customer_no integer UNIQUE COMMENT '顧客番号',
-        order_date date COMMENT '受注日',
-        order_no integer PRIMARY KEY AUTO_INCREMENT COMMENT '受注番号',
-        FOREIGN KEY order_ibfk_1(customer_no) REFERENCES customer(customer_no)
-      ) COMMENT '受注';
-      
-      CREATE TABLE customer (
-        customer_no integer PRIMARY KEY AUTO_INCREMENT COMMENT '顧客番号',
-        tel varchar COMMENT '電話番号'
-      ) COMMENT '顧客';
-      
-      CREATE TABLE order_detail (
-        amount integer COMMENT '金額',
-        detail_no integer PRIMARY KEY COMMENT '受注明細番号',
-        item_no integer COMMENT '商品番号',
-        order_no integer PRIMARY KEY COMMENT '受注番号',
-        FOREIGN KEY order_detail_ibfk_1(order_no) REFERENCES order(order_no)
-      ) COMMENT '受注明細';`;
-
-        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
-      });
-      it('table definition with joined tables', async () => {
-        const sql = `SELECT E.*, D.LOC
-  FROM EMP E
-  LEFT JOIN DEPT D ON E.DEPTNO = D.DEPTNO
-  WHERE E.SAL > 1000
-  ORDER BY E.ENAME;`;
-        const promptText = await createTableDefinisionsForPrompt({ sql, db });
-        const expected = `CREATE TABLE EMP (
-        COMM float,
-        DEPTNO integer UNIQUE,
-        EMPNO integer PRIMARY KEY,
-        ENAME varchar,
-        HIREDATE date,
-        JOB varchar,
-        MGR integer,
-        SAL float,
-        SEX tinyint NOT NULL DEFAULT 0
+  describe('isReadOnlyQuery', () => {
+    it('returns true for select', () => {
+      expect(isReadOnlyQuery('select * from hoge')).toBe(true);
+    });
+    it('returns true for show', () => {
+      expect(isReadOnlyQuery('show full processlist')).toBe(true);
+    });
+    it('returns false for insert', () => {
+      expect(isReadOnlyQuery('insert into hoge (a) values (1)')).toBe(false);
+    });
+    it('returns false for update', () => {
+      expect(isReadOnlyQuery('update hoge set a = 1 where id = 1')).toBe(
+        false,
       );
-      
-      CREATE TABLE DEPT (
-        DEPTNO integer PRIMARY KEY COMMENT '部門番号',
-        DNAME varchar COMMENT '部門名',
-        LOC varchar COMMENT 'ロケーション'
-      ) COMMENT '部門';
-      `;
-
-        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
-      });
     });
-    describe('Insert statement', () => {
-      it('with bind', async () => {
-        const sql = `INSERT INTO testdb.testtable (
-  n0, n1, n2, n3, n4, 
-  f1, f2, f3,
-  d1, d2, d3, d4, d5,
-  s1, s2, s3a, s3b, s3c, long_column_name_long_text, s4, s5, s6, s7, s8,
-  g1, j1 )
-  VALUES(
-    ?, ?, ?, ?, ?, 
-    ?, ?, ?,
-    ?, ?, ?, ?, ?,
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, HEX(?), ?,
-    ST_GeomFromText('POINT(35.702727 100)'), ? )`;
-
-        const promptText = await createTableDefinisionsForPrompt({ sql, db });
-        const expected = TESTTABLE_DEF;
-
-        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
-      });
-
-      it('without bind', async () => {
-        const sql = `INSERT INTO testdb.diff (
-  last_name, first_name, full_name, note, birthday )
-  VALUES('John', 'Disney', 'John Disney', 'blah', '2001-09-12')`;
-
-        const promptText = await createTableDefinisionsForPrompt({ sql, db });
-        const expected = DIFF_DEF;
-
-        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
-      });
+    it('returns false for delete', () => {
+      expect(isReadOnlyQuery('delete from hoge where id = 1')).toBe(false);
     });
-    describe('Update statement', () => {
-      it('with bind', async () => {
-        const sql = `UPDATE testtable SET n0=? WHERE s1=?`;
-
-        const promptText = await createTableDefinisionsForPrompt({ sql, db });
-        const expected = TESTTABLE_DEF;
-
-        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
-      });
-
-      it('without bind', async () => {
-        const sql = `UPDATE diff SET note='blah' WHERE full_name='A'`;
-
-        const promptText = await createTableDefinisionsForPrompt({ sql, db });
-        const expected = DIFF_DEF;
-
-        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
-      });
+    it('returns false for truncate table', () => {
+      expect(isReadOnlyQuery('truncate table hoge')).toBe(false);
     });
-    describe('Delete statement', () => {
-      it('with bind', async () => {
-        const sql = `DELETE FROM testtable WHERE s1=?`;
-
-        const promptText = await createTableDefinisionsForPrompt({ sql, db });
-        const expected = TESTTABLE_DEF;
-
-        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
-      });
-
-      it('without bind', async () => {
-        const sql = `DELETE FROM diff WHERE full_name='A'`;
-
-        const promptText = await createTableDefinisionsForPrompt({ sql, db });
-        const expected = DIFF_DEF;
-
-        expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
-      });
+    it('returns false for a create table (DDL)', () => {
+      expect(isReadOnlyQuery('create table hoge (id int)')).toBe(false);
     });
-  });
-
-  describe('getResourcePositions', () => {
-    it('should return table and column positions', () => {
-      const sql =
-        'select n1,n2, a.ID, note from testtable a inner join diff b on (a.id=b.id) where a_timestamp >= currenttimestamp - interval 1 hour';
-      const positions = getResourcePositions({ sql, db });
-
-      const pos = positions.find(
-        (it) => it.kind === ProposalKind.Table && it.name === 'testtable',
-      );
-      expect(pos).not.toBeUndefined();
-      expect(pos).toEqual({
-        kind: 1,
-        name: 'testtable',
-        comment: 'table with various data types',
-        offset: 30,
-        length: 9,
+    describe('SQLite PRAGMA', () => {
+      it('returns true for a PRAGMA read', () => {
+        expect(isReadOnlyQuery('pragma table_info(hoge)')).toBe(true);
       });
-      const pos2 = positions.find(
-        (it) => it.kind === ProposalKind.Column && it.name === 'n1',
-      );
-      expect(pos2).toEqual({
-        kind: 2,
-        name: 'n1',
-        comment: 'MAX 127',
-        offset: 7,
-        length: 2,
+      it('returns false for a PRAGMA assignment', () => {
+        expect(isReadOnlyQuery('pragma foreign_keys = ON')).toBe(false);
       });
-    });
-    it('should return empty array', () => {
-      const sql = 'select 1';
-      const positions = getResourcePositions({ sql, db });
-
-      expect(positions).toEqual([]);
     });
   });
 
@@ -1456,10 +1045,10 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
           sqlLang: 'partiql',
         });
 
-        const expectedQuery = `INSERT INTO "testtable" 
+        const expectedQuery = `INSERT INTO "testtable"
         VALUE {
           'ID': 0,
-          's1': '', 
+          's1': '',
           'd1': NULL
         }
         `;
@@ -1497,10 +1086,10 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
           sqlLang: 'partiql',
         });
 
-        const expectedQuery = `INSERT INTO "testtable" 
+        const expectedQuery = `INSERT INTO "testtable"
         VALUE {
           'ID': ?,
-          's1': ?, 
+          's1': ?,
           'd1': ?
         }
         `;
