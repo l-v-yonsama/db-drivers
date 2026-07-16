@@ -3,6 +3,19 @@ import { SupplyCredentialType } from './AwsSupplyCredentialType';
 import { DBType } from './DBType';
 import { SQLServerAuthenticationType } from './SQLServerAuthenticationType';
 
+export const ConnectionEnvironment = {
+  Local: 'local',
+  Development: 'development',
+  Test: 'test',
+  Staging: 'staging',
+  Production: 'production',
+} as const;
+
+export type ConnectionEnvironment =
+  (typeof ConnectionEnvironment)[keyof typeof ConnectionEnvironment];
+
+export const ConnectionEnvironmentValues = Object.values(ConnectionEnvironment);
+
 export type ResourceFilterDetail = {
   type: 'prefix' | 'suffix' | 'include' | 'regex';
   value: string;
@@ -170,6 +183,15 @@ export type ConnectionSetting = {
   id?: string;
   dbType: DBType;
   name: string;
+  /**
+   * Free-text note describing the purpose of this connection.
+   */
+  comment?: string;
+  /**
+   * The environment/stage this connection points to (e.g. to distinguish
+   * local/development/production connections that otherwise look alike).
+   */
+  environment?: ConnectionEnvironment;
   url?: string;
   host?: string;
   port?: number;

@@ -13,6 +13,7 @@ import {
   AwsSetting,
   AwsSQSAttributes,
   AwsDynamoTableAttributes,
+  ConnectionEnvironment,
   ConnectionSetting,
   DBType,
   FirebaseSetting,
@@ -286,6 +287,7 @@ export class DbConnection
 {
   public dbType: DBType;
   public name: string;
+  public environment?: ConnectionEnvironment;
   public url?: string;
   public host?: string;
   public port?: number;
@@ -313,6 +315,8 @@ export class DbConnection
   constructor(prop: any) {
     super(ResourceType.Connection, prop.name);
     this.dbType = prop.dbType;
+    this.comment = prop.comment;
+    this.environment = prop.environment;
     this.host = prop.host;
     this.port = prop.port;
     this.user = prop.user;
