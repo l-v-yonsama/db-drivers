@@ -33,6 +33,9 @@ l-v-yonsama-multi-platform-database-drivers-*.tgz
 # Optional eslint cache
 .eslintcache
 
+# Auto generated files
+__tests__/data/logs/parse/*.json
+
 # Misc
 .DS_Store
 src/examples/
