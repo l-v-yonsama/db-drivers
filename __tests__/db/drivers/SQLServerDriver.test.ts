@@ -635,6 +635,32 @@ describe('SQLServerDriver', () => {
     });
   });
 
+  describe('readOnly', () => {
+    it('success: connects and allows a read statement', async () => {
+      const driver = createRDSDriver({ readOnly: true });
+      await driver.connect();
+      const rdh = await driver.requestSql({ sql: 'SELECT 1 as one' });
+      expect(rdh.rows).toHaveLength(1);
+      await driver.disconnect();
+    });
+
+    // readOnlyIntent (ApplicationIntent=ReadOnly) is only an Always-On
+    // Availability-Group read-only-routing hint. This test's standalone
+    // instance has no read-only routing configured, so it is a no-op and
+    // writes still succeed — see isReadOnlyEnforcementReliable(DBType.SQLServer).
+    it('failure: does not block writes on a standalone instance (known limitation)', async () => {
+      const driver = createRDSDriver({ readOnly: true });
+      await driver.connect();
+      await driver.begin();
+      const rdh = await driver.requestSql({
+        sql: `INSERT INTO lock_test (id,title,n) VALUES (999, 'ReadOnlyTest', 1)`,
+      });
+      expect(rdh).not.toBeUndefined();
+      await driver.rollback();
+      await driver.disconnect();
+    });
+  });
+
   function createRDSDriver(
     params?: Partial<ConnectionSetting> & { asRoot?: boolean },
   ): RDSBaseDriver {

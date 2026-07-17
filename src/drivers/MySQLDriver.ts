@@ -701,6 +701,10 @@ ORDER BY ID DESC`;
       database: this.conRes.database,
     };
 
-    return await mysql.createConnection(options);
+    const con = await mysql.createConnection(options);
+    if (this.conRes.readOnly) {
+      await con.query('SET SESSION TRANSACTION READ ONLY');
+    }
+    return con;
   }
 }

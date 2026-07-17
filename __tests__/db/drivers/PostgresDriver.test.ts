@@ -555,6 +555,39 @@ describe('PostgresDriver', () => {
     });
   });
 
+  describe('readOnly', () => {
+    it('success: allows a read statement', async () => {
+      const driver = createRDSDriver({ readOnly: true });
+      await driver.connect();
+      const rdh = await driver.requestSql({ sql: 'select 1' });
+      expect(rdh.rows).toHaveLength(1);
+      await driver.disconnect();
+    });
+
+    it('success: allows SHOW TRANSACTION ISOLATION LEVEL', async () => {
+      const driver = createRDSDriver({ readOnly: true });
+      await driver.connect();
+      const rdh = await driver.requestSql({
+        sql: 'SHOW TRANSACTION ISOLATION LEVEL',
+      });
+      expect(rdh.rows[0].values).toEqual({
+        transaction_isolation: expect.any(String),
+      });
+      await driver.disconnect();
+    });
+
+    it('failure: rejects a write statement', async () => {
+      const driver = createRDSDriver({ readOnly: true });
+      await driver.connect();
+      await expect(
+        driver.requestSql({
+          sql: `INSERT INTO lock_test (id,title,n) VALUES (999, 'ReadOnlyTest', 1)`,
+        }),
+      ).rejects.toThrow(/read.?only/i);
+      await driver.disconnect();
+    });
+  });
+
   describe('kill', () => {
     it('should success', async () => {
       const result = await Promise.allSettled([

@@ -212,6 +212,22 @@ export type ConnectionSetting = {
    * The timezone used to store local dates.
    */
   timezone?: string;
+  /**
+   * Ask the driver to open/keep this connection read-only.
+   *
+   * Applied once at connect time, engine-specific:
+   *  - MySQL: `SET SESSION TRANSACTION READ ONLY` (engine-enforced)
+   *  - Postgres: `-c default_transaction_read_only=on` startup option (engine-enforced)
+   *  - SQLite: `PRAGMA query_only = ON` (engine-enforced)
+   *  - SQL Server: `readOnlyIntent` (`ApplicationIntent=ReadOnly`) — an
+   *    Always-On Availability-Group read-only-routing HINT only. On a
+   *    standalone instance, or a primary without read-only routing
+   *    configured, this is a no-op and writes will still succeed.
+   *    See `isReadOnlyEnforcementReliable`.
+   *
+   * Default: false/undefined — no behavior change for existing callers.
+   */
+  readOnly?: boolean;
   transactionIsolationLevel?: TransactionIsolationLevel;
   connectTimeoutMs?: number;
   queryTimeoutMs?: number;

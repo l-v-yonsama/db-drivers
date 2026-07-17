@@ -306,6 +306,7 @@ export class DbConnection
   public firebase?: FirebaseSetting;
   public sqlServer?: SQLServerSetting;
   public timezone?: string;
+  public readOnly?: boolean;
   public transactionIsolationLevel?: TransactionIsolationLevel;
   public connectTimeoutMs?: number;
   public queryTimeoutMs?: number;
@@ -334,6 +335,7 @@ export class DbConnection
     this.firebase = prop.firebase;
     this.sqlServer = prop.sqlServer;
     this.timezone = prop.timezone;
+    this.readOnly = prop.readOnly;
     this.transactionIsolationLevel = prop.transactionIsolationLevel;
     this.connectTimeoutMs = prop.connectTimeoutMs;
     this.queryTimeoutMs = prop.queryTimeoutMs;

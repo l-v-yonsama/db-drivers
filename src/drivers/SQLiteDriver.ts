@@ -510,6 +510,14 @@ export class SQLiteDriver extends RDSBaseDriver {
       conditions: { rawQueries: true },
       meta: { type: 'pragma' },
     });
+
+    if (this.conRes.readOnly) {
+      await this.requestSql({
+        sql: 'PRAGMA query_only = ON',
+        conditions: { rawQueries: true },
+        meta: { type: 'pragma' },
+      });
+    }
   }
 
   private async exec(

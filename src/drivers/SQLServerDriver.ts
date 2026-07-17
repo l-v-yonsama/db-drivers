@@ -843,6 +843,11 @@ ORDER BY s.session_id DESC
         encrypt: sqlServer?.encrypt ?? false,
         //
         trustServerCertificate: sqlServer?.trustServerCertificate ?? false,
+        // NOTE: this only requests Always-On Availability-Group read-only
+        // routing (ApplicationIntent=ReadOnly). On a standalone instance,
+        // or a primary without read-only routing configured, this is a
+        // no-op — writes will still succeed. See isReadOnlyEnforcementReliable().
+        readOnlyIntent: this.conRes.readOnly ?? false,
       },
     };
     if (transactionIsolationLevel) {

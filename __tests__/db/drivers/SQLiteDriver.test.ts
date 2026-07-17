@@ -599,6 +599,35 @@ describe('SQLiteDriver', () => {
     }, 6000);
   });
 
+  describe('readOnly', () => {
+    it('success: allows a read statement', async () => {
+      const driver = createRDSDriver({ readOnly: true });
+      await driver.connect();
+      const rdh = await driver.requestSql({ sql: 'select 1' });
+      expect(rdh.rows).toHaveLength(1);
+      await driver.disconnect();
+    });
+
+    it('success: allows pragma foreign_keys = true', async () => {
+      const driver = createRDSDriver({ readOnly: true });
+      await driver.connect();
+      const rdh = await driver.requestSql({ sql: 'pragma foreign_keys = true' });
+      expect(rdh.summary.affectedRows).toBe(0);
+      await driver.disconnect();
+    });
+
+    it('failure: rejects a write statement', async () => {
+      const driver = createRDSDriver({ readOnly: true });
+      await driver.connect();
+      await expect(
+        driver.requestSql({
+          sql: `INSERT INTO testtable (s1) VALUES ('ReadOnlyTest')`,
+        }),
+      ).rejects.toThrow(/read.?only/i);
+      await driver.disconnect();
+    });
+  });
+
   function createRDSDriver(params?: Partial<ConnectionSetting>): RDSBaseDriver {
     const options = { ...connectOption, ...params };
     return new SQLiteDriver(options);

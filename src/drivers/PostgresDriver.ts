@@ -704,6 +704,10 @@ ORDER BY A.pid DESC
       };
     }
 
+    if (this.conRes.readOnly) {
+      options.options = '-c default_transaction_read_only=on';
+    }
+
     return new pg.Pool(options);
   }
 }
