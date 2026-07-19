@@ -35,7 +35,7 @@ import {
   DbS3Owner,
   S3KeyParams,
 } from '../../resource';
-import { AwsServiceType, ConnectionSetting, ScanParams } from '../../types';
+import { AwsS3ScanParams, AwsServiceType, ConnectionSetting } from '../../types';
 import {
   acceptResourceFilter,
   parseContentType,
@@ -45,7 +45,10 @@ import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 
-export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
+export class AwsS3ServiceClient
+  extends AwsServiceClient
+  implements Scannable<AwsS3ScanParams>
+{
   s3Client: S3Client;
 
   constructor(
@@ -215,16 +218,23 @@ export class AwsS3ServiceClient extends AwsServiceClient implements Scannable {
     return list;
   }
 
-  async scan(params: ScanParams): Promise<ResultSetData> {
-    const { target, limit, keyword, startTime, endTime, withValue } = params;
-    const list = await this.listObjects({
-      bucket: target,
-      prefix: keyword,
+  async scan(params: AwsS3ScanParams): Promise<ResultSetData> {
+    const {
+      bucketName,
       limit,
-      startTime,
-      endTime,
+      keyPrefix,
+      lastModifiedAfter,
+      lastModifiedBefore,
+      fetchValue,
+    } = params;
+    const list = await this.listObjects({
+      bucket: bucketName,
+      prefix: keyPrefix,
+      limit,
+      startTime: lastModifiedAfter,
+      endTime: lastModifiedBefore,
       withHeader: true,
-      withValue,
+      withValue: fetchValue,
     });
     const rdb = new ResultSetDataBuilder([
       createRdhKey({

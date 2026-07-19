@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "0.14.7",
+  "version": "1.0.0",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -40,7 +40,7 @@
     "clean": "rimraf coverage built tmp *.tgz __tests__/data/logs/parse/*.json",
     "clean:examples": "rimraf built/src/examples",
     "prebuild": "npm run lint",
-    "doc": "typedoc --cleanOutputDir --excludePrivate --plugin typedoc-plugin-markdown --out doc src",
+    "doc": "typedoc",
     "build": "npm run clean && tsc -p tsconfig.json",
     "build:watch": "npm run clean && tsc -w -p tsconfig.json",
     "build:schema": "typescript-json-schema tsconfig.json LogParseConfig --required --noExtraProps --out schema/log-parse-config.schema.json",

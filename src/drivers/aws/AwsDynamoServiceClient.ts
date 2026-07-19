@@ -57,12 +57,10 @@ import {
   parseDynamoAttrType,
   QStatement,
   QueryParams,
-  ScanParams,
   TTLDesc,
 } from '../../types';
 import { acceptResourceFilter, setRdhMetaAndStatement } from '../../utils';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
-import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 import { parseQuery } from '../../helpers';
 import { unmarshall, marshall } from '@aws-sdk/util-dynamodb';
@@ -73,10 +71,7 @@ export type TableDescWithExtraAttrs = TableDescription & {
   ExtraItems?: { name: string; value: AttributeValue }[];
   ttl?: TTLDesc;
 };
-export class AwsDynamoServiceClient
-  extends AwsServiceClient
-  implements Scannable
-{
+export class AwsDynamoServiceClient extends AwsServiceClient {
   client: DynamoDBClient;
   docClient: DynamoDBDocumentClient;
   private interrupted = false;
@@ -479,11 +474,6 @@ export class AwsDynamoServiceClient
     });
     rs.meta.queryInput = JSON.stringify(params, null, 2);
     return rs;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async scan(params: ScanParams): Promise<ResultSetData> {
-    throw new Error('Not implemented');
   }
 
   async executeStatementAtDocClient(

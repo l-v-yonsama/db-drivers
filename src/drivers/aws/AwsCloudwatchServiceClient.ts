@@ -28,19 +28,23 @@ import {
 import { plural } from 'pluralize';
 import { AwsDatabase, DbLogGroup } from '../../resource';
 import {
+  AwsCloudWatchLogGroupScanParams,
+  AwsCloudWatchLogStreamScanParams,
   AwsServiceType,
   ConnectionSetting,
-  ResourceType,
-  ScanParams,
 } from '../../types';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 import { acceptResourceFilter } from '../../utils';
 
+type CloudWatchScanParams =
+  | AwsCloudWatchLogGroupScanParams
+  | AwsCloudWatchLogStreamScanParams;
+
 export class AwsCloudwatchServiceClient
   extends AwsServiceClient
-  implements Scannable
+  implements Scannable<CloudWatchScanParams>
 {
   logClient: CloudWatchLogsClient;
   private interrupted = false;
@@ -162,22 +166,23 @@ export class AwsCloudwatchServiceClient
     return results;
   }
 
-  async scan(params: ScanParams): Promise<ResultSetData> {
-    const { targetResourceType } = params;
-    if (targetResourceType === ResourceType.LogGroup) {
+  async scan(params: CloudWatchScanParams): Promise<ResultSetData> {
+    if (params.kind === 'aws-cloudwatch-loggroup') {
       return this.scanLogGroup(params);
     } else {
       return this.scanLogStream(params);
     }
   }
 
-  async scanLogGroup(params: ScanParams): Promise<ResultSetData> {
-    const { target, keyword, startTime, endTime, limit } = params;
+  async scanLogGroup(
+    params: AwsCloudWatchLogGroupScanParams,
+  ): Promise<ResultSetData> {
+    const { logGroupName, insightsQuery, startTime, endTime, limit } = params;
 
     const stTime = new Date().getTime();
     const { status, results } = await this.query({
-      logGroupName: target,
-      queryString: keyword,
+      logGroupName,
+      queryString: insightsQuery,
       startTime,
       endTime,
       limit,
@@ -236,13 +241,13 @@ export class AwsCloudwatchServiceClient
     });
     rdb.updateMeta({
       queryInput: this.createQueryInput({
-        logGroupName: target,
-        queryString: keyword,
+        logGroupName,
+        queryString: insightsQuery,
         startTime,
         endTime,
         limit,
       }),
-      logGroupName: target,
+      logGroupName,
     });
     return rdb.build();
   }
@@ -274,13 +279,15 @@ export class AwsCloudwatchServiceClient
     return toDate(v);
   }
 
-  async scanLogStream(params: ScanParams): Promise<ResultSetData> {
-    const { target, parentTarget, startTime, limit } = params;
+  async scanLogStream(
+    params: AwsCloudWatchLogStreamScanParams,
+  ): Promise<ResultSetData> {
+    const { logGroupName, logStreamName, startTime, limit } = params;
 
     const stTime = new Date().getTime();
     const list = await this.getLogEvents({
-      logGroupName: parentTarget,
-      logStreamName: target,
+      logGroupName,
+      logStreamName,
       startTime,
       limit,
     });
@@ -318,13 +325,13 @@ export class AwsCloudwatchServiceClient
     });
     rdb.updateMeta({
       queryInput: this.createQueryInput({
-        logGroupName: parentTarget,
-        logStreamName: target,
+        logGroupName,
+        logStreamName,
         startTime,
         limit,
       }),
-      logGroupName: parentTarget,
-      logStreamName: target,
+      logGroupName,
+      logStreamName,
     });
     return rdb.build();
   }

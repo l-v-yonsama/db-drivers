@@ -21,11 +21,11 @@ import {
   GroupRepresentation,
   KeycloakErrorResponse,
   KeycloakInternalServerErrorResponse,
+  KeycloakScanParams,
   RealmParam,
   RealmRepresentation,
   RoleQuery,
   RoleRepresentation,
-  ScanParams,
   SessionQuery,
   SessionStat,
   UserQuery,
@@ -73,7 +73,7 @@ function isKeycloakIntermalServerErrorResponse(
 
 export class KeycloakDriver
   extends BaseDriver<KeycloakDatabase>
-  implements Scannable
+  implements Scannable<KeycloakScanParams>
 {
   private issuerClient: BaseClient | undefined;
   private cachedTokenSet: TokenSet | undefined;
@@ -788,18 +788,18 @@ export class KeycloakDriver
     return res.data ?? [];
   }
 
-  async scan(params: ScanParams): Promise<ResultSetData> {
+  async scan(params: KeycloakScanParams): Promise<ResultSetData> {
     const {
-      targetResourceType,
-      parentTarget,
-      keyword,
-      target,
+      resourceType,
+      parentId,
+      searchQuery,
+      realmName,
       limit,
       jsonExpansion,
     } = params;
 
-    const realm = target;
-    switch (targetResourceType) {
+    const realm = realmName;
+    switch (resourceType) {
       case 'IamRealm': {
         const realms = await this.getRealms();
         const rdb = new ResultSetDataBuilder([
@@ -853,7 +853,7 @@ export class KeycloakDriver
       case 'IamUser': {
         const users = await this.getUsers({
           realm,
-          search: keyword,
+          search: searchQuery,
           max: limit,
         });
 
@@ -935,7 +935,7 @@ export class KeycloakDriver
       case 'IamRole': {
         const roles = await this.getRoles({
           realm,
-          search: keyword,
+          search: searchQuery,
           max: limit,
         });
         const rdb = new ResultSetDataBuilder([
@@ -963,7 +963,7 @@ export class KeycloakDriver
       case 'IamGroup': {
         const groups = await this.getGroups({
           realm,
-          search: keyword,
+          search: searchQuery,
           max: limit,
         });
         const rdb = new ResultSetDataBuilder([
@@ -988,7 +988,7 @@ export class KeycloakDriver
       case 'IamSession': {
         const sessions = await this.getSessions({
           realm,
-          clientUUID: parentTarget,
+          clientUUID: parentId,
           max: limit,
         });
         const rdb = new ResultSetDataBuilder([
@@ -1019,7 +1019,7 @@ export class KeycloakDriver
         return rdb.build();
       }
       default:
-        throw new Error(`Not supported resource type ${targetResourceType}`);
+        throw new Error(`Not supported resource type ${resourceType}`);
     }
   }
 

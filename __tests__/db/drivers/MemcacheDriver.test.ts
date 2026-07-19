@@ -74,9 +74,9 @@ describe('MemcacheDriver', () => {
       const { ok, message, result } = await driver.flow(
         async (): Promise<ResultSetData> => {
           return driver.scan({
-            target:'',
+            kind: 'memcache',
             matchType: 'partial',
-            keyword: 'num',
+            key: 'num',
             limit: 10,
           });
         },
@@ -91,9 +91,9 @@ describe('MemcacheDriver', () => {
       const { ok, message, result } = await driver.flow(
         async (): Promise<ResultSetData> => {
           return driver.scan({
-            target:'',
+            kind: 'memcache',
             matchType: 'exact',
-            keyword: 'testKey4',
+            key: 'testKey4',
             limit: 1,
           });
         },

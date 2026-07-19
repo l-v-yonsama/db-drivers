@@ -1,10 +1,16 @@
 import { TopLevelCondition } from 'json-rules-engine';
 import { Statement } from 'pgsql-ast-parser';
 import {
+  Auth0Database,
   AwsDatabase,
+  DbDatabase,
   DbDynamoTable,
   DbTable,
+  KeycloakDatabase,
+  MemcacheDatabase,
+  MqttDatabase,
   RdsDatabase,
+  RedisDatabase,
   SchemaAndTableName,
 } from '../../resource';
 import { RDSBaseDriver } from '../../drivers';
@@ -97,6 +103,40 @@ export type CreateAwsSchemaDefinitionsForPromptParams = {
   db: AwsDatabase | AwsDatabase[];
   resourceName?: string;
   serviceType?: AwsServiceType;
+};
+
+export type CreateAuth0SchemaDefinitionsForPromptParams = {
+  db: Auth0Database | Auth0Database[];
+};
+
+export type CreateKeycloakSchemaDefinitionsForPromptParams = {
+  db: KeycloakDatabase | KeycloakDatabase[];
+  realmName?: string;
+};
+
+export type CreateMemcacheSchemaDefinitionsForPromptParams = {
+  db: MemcacheDatabase | MemcacheDatabase[];
+};
+
+export type CreateMqttSchemaDefinitionsForPromptParams = {
+  db: MqttDatabase | MqttDatabase[];
+};
+
+export type CreateRedisSchemaDefinitionsForPromptParams = {
+  db: RedisDatabase | RedisDatabase[];
+};
+
+export type CreateSchemaDefinitionsForPromptParams = {
+  db: DbDatabase | DbDatabase[];
+  // RDS-only
+  rdsDriver?: RDSBaseDriver;
+  schemaName?: string;
+  tableName?: string;
+  // AWS-only
+  resourceName?: string;
+  serviceType?: AwsServiceType;
+  // Keycloak-only
+  realmName?: string;
 };
 
 export type ResourcePosition = {

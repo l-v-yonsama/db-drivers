@@ -131,9 +131,10 @@ describe('AwsS3Driver', () => {
 
       it('should have values2', async () => {
         const rdh = await driver.s3Client.scan({
-          target: bucket,
+          kind: 'aws-s3',
+          bucketName: bucket,
           limit: 2000,
-          withValue: { limitSize: 100_000 },
+          fetchValue: { limitSize: 100_000 },
         });
 
         expect(rdh.rows.length).toBe(3);

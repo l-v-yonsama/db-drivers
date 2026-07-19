@@ -29,7 +29,7 @@ import {
 } from 'auth0';
 import pluralize from 'pluralize';
 import { Auth0Database, IamClient, IamOrganization } from '../resource';
-import { ConnectionSetting, ScanParams } from '../types';
+import { Auth0ScanParams, ConnectionSetting } from '../types';
 import { decodeJwt } from '../utils';
 import { BaseDriver, Scannable } from './BaseDriver';
 
@@ -61,7 +61,7 @@ interface OrganizationRowData extends Organization {
 
 export class Auth0Driver
   extends BaseDriver<Auth0Database>
-  implements Scannable
+  implements Scannable<Auth0ScanParams>
 {
   private cachedAccessToken: string | undefined;
 
@@ -452,13 +452,13 @@ export class Auth0Driver
     await mngClient.organizations.addMembers({ id: orgId }, payload);
   }
 
-  async scan(params: ScanParams): Promise<ResultSetData> {
-    const { targetResourceType, parentTarget, keyword, limit, jsonExpansion } =
+  async scan(params: Auth0ScanParams): Promise<ResultSetData> {
+    const { resourceType, parentId, searchQuery, limit, jsonExpansion } =
       params;
-    switch (targetResourceType) {
+    switch (resourceType) {
       case 'IamClient': {
         const clients = await this.getClients({
-          keyword,
+          keyword: searchQuery,
           limit,
         });
         const rdb = new ResultSetDataBuilder([
@@ -521,10 +521,10 @@ export class Auth0Driver
         return rdb.build();
       }
       case 'IamUser': {
-        if (parentTarget) {
-          const members = await this.getMembers(parentTarget, {
+        if (parentId) {
+          const members = await this.getMembers(parentId, {
             limit,
-            keyword,
+            keyword: searchQuery,
           });
           const rdb = new ResultSetDataBuilder([
             createRdhKey({
@@ -555,7 +555,7 @@ export class Auth0Driver
           return rdb.build();
         } else {
           const users = await this.getUsers({
-            keyword,
+            keyword: searchQuery,
             limit,
           });
           let innerAppMetaNames: string[] = [];
@@ -678,7 +678,7 @@ export class Auth0Driver
       }
       case 'IamOrganization': {
         const orgs = await this.getOrganizations({
-          keyword,
+          keyword: searchQuery,
           limit,
         });
 
@@ -735,7 +735,7 @@ export class Auth0Driver
       }
       case 'IamRole': {
         const roles = await this.getRoles({
-          keyword,
+          keyword: searchQuery,
           limit,
         });
         const rdb = new ResultSetDataBuilder([
@@ -755,7 +755,7 @@ export class Auth0Driver
         return rdb.build();
       }
       default:
-        throw new Error(`Not supported resource type ${targetResourceType}`);
+        throw new Error(`Not supported resource type ${resourceType}`);
     }
   }
 

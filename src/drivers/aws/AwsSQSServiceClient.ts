@@ -35,15 +35,18 @@ import {
 } from '../../resource';
 import {
   AwsSQSAttributes,
+  AwsSQSScanParams,
   AwsServiceType,
   ConnectionSetting,
-  ScanParams,
 } from '../../types';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 
-export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
+export class AwsSQSServiceClient
+  extends AwsServiceClient
+  implements Scannable<AwsSQSScanParams>
+{
   sqsClient: SQSClient;
 
   constructor(
@@ -86,11 +89,11 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
     });
   }
 
-  async scan(params: ScanParams): Promise<ResultSetData> {
-    const { target, limit, keyword } = params;
+  async scan(params: AwsSQSScanParams): Promise<ResultSetData> {
+    const { queueUrl, limit, bodyOrMessageIdContains } = params;
 
     let keys = await this.receiveMessages({
-      QueueUrl: target,
+      QueueUrl: queueUrl,
       MaxNumberOfMessages: limit,
       MessageSystemAttributeNames: [
         'SentTimestamp',
@@ -98,9 +101,11 @@ export class AwsSQSServiceClient extends AwsServiceClient implements Scannable {
       ],
     });
 
-    if (keyword) {
+    if (bodyOrMessageIdContains) {
       keys = keys.filter(
-        (it) => it.meta.body.includes(keyword) || it.name.includes(keyword),
+        (it) =>
+          it.meta.body.includes(bodyOrMessageIdContains) ||
+          it.name.includes(bodyOrMessageIdContains),
       );
     }
 

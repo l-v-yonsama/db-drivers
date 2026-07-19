@@ -9,7 +9,7 @@ import {
 import * as fs from 'fs';
 import path from 'path';
 
-describe.skip('MqttDriver', () => {
+describe('MqttDriver', () => {
   let driverResolver: DBDriverResolver;
   let driver: MqttDriver;
 
@@ -20,6 +20,7 @@ describe.skip('MqttDriver', () => {
     dbType: DBType.Mqtt,
     mqttSetting: {
       protocol: 'mqtt',
+      subscriptionList:[{name:'device/piyo/#', qos:0}],
       // topicList: ['device/temperature', 'device/cycle_time'],
     },
   };
@@ -35,7 +36,7 @@ describe.skip('MqttDriver', () => {
     await driver.disconnect();
   });
 
-  describe('connect', () => {
+  describe.skip('connect', () => {
     const ca = path.join('__tests__', 'data', 'certs', 'mosquitto.org.crt');
     const protocolCases = [
       {
@@ -99,7 +100,7 @@ describe.skip('MqttDriver', () => {
         rejectUnauthorized: true,
       },
     ];
-    test.skip.each(protocolCases)(
+    test.each(protocolCases)(
       'connect with protocol: $protocol, protocolVersion: $protocolVersion, rejectUnauthorized: $rejectUnauthorized',
       async ({ protocol, protocolVersion, port, rejectUnauthorized }) => {
         const setting: ConnectionSetting = {
@@ -141,7 +142,7 @@ describe.skip('MqttDriver', () => {
     });
   });
 
-  describe('publish', () => {
+  describe.skip('publish', () => {
     it('should return 1 json record', async () => {
       const subscribe_topic = 'device/piyo/#';
       const publish_topic = 'device/piyo/cycle_time';

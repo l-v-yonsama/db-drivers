@@ -100,10 +100,11 @@ describe('RedisDriver', () => {
   describe('scanStream', () => {
     it('should return values', async () => {
       const keys = await driver.scanStream({
-        target: '0',
+        kind: 'redis',
+        dbIndex: 0,
         limit: 1000,
-        keyword: '*',
-        withValue: {
+        keyGlob: '*',
+        fetchValue: {
           limitSize: 100_000,
         },
       });

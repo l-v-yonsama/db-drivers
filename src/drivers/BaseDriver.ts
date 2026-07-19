@@ -3,8 +3,8 @@ import { DbDatabase, SchemaAndTableHints } from '../resource';
 import { ConnectionSetting, GeneralResult, ScanParams } from '../types';
 import { DBError } from './DBError';
 
-export interface Scannable {
-  scan(params: ScanParams): Promise<ResultSetData>;
+export interface Scannable<P extends ScanParams = ScanParams> {
+  scan(params: P): Promise<ResultSetData>;
 }
 
 export interface Commandable {

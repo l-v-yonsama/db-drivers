@@ -142,7 +142,8 @@ describe('AwsSQSDriver', () => {
       const { ok, message, result } = await driver.flow(
         async (): Promise<ResultSetData> => {
           return await driver.sqsClient.scan({
-            target: queueUrl1,
+            kind: 'aws-sqs',
+            queueUrl: queueUrl1,
             limit: 10,
           });
         },

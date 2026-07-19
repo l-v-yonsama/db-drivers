@@ -38,6 +38,7 @@ __tests__/data/logs/parse/*.json
 
 # Misc
 .DS_Store
+misc/
 src/examples/
 test.sh
 .env

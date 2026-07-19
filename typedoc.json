@@ -1,0 +1,15 @@
+{
+  "entryPoints": ["src"],
+  "out": "doc",
+  "cleanOutputDir": true,
+  "excludePrivate": true,
+  "plugin": ["typedoc-plugin-markdown"],
+  "intentionallyNotExported": [
+    "src/drivers/aws/AwsCloudwatchServiceClient.ts:CloudWatchScanParams",
+    "src/types/drivers/ScanParams.ts:ScanParamsBase",
+    "src/types/utils/index.ts:LogEventFieldRegex",
+    "src/types/utils/index.ts:LogEventFieldLiteral",
+    "src/types/utils/index.ts:LogEventFieldLineBreakLiteral",
+    "src/types/utils/index.ts:LogEventFieldBuiltin"
+  ]
+}

@@ -8,13 +8,13 @@ import {
 } from '@l-v-yonsama/rdh';
 import { Redis } from 'ioredis';
 import { DbKey, RedisDatabase, RedisKeyParams } from '../resource';
-import { ConnectionSetting, RedisKeyType, ScanParams } from '../types';
+import { ConnectionSetting, RedisKeyType, RedisScanParams } from '../types';
 import { prettyTime } from '../utils';
 import { BaseDriver, Scannable } from './BaseDriver';
 
 export class RedisDriver
   extends BaseDriver<RedisDatabase>
-  implements Scannable
+  implements Scannable<RedisScanParams>
 {
   client: Redis | undefined;
 
@@ -92,13 +92,13 @@ export class RedisDriver
     await this.client.del(key);
   }
 
-  async scanStream(params: ScanParams): Promise<DbKey<RedisKeyParams>[]> {
-    const { target, limit, withValue, keyword } = params;
+  async scanStream(params: RedisScanParams): Promise<DbKey<RedisKeyParams>[]> {
+    const { dbIndex, limit, fetchValue, keyGlob } = params;
 
-    await this.client.select(target);
+    await this.client.select(dbIndex);
     const keys = await new Promise<string[]>((resolve) => {
       const stream = this.client.scanStream({
-        match: keyword,
+        match: keyGlob,
         count: limit,
       });
       const keys: string[] = [];
@@ -124,7 +124,7 @@ export class RedisDriver
       const type = (await this.client.type(key)) as RedisKeyType;
       const ttl = await this.client.ttl(key);
       let val: any;
-      if (withValue) {
+      if (fetchValue) {
         val = await this.getValueByKey(this.client, key, type);
       }
       return new DbKey<RedisKeyParams>(key, {
@@ -136,7 +136,7 @@ export class RedisDriver
     return await Promise.all(promises);
   }
 
-  async scan(params: ScanParams): Promise<ResultSetData> {
+  async scan(params: RedisScanParams): Promise<ResultSetData> {
     const dbKeys = await this.scanStream(params);
 
     const rdb = new ResultSetDataBuilder([

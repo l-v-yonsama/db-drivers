@@ -17,8 +17,8 @@ import {
   ConnectionSetting,
   ListOption,
   MemcachedValue,
+  MemcacheScanParams,
   ParsedCommand,
-  ScanParams,
 } from '../types';
 import { BaseDriver, Commandable, Scannable } from './BaseDriver';
 import {
@@ -35,7 +35,7 @@ import { isJson } from '../utils';
 
 export class MemcacheDriver
   extends BaseDriver<MemcacheDatabase>
-  implements Scannable, Commandable
+  implements Scannable<MemcacheScanParams>, Commandable
 {
   private client: Memcached | undefined;
 
@@ -139,14 +139,15 @@ export class MemcacheDriver
 
   async getByRdh(key: string): Promise<ResultSetData> {
     return await this.scan({
+      kind: 'memcache',
       limit: 1,
-      target: 'exact',
-      keyword: key,
+      matchType: 'exact',
+      key,
     });
   }
 
-  async scan(params: ScanParams): Promise<ResultSetData> {
-    const { matchType, limit, withValue, keyword, jsonExpansion } = params;
+  async scan(params: MemcacheScanParams): Promise<ResultSetData> {
+    const { matchType, limit, key } = params;
 
     const keys = [
       createRdhKey({
@@ -183,9 +184,9 @@ export class MemcacheDriver
 
     const startTime = new Date().getTime();
     if (matchType === 'exact') {
-      const val = await this.get(keyword);
+      const val = await this.get(key);
       if (val !== undefined && val !== null) {
-        const dbKey = new DbKey<MemcacheKeyParams>(keyword, {
+        const dbKey = new DbKey<MemcacheKeyParams>(key, {
           slabId: -1,
           val: val,
         });
@@ -194,7 +195,7 @@ export class MemcacheDriver
     } else {
       list = await this.listKeyWithValues({
         limit,
-        keyword,
+        keyword: key,
       });
     }
     const elapsedTimeMilli = new Date().getTime() - startTime;
@@ -262,21 +263,21 @@ export class MemcacheDriver
   async executeCommand(command: string): Promise<ResultSetData> {
     const parsed = this.parseCommand(command);
 
-    const scanParams: Partial<ScanParams> = {
-      target: '',
+    const scanParams: Partial<MemcacheScanParams> = {
+      kind: 'memcache',
     };
     switch (parsed.type) {
       case 'get':
         scanParams.matchType = 'exact';
         scanParams.limit = 1;
-        scanParams.keyword = parsed.key;
+        scanParams.key = parsed.key;
         break;
       case 'cachedump':
         scanParams.matchType = 'partial';
         scanParams.limit = parsed.limit;
-        scanParams.keyword = parsed.keyword;
+        scanParams.key = parsed.keyword;
     }
-    const result = await this.scan(scanParams as ScanParams);
+    const result = await this.scan(scanParams as MemcacheScanParams);
     result.meta.command = command;
     return result;
   }

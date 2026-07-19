@@ -15,9 +15,9 @@ import { MqttDatabase, DbSubscription } from '../resource';
 import {
   ConnectionSetting,
   MqttQoS,
+  MqttScanParams,
   MqttSubscriptionSetting,
   QueryParams,
-  ScanParams,
 } from '../types';
 import { isJson, requestSqlFromRdh } from '../utils';
 import { BaseDriver, Scannable } from './BaseDriver';
@@ -27,6 +27,13 @@ import { parseQuery } from '../helpers';
 
 export type TopicPayloadMessage = {
   timestamp: Date;
+  /**
+   * The concrete topic the message was published to, as reported by the broker.
+   * May differ from the subscription filter key it is bucketed under
+   * (e.g. filter `device/piyo/#` can receive messages for `device/piyo/cycle_time`
+   * and `device/piyo/status`).
+   */
+  topic: string;
   messageId?: number;
   qos: MqttQoS;
   isRetained: boolean;
@@ -57,7 +64,10 @@ function matchTopic(topic: string, filter: string): boolean {
   return tParts.length === fParts.length;
 }
 
-export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
+export class MqttDriver
+  extends BaseDriver<MqttDatabase>
+  implements Scannable<MqttScanParams>
+{
   client: MqttClient | undefined;
   subscribedTopicMap = new Map<string, TopicStatusAndPayloads>();
   clientId: string | undefined;
@@ -152,6 +162,7 @@ export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
           }
           v.messages.push({
             timestamp: new Date(),
+            topic,
             messageId: packet.messageId,
             qos: packet.qos,
             isRetained: packet.retain,
@@ -247,8 +258,21 @@ export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
     topic: string,
     options?: { jsonExpansion?: boolean },
   ): ResultSetData {
-    const jsonExpansion = options?.jsonExpansion ?? false;
-    const messages = this.getAll(topic);
+    return this.buildRdhFromMessages(this.getAll(topic), {
+      jsonExpansion: options?.jsonExpansion ?? false,
+      tableName: topic,
+    });
+  }
+
+  private buildRdhFromMessages(
+    messages: TopicPayloadMessage[],
+    options: {
+      tableName: string;
+      jsonExpansion?: boolean;
+      withValueLimitSize?: number;
+    },
+  ): ResultSetData {
+    const { tableName, withValueLimitSize, jsonExpansion = false } = options;
     const JSON_EXPANSION_PREFIX = 'EX:';
     if (messages.length === 0) {
       return ResultSetDataBuilder.createEmpty({
@@ -257,6 +281,7 @@ export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
     }
 
     const keys = [
+      createRdhKey({ name: 'topic', type: GeneralColumnType.TEXT, width: 200 }),
       createRdhKey({ name: 'timestamp', type: GeneralColumnType.TIMESTAMP }),
       createRdhKey({ name: 'qos', type: GeneralColumnType.INTEGER, width: 70 }),
       createRdhKey({
@@ -296,8 +321,12 @@ export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
     const buf = new ResultSetDataBuilder(keys);
     messages.forEach((message) => {
       const text = message.rawData.toString();
+      const exceedsValueLimit =
+        withValueLimitSize !== undefined &&
+        message.rawData.byteLength > withValueLimitSize;
 
       const rowData = {
+        topic: message.topic,
         timestamp: message.timestamp,
         qos: message.qos,
         retained: message.isRetained,
@@ -320,9 +349,21 @@ export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
               rowData[`${JSON_EXPANSION_PREFIX}${eKey.name}`] = v;
             }
           });
+        } else if (exceedsValueLimit) {
+          rowData['payload'] = undefined;
         } else {
-          rowData['payload'] = JSON.parse(text);
+          try {
+            rowData['payload'] = JSON.parse(text);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            rowData['payload'] = JSON.stringify({
+              error: `Failed to parse JSON: ${message}`,
+              original: text,
+            });
+          }
         }
+      } else if (exceedsValueLimit) {
+        rowData['payload'] = undefined;
       } else {
         if (firstDataType === GeneralColumnType.TEXT) {
           rowData['payload'] = text;
@@ -335,7 +376,7 @@ export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
 
     buf.updateMeta({
       connectionName: this.conRes.name,
-      tableName: topic,
+      tableName,
     });
 
     return buf.build();
@@ -371,10 +412,58 @@ export class MqttDriver extends BaseDriver<MqttDatabase> implements Scannable {
     this.subscribedTopicMap.delete(topic);
   }
 
-  async scan(params: ScanParams): Promise<ResultSetData> {
-    // const dbKeys = await this.scanStream(params);
+  async scan(params: MqttScanParams): Promise<ResultSetData> {
+    const {
+      topicFilter,
+      matchType = 'partial',
+      payloadContains,
+      limit,
+      startTime,
+      endTime,
+      fetchValue,
+      jsonExpansion,
+    } = params;
 
-    return null;
+    const topics =
+      matchType === 'exact'
+        ? this.subscribedTopicMap.has(topicFilter)
+          ? [topicFilter]
+          : []
+        : [...this.subscribedTopicMap.keys()].filter(
+            (t) =>
+              !topicFilter ||
+              matchTopic(t, topicFilter) ||
+              t.includes(topicFilter),
+          );
+
+    let messages = topics.flatMap((topic) => this.getAll(topic));
+
+    if (startTime !== undefined) {
+      messages = messages.filter(
+        (m) => m.timestamp.getTime() >= startTime * 1000,
+      );
+    }
+    if (endTime !== undefined) {
+      messages = messages.filter(
+        (m) => m.timestamp.getTime() <= endTime * 1000,
+      );
+    }
+    if (payloadContains) {
+      messages = messages.filter((m) =>
+        m.rawData.toString().includes(payloadContains),
+      );
+    }
+
+    messages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    if (limit) {
+      messages = messages.slice(0, limit);
+    }
+
+    return this.buildRdhFromMessages(messages, {
+      jsonExpansion: !!jsonExpansion && topics.length === 1,
+      withValueLimitSize: fetchValue?.limitSize,
+      tableName: topics.length === 1 ? topics[0] : topicFilter || 'Mqtt',
+    });
   }
 
   async getInfomationSchemasSub(): Promise<Array<MqttDatabase>> {
