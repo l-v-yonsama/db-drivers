@@ -80,7 +80,7 @@ describe('ResourceHelper', () => {
         const rdh2 = await driver.requestSql({ sql: rdh1.sqlStatement });
 
         const diffResult = diff(rdh1, rdh2);
-        expect(diffResult).toEqual({
+        expect(diffResult).toMatchObject({
           ok: true,
           deleted: 2,
           inserted: 1,
@@ -88,8 +88,11 @@ describe('ResourceHelper', () => {
           updatedColumns: 1,
           message: 'Inserted:1, Deleted:2, Updated:1 (1 column)',
         });
-        expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(true);
-        expect(RowHelper.hasAnnotation(rdh1.rows[4], 'Del')).toBe(true);
+        // diffは引数rdh1/rdh2を変更しない。アノテーションは返り値のクローン
+        // (diffResult.rdh1/rdh2)から読む。
+        expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[3], 'Del')).toBe(true);
+        expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[4], 'Del')).toBe(true);
+        expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(false);
       });
     });
 
@@ -125,7 +128,7 @@ describe('ResourceHelper', () => {
         const rdh2 = await driver.requestSql({ sql: rdh1.sqlStatement });
 
         const diffResult = diff(rdh1, rdh2);
-        expect(diffResult).toEqual({
+        expect(diffResult).toMatchObject({
           ok: true,
           deleted: 2,
           inserted: 1,
@@ -133,8 +136,11 @@ describe('ResourceHelper', () => {
           updatedColumns: 1,
           message: 'Inserted:1, Deleted:2, Updated:1 (1 column)',
         });
-        expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(true);
-        expect(RowHelper.hasAnnotation(rdh1.rows[4], 'Del')).toBe(true);
+        // diffは引数rdh1/rdh2を変更しない。アノテーションは返り値のクローン
+        // (diffResult.rdh1/rdh2)から読む。
+        expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[3], 'Del')).toBe(true);
+        expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[4], 'Del')).toBe(true);
+        expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(false);
       });
 
       it('should has uniq compareKey in meta', async () => {
@@ -169,7 +175,7 @@ describe('ResourceHelper', () => {
         const rdh2 = await driver.requestSql({ sql: rdh1.sqlStatement });
 
         const diffResult = diff(rdh1, rdh2);
-        expect(diffResult).toEqual({
+        expect(diffResult).toMatchObject({
           ok: true,
           deleted: 2,
           inserted: 1,
@@ -177,8 +183,11 @@ describe('ResourceHelper', () => {
           updatedColumns: 1,
           message: 'Inserted:1, Deleted:2, Updated:1 (1 column)',
         });
-        expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(true);
-        expect(RowHelper.hasAnnotation(rdh1.rows[4], 'Del')).toBe(true);
+        // diffは引数rdh1/rdh2を変更しない。アノテーションは返り値のクローン
+        // (diffResult.rdh1/rdh2)から読む。
+        expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[3], 'Del')).toBe(true);
+        expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[4], 'Del')).toBe(true);
+        expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(false);
       });
     });
   });
@@ -318,7 +327,7 @@ describe('ResourceHelper', () => {
         });
 
         const result = diff(rdh1, rdh3);
-        expect(result).toEqual({
+        expect(result).toMatchObject({
           ok: true,
           deleted: 0,
           inserted: 0,
@@ -452,7 +461,7 @@ describe('ResourceHelper', () => {
         });
 
         const result = diff(rdh1, rdh3);
-        expect(result).toEqual({
+        expect(result).toMatchObject({
           ok: true,
           deleted: 0,
           inserted: 0,
@@ -587,7 +596,7 @@ describe('ResourceHelper', () => {
         });
 
         const result = diff(rdh1, rdh3);
-        expect(result).toEqual({
+        expect(result).toMatchObject({
           ok: true,
           deleted: 0,
           inserted: 0,
@@ -723,7 +732,7 @@ describe('ResourceHelper', () => {
         });
 
         const result = diff(rdh1, rdh3);
-        expect(result).toEqual({
+        expect(result).toMatchObject({
           ok: true,
           deleted: 0,
           inserted: 0,
