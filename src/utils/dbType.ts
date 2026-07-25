@@ -8,6 +8,7 @@ export const isRDSType = (dbType: DBType): boolean => {
     case DBType.Postgres:
     case DBType.SQLServer:
     case DBType.SQLite:
+    case DBType.Oracle:
       return true;
   }
   return false;
@@ -23,6 +24,11 @@ export const isRDSType = (dbType: DBType): boolean => {
  * an Always-On Availability-Group read-only-routing hint; on a standalone
  * instance (or a primary without read-only routing configured) it is a
  * no-op, so callers must not treat it as a write-blocking guarantee there.
+ * Oracle is deliberately excluded too: its closest equivalent (`SET
+ * TRANSACTION READ ONLY`) is transaction-scoped, but ad-hoc queries run
+ * with autocommit outside of `flowTransaction()`, so it would only cover
+ * the first statement after connect and then silently stop applying —
+ * worse than an honest no-op, so callers must not rely on it here either.
  */
 export const isReadOnlyEnforcementReliable = (dbType: DBType): boolean => {
   switch (dbType) {

@@ -43,6 +43,17 @@ services:
       - POSTGRES_PASSWORD=testpass
       - POSTGRES_DB=testdb
 
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    container_name: oracle_container
+    ports:
+      - 6012:1521
+    environment:
+      TZ: 'Asia/Tokyo'
+      ORACLE_PASSWORD: testpass
+      APP_USER: testuser
+      APP_USER_PASSWORD: testpass
+
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
     platform: linux/amd64

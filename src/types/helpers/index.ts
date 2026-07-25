@@ -42,6 +42,14 @@ export type BindOptions = {
 
 export type SQLLang = 'sql' | 'partiql';
 
+/**
+ * How a driver's dialect expresses "limit the number of rows returned":
+ *  - 'top': a leading `TOP n` in the SELECT clause (SQL Server)
+ *  - 'trailing': a trailing `LIMIT n` (MySQL / Postgres / SQLite / Aws PartiQL)
+ *  - 'fetchFirst': a trailing `FETCH FIRST n ROWS ONLY` (Oracle)
+ */
+export type LimitClauseStyle = 'top' | 'trailing' | 'fetchFirst';
+
 export type ViewRecordsParams = {
   schemaAndName: SchemaAndTableName;
   limitMode: 'top' | 'last';
@@ -59,7 +67,7 @@ export type ToViewDataQueryParams = {
   // toPositionedParameter?: boolean;
   // toPositionalCharacter?: string;
   limit?: number;
-  limitAsTop?: boolean;
+  limitClauseStyle?: LimitClauseStyle;
 };
 
 export enum ProposalKind {

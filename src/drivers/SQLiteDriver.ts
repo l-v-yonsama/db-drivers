@@ -14,6 +14,7 @@ import { parseQuery, QuoteChar } from '../helpers';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  LimitClauseStyle,
   QueryParams,
   TransactionIsolationLevel,
 } from '../types';
@@ -437,8 +438,8 @@ export class SQLiteDriver extends RDSBaseDriver {
     return undefined;
   }
 
-  isLimitAsTop(): boolean {
-    return false;
+  getLimitClauseStyle(): LimitClauseStyle {
+    return 'trailing';
   }
 
   getIdQuoteCharacter(): QuoteChar | undefined {

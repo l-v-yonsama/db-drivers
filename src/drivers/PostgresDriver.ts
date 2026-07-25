@@ -14,6 +14,7 @@ import { PoolConfig, default as pg } from 'pg';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  LimitClauseStyle,
   QueryParams,
   TransactionIsolationLevel,
 } from '../types';
@@ -647,8 +648,8 @@ ORDER BY A.pid DESC
     return '$';
   }
 
-  isLimitAsTop(): boolean {
-    return false;
+  getLimitClauseStyle(): LimitClauseStyle {
+    return 'trailing';
   }
 
   getIdQuoteCharacter(): QuoteChar | undefined {

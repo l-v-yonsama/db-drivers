@@ -20,6 +20,7 @@ import {
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  LimitClauseStyle,
   QueryParams,
   ResultColumn,
   SQLServerAuthenticationType,
@@ -783,8 +784,8 @@ ORDER BY s.session_id DESC
     return '@';
   }
 
-  isLimitAsTop(): boolean {
-    return true;
+  getLimitClauseStyle(): LimitClauseStyle {
+    return 'top';
   }
 
   getIdQuoteCharacter(): QuoteChar | undefined {

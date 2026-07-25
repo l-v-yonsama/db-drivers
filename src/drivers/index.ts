@@ -8,6 +8,7 @@ export * from './KeycloakDriver';
 export * from './MemcacheDriver';
 export * from './MySQLDriver';
 export * from './MqttDriver';
+export * from './OracleDriver';
 export * from './PostgresDriver';
 export * from './RDSBaseDriver';
 export * from './RedisDriver';

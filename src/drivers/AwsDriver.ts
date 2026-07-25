@@ -12,6 +12,7 @@ import { fromEnv, fromIni } from '@aws-sdk/credential-providers';
 import {
   AwsServiceType,
   ConnectionSetting,
+  LimitClauseStyle,
   QueryParams,
   ResourceType,
   SQLLang,
@@ -301,8 +302,8 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     return undefined;
   }
 
-  isLimitAsTop(): boolean {
-    return false;
+  getLimitClauseStyle(): LimitClauseStyle {
+    return 'trailing';
   }
 
   isSchemaSpecificationSvailable(): boolean {

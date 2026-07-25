@@ -1,5 +1,5 @@
 import { ResultSetData } from '@l-v-yonsama/rdh';
-import { ConnectionSetting, QueryParams, SQLLang } from '../types';
+import { ConnectionSetting, LimitClauseStyle, QueryParams, SQLLang } from '../types';
 import { DbDatabase, SchemaAndTableName } from '../resource';
 import { BaseDriver } from './BaseDriver';
 import { QuoteChar } from '../helpers';
@@ -17,7 +17,7 @@ export abstract class BaseSQLSupportDriver<
 
   abstract isSchemaSpecificationSvailable(): boolean;
 
-  abstract isLimitAsTop(): boolean;
+  abstract getLimitClauseStyle(): LimitClauseStyle;
 
   abstract getSqlLang(): SQLLang;
 

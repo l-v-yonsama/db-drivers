@@ -77,6 +77,7 @@ const DBTypeToSqlLanguageMap: Record<DBType, SqlLanguage> = {
   Postgres: 'postgresql',
   SQLServer: 'transactsql', // tsqlの実体
   SQLite: 'sqlite',
+  Oracle: 'plsql',
   // 以下、SQLじゃないのでフォールバック
   Redis: 'mysql',
   Memcache: 'mysql',
@@ -557,7 +558,7 @@ export function toViewRecordsQuery({
   idQuoteCharacter,
   sqlLang,
   limit,
-  limitAsTop,
+  limitClauseStyle,
   limitMode,
   limitLastColumn,
 }: ToViewDataQueryParams & {
@@ -576,7 +577,7 @@ export function toViewRecordsQuery({
   // -------------------------
   // SELECT clause
   // -------------------------
-  if (limitAsTop && limit) {
+  if (limitClauseStyle === 'top' && limit) {
     // SQL Server は top / last に関係なく TOP を付ける
     query = `SELECT TOP ${limit} * FROM ${tableNameWithSchema}`;
   } else {
@@ -599,10 +600,12 @@ export function toViewRecordsQuery({
   }
 
   // -------------------------
-  // LIMIT (MySQL / PostgreSQL)
+  // LIMIT (MySQL / PostgreSQL / SQLite / Aws) / FETCH FIRST (Oracle)
   // -------------------------
-  if (!limitAsTop && limit) {
+  if (limitClauseStyle === 'trailing' && limit) {
     query += ` LIMIT ${limit}`;
+  } else if (limitClauseStyle === 'fetchFirst' && limit) {
+    query += ` FETCH FIRST ${limit} ROWS ONLY`;
   }
 
   return query;
@@ -1512,7 +1515,7 @@ const toGeneralQuery = ({
   idQuoteCharacter,
   sqlLang,
   limit,
-  limitAsTop,
+  limitClauseStyle,
 }: ToViewDataQueryParams & { selectClause: string }): {
   query: string;
   binds: { [key: string]: any };
@@ -1529,7 +1532,7 @@ const toGeneralQuery = ({
   };
 
   let top = '';
-  if (limitAsTop === true) {
+  if (limitClauseStyle === 'top' && limit !== undefined) {
     top = `TOP ${limit} `;
   }
   let query = `SELECT ${top}${selectClause} ${os.EOL}FROM ${tableNameWithSchema} `;
@@ -1546,8 +1549,10 @@ const toGeneralQuery = ({
       query += os.EOL + 'WHERE' + os.EOL + q;
     }
   }
-  if (limitAsTop !== true && limit !== undefined) {
+  if (limitClauseStyle === 'trailing' && limit !== undefined) {
     query += os.EOL + 'LIMIT ' + limit;
+  } else if (limitClauseStyle === 'fetchFirst' && limit !== undefined) {
+    query += os.EOL + 'FETCH FIRST ' + limit + ' ROWS ONLY';
   }
 
   return {

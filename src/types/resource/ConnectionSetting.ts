@@ -143,6 +143,24 @@ export type SQLServerSetting = {
   domain?: string;
 };
 
+export const OracleConnectionType = {
+  structured: 'structured',
+  useConnectString: 'Use Connect String', // mirrors SQLServerAuthenticationType.useConnectString
+} as const;
+
+export type OracleConnectionType =
+  (typeof OracleConnectionType)[keyof typeof OracleConnectionType];
+
+export type OracleSetting = {
+  /**
+   * Default: 'structured' — host/port/database (Service Name) are used to
+   * build an Easy Connect string. `useConnectString` uses `connectString`
+   * verbatim instead (Easy Connect syntax or a full connect descriptor).
+   */
+  connectionType?: OracleConnectionType;
+  connectString?: string;
+};
+
 export type TransactionIsolationLevel =
   /**
    * READ UNCOMMITTED
@@ -206,6 +224,7 @@ export type ConnectionSetting = {
   awsSetting?: AwsSetting;
   firebase?: FirebaseSetting;
   sqlServer?: SQLServerSetting;
+  oracle?: OracleSetting;
   iamSolution?: IamSolutionSetting;
   mqttSetting?: MqttSetting;
   /**
@@ -224,6 +243,10 @@ export type ConnectionSetting = {
    *    standalone instance, or a primary without read-only routing
    *    configured, this is a no-op and writes will still succeed.
    *    See `isReadOnlyEnforcementReliable`.
+   *  - Oracle: not applied at all. `SET TRANSACTION READ ONLY` exists but is
+   *    transaction-scoped, and ad-hoc queries outside `flowTransaction()`
+   *    autocommit per-statement, so it would only cover the first statement
+   *    after connect. See `isReadOnlyEnforcementReliable`.
    *
    * Default: false/undefined — no behavior change for existing callers.
    */

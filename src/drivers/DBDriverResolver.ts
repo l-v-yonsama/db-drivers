@@ -11,6 +11,7 @@ import { AwsDriver } from './AwsDriver';
 import { BaseDriver } from './BaseDriver';
 import { KeycloakDriver } from './KeycloakDriver';
 import { MySQLDriver } from './MySQLDriver';
+import { OracleDriver } from './OracleDriver';
 import { PostgresDriver } from './PostgresDriver';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { RedisDriver } from './RedisDriver';
@@ -89,6 +90,9 @@ export class DBDriverResolver {
         break;
       case DBType.SQLite:
         driver = new SQLiteDriver(conRes);
+        break;
+      case DBType.Oracle:
+        driver = new OracleDriver(conRes);
         break;
       case DBType.Redis:
         driver = new RedisDriver(conRes);

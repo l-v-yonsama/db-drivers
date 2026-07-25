@@ -3,6 +3,7 @@ export const DBType = {
   Postgres: 'Postgres',
   SQLServer: 'SQLServer',
   SQLite: 'SQLite',
+  Oracle: 'Oracle',
   Redis: 'Redis',
   Memcache: 'Memcache',
   Keycloak: 'Keycloak',

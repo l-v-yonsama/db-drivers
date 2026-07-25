@@ -14,6 +14,7 @@ import { ResultSetHeader } from 'mysql2/promise';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  LimitClauseStyle,
   QueryParams,
   TransactionIsolationLevel,
 } from '../types';
@@ -635,8 +636,8 @@ ORDER BY ID DESC`;
     return undefined;
   }
 
-  isLimitAsTop(): boolean {
-    return false;
+  getLimitClauseStyle(): LimitClauseStyle {
+    return 'trailing';
   }
 
   getIdQuoteCharacter(): QuoteChar | undefined {

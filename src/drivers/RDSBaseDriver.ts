@@ -78,7 +78,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       schemaName: schemaAndName.schema,
       tableRes: new DbTable(schemaAndName.table, null),
       idQuoteCharacter: this.getIdQuoteCharacter(),
-      limitAsTop: this.isLimitAsTop(),
+      limitClauseStyle: this.getLimitClauseStyle(),
       ...others,
     });
 

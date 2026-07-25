@@ -16,6 +16,7 @@ import {
   toSafeQueryForPgsqlAst,
   toViewDataNormalizedQuery,
   toViewDataQuery,
+  toViewRecordsQuery,
 } from '../../src';
 import * as SQLHelperExports from '../../src';
 import { loadMysqlDbFixture } from '../setup/mysql';
@@ -37,6 +38,7 @@ describe('SQLHelper', () => {
         'isReadOnlyQuery',
         'toViewDataQuery',
         'toViewDataNormalizedQuery',
+        'toViewRecordsQuery',
         'toInsertStatement',
         'hasSetVariableClause',
         'separateMultipleQueries',
@@ -636,6 +638,72 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
           expect.anything(),
           't%st',
         ]);
+      });
+    });
+    describe('limit clause style', () => {
+      it('top: TOP n in the SELECT clause, no trailing clause', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+        const { query } = toViewDataQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          schemaName: schemaRes.name,
+          limit: 10,
+          limitClauseStyle: 'top',
+        });
+        expect(eolToSpace(query)).toBe(
+          'SELECT TOP 10 * FROM testdb.testtable',
+        );
+      });
+      it('trailing: trailing LIMIT n', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+        const { query } = toViewDataQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          schemaName: schemaRes.name,
+          limit: 10,
+          limitClauseStyle: 'trailing',
+        });
+        expect(eolToSpace(query)).toBe(
+          'SELECT * FROM testdb.testtable LIMIT 10',
+        );
+      });
+      it('fetchFirst: trailing FETCH FIRST n ROWS ONLY (Oracle)', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+        const { query } = toViewDataQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          schemaName: schemaRes.name,
+          limit: 10,
+          limitClauseStyle: 'fetchFirst',
+        });
+        expect(eolToSpace(query)).toBe(
+          'SELECT * FROM testdb.testtable FETCH FIRST 10 ROWS ONLY',
+        );
+      });
+      it('toViewRecordsQuery: fetchFirst combined with limitMode "last"', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+        const query = toViewRecordsQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          schemaName: schemaRes.name,
+          limit: 5,
+          limitClauseStyle: 'fetchFirst',
+          limitMode: 'last',
+          limitLastColumn: 'ID',
+        });
+        expect(query).toBe(
+          'SELECT * FROM testdb.testtable ORDER BY ID DESC FETCH FIRST 5 ROWS ONLY',
+        );
+      });
+      it('toViewRecordsQuery: top ignores limitMode and always puts TOP up front', () => {
+        const schemaRes = db.getSchema({ isDefault: true });
+        const query = toViewRecordsQuery({
+          tableRes: schemaRes.getChildByName('testtable'),
+          schemaName: schemaRes.name,
+          limit: 5,
+          limitClauseStyle: 'top',
+          limitMode: 'last',
+          limitLastColumn: 'ID',
+        });
+        expect(query).toBe(
+          'SELECT TOP 5 * FROM testdb.testtable ORDER BY ID DESC',
+        );
       });
     });
     describe('partiql', () => {
