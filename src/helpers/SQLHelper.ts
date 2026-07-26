@@ -1362,7 +1362,14 @@ const toEmbeddedStringValue = (
   }
 
   if (isJsonLike(colType)) {
-    return wrapSingleQuote(JSON.stringify(value));
+    // Despite the `string | null` signature above, callers can hand this a
+    // parsed object/array here: mysql2 and pg auto-parse native JSON/JSONB
+    // columns before the value ever reaches this function, while other
+    // paths (e.g. Oracle's pre-21c VARCHAR2/CLOB + "IS JSON" storage) hand
+    // back already-serialized JSON text. Only stringify when it isn't
+    // already a string, or a string value gets JSON-encoded a second time.
+    const text = typeof value === 'string' ? value : JSON.stringify(value);
+    return wrapSingleQuote(text);
   }
 
   if (value.length === 0) {
