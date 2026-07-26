@@ -11,6 +11,7 @@ import {
   SQLServerDriver,
   TransactionIsolationLevel,
 } from '../../../src';
+import { init } from '../../setup/mssql';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 const baseConnectOption = {
@@ -36,6 +37,7 @@ describe('SQLServerDriver', () => {
   let driver: RDSBaseDriver;
 
   beforeAll(async () => {
+    await init();
     driver = createRDSDriver();
     await driver.connect();
   });

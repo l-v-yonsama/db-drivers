@@ -25,6 +25,21 @@ export async function init(): Promise<void> {
   const pool = new pg.Pool(options);
 
   try {
+    // Postgres has no `CREATE ROLE IF NOT EXISTS`, so existence has to be
+    // checked explicitly. SUPERUSER is what lets pg_cancel_backend/
+    // pg_terminate_backend target a session other than its own -- testuser
+    // is already superuser here (POSTGRES_USER bootstraps it that way), but
+    // testadmin exists as a separate, intentionally-named DBA account for
+    // that purpose instead of overloading the app user.
+    const testadmin = await pool.query(
+      "SELECT 1 FROM pg_roles WHERE rolname = 'testadmin'",
+    );
+    if (testadmin.rowCount === 0) {
+      await pool.query(
+        "CREATE ROLE testadmin WITH LOGIN SUPERUSER PASSWORD 'testpass'",
+      );
+    }
+
     await pool.query('DROP TABLE IF EXISTS testtable');
     await pool.query('DROP TYPE IF EXISTS mood');
     await pool.query("CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy')");

@@ -48,6 +48,17 @@ export async function init(): Promise<void> {
   const con = await mysql.createConnection(baseConnectOption);
 
   try {
+    // ALL PRIVILEGES (which folds in SUPER/CONNECTION_ADMIN) is what lets
+    // KILL target a session other than its own; testadmin exists as a
+    // separate, intentionally-named DBA account for that rather than
+    // overloading root.
+    await con.query(
+      "CREATE USER IF NOT EXISTS 'testadmin'@'%' IDENTIFIED BY 'testpass'",
+    );
+    await con.query(
+      "GRANT ALL PRIVILEGES ON *.* TO 'testadmin'@'%' WITH GRANT OPTION",
+    );
+
     await con.query("GRANT ALL PRIVILEGES ON `test-db`.* TO 'testuser'@'%'");
     await con.execute('DROP TABLE IF EXISTS `test-db`.testtable');
     await con.execute<ResultSetHeader>(CREATE_TABLE_STATEMENT);

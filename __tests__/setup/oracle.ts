@@ -21,6 +21,28 @@ async function dropIfExists(
   }
 }
 
+async function ensureTestAdmin(): Promise<void> {
+  const sysCon = await oracledb.getConnection({
+    user: 'system',
+    password: 'testpass',
+    connectString: 'localhost:6012/FREEPDB1',
+  });
+  try {
+    const existing = await sysCon.execute<{ USERNAME: string }>(
+      `SELECT username FROM all_users WHERE username = 'TESTADMIN'`,
+    );
+    if (!(existing.rows ?? []).length) {
+      await sysCon.execute(`CREATE USER testadmin IDENTIFIED BY testpass`);
+    }
+    // DBA covers CREATE SESSION plus the ALTER SYSTEM privilege
+    // kill(sessionOrPid) needs for ALTER SYSTEM KILL SESSION on another
+    // session; re-granting an already-held role is a harmless no-op.
+    await sysCon.execute(`GRANT DBA TO testadmin`);
+  } finally {
+    await sysCon.close();
+  }
+}
+
 async function grantCatalogAccess(): Promise<void> {
   // getLocks()/getSessions() query V$SESSION/V$SQL/V$LOCKED_OBJECT, which a
   // bare APP_USER (as gvenzl/oracle-free creates it) has no privilege to
@@ -40,6 +62,7 @@ async function grantCatalogAccess(): Promise<void> {
 }
 
 export async function init(): Promise<void> {
+  await ensureTestAdmin();
   await grantCatalogAccess();
 
   const con = await oracledb.getConnection(baseConnectOption);
