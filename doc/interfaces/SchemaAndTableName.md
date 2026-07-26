@@ -17,7 +17,7 @@
 
 #### Defined in
 
-[src/resource/DbResource.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/eb74e2b4919ca09646dd7e3beb42ccfe11dd0070/src/resource/DbResource.ts#L37)
+[src/resource/DbResource.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/resource/DbResource.ts#L37)
 
 ___
 
@@ -27,4 +27,4 @@ ___
 
 #### Defined in
 
-[src/resource/DbResource.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/eb74e2b4919ca09646dd7e3beb42ccfe11dd0070/src/resource/DbResource.ts#L38)
+[src/resource/DbResource.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/resource/DbResource.ts#L38)

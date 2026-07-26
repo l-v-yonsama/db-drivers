@@ -12,6 +12,19 @@ docker compose -f unit-test.yml up -d
 cd ..
 ```
 
+Test accounts (provisioned by `__tests__/setup/*.ts` on each test run):
+
+| Vendor | Host:Port | Database | User | Password | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| MySQL | 127.0.0.1:6001 | test-db | testuser | testpass | app user |
+| MySQL | 127.0.0.1:6001 | (all) | testadmin | testpass | ALL PRIVILEGES, for session kill |
+| PostgreSQL | 127.0.0.1:6002 | testdb | testuser | testpass | already superuser (POSTGRES_USER) |
+| PostgreSQL | 127.0.0.1:6002 | (all) | testadmin | testpass | SUPERUSER, kept separate from testuser |
+| Oracle | 127.0.0.1:6012/FREEPDB1 | - | testuser | testpass | APP_USER |
+| Oracle | 127.0.0.1:6012/FREEPDB1 | (all) | testadmin | testpass | DBA role, for session kill |
+| SQL Server | 127.0.0.1:6433 | testdb | testuser | Pass123zxcv! | db_owner on testdb |
+| SQL Server | 127.0.0.1:6433 | (all) | testadmin | Pass123zxcv! | sysadmin role, for session kill |
+
 ```sh
 yarn add @l-v-yonsama/multi-platform-database-drivers
 OR

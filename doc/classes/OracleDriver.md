@@ -1,87 +1,94 @@
-[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / SQLiteDriver
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / OracleDriver
 
-# Class: SQLiteDriver
+# Class: OracleDriver
 
 ## Hierarchy
 
 - [`RDSBaseDriver`](RDSBaseDriver.md)
 
-  ↳ **`SQLiteDriver`**
+  ↳ **`OracleDriver`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](SQLiteDriver.md#constructor)
+- [constructor](OracleDriver.md#constructor)
 
 ### Properties
 
-- [conRes](SQLiteDriver.md#conres)
-- [isConnected](SQLiteDriver.md#isconnected)
-- [sshLocalPort](SQLiteDriver.md#sshlocalport)
-- [sshServer](SQLiteDriver.md#sshserver)
+- [conRes](OracleDriver.md#conres)
+- [isConnected](OracleDriver.md#isconnected)
+- [sshLocalPort](OracleDriver.md#sshlocalport)
+- [sshServer](OracleDriver.md#sshserver)
 
 ### Methods
 
-- [begin](SQLiteDriver.md#begin)
-- [closeSub](SQLiteDriver.md#closesub)
-- [commit](SQLiteDriver.md#commit)
-- [connect](SQLiteDriver.md#connect)
-- [connectSub](SQLiteDriver.md#connectsub)
-- [connectWithTest](SQLiteDriver.md#connectwithtest)
-- [count](SQLiteDriver.md#count)
-- [countSql](SQLiteDriver.md#countsql)
-- [createDBError](SQLiteDriver.md#createdberror)
-- [disconnect](SQLiteDriver.md#disconnect)
-- [explainAnalyzeSql](SQLiteDriver.md#explainanalyzesql)
-- [explainAnalyzeSqlSub](SQLiteDriver.md#explainanalyzesqlsub)
-- [explainSql](SQLiteDriver.md#explainsql)
-- [explainSqlSub](SQLiteDriver.md#explainsqlsub)
-- [filterSchemas](SQLiteDriver.md#filterschemas)
-- [filterTables](SQLiteDriver.md#filtertables)
-- [flow](SQLiteDriver.md#flow)
-- [flowTransaction](SQLiteDriver.md#flowtransaction)
-- [getConnectionRes](SQLiteDriver.md#getconnectionres)
-- [getDbDatabases](SQLiteDriver.md#getdbdatabases)
-- [getFirstDbDatabase](SQLiteDriver.md#getfirstdbdatabase)
-- [getIdQuoteCharacter](SQLiteDriver.md#getidquotecharacter)
-- [getInfomationSchemas](SQLiteDriver.md#getinfomationschemas)
-- [getInfomationSchemasSub](SQLiteDriver.md#getinfomationschemassub)
-- [getLimitClauseStyle](SQLiteDriver.md#getlimitclausestyle)
-- [getLocks](SQLiteDriver.md#getlocks)
-- [getMajorVersion](SQLiteDriver.md#getmajorversion)
-- [getName](SQLiteDriver.md#getname)
-- [getPositionalCharacter](SQLiteDriver.md#getpositionalcharacter)
-- [getRdsDatabase](SQLiteDriver.md#getrdsdatabase)
-- [getSessions](SQLiteDriver.md#getsessions)
-- [getSqlLang](SQLiteDriver.md#getsqllang)
-- [getTableDDL](SQLiteDriver.md#gettableddl)
-- [getTestSqlStatement](SQLiteDriver.md#gettestsqlstatement)
-- [getTransactionIsolationLevel](SQLiteDriver.md#gettransactionisolationlevel)
-- [getVersion](SQLiteDriver.md#getversion)
-- [initBaseStatus](SQLiteDriver.md#initbasestatus)
-- [isNeedsSsh](SQLiteDriver.md#isneedsssh)
-- [isPositionedParameterAvailable](SQLiteDriver.md#ispositionedparameteravailable)
-- [isQuery](SQLiteDriver.md#isquery)
-- [isSchemaSpecificationSvailable](SQLiteDriver.md#isschemaspecificationsvailable)
-- [kill](SQLiteDriver.md#kill)
-- [parseSchemaAndTableHints](SQLiteDriver.md#parseschemaandtablehints)
-- [quoteIdentifier](SQLiteDriver.md#quoteidentifier)
-- [requestSql](SQLiteDriver.md#requestsql)
-- [requestSqlSub](SQLiteDriver.md#requestsqlsub)
-- [resetDefaultSchema](SQLiteDriver.md#resetdefaultschema)
-- [rollback](SQLiteDriver.md#rollback)
-- [setAutoCommit](SQLiteDriver.md#setautocommit)
-- [supportsShowCreate](SQLiteDriver.md#supportsshowcreate)
-- [test](SQLiteDriver.md#test)
-- [useDatabase](SQLiteDriver.md#usedatabase)
-- [viewRows](SQLiteDriver.md#viewrows)
+- [begin](OracleDriver.md#begin)
+- [closeSub](OracleDriver.md#closesub)
+- [commit](OracleDriver.md#commit)
+- [connect](OracleDriver.md#connect)
+- [connectSub](OracleDriver.md#connectsub)
+- [connectWithTest](OracleDriver.md#connectwithtest)
+- [count](OracleDriver.md#count)
+- [countSql](OracleDriver.md#countsql)
+- [createDBError](OracleDriver.md#createdberror)
+- [disconnect](OracleDriver.md#disconnect)
+- [explainAnalyzeSql](OracleDriver.md#explainanalyzesql)
+- [explainAnalyzeSqlSub](OracleDriver.md#explainanalyzesqlsub)
+- [explainSql](OracleDriver.md#explainsql)
+- [explainSqlSub](OracleDriver.md#explainsqlsub)
+- [fieldInfo2Key](OracleDriver.md#fieldinfo2key)
+- [filterSchemas](OracleDriver.md#filterschemas)
+- [filterTables](OracleDriver.md#filtertables)
+- [flow](OracleDriver.md#flow)
+- [flowTransaction](OracleDriver.md#flowtransaction)
+- [getConnectionRes](OracleDriver.md#getconnectionres)
+- [getCurrentSchema](OracleDriver.md#getcurrentschema)
+- [getDbDatabases](OracleDriver.md#getdbdatabases)
+- [getFirstDbDatabase](OracleDriver.md#getfirstdbdatabase)
+- [getIdQuoteCharacter](OracleDriver.md#getidquotecharacter)
+- [getInfomationSchemas](OracleDriver.md#getinfomationschemas)
+- [getInfomationSchemasSub](OracleDriver.md#getinfomationschemassub)
+- [getLimitClauseStyle](OracleDriver.md#getlimitclausestyle)
+- [getLocks](OracleDriver.md#getlocks)
+- [getMajorVersion](OracleDriver.md#getmajorversion)
+- [getName](OracleDriver.md#getname)
+- [getPositionalCharacter](OracleDriver.md#getpositionalcharacter)
+- [getRdsDatabase](OracleDriver.md#getrdsdatabase)
+- [getSchemas](OracleDriver.md#getschemas)
+- [getSessions](OracleDriver.md#getsessions)
+- [getSqlLang](OracleDriver.md#getsqllang)
+- [getTableDDL](OracleDriver.md#gettableddl)
+- [getTables](OracleDriver.md#gettables)
+- [getTestSqlStatement](OracleDriver.md#gettestsqlstatement)
+- [getTransactionIsolationLevel](OracleDriver.md#gettransactionisolationlevel)
+- [getVersion](OracleDriver.md#getversion)
+- [initBaseStatus](OracleDriver.md#initbasestatus)
+- [isNeedsSsh](OracleDriver.md#isneedsssh)
+- [isPositionedParameterAvailable](OracleDriver.md#ispositionedparameteravailable)
+- [isQuery](OracleDriver.md#isquery)
+- [isSchemaSpecificationSvailable](OracleDriver.md#isschemaspecificationsvailable)
+- [kill](OracleDriver.md#kill)
+- [parseSchemaAndTableHints](OracleDriver.md#parseschemaandtablehints)
+- [quoteIdentifier](OracleDriver.md#quoteidentifier)
+- [requestSql](OracleDriver.md#requestsql)
+- [requestSqlSub](OracleDriver.md#requestsqlsub)
+- [resetDefaultSchema](OracleDriver.md#resetdefaultschema)
+- [rollback](OracleDriver.md#rollback)
+- [setAutoCommit](OracleDriver.md#setautocommit)
+- [setColumns](OracleDriver.md#setcolumns)
+- [setForinKeys](OracleDriver.md#setforinkeys)
+- [setUniqueKeys](OracleDriver.md#setuniquekeys)
+- [supportsShowCreate](OracleDriver.md#supportsshowcreate)
+- [test](OracleDriver.md#test)
+- [useDatabase](OracleDriver.md#usedatabase)
+- [viewRows](OracleDriver.md#viewrows)
 
 ## Constructors
 
 ### constructor
 
-• **new SQLiteDriver**(`conRes`): [`SQLiteDriver`](SQLiteDriver.md)
+• **new OracleDriver**(`conRes`): [`OracleDriver`](OracleDriver.md)
 
 #### Parameters
 
@@ -91,7 +98,7 @@
 
 #### Returns
 
-[`SQLiteDriver`](SQLiteDriver.md)
+[`OracleDriver`](OracleDriver.md)
 
 #### Overrides
 
@@ -99,7 +106,7 @@
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L39)
+[src/drivers/OracleDriver.ts:37](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L37)
 
 ## Properties
 
@@ -173,7 +180,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:43](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L43)
+[src/drivers/OracleDriver.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L41)
 
 ___
 
@@ -191,7 +198,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:482](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L482)
+[src/drivers/OracleDriver.ts:664](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L664)
 
 ___
 
@@ -209,7 +216,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:47](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L47)
+[src/drivers/OracleDriver.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L61)
 
 ___
 
@@ -269,7 +276,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:62](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L62)
+[src/drivers/OracleDriver.ts:125](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L125)
 
 ___
 
@@ -408,7 +415,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:30](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L30)
+[src/drivers/OracleDriver.ts:276](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L276)
 
 ___
 
@@ -456,7 +463,29 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:189](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L189)
+[src/drivers/OracleDriver.ts:247](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L247)
+
+___
+
+### fieldInfo2Key
+
+▸ **fieldInfo2Key**(`fieldInfo`, `useTableColumnType`, `table?`): `RdhKey`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `fieldInfo` | `Metadata`\<`any`\> |
+| `useTableColumnType` | `boolean` |
+| `table?` | [`DbTable`](DbTable.md) |
+
+#### Returns
+
+`RdhKey`
+
+#### Defined in
+
+[src/drivers/OracleDriver.ts:83](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L83)
 
 ___
 
@@ -588,6 +617,20 @@ ___
 
 ___
 
+### getCurrentSchema
+
+▸ **getCurrentSchema**(): `Promise`\<`string`\>
+
+#### Returns
+
+`Promise`\<`string`\>
+
+#### Defined in
+
+[src/drivers/OracleDriver.ts:292](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L292)
+
+___
+
 ### getDbDatabases
 
 ▸ **getDbDatabases**(): [`DbDatabase`](../modules.md#dbdatabase)[]
@@ -638,7 +681,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:445](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L445)
+[src/drivers/OracleDriver.ts:627](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L627)
 
 ___
 
@@ -674,7 +717,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:233](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L233)
+[src/drivers/OracleDriver.ts:347](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L347)
 
 ___
 
@@ -692,7 +735,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:441](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L441)
+[src/drivers/OracleDriver.ts:623](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L623)
 
 ___
 
@@ -716,7 +759,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:220](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L220)
+[src/drivers/OracleDriver.ts:300](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L300)
 
 ___
 
@@ -770,7 +813,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:437](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L437)
+[src/drivers/OracleDriver.ts:619](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L619)
 
 ___
 
@@ -789,6 +832,26 @@ ___
 #### Defined in
 
 [src/drivers/RDSBaseDriver.ts:96](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/RDSBaseDriver.ts#L96)
+
+___
+
+### getSchemas
+
+▸ **getSchemas**(`dbDatabase`): `Promise`\<[`DbSchema`](DbSchema.md)[]\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dbDatabase` | [`RdsDatabase`](RdsDatabase.md) |
+
+#### Returns
+
+`Promise`\<[`DbSchema`](DbSchema.md)[]\>
+
+#### Defined in
+
+[src/drivers/OracleDriver.ts:377](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L377)
 
 ___
 
@@ -812,7 +875,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:225](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L225)
+[src/drivers/OracleDriver.ts:324](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L324)
 
 ___
 
@@ -856,7 +919,27 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:457](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L457)
+[src/drivers/OracleDriver.ts:635](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L635)
+
+___
+
+### getTables
+
+▸ **getTables**(`dbSchema`): `Promise`\<[`DbTable`](DbTable.md)[]\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dbSchema` | [`DbSchema`](DbSchema.md) |
+
+#### Returns
+
+`Promise`\<[`DbTable`](DbTable.md)[]\>
+
+#### Defined in
+
+[src/drivers/OracleDriver.ts:397](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L397)
 
 ___
 
@@ -874,7 +957,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:84](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L84)
+[src/drivers/OracleDriver.ts:200](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L200)
 
 ___
 
@@ -892,7 +975,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:229](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L229)
+[src/drivers/OracleDriver.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L79)
 
 ___
 
@@ -910,7 +993,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:209](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L209)
+[src/drivers/OracleDriver.ts:288](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L288)
 
 ___
 
@@ -964,7 +1047,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:433](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L433)
+[src/drivers/OracleDriver.ts:615](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L615)
 
 ___
 
@@ -1000,13 +1083,13 @@ ___
 
 `boolean`
 
-#### Overrides
+#### Inherited from
 
 [RDSBaseDriver](RDSBaseDriver.md).[isSchemaSpecificationSvailable](RDSBaseDriver.md#isschemaspecificationsvailable)
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:449](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L449)
+[src/drivers/RDSBaseDriver.ts:92](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/RDSBaseDriver.ts#L92)
 
 ___
 
@@ -1019,9 +1102,9 @@ If sesssionOrPid is not specified, cancel the running request.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `sesssionOrPid?` | `number` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `sesssionOrPid?` | `number` | the target session's SID (the SERIAL# needed to actually kill it is looked up here, since Oracle requires the pair) |
 
 #### Returns
 
@@ -1033,7 +1116,7 @@ If sesssionOrPid is not specified, cancel the running request.
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:79](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L79)
+[src/drivers/OracleDriver.ts:155](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L155)
 
 ___
 
@@ -1129,7 +1212,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:101](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L101)
+[src/drivers/OracleDriver.ts:204](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L204)
 
 ___
 
@@ -1172,7 +1255,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L51)
+[src/drivers/OracleDriver.ts:66](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L66)
 
 ___
 
@@ -1196,7 +1279,67 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:60](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L60)
+[src/drivers/OracleDriver.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L72)
+
+___
+
+### setColumns
+
+▸ **setColumns**(`dbSchema`): `Promise`\<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dbSchema` | [`DbSchema`](DbSchema.md) |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Defined in
+
+[src/drivers/OracleDriver.ts:429](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L429)
+
+___
+
+### setForinKeys
+
+▸ **setForinKeys**(`dbSchema`): `Promise`\<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dbSchema` | [`DbSchema`](DbSchema.md) |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Defined in
+
+[src/drivers/OracleDriver.ts:548](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L548)
+
+___
+
+### setUniqueKeys
+
+▸ **setUniqueKeys**(`dbSchema`): `Promise`\<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dbSchema` | [`DbSchema`](DbSchema.md) |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Defined in
+
+[src/drivers/OracleDriver.ts:506](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L506)
 
 ___
 
@@ -1214,7 +1357,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:453](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L453)
+[src/drivers/OracleDriver.ts:631](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L631)
 
 ___
 
@@ -1262,7 +1405,7 @@ ___
 
 #### Defined in
 
-[src/drivers/SQLiteDriver.ts:55](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/SQLiteDriver.ts#L55)
+[src/drivers/OracleDriver.ts:117](https://github.com/l-v-yonsama/db-drivers/blob/dfc4211e073b59e6d665a359343a183870df8032/src/drivers/OracleDriver.ts#L117)
 
 ___
 
