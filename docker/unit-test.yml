@@ -126,7 +126,6 @@ services:
     container_name: test-db-memcache
     ports:
       - "6211:11211"   # ホスト:6211 → コンテナ:11211
-    restart: unless-stopped
     command:
       [
         "memcached",
