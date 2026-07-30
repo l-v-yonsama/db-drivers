@@ -1,0 +1,856 @@
+[@l-v-yonsama/multi-platform-database-drivers](../README.md) / [Exports](../modules.md) / AwsDriver
+
+# Class: AwsDriver
+
+## Hierarchy
+
+- [`BaseSQLSupportDriver`](BaseSQLSupportDriver.md)\<[`AwsDatabase`](AwsDatabase.md)\>
+
+  ↳ **`AwsDriver`**
+
+## Table of contents
+
+### Constructors
+
+- [constructor](AwsDriver.md#constructor)
+
+### Properties
+
+- [cloudwatchClient](AwsDriver.md#cloudwatchclient)
+- [conRes](AwsDriver.md#conres)
+- [dynamoClient](AwsDriver.md#dynamoclient)
+- [isConnected](AwsDriver.md#isconnected)
+- [s3Client](AwsDriver.md#s3client)
+- [sesClient](AwsDriver.md#sesclient)
+- [sqsClient](AwsDriver.md#sqsclient)
+- [sshLocalPort](AwsDriver.md#sshlocalport)
+- [sshServer](AwsDriver.md#sshserver)
+
+### Methods
+
+- [closeSub](AwsDriver.md#closesub)
+- [connect](AwsDriver.md#connect)
+- [connectSub](AwsDriver.md#connectsub)
+- [count](AwsDriver.md#count)
+- [countSql](AwsDriver.md#countsql)
+- [createClientConfig](AwsDriver.md#createclientconfig)
+- [createDBError](AwsDriver.md#createdberror)
+- [disconnect](AwsDriver.md#disconnect)
+- [explainAnalyzeSql](AwsDriver.md#explainanalyzesql)
+- [explainSql](AwsDriver.md#explainsql)
+- [flow](AwsDriver.md#flow)
+- [getClientByResourceType](AwsDriver.md#getclientbyresourcetype)
+- [getClientByServiceType](AwsDriver.md#getclientbyservicetype)
+- [getConnectionRes](AwsDriver.md#getconnectionres)
+- [getDbDatabases](AwsDriver.md#getdbdatabases)
+- [getFirstDbDatabase](AwsDriver.md#getfirstdbdatabase)
+- [getIdQuoteCharacter](AwsDriver.md#getidquotecharacter)
+- [getInfomationSchemas](AwsDriver.md#getinfomationschemas)
+- [getInfomationSchemasSub](AwsDriver.md#getinfomationschemassub)
+- [getLimitClauseStyle](AwsDriver.md#getlimitclausestyle)
+- [getName](AwsDriver.md#getname)
+- [getPositionalCharacter](AwsDriver.md#getpositionalcharacter)
+- [getSqlLang](AwsDriver.md#getsqllang)
+- [initBaseStatus](AwsDriver.md#initbasestatus)
+- [isNeedsSsh](AwsDriver.md#isneedsssh)
+- [isPositionedParameterAvailable](AwsDriver.md#ispositionedparameteravailable)
+- [isQuery](AwsDriver.md#isquery)
+- [isSchemaSpecificationSvailable](AwsDriver.md#isschemaspecificationsvailable)
+- [kill](AwsDriver.md#kill)
+- [parseSchemaAndTableHints](AwsDriver.md#parseschemaandtablehints)
+- [requestSql](AwsDriver.md#requestsql)
+- [test](AwsDriver.md#test)
+
+## Constructors
+
+### constructor
+
+• **new AwsDriver**(`conRes`): [`AwsDriver`](AwsDriver.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `conRes` | [`ConnectionSetting`](../modules.md#connectionsetting) |
+
+#### Returns
+
+[`AwsDriver`](AwsDriver.md)
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[constructor](BaseSQLSupportDriver.md#constructor)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:44](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L44)
+
+## Properties
+
+### cloudwatchClient
+
+• **cloudwatchClient**: [`AwsCloudwatchServiceClient`](AwsCloudwatchServiceClient.md)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:40](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L40)
+
+___
+
+### conRes
+
+• `Protected` **conRes**: [`ConnectionSetting`](../modules.md#connectionsetting)
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[conRes](BaseSQLSupportDriver.md#conres)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:52](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L52)
+
+___
+
+### dynamoClient
+
+• **dynamoClient**: [`AwsDynamoServiceClient`](AwsDynamoServiceClient.md)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:42](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L42)
+
+___
+
+### isConnected
+
+• **isConnected**: `boolean`
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[isConnected](BaseSQLSupportDriver.md#isconnected)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:51](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L51)
+
+___
+
+### s3Client
+
+• **s3Client**: [`AwsS3ServiceClient`](AwsS3ServiceClient.md)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:41](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L41)
+
+___
+
+### sesClient
+
+• **sesClient**: [`AwsSESServiceClient`](AwsSESServiceClient.md)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:38](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L38)
+
+___
+
+### sqsClient
+
+• **sqsClient**: [`AwsSQSServiceClient`](AwsSQSServiceClient.md)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:39](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L39)
+
+___
+
+### sshLocalPort
+
+• `Protected` `Optional` **sshLocalPort**: `number`
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[sshLocalPort](BaseSQLSupportDriver.md#sshlocalport)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:54](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L54)
+
+___
+
+### sshServer
+
+• `Protected` **sshServer**: `any`
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[sshServer](BaseSQLSupportDriver.md#sshserver)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:53](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L53)
+
+## Methods
+
+### closeSub
+
+▸ **closeSub**(): `Promise`\<`string`\>
+
+#### Returns
+
+`Promise`\<`string`\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[closeSub](BaseSQLSupportDriver.md#closesub)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:277](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L277)
+
+___
+
+### connect
+
+▸ **connect**(): `Promise`\<`string`\>
+
+#### Returns
+
+`Promise`\<`string`\>
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[connect](BaseSQLSupportDriver.md#connect)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:160](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L160)
+
+___
+
+### connectSub
+
+▸ **connectSub**(): `Promise`\<`string`\>
+
+#### Returns
+
+`Promise`\<`string`\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[connectSub](BaseSQLSupportDriver.md#connectsub)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:132](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L132)
+
+___
+
+### count
+
+▸ **count**(`params`): `Promise`\<`number`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`SchemaAndTableName`](../interfaces/SchemaAndTableName.md) |
+
+#### Returns
+
+`Promise`\<`number`\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[count](BaseSQLSupportDriver.md#count)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:349](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L349)
+
+___
+
+### countSql
+
+▸ **countSql**(`params`): `Promise`\<`number`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`QueryParams`](../modules.md#queryparams) |
+
+#### Returns
+
+`Promise`\<`number`\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[countSql](BaseSQLSupportDriver.md#countsql)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:332](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L332)
+
+___
+
+### createClientConfig
+
+▸ **createClientConfig**(): [`ClientConfigType`](../modules.md#clientconfigtype)
+
+#### Returns
+
+[`ClientConfigType`](../modules.md#clientconfigtype)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:48](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L48)
+
+___
+
+### createDBError
+
+▸ **createDBError**(`message`, `sourceError`): [`DBError`](DBError.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `message` | `string` |
+| `sourceError` | `any` |
+
+#### Returns
+
+[`DBError`](DBError.md)
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[createDBError](BaseSQLSupportDriver.md#createdberror)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:236](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L236)
+
+___
+
+### disconnect
+
+▸ **disconnect**(): `Promise`\<`string`\>
+
+#### Returns
+
+`Promise`\<`string`\>
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[disconnect](BaseSQLSupportDriver.md#disconnect)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:185](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L185)
+
+___
+
+### explainAnalyzeSql
+
+▸ **explainAnalyzeSql**(`params`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`QueryParams`](../modules.md#queryparams) |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[explainAnalyzeSql](BaseSQLSupportDriver.md#explainanalyzesql)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:328](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L328)
+
+___
+
+### explainSql
+
+▸ **explainSql**(`params`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`QueryParams`](../modules.md#queryparams) |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[explainSql](BaseSQLSupportDriver.md#explainsql)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:324](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L324)
+
+___
+
+### flow
+
+▸ **flow**\<`T`\>(`f`): `Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | `any` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `f` | (`driver`: `this`) => `Promise`\<`T`\> |
+
+#### Returns
+
+`Promise`\<[`GeneralResult`](GeneralResult.md)\<`T`\>\>
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[flow](BaseSQLSupportDriver.md#flow)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:102](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L102)
+
+___
+
+### getClientByResourceType
+
+▸ **getClientByResourceType**\<`T`\>(`resourceType`): `T`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends [`AwsServiceClient`](AwsServiceClient.md)\<`T`\> = [`AwsServiceClient`](AwsServiceClient.md) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `resourceType` | [`ResourceType`](../modules.md#resourcetype) |
+
+#### Returns
+
+`T`
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:91](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L91)
+
+___
+
+### getClientByServiceType
+
+▸ **getClientByServiceType**\<`T`\>(`serviceType`): `T`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends [`AwsServiceClient`](AwsServiceClient.md)\<`T`\> = [`AwsServiceClient`](AwsServiceClient.md) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `serviceType` | [`AwsServiceType`](../modules.md#awsservicetype) |
+
+#### Returns
+
+`T`
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:67](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L67)
+
+___
+
+### getConnectionRes
+
+▸ **getConnectionRes**(): [`ConnectionSetting`](../modules.md#connectionsetting)
+
+#### Returns
+
+[`ConnectionSetting`](../modules.md#connectionsetting)
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getConnectionRes](BaseSQLSupportDriver.md#getconnectionres)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:64](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L64)
+
+___
+
+### getDbDatabases
+
+▸ **getDbDatabases**(): [`DbDatabase`](../modules.md#dbdatabase)[]
+
+#### Returns
+
+[`DbDatabase`](../modules.md#dbdatabase)[]
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getDbDatabases](BaseSQLSupportDriver.md#getdbdatabases)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:226](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L226)
+
+___
+
+### getFirstDbDatabase
+
+▸ **getFirstDbDatabase**(): [`DbDatabase`](../modules.md#dbdatabase)
+
+#### Returns
+
+[`DbDatabase`](../modules.md#dbdatabase)
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getFirstDbDatabase](BaseSQLSupportDriver.md#getfirstdbdatabase)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:230](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L230)
+
+___
+
+### getIdQuoteCharacter
+
+▸ **getIdQuoteCharacter**(): [`QuoteChar`](../modules.md#quotechar)
+
+#### Returns
+
+[`QuoteChar`](../modules.md#quotechar)
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getIdQuoteCharacter](BaseSQLSupportDriver.md#getidquotecharacter)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:313](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L313)
+
+___
+
+### getInfomationSchemas
+
+▸ **getInfomationSchemas**(): `Promise`\<[`AwsDatabase`](AwsDatabase.md)[]\>
+
+#### Returns
+
+`Promise`\<[`AwsDatabase`](AwsDatabase.md)[]\>
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getInfomationSchemas](BaseSQLSupportDriver.md#getinfomationschemas)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:211](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L211)
+
+___
+
+### getInfomationSchemasSub
+
+▸ **getInfomationSchemasSub**(): `Promise`\<[`AwsDatabase`](AwsDatabase.md)[]\>
+
+#### Returns
+
+`Promise`\<[`AwsDatabase`](AwsDatabase.md)[]\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getInfomationSchemasSub](BaseSQLSupportDriver.md#getinfomationschemassub)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:214](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L214)
+
+___
+
+### getLimitClauseStyle
+
+▸ **getLimitClauseStyle**(): [`LimitClauseStyle`](../modules.md#limitclausestyle)
+
+#### Returns
+
+[`LimitClauseStyle`](../modules.md#limitclausestyle)
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getLimitClauseStyle](BaseSQLSupportDriver.md#getlimitclausestyle)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:305](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L305)
+
+___
+
+### getName
+
+▸ **getName**(): `string`
+
+#### Returns
+
+`string`
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getName](BaseSQLSupportDriver.md#getname)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:61](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L61)
+
+___
+
+### getPositionalCharacter
+
+▸ **getPositionalCharacter**(): `string`
+
+#### Returns
+
+`string`
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getPositionalCharacter](BaseSQLSupportDriver.md#getpositionalcharacter)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:301](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L301)
+
+___
+
+### getSqlLang
+
+▸ **getSqlLang**(): [`SQLLang`](../modules.md#sqllang)
+
+#### Returns
+
+[`SQLLang`](../modules.md#sqllang)
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[getSqlLang](BaseSQLSupportDriver.md#getsqllang)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:63](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L63)
+
+___
+
+### initBaseStatus
+
+▸ **initBaseStatus**(): `void`
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[initBaseStatus](BaseSQLSupportDriver.md#initbasestatus)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:68](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L68)
+
+___
+
+### isNeedsSsh
+
+▸ **isNeedsSsh**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[isNeedsSsh](BaseSQLSupportDriver.md#isneedsssh)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:72](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L72)
+
+___
+
+### isPositionedParameterAvailable
+
+▸ **isPositionedParameterAvailable**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[isPositionedParameterAvailable](BaseSQLSupportDriver.md#ispositionedparameteravailable)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:297](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L297)
+
+___
+
+### isQuery
+
+▸ **isQuery**(`sql`): `boolean`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sql` | `string` |
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[isQuery](BaseSQLSupportDriver.md#isquery)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:75](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L75)
+
+___
+
+### isSchemaSpecificationSvailable
+
+▸ **isSchemaSpecificationSvailable**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[isSchemaSpecificationSvailable](BaseSQLSupportDriver.md#isschemaspecificationsvailable)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:309](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L309)
+
+___
+
+### kill
+
+▸ **kill**(`sesssionOrPid?`): `Promise`\<`string`\>
+
+Terminate (kill) a specific session.
+If sesssionOrPid is not specified, cancel the running request.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sesssionOrPid?` | `number` |
+
+#### Returns
+
+`Promise`\<`string`\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[kill](BaseSQLSupportDriver.md#kill)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:336](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L336)
+
+___
+
+### parseSchemaAndTableHints
+
+▸ **parseSchemaAndTableHints**(`sql`): [`SchemaAndTableHints`](../interfaces/SchemaAndTableHints.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sql` | `string` |
+
+#### Returns
+
+[`SchemaAndTableHints`](../interfaces/SchemaAndTableHints.md)
+
+#### Inherited from
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[parseSchemaAndTableHints](BaseSQLSupportDriver.md#parseschemaandtablehints)
+
+#### Defined in
+
+[src/drivers/BaseDriver.ts:86](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/BaseDriver.ts#L86)
+
+___
+
+### requestSql
+
+▸ **requestSql**(`params`): `Promise`\<`ResultSetData`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | [`QueryParams`](../modules.md#queryparams) |
+
+#### Returns
+
+`Promise`\<`ResultSetData`\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[requestSql](BaseSQLSupportDriver.md#requestsql)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:317](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L317)
+
+___
+
+### test
+
+▸ **test**(`with_connect?`): `Promise`\<`string`\>
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `with_connect` | `boolean` | `false` |
+
+#### Returns
+
+`Promise`\<`string`\>
+
+#### Overrides
+
+[BaseSQLSupportDriver](BaseSQLSupportDriver.md).[test](BaseSQLSupportDriver.md#test)
+
+#### Defined in
+
+[src/drivers/AwsDriver.ts:234](https://github.com/l-v-yonsama/db-drivers/blob/d836caab660565d42579ffe0c7a7f3ab39e9c27c/src/drivers/AwsDriver.ts#L234)

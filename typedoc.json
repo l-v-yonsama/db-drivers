@@ -1,6 +1,6 @@
 {
   "entryPoints": ["src"],
-  "out": "doc",
+  "out": "docs",
   "cleanOutputDir": true,
   "excludePrivate": true,
   "plugin": ["typedoc-plugin-markdown"],
