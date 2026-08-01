@@ -454,6 +454,14 @@ export class SQLiteDriver extends RDSBaseDriver {
     return true;
   }
 
+  /**
+   * `schemaName` is intentionally unused: this codebase models SQLite as
+   * single-schema (`isSchemaSpecificationSvailable()` is false above), so
+   * cross-schema duplicate table names can't occur. The returned DDL is the
+   * verbatim `CREATE TABLE` text as originally authored by the user (stored
+   * in `sqlite_master.sql`), so it's left unrewritten rather than risking
+   * corruption of arbitrary user-written SQL.
+   */
   async getTableDDL({
     tableName,
     schemaName,

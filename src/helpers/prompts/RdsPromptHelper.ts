@@ -6,7 +6,12 @@ import {
   CreateTableDefinitionsForPromptParams,
   QNames,
 } from '../../types';
-import { parseQuery, toRdsDatabase } from '../SQLHelper';
+import {
+  createTableNameWithSchema,
+  parseQuery,
+  QuoteChar,
+  toRdsDatabase,
+} from '../SQLHelper';
 
 type RdsTableWithSchema = { table: DbTable; schemaName: string };
 
@@ -42,6 +47,7 @@ const renderRdsTableDefinitionsForPrompt = async ({
       const tableDef = toCreateTableDDL({
         dbTable: dbTable.table,
         schemaName: dbTable.schemaName,
+        idQuoteCharacter: rdsDriver?.getIdQuoteCharacter(),
       });
       lines.push(tableDef);
     }
@@ -65,6 +71,12 @@ export const createTableDefinitionsForPrompt = async (
       }
 
       const dbTableWithSchemas: RdsTableWithSchema[] = [];
+      const isAlreadyIncluded = (schemaName: string, tableName: string): boolean =>
+        dbTableWithSchemas.find(
+          (it) =>
+            equalsIgnoreCase(it.schemaName, schemaName) &&
+            equalsIgnoreCase(it.table.name, tableName),
+        ) !== undefined;
       const qnameList: QNames[] = [qst.names];
       if (qst.additionalNames) {
         qnameList.push(...qst.additionalNames);
@@ -84,12 +96,7 @@ export const createTableDefinitionsForPrompt = async (
                 const tblTo = schema.children.find((it) =>
                   equalsIgnoreCase(it.name, refTo.tableName),
                 );
-                if (
-                  tblTo &&
-                  dbTableWithSchemas.find(
-                    (it) => it.table.name === tblTo.name,
-                  ) === undefined
-                ) {
+                if (tblTo && !isAlreadyIncluded(schema.name, tblTo.name)) {
                   dbTableWithSchemas.push({
                     table: tblTo,
                     schemaName: schema.name,
@@ -105,9 +112,7 @@ export const createTableDefinitionsForPrompt = async (
                   );
                   if (
                     tblFrom &&
-                    dbTableWithSchemas.find(
-                      (it) => it.table.name === tblFrom.name,
-                    ) === undefined
+                    !isAlreadyIncluded(schema.name, tblFrom.name)
                   ) {
                     dbTableWithSchemas.push({
                       table: tblFrom,
@@ -187,9 +192,11 @@ export const createRdsSchemaDefinitionsForPrompt = async (
 export const toCreateTableDDL = ({
   dbTable,
   schemaName,
+  idQuoteCharacter,
 }: {
   dbTable: DbTable;
   schemaName?: string;
+  idQuoteCharacter?: QuoteChar;
 }): string => {
   const columns = dbTable.children;
   const colDefs: string[] = [];
@@ -229,9 +236,11 @@ export const toCreateTableDDL = ({
     );
   }
 
-  const qualifiedTableName = schemaName
-    ? `${schemaName}.${dbTable.name}`
-    : dbTable.name;
+  const qualifiedTableName = createTableNameWithSchema({
+    schema: schemaName,
+    table: dbTable.name,
+    idQuoteCharacter,
+  });
   let tableDef = `CREATE TABLE ${qualifiedTableName} (\n${colDefs.join(',\n')}\n)`;
   if (dbTable.comment) {
     tableDef += ` COMMENT '${dbTable.comment}';`;

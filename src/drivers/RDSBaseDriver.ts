@@ -309,6 +309,12 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       : identifier;
   }
 
+  /**
+   * When `supportsShowCreate()` is true and `schemaName` is given, the
+   * returned DDL must be schema-qualified (e.g. `CREATE TABLE schema.table`).
+   * Engines whose native DDL output is never schema-qualified (e.g. MySQL's
+   * `SHOW CREATE TABLE`) must qualify it themselves before returning.
+   */
   getTableDDL({
     tableName,
     schemaName,

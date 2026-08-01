@@ -1268,7 +1268,7 @@ const unwrapQuote = (s: string): string => {
   return s;
 };
 
-const createTableNameWithSchema = ({
+export const createTableNameWithSchema = ({
   schema,
   table,
   idQuoteCharacter,

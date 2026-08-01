@@ -663,11 +663,17 @@ ORDER BY ID DESC`;
       : this.quoteIdentifier(tableName);
     const rows = await this.executeOnConnection(`SHOW CREATE TABLE ${name}`);
 
-    if (rows.length && rows[0]['Create Table']) {
-      return rows[0]['Create Table'] ?? '';
+    const ddl = rows.length ? (rows[0]['Create Table'] ?? '') : '';
+    if (ddl && schemaName) {
+      // `SHOW CREATE TABLE` never includes the schema in its output, so
+      // qualify it ourselves to match the RDSBaseDriver.getTableDDL contract.
+      return ddl.replace(
+        /^CREATE TABLE (`(?:[^`]|``)*`)/,
+        `CREATE TABLE ${this.quoteIdentifier(schemaName)}.$1`,
+      );
     }
 
-    return '';
+    return ddl;
   }
 
   async closeSub(): Promise<string> {

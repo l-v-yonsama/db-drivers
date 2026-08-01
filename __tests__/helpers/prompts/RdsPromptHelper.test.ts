@@ -118,6 +118,57 @@ describe('RdsPromptHelper', () => {
 
         expect(eolToSpace(expected.trim())).toBe(eolToSpace(promptText.trim()));
       });
+
+      it('does not drop a same-named FK table from a second schema', async () => {
+        // Two schemas each have their own `order` -> `customer` FK pair.
+        // Joining `sA.order` with `sB.order` must expand FKs from both
+        // schemas, even though both FK targets are named `customer`.
+        const multiDb = new RdsDatabase('multidb');
+        const buildSchema = (schemaName: string): void => {
+          const schema = new DbSchema(schemaName);
+          multiDb.addChild(schema);
+
+          const customer = new DbTable('customer', 'TABLE');
+          customer.addChild(
+            new DbColumn('customer_no', GeneralColumnType.INTEGER, {
+              key: 'PRI',
+            }),
+          );
+          schema.addChild(customer);
+
+          const order = new DbTable('order', 'TABLE');
+          order.addChild(
+            new DbColumn('order_no', GeneralColumnType.INTEGER, {
+              key: 'PRI',
+            }),
+          );
+          order.addChild(
+            new DbColumn('customer_no', GeneralColumnType.INTEGER, {}),
+          );
+          order.foreignKeys = {
+            referenceTo: {
+              customer_no: {
+                tableName: 'customer',
+                columnName: 'customer_no',
+                constraintName: `${schemaName}_order_ibfk_1`,
+              },
+            },
+          };
+          schema.addChild(order);
+        };
+        buildSchema('sA');
+        buildSchema('sB');
+
+        const sql = `SELECT * FROM sA.order O1 JOIN sB.order O2 ON 1 = 1`;
+        const promptText = await createTableDefinitionsForPrompt({
+          sql,
+          db: multiDb,
+        });
+
+        expect(promptText).toContain('CREATE TABLE sA.customer');
+        expect(promptText).toContain('CREATE TABLE sB.customer');
+        expect(promptText.match(/CREATE TABLE \S+\.customer/g)).toHaveLength(2);
+      });
     });
     describe('Insert statement', () => {
       it('with bind', async () => {
@@ -330,6 +381,44 @@ describe('RdsPromptHelper', () => {
       expect(testdbDDL).not.toBe(oradbDDL);
       expect(testdbDDL).toContain('CREATE TABLE testdb.DEPT');
       expect(oradbDDL).toContain('CREATE TABLE oradb.DEPT');
+    });
+
+    describe('identifier quoting', () => {
+      const buildTable = (): DbTable => {
+        const table = new DbTable('my table', 'TABLE');
+        table.addChild(
+          new DbColumn('id', GeneralColumnType.INTEGER, { key: 'PRI' }),
+        );
+        return table;
+      };
+
+      it('quotes schema and table names that need it with a double quote by default', () => {
+        expect(
+          toCreateTableDDL({ dbTable: buildTable(), schemaName: 'my-schema' }),
+        ).toMatch(/^CREATE TABLE "my-schema"\."my table" \(/);
+      });
+
+      it('quotes with a backtick when idQuoteCharacter is `', () => {
+        expect(
+          toCreateTableDDL({
+            dbTable: buildTable(),
+            schemaName: 'my-schema',
+            idQuoteCharacter: '`',
+          }),
+        ).toMatch(/^CREATE TABLE `my-schema`\.`my table` \(/);
+      });
+
+      it('leaves safe identifiers unquoted regardless of idQuoteCharacter', () => {
+        const deptTable = findTable('oradb', 'DEPT');
+
+        expect(
+          toCreateTableDDL({
+            dbTable: deptTable,
+            schemaName: 'oradb',
+            idQuoteCharacter: '`',
+          }),
+        ).toMatch(/^CREATE TABLE oradb\.DEPT \(/);
+      });
     });
   });
 });

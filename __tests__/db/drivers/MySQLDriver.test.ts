@@ -389,7 +389,13 @@ describe('MySQLDriver', () => {
         schemaName: 'test-db',
         tableName: 'EMP',
       });
-      expect(eolToSpace(ddl)).toBe(eolToSpace(empDDL));
+      // `SHOW CREATE TABLE` never qualifies its own output with the schema,
+      // so the driver must prepend it when `schemaName` is given.
+      const qualifiedEmpDDL = empDDL.replace(
+        'CREATE TABLE `EMP`',
+        'CREATE TABLE `test-db`.`EMP`',
+      );
+      expect(eolToSpace(ddl)).toBe(eolToSpace(qualifiedEmpDDL));
     });
     it('should return DDL when schema is not specified', async () => {
       const ddl = await driver.getTableDDL({
