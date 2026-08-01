@@ -1,0 +1,8 @@
+2026-03-16T14:28:24.206+09:00 DEBUG 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : ==>  Preparing: select id, name, age, created, updated from users where id = ?
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : ==> Parameters: 13(Integer)
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           thread-2] c.example.demo.MyBatisUserMapper.insert  : ==>  Preparing: insert into users(name) values(?)
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           thread-2] c.example.demo.MyBatisUserMapper.insert  : ==> Parameters: MyBatisThread2User(String)
+2026-03-16T14:28:24.207+09:00 TRACE 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : <==    Columns: ID, NAME, AGE, CREATED, UPDATED
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           thread-2] c.example.demo.MyBatisUserMapper.insert  : <==    Updates: 1
+2026-03-16T14:28:24.207+09:00 TRACE 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : <==        Row: 13, MyBatisCommitUser, null, null, null
+2026-03-16T14:28:24.207+09:00 DEBUG 39698 --- [           main] c.e.demo.MyBatisUserMapper.selectById    : <==      Total: 1

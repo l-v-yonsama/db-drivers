@@ -6,7 +6,10 @@ import {
   SqlExecutionEvent,
   SqlFragment,
 } from '../../types';
-import { removeSqlComments } from './sql/removeSqlComments';
+import {
+  removeSqlComments,
+  splitByStringLiterals,
+} from './sql/removeSqlComments';
 
 export function buildSqlExecutions({
   fragments,
@@ -127,7 +130,7 @@ export function buildSqlExecutions({
         endLine: calcLine(fragment),
         timestamp: fragment.timestamp,
         thread: fragment.thread,
-        sql: '',
+        sql: extractSqlFromErrorText(fragment.value) ?? '',
         formattedSql: '',
         framework: fragment.framework,
         daoClass: fragment.daoClass,
@@ -157,6 +160,9 @@ export function buildSqlExecutions({
 
     if (fragment.type === 'SQL_ERROR_DETAIL') {
       builder.current.errorDetail = fragment.value;
+      if (!builder.current.sql) {
+        builder.current.sql = extractSqlFromErrorText(fragment.value) ?? '';
+      }
       finalizeExecution(builder);
     }
   }
@@ -256,7 +262,7 @@ function normalizeHibernateSql(sql: string, params: string[]): string {
       continue;
     }
 
-    if (/^\d+(\.\d+)?$/.test(value)) {
+    if (isNumericLiteral(value)) {
       values.push(value);
     } else {
       values.push(`'${escapeSqlString(value)}'`);
@@ -269,7 +275,7 @@ function normalizeSpringJdbcSql(sql: string, params: string[]): string {
   const values: string[] = [];
 
   for (const line of params) {
-    const m = line.match(/parameter value \[([^\]]*)\]/);
+    const m = line.match(/parameter value \[(.*?)\], value class/);
     if (!m) continue;
 
     const value = m[1];
@@ -279,7 +285,7 @@ function normalizeSpringJdbcSql(sql: string, params: string[]): string {
       continue;
     }
 
-    if (/^\d+(\.\d+)?$/.test(value)) {
+    if (isNumericLiteral(value)) {
       values.push(value);
     } else {
       values.push(`'${escapeSqlString(value)}'`);
@@ -289,11 +295,19 @@ function normalizeSpringJdbcSql(sql: string, params: string[]): string {
   return applyParameters(sql, values);
 }
 
+function isNumericLiteral(value: string): boolean {
+  return /^[-+]?(\d+(\.\d+)?|\.\d+)([eE][-+]?\d+)?$/.test(value);
+}
+
 export function splitMyBatisParams(body: string): string[] {
   const result: string[] = [];
 
-  const regex =
-    /(null|[\s\S]*?\((?:String|Integer|Long|Short|Byte|Double|Float|Boolean|Timestamp|Date|Time|BigDecimal)\))(?:,\s*)?/g;
+  // Matches "<value>(<JavaType>)" pairs. The type is any Java type token
+  // (simple, qualified, or array e.g. "byte[]") rather than a fixed list,
+  // so unrecognized types (LocalDateTime, UUID, custom TypeHandlers, ...)
+  // don't stop the split. Unknown, non-numeric types still get quoted as
+  // strings by formatTypedParam, which is a known limitation.
+  const regex = /(null|[\s\S]*?\([A-Za-z_$][\w.$]*(?:\[\])?\))(?:,\s*)?/g;
 
   let match: RegExpExecArray | null;
 
@@ -340,19 +354,47 @@ function isNumericType(type: string): boolean {
     'Double',
     'Float',
     'BigDecimal',
+    'BigInteger',
   ].includes(type);
 }
 function applyParameters(sql: string, params: string[]): string {
   let index = 0;
 
-  return sql.replace(/\?/g, () => {
-    if (index >= params.length) return '?';
+  return splitByStringLiterals(sql)
+    .map((segment) => {
+      if (segment.inString) return segment.text;
 
-    const value = params[index++];
+      return segment.text.replace(/\?/g, () => {
+        if (index >= params.length) return '?';
 
-    return value.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ');
-  });
+        const value = params[index++];
+
+        return value.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ');
+      });
+    })
+    .join('');
 }
+function extractSqlFromErrorText(text: string): string | undefined {
+  const domaMatch = text.match(/SQL=\[([^\]]*)\]/);
+  if (domaMatch && domaMatch[1].trim()) {
+    return domaMatch[1].trim();
+  }
+
+  const springJdbcMatch = text.match(/SQL \[([^\]]*)\]/);
+  if (springJdbcMatch && springJdbcMatch[1].trim()) {
+    return springJdbcMatch[1].trim();
+  }
+
+  const h2Match = text.match(
+    /SQL statement:\s*\r?\n?\s*([\s\S]*?)\s*\[\w[\w-]*\]/,
+  );
+  if (h2Match && h2Match[1].trim()) {
+    return h2Match[1].trim();
+  }
+
+  return undefined;
+}
+
 function escapeSqlString(value: string): string {
   return value.replace(/'/g, "''");
 }

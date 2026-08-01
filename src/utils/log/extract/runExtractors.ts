@@ -1,5 +1,21 @@
 import { ClassifiedEvent, ExtractorConfig, SqlFragment } from '../../../types';
 
+type ExtractorState = {
+  stepIndex: number;
+  buffer: SqlFragment[];
+};
+
+type DaoContext = {
+  daoClass?: string;
+  daoMethod?: string;
+};
+
+const DEFAULT_THREAD_KEY = '__default__';
+
+function threadKeyOf(event: ClassifiedEvent): string {
+  return event.thread?.trim() || DEFAULT_THREAD_KEY;
+}
+
 /**
  * Extract SQL related fragments from classified log events.
  *
@@ -11,24 +27,48 @@ export function runExtractors(
 ): SqlFragment[] {
   const results: SqlFragment[] = [];
 
-  const states = extractors.map(() => ({
-    stepIndex: -1,
-    buffer: [] as SqlFragment[],
-  }));
+  // Extractor state and DAO context are kept per thread so that
+  // interleaved logs from concurrent threads don't flush/overwrite each
+  // other's in-progress SQL capture or DAO context. Logs without thread
+  // info collapse onto a single default key, preserving prior behavior.
+  const statesByThread = new Map<string, ExtractorState[]>();
+  const daoContextByThread = new Map<string, DaoContext>();
 
-  let daoClass: string | undefined;
-  let daoMethod: string | undefined;
+  const getStates = (threadKey: string): ExtractorState[] => {
+    let states = statesByThread.get(threadKey);
+    if (!states) {
+      states = extractors.map(() => ({
+        stepIndex: -1,
+        buffer: [] as SqlFragment[],
+      }));
+      statesByThread.set(threadKey, states);
+    }
+    return states;
+  };
+
+  const getDaoContext = (threadKey: string): DaoContext => {
+    let context = daoContextByThread.get(threadKey);
+    if (!context) {
+      context = {};
+      daoContextByThread.set(threadKey, context);
+    }
+    return context;
+  };
 
   for (const event of events) {
+    const threadKey = threadKeyOf(event);
+    const states = getStates(threadKey);
+    const daoContext = getDaoContext(threadKey);
+
     /**
      * DAO context capture
      */
     if (event.eventContext?.daoClass) {
-      daoClass = event.eventContext.daoClass;
+      daoContext.daoClass = event.eventContext.daoClass;
     }
 
     if (event.eventContext?.daoMethod) {
-      daoMethod = event.eventContext.daoMethod;
+      daoContext.daoMethod = event.eventContext.daoMethod;
     }
 
     extractors.forEach((extractor, i) => {
@@ -79,8 +119,8 @@ export function runExtractors(
             thread: event.thread,
             framework: extractor.framework,
             value,
-            daoClass,
-            daoMethod,
+            daoClass: daoContext.daoClass,
+            daoMethod: daoContext.daoMethod,
           };
           if (step.action === 'captureSql') {
             state.buffer.push({
@@ -171,10 +211,12 @@ export function runExtractors(
    *   SQL_PARAMS
    *   (log end)
    */
-  states.forEach((state) => {
-    if (state.buffer.length > 0) {
-      results.push(...state.buffer);
-    }
+  statesByThread.forEach((states) => {
+    states.forEach((state) => {
+      if (state.buffer.length > 0) {
+        results.push(...state.buffer);
+      }
+    });
   });
 
   /**

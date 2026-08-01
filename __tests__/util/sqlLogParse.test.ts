@@ -5,11 +5,14 @@ import {
   LOG_EVENT_SPLIT_PRESETS,
   LogParser,
   SQL_LOG_PARSE_PRESETS,
+  SqlExecutionEvent,
 } from '../../src';
 
 const dataFolder = path.join('__tests__', 'data');
 
-const RESET_EXTRACTED_SQL_RESULT = true;
+// Set to true only when intentionally regenerating the expected fixture
+// JSON files; keep false so normal test runs never rewrite fixtures.
+const RESET_EXTRACTED_SQL_RESULT = false;
 
 const readFile = async (fileName: string): Promise<string> => {
   return await fs.readFile(path.join(dataFolder, 'logs', 'parse', fileName), {
@@ -112,8 +115,8 @@ describe('LogParser.parse (SQL execution extraction)', () => {
         endLine: 6,
         timestamp: expect.any(String),
         thread: 'main',
-        sql: '',
-        formattedSql: '',
+        sql: 'select * FORM users',
+        formattedSql: 'SELECT\n  * FORM users',
         framework: 'Hibernate',
         error: 'SQL Error: 42000, SQLState: 42000',
         type: 'error',
@@ -229,6 +232,54 @@ describe('LogParser.parse (SQL execution extraction)', () => {
         daoMethod: 'insert',
       });
     });
+    it('keeps DAO context isolated per thread when two threads interleave', async () => {
+      const logText = await readFile('DomaMultiThread.log');
+      const { split } = LOG_EVENT_SPLIT_PRESETS['SpringBoot'];
+      const { classify, extractors } = SQL_LOG_PARSE_PRESETS['Doma'];
+      const parser = new LogParser({
+        split,
+        classify,
+        extractors,
+      });
+      const result = await parser.parse({
+        logText,
+        stage: 'sqlExecution',
+      });
+
+      expect(result.ok).toBeTruthy();
+      if (!result.ok) return;
+
+      const findExecution = (thread: string, sql: string): SqlExecutionEvent | undefined =>
+        result.sqlExecutions.find(
+          (e) => e.thread === thread && e.sql === sql,
+        );
+
+      const mainInsert = findExecution(
+        'main',
+        "insert into users (name) values ('CommitUser')",
+      );
+      const mainSelect = findExecution(
+        'main',
+        'select\n  id,\n  name\nfrom\n  users\nwhere\n  id = 1',
+      );
+      const thread2Select = findExecution(
+        'thread-2',
+        'select\n  id,\n  name\nfrom\n  users\nwhere\n  id = 1',
+      );
+      const thread2Insert = findExecution(
+        'thread-2',
+        "insert into users (name) values ('CommitUser')",
+      );
+
+      // main's own ENTER (daoMethod=insert) is immediately followed by
+      // thread-2's ENTER (daoMethod=selectById) before main's own SQL_LOG
+      // fires. A shared (non thread-scoped) daoMethod variable would leak
+      // thread-2's value onto main's insert, and vice versa for the select.
+      expect(mainInsert?.daoMethod).toBe('insert');
+      expect(mainSelect?.daoMethod).toBe('selectById');
+      expect(thread2Select?.daoMethod).toBe('selectById');
+      expect(thread2Insert?.daoMethod).toBe('insert');
+    });
     it('should parse alternative Doma ERROR log format correctly', async () => {
       const logText = await readFile('Doma3.log');
       const { split } = LOG_EVENT_SPLIT_PRESETS['SpringBoot'];
@@ -271,8 +322,8 @@ describe('LogParser.parse (SQL execution extraction)', () => {
         endLine: 5,
         timestamp: expect.any(String),
         thread: 'main',
-        sql: '',
-        formattedSql: '',
+        sql: 'select id, name from userss wheeer id = 6',
+        formattedSql: 'SELECT\n  id,\n  name\nFROM\n  userss wheeer id = 6',
         framework: 'Doma',
         daoClass: 'com.example.demo.UserDaoImpl,',
         daoMethod: 'selectSyntaxError',
@@ -283,6 +334,43 @@ describe('LogParser.parse (SQL execution extraction)', () => {
     });
   });
   describe('MyBatis preset', () => {
+    it('keeps extractor buffer state isolated per thread when two threads interleave', async () => {
+      const logText = await readFile('MyBatisMultiThread.log');
+      const { split } = LOG_EVENT_SPLIT_PRESETS['SpringBoot'];
+      const { classify, extractors } = SQL_LOG_PARSE_PRESETS['MyBatis'];
+      const parser = new LogParser({
+        split,
+        classify,
+        extractors,
+      });
+      const result = await parser.parse({
+        logText,
+        stage: 'sqlExecution',
+      });
+
+      expect(result.ok).toBeTruthy();
+      if (!result.ok) return;
+
+      expect(result.sqlExecutions.length).toBe(2);
+
+      const mainSelect = result.sqlExecutions.find(
+        (e) => e.thread === 'main',
+      );
+      const thread2Insert = result.sqlExecutions.find(
+        (e) => e.thread === 'thread-2',
+      );
+
+      // thread-2's INSERT (Preparing/Parameters/Updates) interleaves between
+      // main's SELECT Parameters and its own Columns/Row/Total. With a shared
+      // (non thread-scoped) extractor buffer, main's Row and Total events
+      // never reach any buffer (they arrive after the shared state has
+      // already moved past the RESULT step for thread-2's session) and are
+      // silently dropped, so main's execution ends up missing its result.
+      expect(mainSelect?.daoMethod).toBe('selectById');
+      expect(mainSelect?.result).toBe('1');
+      expect(thread2Insert?.daoMethod).toBe('insert');
+      expect(thread2Insert?.result).toBe('1');
+    });
     it('should parse MyBatis SQL execution logs correctly', async () => {
       const logText = await readFile('MyBatis.log');
       const { split } = LOG_EVENT_SPLIT_PRESETS['SpringBoot'];
@@ -448,8 +536,8 @@ describe('LogParser.parse (SQL execution extraction)', () => {
         endLine: 12,
         timestamp: expect.any(String),
         thread: 'main',
-        sql: '',
-        formattedSql: '',
+        sql: 'select id, name FORM users',
+        formattedSql: 'SELECT\n  id,\n  name FORM users',
         framework: 'MyBatis',
         daoClass: 'c.e.d.M',
         daoMethod: 'selectSyntaxError',
@@ -540,8 +628,8 @@ describe('LogParser.parse (SQL execution extraction)', () => {
         endLine: 18,
         timestamp: expect.any(String),
         thread: 'main',
-        sql: '',
-        formattedSql: '',
+        sql: 'select * FORM users',
+        formattedSql: 'SELECT\n  * FORM users',
         framework: 'SpringJdbc',
         error: expect.any(String),
         type: 'error',
