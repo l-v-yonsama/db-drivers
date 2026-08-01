@@ -115,9 +115,6 @@ export class DBDriverResolver {
       case DBType.Mqtt:
         driver = new MqttDriver(conRes);
         break;
-      // case DBType.Mongodb:
-      //   // driver = new MongoDriver(conDef)
-      //   break
       // case DBType.IndexedDB:
       //   driver = new IndexedDBDriver(conRes);
       //   break;
