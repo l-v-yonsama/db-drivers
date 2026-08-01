@@ -39,7 +39,10 @@ const renderRdsTableDefinitionsForPrompt = async ({
     if (tableDDL) {
       lines.push(tableDDL);
     } else {
-      const tableDef = toCreateTableDDL({ dbTable: dbTable.table });
+      const tableDef = toCreateTableDDL({
+        dbTable: dbTable.table,
+        schemaName: dbTable.schemaName,
+      });
       lines.push(tableDef);
     }
     lines.push('');
@@ -175,7 +178,19 @@ export const createRdsSchemaDefinitionsForPrompt = async (
   return undefined;
 };
 
-export const toCreateTableDDL = ({ dbTable }: { dbTable: DbTable }): string => {
+/**
+ * `schemaName`, when given, qualifies the generated `CREATE TABLE` statement
+ * (`CREATE TABLE schemaName.tableName`) -- without it, two same-named tables
+ * in different schemas (e.g. Postgres/SQL Server) render as identical,
+ * indistinguishable `CREATE TABLE` blocks.
+ */
+export const toCreateTableDDL = ({
+  dbTable,
+  schemaName,
+}: {
+  dbTable: DbTable;
+  schemaName?: string;
+}): string => {
   const columns = dbTable.children;
   const colDefs: string[] = [];
   columns.forEach((col) => {
@@ -214,7 +229,10 @@ export const toCreateTableDDL = ({ dbTable }: { dbTable: DbTable }): string => {
     );
   }
 
-  let tableDef = `CREATE TABLE ${dbTable.name} (\n${colDefs.join(',\n')}\n)`;
+  const qualifiedTableName = schemaName
+    ? `${schemaName}.${dbTable.name}`
+    : dbTable.name;
+  let tableDef = `CREATE TABLE ${qualifiedTableName} (\n${colDefs.join(',\n')}\n)`;
   if (dbTable.comment) {
     tableDef += ` COMMENT '${dbTable.comment}';`;
   } else {

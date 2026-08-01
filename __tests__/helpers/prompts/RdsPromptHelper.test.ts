@@ -18,7 +18,7 @@ describe('RdsPromptHelper', () => {
   });
 
   describe('createTableDefinitionsForPrompt', () => {
-    const TESTTABLE_DEF = `CREATE TABLE testtable (
+    const TESTTABLE_DEF = `CREATE TABLE testdb.testtable (
         d1 date COMMENT '“Zero” Value 0000-00-00',
         d2 time COMMENT '“Zero” Value 00:00:00',
         d3 timestamp COMMENT '“Zero” Value 0000-00-00 00:00:00',
@@ -49,7 +49,7 @@ describe('RdsPromptHelper', () => {
         s8 set
       ) COMMENT 'table with various data types';`;
 
-    const DIFF_DEF = `CREATE TABLE diff (
+    const DIFF_DEF = `CREATE TABLE testdb.diff (
   birthday date,
   first_name varchar PRIMARY KEY,
   full_name varchar UNIQUE,
@@ -67,7 +67,7 @@ describe('RdsPromptHelper', () => {
       it('table definition with foreign key tables', async () => {
         const sql = 'select * from testdb.order';
         const promptText = await createTableDefinitionsForPrompt({ sql, db });
-        const expected = `CREATE TABLE order (
+        const expected = `CREATE TABLE testdb.order (
         amount integer COMMENT '受注金額',
         customer_no integer UNIQUE COMMENT '顧客番号',
         order_date date COMMENT '受注日',
@@ -75,12 +75,12 @@ describe('RdsPromptHelper', () => {
         FOREIGN KEY order_ibfk_1(customer_no) REFERENCES customer(customer_no)
       ) COMMENT '受注';
 
-      CREATE TABLE customer (
+      CREATE TABLE testdb.customer (
         customer_no integer PRIMARY KEY AUTO_INCREMENT COMMENT '顧客番号',
         tel varchar COMMENT '電話番号'
       ) COMMENT '顧客';
 
-      CREATE TABLE order_detail (
+      CREATE TABLE testdb.order_detail (
         amount integer COMMENT '金額',
         detail_no integer PRIMARY KEY COMMENT '受注明細番号',
         item_no integer COMMENT '商品番号',
@@ -97,7 +97,7 @@ describe('RdsPromptHelper', () => {
   WHERE E.SAL > 1000
   ORDER BY E.ENAME;`;
         const promptText = await createTableDefinitionsForPrompt({ sql, db });
-        const expected = `CREATE TABLE EMP (
+        const expected = `CREATE TABLE testdb.EMP (
         COMM float,
         DEPTNO integer UNIQUE,
         EMPNO integer PRIMARY KEY,
@@ -109,7 +109,7 @@ describe('RdsPromptHelper', () => {
         SEX tinyint NOT NULL DEFAULT 0
       );
 
-      CREATE TABLE DEPT (
+      CREATE TABLE testdb.DEPT (
         DEPTNO integer PRIMARY KEY COMMENT '部門番号',
         DNAME varchar COMMENT '部門名',
         LOC varchar COMMENT 'ロケーション'
@@ -193,13 +193,16 @@ describe('RdsPromptHelper', () => {
 
   describe('createRdsSchemaDefinitionsForPrompt', () => {
     it('filters by tableName only, matching the table in every schema that has it', async () => {
-      // DEPT exists in both the `testdb` and `oradb` schemas of the fixture.
+      // DEPT exists in both the `testdb` and `oradb` schemas of the fixture --
+      // each occurrence must be schema-qualified so the two are distinguishable.
       const promptText = await createRdsSchemaDefinitionsForPrompt({
         db,
         tableName: 'DEPT',
       });
 
-      expect(promptText.match(/CREATE TABLE DEPT/g)).toHaveLength(2);
+      expect(promptText).toContain('CREATE TABLE testdb.DEPT');
+      expect(promptText).toContain('CREATE TABLE oradb.DEPT');
+      expect(promptText.match(/CREATE TABLE \S+\.DEPT/g)).toHaveLength(2);
     });
 
     it('filters by schemaName only, returning every table in that schema', async () => {
@@ -208,9 +211,9 @@ describe('RdsPromptHelper', () => {
         schemaName: 'oradb',
       });
 
-      expect(promptText).toContain('CREATE TABLE DEPT');
-      expect(promptText).toContain('CREATE TABLE EMP');
-      expect(promptText).not.toContain('CREATE TABLE testtable');
+      expect(promptText).toContain('CREATE TABLE oradb.DEPT');
+      expect(promptText).toContain('CREATE TABLE oradb.EMP');
+      expect(promptText).not.toContain('testtable');
       expect(promptText.match(/CREATE TABLE /g)).toHaveLength(2);
     });
 
@@ -221,12 +224,12 @@ describe('RdsPromptHelper', () => {
         tableName: 'DEPT',
       });
 
-      expect(promptText.match(/CREATE TABLE DEPT/g)).toHaveLength(1);
+      expect(promptText.match(/CREATE TABLE oradb\.DEPT/g)).toHaveLength(1);
 
       const oradbSchema = db.children.find((it) => it.name === 'oradb');
       const deptTable = oradbSchema.children.find((it) => it.name === 'DEPT');
       expect(promptText.trim()).toBe(
-        toCreateTableDDL({ dbTable: deptTable }).trim(),
+        toCreateTableDDL({ dbTable: deptTable, schemaName: 'oradb' }).trim(),
       );
     });
 
@@ -265,7 +268,8 @@ describe('RdsPromptHelper', () => {
         tableName: 'dept',
       });
 
-      expect(promptText).toContain('CREATE TABLE DEPT');
+      // The qualifier reflects the schema's real (as-stored) name, not the filter's casing.
+      expect(promptText).toContain('CREATE TABLE oradb.DEPT');
     });
 
     it('accepts an array of RdsDatabase and resolves tables across all of them', async () => {
@@ -284,7 +288,48 @@ describe('RdsPromptHelper', () => {
         tableName: 'extra_table',
       });
 
-      expect(promptText).toContain('CREATE TABLE extra_table');
+      expect(promptText).toContain('CREATE TABLE public.extra_table');
+    });
+  });
+
+  describe('toCreateTableDDL', () => {
+    const findTable = (schemaName: string, tableName: string): DbTable => {
+      const schema = db.children.find((it) => it.name === schemaName);
+      return schema.children.find((it) => it.name === tableName);
+    };
+
+    it('qualifies the table name with schemaName when given', () => {
+      const deptTable = findTable('oradb', 'DEPT');
+
+      expect(toCreateTableDDL({ dbTable: deptTable, schemaName: 'oradb' })).toMatch(
+        /^CREATE TABLE oradb\.DEPT \(/,
+      );
+    });
+
+    it('falls back to the bare table name when schemaName is omitted (backward compatible)', () => {
+      const deptTable = findTable('oradb', 'DEPT');
+
+      expect(toCreateTableDDL({ dbTable: deptTable })).toMatch(
+        /^CREATE TABLE DEPT \(/,
+      );
+    });
+
+    it('same-named tables in different schemas produce distinguishable, non-identical DDL', () => {
+      const testdbDept = findTable('testdb', 'DEPT');
+      const oradbDept = findTable('oradb', 'DEPT');
+
+      const testdbDDL = toCreateTableDDL({
+        dbTable: testdbDept,
+        schemaName: 'testdb',
+      });
+      const oradbDDL = toCreateTableDDL({
+        dbTable: oradbDept,
+        schemaName: 'oradb',
+      });
+
+      expect(testdbDDL).not.toBe(oradbDDL);
+      expect(testdbDDL).toContain('CREATE TABLE testdb.DEPT');
+      expect(oradbDDL).toContain('CREATE TABLE oradb.DEPT');
     });
   });
 });

@@ -53,7 +53,7 @@ describe('SchemaPromptHelper', () => {
         tableName: 'DEPT',
       });
 
-      expect(promptText).toContain('CREATE TABLE DEPT');
+      expect(promptText).toContain('CREATE TABLE testdb.DEPT');
     });
 
     it('routes an AwsDatabase to the AWS renderer', async () => {

@@ -135,6 +135,36 @@ message
 
 ```
 
+## Project Structure
+
+This package exposes one driver per database/service behind a shared interface. High-level layout:
+
+```
+src/
+├── index.ts      # public entry point (re-exports everything below)
+├── drivers/      # one <Engine>Driver.ts per DB/service
+│   │             #   BaseDriver → BaseSQLSupportDriver → RDSBaseDriver
+│   │             #   (MySQL/Postgres/SQLite/SQLServer/Oracle extend RDSBaseDriver;
+│   │             #    Auth0/Keycloak/Memcache/Mqtt/Redis/Aws extend BaseDriver directly)
+│   ├── aws/        # AWS service clients (S3/SQS/SES/Dynamo/CloudWatch) used by AwsDriver
+│   └── memcache/    # helper used internally by MemcacheDriver
+├── resource/     # DB metadata model: DbDatabase/DbSchema/DbTable/DbColumn hierarchy
+├── helpers/      # SQL parsing/formatting (SQLHelper), rule engine, autocomplete proposals
+│   └── prompts/    # per-dbType "schema definitions for LLM prompt" builders
+├── types/        # types/interfaces/enums only, mirrors drivers/resource/helpers/utils
+├── utils/        # standalone utilities + the SQL/application log-parsing pipeline (utils/log/)
+└── examples/     # per-driver usage scripts (gitignored, not published to npm)
+```
+
+Every directory has its own `index.ts` that re-exports its contents (`export * from './X'`), so `src/index.ts` is the single public API surface shipped to consumers (`built/src/index.js`).
+
+`__tests__/` loosely mirrors this layout (`db/drivers/`, `helpers/`, `helpers/prompts/`, `resource/`, `util/`), plus test-only `data/` (fixtures) and `setup/` (docker test-account bootstrap) folders.
+
+Other top-level folders:
+
+- `docker/` — Docker Compose config for the local test databases used by `__tests__/setup/*.ts` (see "Prepare" above)
+- `schema/` — JSON Schema generated from the `LogParseConfig` type (`npm run build:schema`, via `typescript-json-schema`); consumed by the db-notebook VS Code extension as the JSON Validator schema for `*.log-parser.config.json` files
+
 ### Release
 
 for local test
