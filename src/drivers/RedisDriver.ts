@@ -10,11 +10,11 @@ import { Redis } from 'ioredis';
 import { DbKey, RedisDatabase, RedisKeyParams } from '../resource';
 import { ConnectionSetting, RedisKeyType, RedisScanParams } from '../types';
 import { prettyTime } from '../utils';
-import { BaseDriver, Scannable } from './BaseDriver';
+import { BaseDriver, Commandable, Scannable } from './BaseDriver';
 
 export class RedisDriver
   extends BaseDriver<RedisDatabase>
-  implements Scannable<RedisScanParams>
+  implements Scannable<RedisScanParams>, Commandable
 {
   client: Redis | undefined;
 
@@ -184,6 +184,81 @@ export class RedisDriver
       ],
     });
     return rdb.build();
+  }
+
+  async executeCommand(command: string): Promise<ResultSetData> {
+    const startTime = new Date().getTime();
+    const { cmdName, args } = this.tokenizeCommand(command);
+    const reply = await this.client.call(cmdName, ...args);
+    const elapsedTimeMilli = new Date().getTime() - startTime;
+
+    const rdb = this.buildCommandResultSet(cmdName, reply);
+    rdb.setSummary({
+      elapsedTimeMilli,
+      selectedRows: rdb.rs.rows.length,
+    });
+    const result = rdb.build();
+    result.meta.command = command;
+    return result;
+  }
+
+  private tokenizeCommand(command: string): { cmdName: string; args: string[] } {
+    const matches = command.trim().match(/"([^"]*)"|'([^']*)'|\S+/g) ?? [];
+    const tokens = matches.map((tok) => {
+      if (
+        (tok.startsWith('"') && tok.endsWith('"')) ||
+        (tok.startsWith("'") && tok.endsWith("'"))
+      ) {
+        return tok.slice(1, -1);
+      }
+      return tok;
+    });
+    const [cmdName, ...args] = tokens;
+    if (!cmdName) {
+      throw new Error('Empty command');
+    }
+    return { cmdName, args };
+  }
+
+  private buildCommandResultSet(
+    cmdName: string,
+    reply: unknown,
+  ): ResultSetDataBuilder {
+    if (
+      cmdName.toUpperCase() === 'HGETALL' &&
+      Array.isArray(reply) &&
+      reply.length % 2 === 0
+    ) {
+      const rdb = new ResultSetDataBuilder([
+        createRdhKey({ name: 'field', type: GeneralColumnType.TEXT, width: 150 }),
+        createRdhKey({ name: 'value', type: GeneralColumnType.TEXT, width: 300 }),
+      ]);
+      for (let i = 0; i < reply.length; i += 2) {
+        rdb.addRow({ field: reply[i], value: reply[i + 1] });
+      }
+      rdb.updateMeta({
+        tableName: `Redis${cmdName.toUpperCase()}`,
+        connectionName: this.conRes.name,
+      });
+      return rdb;
+    }
+
+    const rdb = new ResultSetDataBuilder([
+      createRdhKey({ name: 'value', type: GeneralColumnType.JSON, width: 300 }),
+    ]);
+    if (Array.isArray(reply)) {
+      reply.forEach((el) => {
+        const value = el !== null && typeof el === 'object' ? JSON.stringify(el) : el;
+        rdb.addRow({ value });
+      });
+    } else {
+      rdb.addRow({ value: reply });
+    }
+    rdb.updateMeta({
+      tableName: `Redis${cmdName.toUpperCase()}`,
+      connectionName: this.conRes.name,
+    });
+    return rdb;
   }
 
   async getValueByKey(

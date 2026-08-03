@@ -143,4 +143,50 @@ describe('RedisDriver', () => {
       expect(key.params.type).toBe(RedisKeyType.zset);
     });
   });
+
+  describe('executeCommand', () => {
+    it('GET returns a single scalar row (generic case)', async () => {
+      const result = await driver.executeCommand('GET s1');
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].values.value).toBe('text');
+      expect(result.meta.command).toBe('GET s1');
+    });
+
+    it('LRANGE returns one row per array element (generic case)', async () => {
+      const result = await driver.executeCommand('LRANGE list3 0 -1');
+      expect(result.rows).toHaveLength(3);
+      expect(result.rows.map((r) => r.values.value)).toEqual(['1', '2', '3']);
+    });
+
+    it('HGETALL reshapes into a field/value table (special case)', async () => {
+      const result = await driver.executeCommand('HGETALL user-hash');
+      expect(result.rows).toHaveLength(3);
+      const byField = Object.fromEntries(
+        result.rows.map((r) => [r.values.field, r.values.value]),
+      );
+      expect(byField).toEqual({
+        name: 'Bob',
+        age: '20',
+        description: 'I am a programmer',
+      });
+    });
+
+    it('quoted argument with embedded space is tokenized as one arg', async () => {
+      await driver.executeCommand('SET quoted:key "hello world"');
+      const result = await driver.executeCommand('GET quoted:key');
+      expect(result.rows[0].values.value).toBe('hello world');
+    });
+
+    it('unknown/nil key returns a single null-value row', async () => {
+      const result = await driver.executeCommand('GET does-not-exist');
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].values.value).toBeNull();
+    });
+
+    it('sets a summary describing the row count, like other drivers do', async () => {
+      const result = await driver.executeCommand('LRANGE list3 0 -1');
+      expect(result.summary.selectedRows).toBe(3);
+      expect(result.summary.info).toMatch(/^3 rows in set \(\d+\.\d+ sec\)$/);
+    });
+  });
 });
