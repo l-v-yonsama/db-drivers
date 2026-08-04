@@ -7,6 +7,7 @@ import {
   DbLogGroup,
   DbS3Bucket,
   DbS3Owner,
+  DbSESIdentity,
   DbSQSQueue,
 } from '../../../src';
 
@@ -148,6 +149,38 @@ describe('AwsPromptHelper', () => {
       expect(promptText).toContain('size: 2048 bytes');
     });
 
+    const buildSesDb = (): AwsDatabase => {
+      const awsDb = new AwsDatabase('SES', AwsServiceType.SES);
+      awsDb.addChild(
+        new DbSESIdentity('no-reply@example.com', {
+          identityType: 'EmailAddress',
+          verificationStatus: 'Success',
+        }),
+      );
+      awsDb.addChild(
+        new DbSESIdentity('example.com', {
+          identityType: 'Domain',
+          verificationStatus: 'Pending',
+        }),
+      );
+      return awsDb;
+    };
+
+    it('renders identity type and verification status for SES identities under an Identities heading', async () => {
+      const promptText = await createAwsSchemaDefinitionsForPrompt({
+        db: buildSesDb(),
+      });
+
+      expect(promptText).toContain('-- SES --');
+      expect(promptText).toContain('--- Identities (2 identities) ---');
+      expect(promptText).toContain(
+        '- no-reply@example.com (type: EmailAddress, verification: Success)',
+      );
+      expect(promptText).toContain(
+        '- example.com (type: Domain, verification: Pending)',
+      );
+    });
+
     it('renders FIFO and parsed DLQ info for SQS queues under a Queues heading, and "DLQ: none" otherwise', async () => {
       const promptText = await createAwsSchemaDefinitionsForPrompt({
         db: buildSqsDb(),
@@ -195,13 +228,23 @@ describe('AwsPromptHelper', () => {
       expect(promptText).toContain('--- Owners (0 owners) ---');
     });
 
-    it('returns undefined when no service in db has anything schema-like to render (e.g. SES only)', async () => {
+    it('returns undefined when the serviceType filter matches no database in db at all', async () => {
+      const promptText = await createAwsSchemaDefinitionsForPrompt({
+        db: [buildS3Db()],
+        serviceType: AwsServiceType.SQS,
+      });
+
+      expect(promptText).toBeUndefined();
+    });
+
+    it('still shows an "-- SES --" section with a "(0 identities)" heading when the account has no identities', async () => {
       const sesDb = new AwsDatabase('SES', AwsServiceType.SES);
       const promptText = await createAwsSchemaDefinitionsForPrompt({
         db: sesDb,
       });
 
-      expect(promptText).toBeUndefined();
+      expect(promptText).toContain('-- SES --');
+      expect(promptText).toContain('--- Identities (0 identities) ---');
     });
 
     it('filters by serviceType, skipping other services entirely', async () => {
@@ -217,7 +260,7 @@ describe('AwsPromptHelper', () => {
 
     it('renders a section for every service when no filter is given', async () => {
       const promptText = await createAwsSchemaDefinitionsForPrompt({
-        db: [buildDynamoDb(), buildS3Db(), buildCloudwatchDb(), buildSqsDb()],
+        db: [buildDynamoDb(), buildS3Db(), buildCloudwatchDb(), buildSqsDb(), buildSesDb()],
       });
 
       expect(promptText).toContain('-- DynamoDB --');
@@ -228,16 +271,20 @@ describe('AwsPromptHelper', () => {
       expect(promptText).toContain('--- LogGroups (1 log group) ---');
       expect(promptText).toContain('-- SQS --');
       expect(promptText).toContain('--- Queues (2 queues) ---');
+      expect(promptText).toContain('-- SES --');
+      expect(promptText).toContain('--- Identities (2 identities) ---');
     });
 
-    it('ignores AWS services with nothing schema-like to render, such as SES', async () => {
-      const sesDb = new AwsDatabase('SES', AwsServiceType.SES);
+    it('renders SES alongside other services when mixed in the same db array', async () => {
       const promptText = await createAwsSchemaDefinitionsForPrompt({
-        db: [sesDb, buildS3Db()],
+        db: [buildSesDb(), buildS3Db()],
       });
 
       expect(promptText).toContain('-- S3 --');
-      expect(promptText).not.toContain('SES');
+      expect(promptText).toContain('-- SES --');
+      expect(promptText).toContain(
+        '- no-reply@example.com (type: EmailAddress, verification: Success)',
+      );
     });
   });
 });

@@ -5,6 +5,7 @@ import {
   DbLogGroup,
   DbS3Bucket,
   DbS3Owner,
+  DbSESIdentity,
   DbSQSQueue,
 } from '../../resource';
 import { AwsServiceType, CreateAwsSchemaDefinitionsForPromptParams } from '../../types';
@@ -236,17 +237,41 @@ const renderSqsSection = (
   return lines;
 };
 
+const renderSesSection = (
+  awsDb: AwsDatabase,
+  resourceName?: string,
+): string[] => {
+  const identities = awsDb.children.filter(
+    (it): it is DbSESIdentity => it instanceof DbSESIdentity,
+  );
+  const matches = resourceName
+    ? identities.filter((it) => equalsIgnoreCase(it.name, resourceName))
+    : identities;
+  const lines: string[] = [
+    formatResourceGroupHeading('Identities', 'identity', matches.length),
+  ];
+  matches.forEach((identity) => {
+    lines.push(
+      `- ${identity.name} (type: ${identity.attr.identityType}, verification: ${
+        identity.attr.verificationStatus ?? 'NotStarted'
+      })`,
+    );
+  });
+  lines.push('');
+  return lines;
+};
+
 /**
  * Returns a schema-like description of a target AWS resource tree, with a
- * `-- ${service} --` heading per AWS service (DynamoDB/S3/Cloudwatch/SQS),
+ * `-- ${service} --` heading per AWS service (DynamoDB/S3/Cloudwatch/SQS/SES),
  * a `--- ${group} (N ${unit}) ---` heading per resource type within that
  * service, and the matching resources listed underneath. Optionally
  * narrowed by an exact-match `resourceName` and/or `serviceType` filter
  * (applied only when given). A resource-type group's heading is always
  * shown for a service that was actually queried - even with a "(0 ...)"
  * count - so the caller can tell "checked, found nothing" apart from "not
- * checked at all". A service outside the `db`/`serviceType` input (or one
- * with no resource types defined here, e.g. SES) contributes nothing.
+ * checked at all". A service outside the `db`/`serviceType` input contributes
+ * nothing; a service with no case below (there are none currently) would too.
  */
 export const createAwsSchemaDefinitionsForPrompt = async (
   params: CreateAwsSchemaDefinitionsForPromptParams,
@@ -274,8 +299,8 @@ export const createAwsSchemaDefinitionsForPrompt = async (
         case AwsServiceType.SQS:
           serviceLines = renderSqsSection(awsDb, resourceName);
           break;
-        default:
-          // e.g. SES has nothing schema-like to render.
+        case AwsServiceType.SES:
+          serviceLines = renderSesSection(awsDb, resourceName);
           break;
       }
       if (serviceLines.length === 0) {
