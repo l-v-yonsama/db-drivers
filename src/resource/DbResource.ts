@@ -148,6 +148,41 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
         json,
       );
       break;
+    case ResourceType.KeycloakDatabase:
+      res = Object.assign(new KeycloakDatabase(name), json);
+      break;
+    case ResourceType.Auth0Database:
+      res = Object.assign(new Auth0Database(name), json);
+      break;
+    case ResourceType.IamRealm:
+      res = Object.assign(new IamRealm(name), json);
+      break;
+    case ResourceType.IamClient:
+      res = Object.assign(new IamClient(name), json);
+      break;
+    case ResourceType.IamUser:
+      res = Object.assign(new IamUser(name), json);
+      break;
+    case ResourceType.IamGroup:
+      res = Object.assign(new IamGroup(name), json);
+      break;
+    case ResourceType.IamOrganization:
+      res = Object.assign(new IamOrganization(name), json);
+      break;
+    case ResourceType.IamRole:
+      res = Object.assign(new IamRole(name), json);
+      break;
+    case ResourceType.IamSession:
+      // IamSession is only a scan-target discriminant for KeycloakScanParams
+      // (see ScanParams.ts); no DbResource subtype backs it, so it can never
+      // legitimately reach fromJson().
+      throw new Error(
+        'IamSession is not a DbResource node and cannot be restored via fromJson.',
+      );
+    default: {
+      const _exhaustiveCheck: never = resourceType;
+      throw new Error(`Unhandled resourceType in fromJson: ${_exhaustiveCheck}`);
+    }
   }
   if (json.children) {
     const children = json.children.map((child) => fromJson(child));

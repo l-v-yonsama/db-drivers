@@ -2,9 +2,13 @@ import {
   Auth0Database,
   DbSESIdentity,
   fromJson,
+  IamClient,
   IamGroup,
+  IamOrganization,
   IamRealm,
   IamRole,
+  IamUser,
+  KeycloakDatabase,
 } from '../../src';
 
 describe('DbResource', () => {
@@ -55,6 +59,26 @@ describe('DbResource', () => {
       expect((restored as DbSESIdentity).attr).toEqual({
         identityType: 'EmailAddress',
         verificationStatus: 'Success',
+      });
+    });
+
+    describe.each([
+      { className: 'KeycloakDatabase', create: () => new KeycloakDatabase('keycloak') },
+      { className: 'Auth0Database', create: () => new Auth0Database('auth0') },
+      { className: 'IamRealm', create: () => new IamRealm('realm') },
+      { className: 'IamClient', create: () => new IamClient('client') },
+      { className: 'IamUser', create: () => new IamUser('user') },
+      { className: 'IamGroup', create: () => new IamGroup('group') },
+      { className: 'IamOrganization', create: () => new IamOrganization('org') },
+      { className: 'IamRole', create: () => new IamRole('role') },
+    ])('restores a $className', ({ create }) => {
+      it('keeps the same constructor and name', () => {
+        const original = create();
+
+        const restored = fromJson(JSON.parse(JSON.stringify(original)));
+
+        expect(restored).toBeInstanceOf(original.constructor);
+        expect(restored.name).toBe(original.name);
       });
     });
   });
