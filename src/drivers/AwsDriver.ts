@@ -126,6 +126,9 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     return {
       accessKeyId: user,
       secretAccessKey: password,
+      ...(awsSetting?.sessionToken
+        ? { sessionToken: awsSetting.sessionToken }
+        : {}),
     };
   }
 

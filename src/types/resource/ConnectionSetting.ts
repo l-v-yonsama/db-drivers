@@ -56,6 +56,11 @@ export type AwsSetting = {
   region?: string;
   services: AwsServiceType[];
   s3ForcePathStyle?: boolean;
+  /**
+   * Session token for temporary credentials (e.g. AWS SSO, AssumeRole).
+   * Only used when supplyCredentialType is ExplicitInProperty.
+   */
+  sessionToken?: string;
 };
 
 export type IamSolutionSetting = {
