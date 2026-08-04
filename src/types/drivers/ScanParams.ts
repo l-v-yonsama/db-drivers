@@ -69,6 +69,20 @@ export type AwsSQSScanParams = ScanParamsBase & {
   bodyOrMessageIdContains?: string;
 };
 
+export type AwsSsmScanParams = ScanParamsBase & {
+  kind: 'aws-ssm';
+  /** Path prefix under which to list parameters (e.g. "/prod/s3/"). Empty/omitted lists all parameters. */
+  pathPrefix?: string;
+  /** Substring match against parameter names. */
+  nameContains?: string;
+};
+
+export type AwsSecretsManagerScanParams = ScanParamsBase & {
+  kind: 'aws-secretsmanager';
+  /** Substring match against secret names. */
+  nameContains?: string;
+};
+
 export type AwsCloudWatchLogGroupScanParams = ScanParamsBase & {
   kind: 'aws-cloudwatch-loggroup';
   logGroupName: string;
@@ -123,6 +137,8 @@ export type ScanParams =
   | MqttScanParams
   | AwsS3ScanParams
   | AwsSQSScanParams
+  | AwsSsmScanParams
+  | AwsSecretsManagerScanParams
   | AwsCloudWatchLogGroupScanParams
   | AwsCloudWatchLogStreamScanParams
   | KeycloakScanParams

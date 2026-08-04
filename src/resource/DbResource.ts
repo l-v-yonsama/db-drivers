@@ -14,6 +14,8 @@ import {
   AwsSQSAttributes,
   AwsDynamoTableAttributes,
   AwsSESIdentityAttributes,
+  AwsSsmParameterAttributes,
+  AwsSecretAttributes,
   ConnectionEnvironment,
   ConnectionSetting,
   DBType,
@@ -148,6 +150,24 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
         json,
       );
       break;
+    case ResourceType.SsmParameter:
+      res = Object.assign(
+        new DbSsmParameter(name, castTo<DbSsmParameter>(json).attr),
+        json,
+      );
+      break;
+    case ResourceType.SecretsManagerSecret:
+      res = Object.assign(
+        new DbSecretsManagerSecret(
+          name,
+          castTo<DbSecretsManagerSecret>(json).attr,
+        ),
+        json,
+      );
+      break;
+    case ResourceType.Group:
+      res = Object.assign(new DbResourceGroup(name), json);
+      break;
     case ResourceType.KeycloakDatabase:
       res = Object.assign(new KeycloakDatabase(name), json);
       break;
@@ -214,6 +234,9 @@ export type AllSubDbResource =
   | DbDynamoTable
   | DbDynamoTableColumn
   | DbSESIdentity
+  | DbSsmParameter
+  | DbSecretsManagerSecret
+  | DbResourceGroup
   | DbSubscription
   // IAM
   | IamRealm
@@ -441,6 +464,9 @@ export class AwsDatabase extends DbResource<
   | DbS3Owner
   | DbDynamoTable
   | DbSESIdentity
+  | DbSsmParameter
+  | DbSecretsManagerSecret
+  | DbResourceGroup
 > {
   constructor(name: string, public readonly serviceType: AwsServiceType) {
     super(ResourceType.AwsDatabase, name);
@@ -1299,5 +1325,37 @@ export class DbSESIdentity extends AwsDbResource<AwsSESIdentityAttributes> {
       identityType: this.attr.identityType,
       verificationStatus: this.attr.verificationStatus,
     };
+  }
+}
+
+// Deliberately never carries the parameter's actual value - see
+// AwsSsmServiceClient#scan(), which never fetches it either. Only
+// AwsSsmServiceClient#getParameterValue() fetches a single value on demand.
+export class DbSsmParameter extends AwsDbResource<AwsSsmParameterAttributes> {
+  constructor(name: string, attr: AwsSsmParameterAttributes) {
+    super(ResourceType.SsmParameter, name, attr);
+    this.setPropertyFormat({ dates: ['lastModifiedDate'] });
+  }
+}
+
+// Deliberately never carries the secret's actual value - see the same note
+// on DbSsmParameter above; AwsSecretsManagerServiceClient#getSecretValue()
+// is the only place that fetches it.
+export class DbSecretsManagerSecret extends AwsDbResource<AwsSecretAttributes> {
+  constructor(name: string, attr: AwsSecretAttributes) {
+    super(ResourceType.SecretsManagerSecret, name, attr);
+    this.setPropertyFormat({ dates: ['lastChangedDate', 'lastAccessedDate'] });
+  }
+}
+
+// Generic, reusable container for grouping sibling resources under a
+// heading in the resource tree (e.g. SSM parameters by type, Secrets
+// Manager secrets by rotation status). Carries no attr of its own - the
+// grouping itself is display-only tree structure, built by the consumer
+// (not by any driver's getInfomationSchemas()), so it never affects the AI
+// tools' schema output, which reads the flat, ungrouped children directly.
+export class DbResourceGroup extends DbResource {
+  constructor(name: string) {
+    super(ResourceType.Group, name);
   }
 }

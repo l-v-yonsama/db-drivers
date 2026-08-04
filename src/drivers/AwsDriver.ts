@@ -24,6 +24,8 @@ import { AwsServiceClient } from './aws/AwsServiceClient';
 import { AwsSESServiceClient } from './aws/AwsSESServiceClient';
 import { AwsSQSServiceClient } from './aws/AwsSQSServiceClient';
 import { AwsDynamoServiceClient } from './aws/AwsDynamoServiceClient';
+import { AwsSsmServiceClient } from './aws/AwsSsmServiceClient';
+import { AwsSecretsManagerServiceClient } from './aws/AwsSecretsManagerServiceClient';
 import { ResultSetData } from '@l-v-yonsama/rdh';
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 import { QuoteChar } from '../helpers';
@@ -40,6 +42,8 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
   public cloudwatchClient: AwsCloudwatchServiceClient;
   public s3Client: AwsS3ServiceClient;
   public dynamoClient: AwsDynamoServiceClient;
+  public ssmClient: AwsSsmServiceClient;
+  public secretsManagerClient: AwsSecretsManagerServiceClient;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -84,6 +88,12 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       case 'DynamoDB':
         client = this.dynamoClient;
         break;
+      case 'SSM':
+        client = this.ssmClient;
+        break;
+      case 'SecretsManager':
+        client = this.secretsManagerClient;
+        break;
     }
     return client as T;
   }
@@ -106,6 +116,12 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         break;
       case 'DynamoTable':
         client = this.dynamoClient;
+        break;
+      case 'SsmParameter':
+        client = this.ssmClient;
+        break;
+      case 'SecretsManagerSecret':
+        client = this.secretsManagerClient;
         break;
     }
     return client as T;
@@ -140,6 +156,12 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     const s3 = new AwsS3ServiceClient(this.conRes, config, this);
     const ses = new AwsSESServiceClient(this.conRes, config, this);
     const dynamo = new AwsDynamoServiceClient(this.conRes, config, this);
+    const ssm = new AwsSsmServiceClient(this.conRes, config, this);
+    const secretsManager = new AwsSecretsManagerServiceClient(
+      this.conRes,
+      config,
+      this,
+    );
     const { services } = this.conRes.awsSetting;
 
     let message = '';
@@ -188,6 +210,24 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         this.dynamoClient = dynamo;
       }
     }
+    if (services.includes(AwsServiceType.SSM)) {
+      message = await ssm.connect();
+      if (message) {
+        messageList.push(message);
+        this.ssmClient = null;
+      } else {
+        this.ssmClient = ssm;
+      }
+    }
+    if (services.includes(AwsServiceType.SecretsManager)) {
+      message = await secretsManager.connect();
+      if (message) {
+        messageList.push(message);
+        this.secretsManagerClient = null;
+      } else {
+        this.secretsManagerClient = secretsManager;
+      }
+    }
 
     // SSOセッション切れエラーが含まれているかチェック
     const ssoExpired = messageList.some(
@@ -222,6 +262,8 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       this.sqsClient,
       this.cloudwatchClient,
       this.dynamoClient,
+      this.ssmClient,
+      this.secretsManagerClient,
     ]) {
       if (!client) {
         continue;
@@ -273,6 +315,24 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         messageList.push(message);
       }
     }
+    if (services.includes(AwsServiceType.SSM)) {
+      const client = new AwsSsmServiceClient(this.conRes, config, this);
+      const message = await client.test(with_connect);
+      if (message) {
+        messageList.push(message);
+      }
+    }
+    if (services.includes(AwsServiceType.SecretsManager)) {
+      const client = new AwsSecretsManagerServiceClient(
+        this.conRes,
+        config,
+        this,
+      );
+      const message = await client.test(with_connect);
+      if (message) {
+        messageList.push(message);
+      }
+    }
 
     return messageList.join(',');
   }
@@ -285,6 +345,8 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       this.cloudwatchClient,
       this.s3Client,
       this.dynamoClient,
+      this.ssmClient,
+      this.secretsManagerClient,
     ]) {
       if (!client) {
         continue;

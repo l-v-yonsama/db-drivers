@@ -1,6 +1,7 @@
 import {
   CreateQueueCommand,
   DeleteQueueCommand,
+  GetQueueAttributesCommand,
   ListQueuesCommand,
   SendMessageCommand,
   SQSClient,
@@ -31,6 +32,8 @@ describe('AwsSQSDriver', () => {
   let driver: AwsDriver;
   const queueName1 = 'queueName1.fifo';
   const queueUrl1 = 'http://localhost:6005/000000000000/queueName1.fifo';
+  const dlqName = 'orders-dlq';
+  const sourceQueueName = 'orders-with-dlq';
 
   beforeAll(async () => {
     sqsClient = new SQSClient({
@@ -83,6 +86,30 @@ describe('AwsSQSDriver', () => {
         }),
       );
     }
+
+    // A DLQ + a source queue whose RedrivePolicy points at it, so
+    // getInfomationSchemas() has something real to cross-reference for
+    // attr.isDlq.
+    const { QueueUrl: dlqUrl } = await sqsClient.send(
+      new CreateQueueCommand({ QueueName: dlqName }),
+    );
+    const { Attributes: dlqAttrs } = await sqsClient.send(
+      new GetQueueAttributesCommand({
+        QueueUrl: dlqUrl,
+        AttributeNames: ['QueueArn'],
+      }),
+    );
+    await sqsClient.send(
+      new CreateQueueCommand({
+        QueueName: sourceQueueName,
+        Attributes: {
+          RedrivePolicy: JSON.stringify({
+            deadLetterTargetArn: dlqAttrs?.QueueArn,
+            maxReceiveCount: '5',
+          }),
+        },
+      }),
+    );
   });
 
   afterAll(async () => {
@@ -134,6 +161,21 @@ describe('AwsSQSDriver', () => {
       expect(queue.name).toBe('queueName1.fifo');
       expect(queue.attr?.FifoQueue).toBe(true);
       expect(queue.attr?.ContentBasedDeduplication).toBe(true);
+    });
+
+    it('marks attr.isDlq only on the queue that is a sibling\'s RedrivePolicy target', async () => {
+      const dlq = testDbRes.children.find((it) => it.name === dlqName) as DbSQSQueue;
+      expect(dlq.attr?.isDlq).toBe(true);
+
+      const source = testDbRes.children.find(
+        (it) => it.name === sourceQueueName,
+      ) as DbSQSQueue;
+      expect(source.attr?.isDlq).toBeUndefined();
+
+      const unrelated = testDbRes.children.find(
+        (it) => it.name === queueName1,
+      ) as DbSQSQueue;
+      expect(unrelated.attr?.isDlq).toBeUndefined();
     });
   });
 

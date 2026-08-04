@@ -9,6 +9,8 @@ import {
   DbS3Owner,
   DbSESIdentity,
   DbSQSQueue,
+  DbSsmParameter,
+  DbSecretsManagerSecret,
 } from '../../../src';
 
 describe('AwsPromptHelper', () => {
@@ -181,6 +183,73 @@ describe('AwsPromptHelper', () => {
       );
     });
 
+    const secureParamValue = 'arn:aws:iam::123456789012:role/ExternalAccess';
+    const buildSsmDb = (): AwsDatabase => {
+      const awsDb = new AwsDatabase('SSM', AwsServiceType.SSM);
+      awsDb.addChild(
+        new DbSsmParameter('/prod/s3/bucket-name', {
+          type: 'String',
+          lastModifiedDate: new Date('2023-01-01T00:00:00Z'),
+        }),
+      );
+      awsDb.addChild(
+        new DbSsmParameter('/prod/s3/assume-role-arn', {
+          type: 'SecureString',
+          lastModifiedDate: new Date('2023-02-01T00:00:00Z'),
+        }),
+      );
+      return awsDb;
+    };
+
+    it('renders parameter type and lastModified, never the value, under a Parameters heading', async () => {
+      const promptText = await createAwsSchemaDefinitionsForPrompt({
+        db: buildSsmDb(),
+      });
+
+      expect(promptText).toContain('-- SSM --');
+      expect(promptText).toContain('--- Parameters (2 parameters) ---');
+      expect(promptText).toContain(
+        '- /prod/s3/bucket-name (type: String, modified: 2023-01-01T00:00:00.000Z)',
+      );
+      expect(promptText).toContain(
+        '- /prod/s3/assume-role-arn (type: SecureString, modified: 2023-02-01T00:00:00.000Z)',
+      );
+      // The whole point of this render path is that it never has the actual
+      // value to leak in the first place.
+      expect(promptText).not.toContain(secureParamValue);
+    });
+
+    const secretValue = 'super-secret-password';
+    const buildSecretsManagerDb = (): AwsDatabase => {
+      const awsDb = new AwsDatabase('SecretsManager', AwsServiceType.SecretsManager);
+      awsDb.addChild(
+        new DbSecretsManagerSecret('prod/db/password', {
+          description: 'Production database password',
+          rotationEnabled: true,
+        }),
+      );
+      awsDb.addChild(
+        new DbSecretsManagerSecret('prod/api/key', {
+          rotationEnabled: false,
+        }),
+      );
+      return awsDb;
+    };
+
+    it('renders description and rotation status, never the value, under a Secrets heading', async () => {
+      const promptText = await createAwsSchemaDefinitionsForPrompt({
+        db: buildSecretsManagerDb(),
+      });
+
+      expect(promptText).toContain('-- SecretsManager --');
+      expect(promptText).toContain('--- Secrets (2 secrets) ---');
+      expect(promptText).toContain(
+        '- prod/db/password (Production database password, rotation: enabled)',
+      );
+      expect(promptText).toContain('- prod/api/key (rotation: disabled)');
+      expect(promptText).not.toContain(secretValue);
+    });
+
     it('renders FIFO and parsed DLQ info for SQS queues under a Queues heading, and "DLQ: none" otherwise', async () => {
       const promptText = await createAwsSchemaDefinitionsForPrompt({
         db: buildSqsDb(),
@@ -193,6 +262,23 @@ describe('AwsPromptHelper', () => {
       );
       expect(promptText).toContain(
         '- notifications (type: Standard, DLQ: none)',
+      );
+    });
+
+    it('flags a queue as a DLQ target when attr.isDlq is set', async () => {
+      const awsDb = new AwsDatabase('SQS', AwsServiceType.SQS);
+      awsDb.addChild(
+        new DbSQSQueue(
+          'orders-dlq',
+          'https://sqs.us-east-1.amazonaws.com/123456789012/orders-dlq',
+          { isDlq: true },
+        ),
+      );
+
+      const promptText = await createAwsSchemaDefinitionsForPrompt({ db: awsDb });
+
+      expect(promptText).toContain(
+        '- orders-dlq (type: Standard, DLQ: none, is a DLQ target for another queue)',
       );
     });
 

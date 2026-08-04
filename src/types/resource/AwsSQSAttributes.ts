@@ -121,5 +121,15 @@ export type AwsSQSAttributes = {
   CreatedTimestamp?: number;
   LastModifiedTimestamp?: number;
 
+  /**
+   * True when this queue is itself the dead-letter-queue target of at
+   * least one sibling queue's RedrivePolicy (i.e. some other queue's
+   * `deadLetterTargetArn` points at this queue's own ARN). Computed by
+   * AwsSQSServiceClient#getInfomationSchemas() by cross-referencing every
+   * queue's RedrivePolicy in the same account/region -- not an AWS API
+   * field itself.
+   */
+  isDlq?: boolean;
+
   [key: string]: any;
 };

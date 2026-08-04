@@ -1,5 +1,6 @@
 import {
   Auth0Database,
+  DbResourceGroup,
   DbSESIdentity,
   fromJson,
   IamClient,
@@ -71,6 +72,7 @@ describe('DbResource', () => {
       { className: 'IamGroup', create: () => new IamGroup('group') },
       { className: 'IamOrganization', create: () => new IamOrganization('org') },
       { className: 'IamRole', create: () => new IamRole('role') },
+      { className: 'DbResourceGroup', create: () => new DbResourceGroup('String params (4)') },
     ])('restores a $className', ({ create }) => {
       it('keeps the same constructor and name', () => {
         const original = create();

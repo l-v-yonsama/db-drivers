@@ -19,6 +19,12 @@ export const ResourceType = {
   LogStream: 'LogStream',
   Subscription: 'Subscription',
   Identity: 'Identity',
+  SsmParameter: 'SsmParameter',
+  SecretsManagerSecret: 'SecretsManagerSecret',
+  // Generic, reusable container node for grouping children under a common
+  // heading in the resource tree (e.g. SSM parameters by type, Secrets
+  // Manager secrets by rotation status). Not a real AWS/DB resource itself.
+  Group: 'Group',
   // IAM-KEYCLOAK
   KeycloakDatabase: 'KeycloakDatabase',
   IamRealm: 'IamRealm',

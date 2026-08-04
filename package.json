@@ -1,11 +1,12 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "1.2.3",
+  "version": "1.2.6",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
   },
   "devDependencies": {
+    "@aws-sdk/client-lambda": "^3.1103.0",
     "@types/auth0": "^3.3.9",
     "@types/better-sqlite3": "^7.6.11",
     "@types/bytes": "^3.1.1",
@@ -91,8 +92,10 @@
     "@aws-sdk/client-cloudwatch-logs": "^3.306.0",
     "@aws-sdk/client-dynamodb": "^3.654.0",
     "@aws-sdk/client-s3": "^3.279.0",
+    "@aws-sdk/client-secrets-manager": "^3.1102.0",
     "@aws-sdk/client-ses": "^3.398.0",
     "@aws-sdk/client-sqs": "^3.398.0",
+    "@aws-sdk/client-ssm": "^3.1102.0",
     "@aws-sdk/credential-providers": "^3.279.0",
     "@aws-sdk/lib-dynamodb": "^3.656.0",
     "@aws-sdk/s3-request-presigner": "^3.427.0",

@@ -151,6 +151,7 @@ export class AwsSQSServiceClient
       return null;
     }
     const dbDatabase = new AwsDatabase('SQS', AwsServiceType.SQS);
+    const dbQueues: DbSQSQueue[] = [];
 
     try {
       let NextToken: string | undefined = undefined;
@@ -179,16 +180,45 @@ export class AwsSQSServiceClient
 
             const dbQueue = new DbSQSQueue(name, queueUrl, attr);
             dbDatabase.addChild(dbQueue);
+            dbQueues.push(dbQueue);
           }
         }
         NextToken = queues.NextToken;
       } while (NextToken);
+      this.markDlqQueues(dbQueues);
       dbDatabase.comment = `${dbDatabase.children.length} ${plural('queue')}`;
     } catch (e) {
       console.error(e);
       // reject(e);
     }
     return dbDatabase;
+  }
+
+  // Cross-references every queue's own RedrivePolicy.deadLetterTargetArn
+  // against every other queue's QueueArn (already fetched via
+  // AttributeNames: ['All'] above, no extra API calls) and stamps
+  // attr.isDlq on the ones that are themselves someone else's DLQ target.
+  private markDlqQueues(queues: DbSQSQueue[]): void {
+    const dlqArns = new Set<string>();
+    queues.forEach((q) => {
+      const policy = q.attr.RedrivePolicy;
+      if (!policy) {
+        return;
+      }
+      try {
+        const parsed = typeof policy === 'string' ? JSON.parse(policy) : policy;
+        if (parsed?.deadLetterTargetArn) {
+          dlqArns.add(parsed.deadLetterTargetArn);
+        }
+      } catch (_) {
+        // malformed RedrivePolicy JSON -- ignore, not this queue's concern
+      }
+    });
+    queues.forEach((q) => {
+      if (q.attr.QueueArn && dlqArns.has(q.attr.QueueArn)) {
+        q.attr.isDlq = true;
+      }
+    });
   }
 
   private toAttributes(it: Record<string, string>): AwsSQSAttributes {

@@ -4,6 +4,8 @@ export * from './AwsSQSAttributes';
 export * from './AwsSupplyCredentialType';
 export * from './AwsDynamoTableAttributes';
 export * from './AwsSESIdentityAttributes';
+export * from './AwsSsmParameterAttributes';
+export * from './AwsSecretAttributes';
 export * from './ConnectionSetting';
 export * from './DBType';
 export * from './ForeignKeyConstraint';

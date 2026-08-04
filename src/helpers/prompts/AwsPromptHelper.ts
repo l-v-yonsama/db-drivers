@@ -7,6 +7,8 @@ import {
   DbS3Owner,
   DbSESIdentity,
   DbSQSQueue,
+  DbSsmParameter,
+  DbSecretsManagerSecret,
 } from '../../resource';
 import { AwsServiceType, CreateAwsSchemaDefinitionsForPromptParams } from '../../types';
 import { formatResourceGroupHeading } from './promptFormatUtils';
@@ -231,7 +233,8 @@ const renderSqsSection = (
         dlqInfo = `DLQ: ${queue.attr.RedrivePolicy}`;
       }
     }
-    lines.push(`- ${queue.name} (type: ${type}, ${dlqInfo})`);
+    const dlqFlag = queue.attr.isDlq ? ', is a DLQ target for another queue' : '';
+    lines.push(`- ${queue.name} (type: ${type}, ${dlqInfo}${dlqFlag})`);
   });
   lines.push('');
   return lines;
@@ -261,9 +264,67 @@ const renderSesSection = (
   return lines;
 };
 
+// Deliberately renders only name/type/lastModifiedDate - never the parameter's
+// actual value. Mirrors AwsSsmServiceClient#scan(), which never fetches it
+// either; only the dedicated "copy real value" action does a single on-demand
+// fetch, entirely separate from this prompt/schema rendering path.
+const renderSsmSection = (
+  awsDb: AwsDatabase,
+  resourceName?: string,
+): string[] => {
+  const parameters = awsDb.children.filter(
+    (it): it is DbSsmParameter => it instanceof DbSsmParameter,
+  );
+  const matches = resourceName
+    ? parameters.filter((it) => equalsIgnoreCase(it.name, resourceName))
+    : parameters;
+  const lines: string[] = [
+    formatResourceGroupHeading('Parameters', 'parameter', matches.length),
+  ];
+  matches.forEach((param) => {
+    const parts: string[] = [`type: ${param.attr.type}`];
+    if (param.attr.lastModifiedDate) {
+      parts.push(`modified: ${new Date(param.attr.lastModifiedDate).toISOString()}`);
+    }
+    lines.push(`- ${param.name} (${parts.join(', ')})`);
+  });
+  lines.push('');
+  return lines;
+};
+
+// Deliberately renders only name/description/rotation status - never the
+// secret's actual value. Mirrors AwsSecretsManagerServiceClient#scan(), which
+// never fetches it either (ListSecrets cannot return values in the first
+// place); only the dedicated "copy real value" action fetches it, via a
+// single on-demand GetSecretValue call entirely separate from this path.
+const renderSecretsManagerSection = (
+  awsDb: AwsDatabase,
+  resourceName?: string,
+): string[] => {
+  const secrets = awsDb.children.filter(
+    (it): it is DbSecretsManagerSecret => it instanceof DbSecretsManagerSecret,
+  );
+  const matches = resourceName
+    ? secrets.filter((it) => equalsIgnoreCase(it.name, resourceName))
+    : secrets;
+  const lines: string[] = [
+    formatResourceGroupHeading('Secrets', 'secret', matches.length),
+  ];
+  matches.forEach((secret) => {
+    const parts: string[] = [];
+    if (secret.attr.description) {
+      parts.push(secret.attr.description);
+    }
+    parts.push(`rotation: ${secret.attr.rotationEnabled ? 'enabled' : 'disabled'}`);
+    lines.push(`- ${secret.name} (${parts.join(', ')})`);
+  });
+  lines.push('');
+  return lines;
+};
+
 /**
  * Returns a schema-like description of a target AWS resource tree, with a
- * `-- ${service} --` heading per AWS service (DynamoDB/S3/Cloudwatch/SQS/SES),
+ * `-- ${service} --` heading per AWS service (DynamoDB/S3/Cloudwatch/SQS/SES/SSM/SecretsManager),
  * a `--- ${group} (N ${unit}) ---` heading per resource type within that
  * service, and the matching resources listed underneath. Optionally
  * narrowed by an exact-match `resourceName` and/or `serviceType` filter
@@ -301,6 +362,12 @@ export const createAwsSchemaDefinitionsForPrompt = async (
           break;
         case AwsServiceType.SES:
           serviceLines = renderSesSection(awsDb, resourceName);
+          break;
+        case AwsServiceType.SSM:
+          serviceLines = renderSsmSection(awsDb, resourceName);
+          break;
+        case AwsServiceType.SecretsManager:
+          serviceLines = renderSecretsManagerSection(awsDb, resourceName);
           break;
       }
       if (serviceLines.length === 0) {
