@@ -90,7 +90,7 @@ services:
       - minio_data:/data
 
   localstack:
-    image: localstack/localstack
+    image: localstack/localstack:4.14.0
     ports:
       - 6005:4566 # all services
       - 6006:8080 # dashboard
