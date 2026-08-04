@@ -3,6 +3,7 @@ export * from './AwsServiceType';
 export * from './AwsSQSAttributes';
 export * from './AwsSupplyCredentialType';
 export * from './AwsDynamoTableAttributes';
+export * from './AwsSESIdentityAttributes';
 export * from './ConnectionSetting';
 export * from './DBType';
 export * from './ForeignKeyConstraint';

@@ -92,9 +92,17 @@ export class AwsSQSServiceClient
   async scan(params: AwsSQSScanParams): Promise<ResultSetData> {
     const { queueUrl, limit, bodyOrMessageIdContains } = params;
 
+    if (limit < 1 || limit > 10) {
+      throw new Error('limit must be between 1 and 10 for aws-sqs scan.');
+    }
+
+    // Scanning is a read-only peek, not a real consumer: force VisibilityTimeout
+    // to 0 so messages stay visible to other consumers instead of disappearing
+    // for the queue's default visibility timeout.
     let keys = await this.receiveMessages({
       QueueUrl: queueUrl,
       MaxNumberOfMessages: limit,
+      VisibilityTimeout: 0,
       MessageSystemAttributeNames: [
         'SentTimestamp',
         'ApproximateFirstReceiveTimestamp',

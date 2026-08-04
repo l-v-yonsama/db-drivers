@@ -160,6 +160,54 @@ describe('AwsSQSDriver', () => {
         expect(row.values['body']).toBe(`Hello world:${i}`);
       }
     });
+
+    it('rejects a limit greater than 10', async () => {
+      const { ok, message } = await driver.flow(async () => {
+        return await driver.sqsClient.scan({
+          kind: 'aws-sqs',
+          queueUrl: queueUrl1,
+          limit: 11,
+        });
+      });
+
+      expect(ok).toBe(false);
+      expect(message).toBe('limit must be between 1 and 10 for aws-sqs scan.');
+    });
+
+    it('does not leave messages invisible to other consumers after scanning', async () => {
+      const { QueueUrl: queueUrl2 } = await sqsClient.send(
+        new CreateQueueCommand({ QueueName: 'standardQueueForPeekTest' }),
+      );
+      await sqsClient.send(
+        new SendMessageCommand({
+          QueueUrl: queueUrl2,
+          MessageBody: 'peek me',
+        }),
+      );
+
+      // Scanning is meant to be a non-destructive peek: it must not hold the
+      // message under the queue's (default 30s) VisibilityTimeout, otherwise a
+      // real consumer (or a second scan) would see nothing until it expires.
+      const first = await driver.flow(async () => {
+        return await driver.sqsClient.scan({
+          kind: 'aws-sqs',
+          queueUrl: queueUrl2,
+          limit: 10,
+        });
+      });
+      expect(first.ok).toBe(true);
+      expect(first.result.rows).toHaveLength(1);
+
+      const second = await driver.flow(async () => {
+        return await driver.sqsClient.scan({
+          kind: 'aws-sqs',
+          queueUrl: queueUrl2,
+          limit: 10,
+        });
+      });
+      expect(second.ok).toBe(true);
+      expect(second.result.rows).toHaveLength(1);
+    });
   });
 
   describe('flow', () => {

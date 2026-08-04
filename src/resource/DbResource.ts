@@ -13,6 +13,7 @@ import {
   AwsSetting,
   AwsSQSAttributes,
   AwsDynamoTableAttributes,
+  AwsSESIdentityAttributes,
   ConnectionEnvironment,
   ConnectionSetting,
   DBType,
@@ -171,6 +172,7 @@ export type AllSubDbResource =
   | DbS3Owner
   | DbDynamoTable
   | DbDynamoTableColumn
+  | DbSESIdentity
   | DbSubscription
   // IAM
   | IamRealm
@@ -392,7 +394,12 @@ export class RdsDatabase extends DbResource<DbSchema> {
 }
 
 export class AwsDatabase extends DbResource<
-  DbS3Bucket | DbSQSQueue | DbLogGroup | DbS3Owner | DbDynamoTable
+  | DbS3Bucket
+  | DbSQSQueue
+  | DbLogGroup
+  | DbS3Owner
+  | DbDynamoTable
+  | DbSESIdentity
 > {
   constructor(name: string, public readonly serviceType: AwsServiceType) {
     super(ResourceType.AwsDatabase, name);
@@ -1236,6 +1243,20 @@ export class DbS3Owner extends AwsDbResource<{}> {
     return {
       ...super.getProperties(),
       'Owner id': this.ownerId,
+    };
+  }
+}
+
+export class DbSESIdentity extends AwsDbResource<AwsSESIdentityAttributes> {
+  constructor(name: string, attr: AwsSESIdentityAttributes) {
+    super(ResourceType.Identity, name, attr);
+  }
+
+  getProperties(): { [key: string]: any } {
+    return {
+      ...super.getProperties(),
+      identityType: this.attr.identityType,
+      verificationStatus: this.attr.verificationStatus,
     };
   }
 }

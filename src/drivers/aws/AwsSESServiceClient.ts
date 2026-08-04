@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {
+  GetIdentityVerificationAttributesCommand,
   GetSendQuotaCommand,
   GetSendQuotaCommandOutput,
   GetSendStatisticsCommand,
@@ -14,7 +15,7 @@ import {
   VerifyEmailAddressCommand,
   VerifyEmailAddressCommandOutput,
 } from '@aws-sdk/client-ses';
-import { AwsDatabase } from '../../resource';
+import { AwsDatabase, DbSESIdentity } from '../../resource';
 import { AwsServiceType, ConnectionSetting } from '../../types';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { AwsServiceClient } from './AwsServiceClient';
@@ -94,6 +95,35 @@ export class AwsSESServiceClient extends AwsServiceClient {
     const dbDatabase = new AwsDatabase('SES', AwsServiceType.SES);
     const { Max24HourSend, SentLast24Hours } = await this.getSendQuota();
     dbDatabase.comment = `Max24HourSend:${Max24HourSend}, SentLast24Hours:${SentLast24Hours}`;
+
+    const [emailAddresses, domains] = await Promise.all([
+      this.listIdentities(IdentityType.EmailAddress),
+      this.listIdentities(IdentityType.Domain),
+    ]);
+    const identities = [
+      ...emailAddresses.map((name) => ({
+        name,
+        identityType: IdentityType.EmailAddress,
+      })),
+      ...domains.map((name) => ({ name, identityType: IdentityType.Domain })),
+    ];
+
+    if (identities.length > 0) {
+      const { VerificationAttributes } = await this.sesClient.send(
+        new GetIdentityVerificationAttributesCommand({
+          Identities: identities.map((it) => it.name),
+        }),
+      );
+      identities.forEach(({ name, identityType }) => {
+        dbDatabase.addChild(
+          new DbSESIdentity(name, {
+            identityType,
+            verificationStatus:
+              VerificationAttributes?.[name]?.VerificationStatus,
+          }),
+        );
+      });
+    }
 
     return dbDatabase;
   }

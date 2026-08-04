@@ -18,6 +18,7 @@ export const ResourceType = {
   LogGroup: 'LogGroup',
   LogStream: 'LogStream',
   Subscription: 'Subscription',
+  Identity: 'Identity',
   // IAM-KEYCLOAK
   KeycloakDatabase: 'KeycloakDatabase',
   IamRealm: 'IamRealm',
