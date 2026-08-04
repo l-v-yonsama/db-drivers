@@ -1,5 +1,7 @@
 import {
   Auth0Database,
+  DbSESIdentity,
+  fromJson,
   IamGroup,
   IamRealm,
   IamRole,
@@ -36,6 +38,23 @@ describe('DbResource', () => {
         db.addChild(role);
 
         expect(db.getRoleByName('editor')).toBe(role);
+      });
+    });
+  });
+
+  describe('fromJson', () => {
+    it('restores a DbSESIdentity with its attr intact', () => {
+      const original = new DbSESIdentity('sender@example.com', {
+        identityType: 'EmailAddress',
+        verificationStatus: 'Success',
+      });
+
+      const restored = fromJson(JSON.parse(JSON.stringify(original)));
+
+      expect(restored).toBeInstanceOf(DbSESIdentity);
+      expect((restored as DbSESIdentity).attr).toEqual({
+        identityType: 'EmailAddress',
+        verificationStatus: 'Success',
       });
     });
   });

@@ -142,6 +142,12 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
         );
       }
       break;
+    case ResourceType.Identity:
+      res = Object.assign(
+        new DbSESIdentity(name, castTo<DbSESIdentity>(json).attr),
+        json,
+      );
+      break;
   }
   if (json.children) {
     const children = json.children.map((child) => fromJson(child));
