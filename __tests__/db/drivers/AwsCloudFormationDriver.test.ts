@@ -109,7 +109,11 @@ describe('AwsCloudFormationDriver', () => {
   }, 60000);
 
   afterAll(async () => {
-    await cfnClient.send(new DeleteStackCommand({ StackName: stackName }));
+    // Deliberately not deleting the stack here - same convention as the other
+    // AWS driver tests (SQS/SES/SSM/...): beforeAll deletes-then-recreates for
+    // a clean run, but afterAll leaves the resource in place so it's still
+    // visible against LocalStack for manual UI verification (e.g. the F5
+    // debug launch's localAws connection).
     cfnClient.destroy();
     await driver.disconnect();
   });
