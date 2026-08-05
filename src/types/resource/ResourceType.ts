@@ -21,6 +21,7 @@ export const ResourceType = {
   Identity: 'Identity',
   SsmParameter: 'SsmParameter',
   SecretsManagerSecret: 'SecretsManagerSecret',
+  CfnStack: 'CfnStack',
   // Generic, reusable container node for grouping children under a common
   // heading in the resource tree (e.g. SSM parameters by type, Secrets
   // Manager secrets by rotation status). Not a real AWS/DB resource itself.

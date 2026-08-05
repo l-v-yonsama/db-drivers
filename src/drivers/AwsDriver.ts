@@ -18,6 +18,7 @@ import {
   SQLLang,
   SupplyCredentialType,
 } from '../types';
+import { AwsCloudFormationServiceClient } from './aws/AwsCloudFormationServiceClient';
 import { AwsCloudwatchServiceClient } from './aws/AwsCloudwatchServiceClient';
 import { AwsS3ServiceClient } from './aws/AwsS3ServiceClient';
 import { AwsServiceClient } from './aws/AwsServiceClient';
@@ -44,6 +45,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
   public dynamoClient: AwsDynamoServiceClient;
   public ssmClient: AwsSsmServiceClient;
   public secretsManagerClient: AwsSecretsManagerServiceClient;
+  public cloudFormationClient: AwsCloudFormationServiceClient;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -94,6 +96,9 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       case 'SecretsManager':
         client = this.secretsManagerClient;
         break;
+      case 'CloudFormation':
+        client = this.cloudFormationClient;
+        break;
     }
     return client as T;
   }
@@ -122,6 +127,9 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         break;
       case 'SecretsManagerSecret':
         client = this.secretsManagerClient;
+        break;
+      case 'CfnStack':
+        client = this.cloudFormationClient;
         break;
     }
     return client as T;
@@ -158,6 +166,11 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     const dynamo = new AwsDynamoServiceClient(this.conRes, config, this);
     const ssm = new AwsSsmServiceClient(this.conRes, config, this);
     const secretsManager = new AwsSecretsManagerServiceClient(
+      this.conRes,
+      config,
+      this,
+    );
+    const cloudFormation = new AwsCloudFormationServiceClient(
       this.conRes,
       config,
       this,
@@ -228,6 +241,15 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         this.secretsManagerClient = secretsManager;
       }
     }
+    if (services.includes(AwsServiceType.CloudFormation)) {
+      message = await cloudFormation.connect();
+      if (message) {
+        messageList.push(message);
+        this.cloudFormationClient = null;
+      } else {
+        this.cloudFormationClient = cloudFormation;
+      }
+    }
 
     // SSOセッション切れエラーが含まれているかチェック
     const ssoExpired = messageList.some(
@@ -264,6 +286,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       this.dynamoClient,
       this.ssmClient,
       this.secretsManagerClient,
+      this.cloudFormationClient,
     ]) {
       if (!client) {
         continue;
@@ -333,6 +356,17 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         messageList.push(message);
       }
     }
+    if (services.includes(AwsServiceType.CloudFormation)) {
+      const client = new AwsCloudFormationServiceClient(
+        this.conRes,
+        config,
+        this,
+      );
+      const message = await client.test(with_connect);
+      if (message) {
+        messageList.push(message);
+      }
+    }
 
     return messageList.join(',');
   }
@@ -347,6 +381,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       this.dynamoClient,
       this.ssmClient,
       this.secretsManagerClient,
+      this.cloudFormationClient,
     ]) {
       if (!client) {
         continue;

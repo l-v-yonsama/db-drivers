@@ -1,6 +1,7 @@
 import { equalsIgnoreCase } from '@l-v-yonsama/rdh';
 import {
   AwsDatabase,
+  DbCfnStack,
   DbDynamoTable,
   DbLogGroup,
   DbS3Bucket,
@@ -322,9 +323,49 @@ const renderSecretsManagerSection = (
   return lines;
 };
 
+// L2a scope: renders the resources DescribeStackResources returned, with no
+// dependency lines (`attr.resources[].dependsOn` is not yet populated by
+// AwsCloudFormationServiceClient). The `depends on: ...` rendering below is
+// already data-driven off that field so L2b (Ref/Fn::GetAtt/DependsOn
+// extraction from GetTemplate) needs no change here - only the client needs
+// to start populating it.
+const renderCloudFormationSection = (
+  awsDb: AwsDatabase,
+  resourceName?: string,
+): string[] => {
+  const stacks = awsDb.children.filter(
+    (it): it is DbCfnStack => it instanceof DbCfnStack,
+  );
+  const matches = resourceName
+    ? stacks.filter((it) => equalsIgnoreCase(it.name, resourceName))
+    : stacks;
+  const lines: string[] = [
+    formatResourceGroupHeading('Stacks', 'stack', matches.length),
+  ];
+  matches.forEach((stack) => {
+    lines.push(`- ${stack.name} (status: ${stack.attr.stackStatus})`);
+    (stack.attr.resources ?? []).forEach((resource) => {
+      const physical = resource.physicalId
+        ? `, physical: ${resource.physicalId}`
+        : '';
+      lines.push(
+        `    ${resource.logicalId} (${resource.resourceType}${physical})`,
+      );
+      if (resource.dependsOn?.length) {
+        const depends = resource.dependsOn
+          .map((dep) => `${dep.logicalId} (via ${dep.via})`)
+          .join(', ');
+        lines.push(`        depends on: ${depends}`);
+      }
+    });
+  });
+  lines.push('');
+  return lines;
+};
+
 /**
  * Returns a schema-like description of a target AWS resource tree, with a
- * `-- ${service} --` heading per AWS service (DynamoDB/S3/Cloudwatch/SQS/SES/SSM/SecretsManager),
+ * `-- ${service} --` heading per AWS service (DynamoDB/S3/Cloudwatch/SQS/SES/SSM/SecretsManager/CloudFormation),
  * a `--- ${group} (N ${unit}) ---` heading per resource type within that
  * service, and the matching resources listed underneath. Optionally
  * narrowed by an exact-match `resourceName` and/or `serviceType` filter
@@ -368,6 +409,9 @@ export const createAwsSchemaDefinitionsForPrompt = async (
           break;
         case AwsServiceType.SecretsManager:
           serviceLines = renderSecretsManagerSection(awsDb, resourceName);
+          break;
+        case AwsServiceType.CloudFormation:
+          serviceLines = renderCloudFormationSection(awsDb, resourceName);
           break;
       }
       if (serviceLines.length === 0) {

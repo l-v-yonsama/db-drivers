@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Hands-on template for ALB
+
+Parameters:
+  VPCStack:
+    Type: String
+    Default: handson-cfn
+  EC2Stack:
+    Type: String
+    Default: handson-cfn-ec2
+
+Resources:
+  FrontLB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Ref AWS::StackName
+      Subnets:
+        - Fn::ImportValue: VPC-PublicSubnet1
+        - Fn::ImportValue: VPC-PublicSubnet2
+      SecurityGroups:
+        - !Ref SecurityGroupLB
+
+  FrontLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref FrontLB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontLBTargetGroup
+
+  FrontLBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${AWS::StackName}-tg
+      VpcId:
+        Fn::ImportValue: VPC-VPCID
+      Port: 80
+      Protocol: HTTP
+      HealthCheckPath: /.check_alive
+      Targets:
+        - Id:
+            Fn::ImportValue: VPC-EC2WebServer01
+
+  SecurityGroupLB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Ref AWS::StackName
+      VpcId:
+        Fn::ImportValue: VPC-VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  FrontLBEndpoint:
+    Value: !GetAtt FrontLB.DNSName
+    Export:
+      Name: !Sub ${AWS::StackName}-Endpoint
