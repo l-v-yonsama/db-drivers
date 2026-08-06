@@ -8,6 +8,12 @@ import {
   parseCfnYamlTemplate,
   parseRefValue,
 } from '../../src';
+import {
+  stripMermaidFence,
+  verifyMermaidArchitectureSyntax,
+} from '../setup/mermaidArchitectureSyntax';
+import testOrderStackTemplate from '../data/cfn/templates/db-drivers-test-order-stack.json';
+import testApiLambdaStackTemplate from '../data/cfn/templates/db-drivers-test-api-lambda-stack.json';
 
 // Recovered from a 2025-06 prototype (see git-notebook local history, never committed - hence
 // no git blame to point to) and ported onto today's types/naming. The .md files alongside
@@ -112,9 +118,7 @@ describe('cfn', () => {
       const deps = extractResourceDependencies(template);
 
       // Ref inside Properties (VpcId: !Ref CFnVPC)
-      expect(deps.PublicSubnet1).toEqual([
-        { logicalId: 'CFnVPC', via: 'Ref' },
-      ]);
+      expect(deps.PublicSubnet1).toEqual([{ logicalId: 'CFnVPC', via: 'Ref' }]);
       // Both an explicit DependsOn and a same-target Ref inside Properties - both kept,
       // since they're distinct relationships even when they point at the same resource.
       expect(deps.PublicRoute).toEqual(
@@ -143,9 +147,7 @@ describe('cfn', () => {
       );
       const deps = extractResourceDependencies(template);
 
-      expect(deps.EC2WebServer01).toEqual([
-        { logicalId: 'EC2SG', via: 'Ref' },
-      ]);
+      expect(deps.EC2WebServer01).toEqual([{ logicalId: 'EC2SG', via: 'Ref' }]);
     });
   });
 
@@ -155,7 +157,10 @@ describe('cfn', () => {
       const diagram = generateDiagram({
         mode: 'GroupByTemplate',
         list: [
-          { fileName: '01_vpc.yaml', templateJSONString: JSON.stringify(template) },
+          {
+            fileName: '01_vpc.yaml',
+            templateJSONString: JSON.stringify(template),
+          },
         ],
       });
 
@@ -181,17 +186,152 @@ describe('cfn', () => {
       expect(diagram).not.toContain('AWS_EC2_RouteTable');
     });
 
+    it("resolves an icon for every resource type in db-notebook's own AWS services PLUS common integration types (API Gateway, Lambda::Permission)", () => {
+      // Each icon name below was independently confirmed to exist in the
+      // real registry (https://api.iconify.design/logos.json?icons=<name>)
+      // - iconMap entries look "plausible" by naming convention alone, so a
+      // typo'd or made-up name (like the old 'aws-iam-role'/'aws-iam-policy'
+      // - IAM only has one generic icon, no role/policy variants) silently
+      // renders as a blank box instead of failing anywhere in this test
+      // suite. That's how 'AWS::SQS::Queue' went unmapped for a while, and
+      // how the whole AWS::ApiGateway::* family (RestApi/Resource/Method/
+      // Deployment) plus Lambda::Permission went unmapped too - none of
+      // them are one of db-notebook's own scanned AWS services, but they're
+      // exactly what a real "API Gateway calls Lambda" stack is made of.
+      const template = parseCfnJsonTemplate(
+        JSON.stringify({
+          Resources: {
+            MyQueue: { Type: 'AWS::SQS::Queue' },
+            MyRole: { Type: 'AWS::IAM::Role' },
+            MyPolicy: { Type: 'AWS::IAM::Policy' },
+            MySesIdentity: { Type: 'AWS::SES::EmailIdentity' },
+            MySecret: { Type: 'AWS::SecretsManager::Secret' },
+            MyLogGroup: { Type: 'AWS::Logs::LogGroup' },
+            MyParam: { Type: 'AWS::SSM::Parameter' },
+            MyRestApi: { Type: 'AWS::ApiGateway::RestApi' },
+            MyApiResource: { Type: 'AWS::ApiGateway::Resource' },
+            MyApiMethod: { Type: 'AWS::ApiGateway::Method' },
+            MyApiDeployment: { Type: 'AWS::ApiGateway::Deployment' },
+            MyLambdaPermission: { Type: 'AWS::Lambda::Permission' },
+          },
+        }),
+      );
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const diagram = generateDiagram({
+        mode: 'GroupByTemplate',
+        list: [
+          {
+            fileName: 'icons.json',
+            templateJSONString: JSON.stringify(template),
+          },
+        ],
+      });
+      // getCfnIconString's fallback console.warn is the only signal a type
+      // fell through every mapping below - if every type here is actually
+      // covered, it should never fire.
+      expect(warnSpy).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
+
+      expect(diagram).toContain('service f0_MyQueue(logos:aws-sqs)[MyQueue]');
+      expect(diagram).toContain('service f0_MyRole(logos:aws-iam)[MyRole]');
+      expect(diagram).toContain('service f0_MyPolicy(logos:aws-iam)[MyPolicy]');
+      expect(diagram).toContain(
+        'service f0_MySesIdentity(logos:aws-ses)[MySesIdentity]',
+      );
+      expect(diagram).toContain(
+        'service f0_MySecret(logos:aws-secrets-manager)[MySecret]',
+      );
+      expect(diagram).toContain(
+        'service f0_MyLogGroup(logos:aws-cloudwatch)[MyLogGroup]',
+      );
+      // Was wrongly reusing Secrets Manager's icon.
+      expect(diagram).toContain(
+        'service f0_MyParam(logos:aws-systems-manager)[MyParam]',
+      );
+      expect(diagram).toContain(
+        'service f0_MyRestApi(logos:aws-api-gateway)[MyRestApi]',
+      );
+      expect(diagram).toContain(
+        'service f0_MyApiResource(logos:aws-api-gateway)[MyApiResource]',
+      );
+      expect(diagram).toContain(
+        'service f0_MyApiMethod(logos:aws-api-gateway)[MyApiMethod]',
+      );
+      expect(diagram).toContain(
+        'service f0_MyApiDeployment(logos:aws-api-gateway)[MyApiDeployment]',
+      );
+      expect(diagram).toContain(
+        'service f0_MyLambdaPermission(logos:aws-iam)[MyLambdaPermission]',
+      );
+      expect(diagram).not.toContain('aws-iam-role');
+      expect(diagram).not.toContain('aws-iam-policy');
+    });
+
+    it('sanitizes a hyphenated real-world stack name for both the group id AND its label', () => {
+      // Real CloudFormation stack names routinely contain hyphens (unlike
+      // logical ids, which the AWS spec restricts to alnum) - using one
+      // directly as fileName used to break `architecture-beta` parsing. A
+      // "-" isn't just invalid in a bare id token there - its tokenizer
+      // reserves "-" for arrow syntax ("--"/"-->") in label text too, so
+      // both positions need sanitizing, not only the id.
+      const template = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
+      const diagram = generateDiagram({
+        mode: 'GroupByTemplate',
+        list: [
+          {
+            fileName: 'db-drivers-test-order-stack',
+            templateJSONString: JSON.stringify(template),
+          },
+        ],
+      });
+
+      expect(diagram).toContain(
+        '  group db_drivers_test_order_stack(logos:aws-cloudformation)[db_drivers_test_order_stack]',
+      );
+      expect(diagram).toContain(
+        '  group f0_resources[Resources] in db_drivers_test_order_stack',
+      );
+      // The original, unsanitized name still survives in the `%% ---`
+      // comment above the group (comments aren't tokenized, so it's the one
+      // place a raw "-" is safe) - nothing is silently lost, just not
+      // rendered as a graphical label.
+      expect(diagram).toContain('  %% --- db-drivers-test-order-stack ---');
+      // No bare "-" in any id or [label] position specifically (icon
+      // strings like "(logos:aws-cloudformation)" and mermaid's own
+      // "architecture-beta" keyword legitimately contain "-" and are left
+      // alone - only ids and [...] label text are restricted).
+      const idsAndLabelsWithHyphens = diagram
+        .split('\n')
+        .flatMap((line) => {
+          const idMatch = line.match(/^\s*(?:group|service)\s+(\S+?)(?:\(|\[)/);
+          const labelMatch = line.match(/\[([^\]]*)\]/);
+          return [idMatch?.[1], labelMatch?.[1]].filter(Boolean);
+        })
+        .filter((token) => token.includes('-'));
+      expect(idsAndLabelsWithHyphens).toEqual([]);
+    });
+
     it('includes Parameters/Outputs groups and edges only when the corresponding option is set', () => {
       const template = parseCfnYamlTemplate(
         readYamlFixture('cross_ref_02/ec2.yaml'),
       );
       const withoutExtras = generateDiagram({
         mode: 'GroupByTemplate',
-        list: [{ fileName: 'ec2.yaml', templateJSONString: JSON.stringify(template) }],
+        list: [
+          {
+            fileName: 'ec2.yaml',
+            templateJSONString: JSON.stringify(template),
+          },
+        ],
       });
       const withExtras = generateDiagram({
         mode: 'GroupByTemplate',
-        list: [{ fileName: 'ec2.yaml', templateJSONString: JSON.stringify(template) }],
+        list: [
+          {
+            fileName: 'ec2.yaml',
+            templateJSONString: JSON.stringify(template),
+          },
+        ],
         options: { includeParameters: true, includeOutputs: true },
       });
 
@@ -203,14 +343,19 @@ describe('cfn', () => {
     });
 
     it('renders an "IntegratedArchitecture" diagram with real VPC/AZ/Subnet placement and cross-template edges', () => {
-      const files = ['vpc.yaml', 'ec2.yaml', 'rds.yaml', 'elb.yaml'].map((f) => ({
-        fileName: f,
-        templateJSONString: JSON.stringify(
-          parseCfnYamlTemplate(readYamlFixture(`cross_ref_02/${f}`)),
-        ),
-      }));
+      const files = ['vpc.yaml', 'ec2.yaml', 'rds.yaml', 'elb.yaml'].map(
+        (f) => ({
+          fileName: f,
+          templateJSONString: JSON.stringify(
+            parseCfnYamlTemplate(readYamlFixture(`cross_ref_02/${f}`)),
+          ),
+        }),
+      );
 
-      const diagram = generateDiagram({ mode: 'IntegratedArchitecture', list: files });
+      const diagram = generateDiagram({
+        mode: 'IntegratedArchitecture',
+        list: files,
+      });
 
       // Internet -> IGW -> ELB -> EC2 (in its public subnet), RDS in its private subnet -
       // all resolved via cross-template Fn::ImportValue/exported Output names, not guessed.
@@ -241,5 +386,99 @@ describe('cfn', () => {
         generateDiagram({ mode: 'Nonsense' as any, list: [] }),
       ).toThrow(/Unknown mode/);
     });
+  });
+
+  // Fixture-based assertions above only check for specific substrings - they
+  // can't catch a diagram that's syntactically broken in some way none of
+  // them happens to probe (exactly how the hyphenated-stack-name id/label
+  // bug slipped through, since no fixture used a hyphenated name). These
+  // run every generated diagram through mermaid's actual parser instead of
+  // trusting the string shape, so a manual F5 debug-launch check in the
+  // extension is no longer the only way to catch a mermaid syntax error.
+  describe('generateDiagram output is valid mermaid syntax', () => {
+    it('accepts GroupByTemplate, IntegratedArchitecture, and a hyphenated real-world stack name', async () => {
+      const vpcTemplate = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
+      const groupByTemplate = generateDiagram({
+        mode: 'GroupByTemplate',
+        list: [
+          {
+            fileName: '01_vpc.yaml',
+            templateJSONString: JSON.stringify(vpcTemplate),
+          },
+        ],
+      });
+
+      const hyphenatedStackName = generateDiagram({
+        mode: 'GroupByTemplate',
+        list: [
+          {
+            fileName: 'db-drivers-test-order-stack',
+            templateJSONString: JSON.stringify(vpcTemplate),
+          },
+        ],
+      });
+
+      const crossRefFiles = [
+        'vpc.yaml',
+        'ec2.yaml',
+        'rds.yaml',
+        'elb.yaml',
+      ].map((f) => ({
+        fileName: f,
+        templateJSONString: JSON.stringify(
+          parseCfnYamlTemplate(readYamlFixture(`cross_ref_02/${f}`)),
+        ),
+      }));
+      const integratedArchitecture = generateDiagram({
+        mode: 'IntegratedArchitecture',
+        list: crossRefFiles,
+      });
+
+      const results = await verifyMermaidArchitectureSyntax(
+        [groupByTemplate, hyphenatedStackName, integratedArchitecture].map(
+          stripMermaidFence,
+        ),
+      );
+
+      results.forEach((result) => {
+        expect(result).toEqual({ ok: true });
+      });
+    }, 20000);
+
+    it('actually rejects broken syntax, so the check above is meaningful and not a rubber stamp', async () => {
+      const [result] = await verifyMermaidArchitectureSyntax([
+        'architecture-beta\n  group db-drivers-test-order-stack[db-drivers-test-order-stack]\n',
+      ]);
+
+      expect(result.ok).toBe(false);
+    }, 20000);
+
+    it('verify testOrderStackTemplate', async () => {
+      const diagram = generateDiagram({
+        mode: 'GroupByTemplate',
+        list: [
+          {
+            fileName: 'db-drivers-test-order-stack.json',
+            templateJSONString: JSON.stringify(testOrderStackTemplate),
+          },
+        ],
+      });
+      const [result] = await verifyMermaidArchitectureSyntax([diagram]);
+      expect(result.ok).toBe(false);
+    }, 10000);
+
+    it('verify testApiLambdaStackTemplate', async () => {
+      const diagram = generateDiagram({
+        mode: 'GroupByTemplate',
+        list: [
+          {
+            fileName: 'db-drivers-test-api-lambda-stack.json',
+            templateJSONString: JSON.stringify(testApiLambdaStackTemplate),
+          },
+        ],
+      });
+      const [result] = await verifyMermaidArchitectureSyntax([diagram]);
+      expect(result.ok).toBe(false);
+    }, 10000);
   });
 });

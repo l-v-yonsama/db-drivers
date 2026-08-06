@@ -198,7 +198,18 @@ export type DiagramOutput = {
 export type DiagramFile = {
   fileIndex: number;
   fileName: string;
+  /** The raw, human-readable file/stack name (extension stripped) - kept for
+   * deriving groupId and for the `%% ---` comment above the group (comments
+   * aren't tokenized, so raw characters are safe there). NOT safe to put
+   * straight into an `architecture-beta` id OR label position: real-world
+   * stack names routinely contain `-` (e.g. "db-drivers-test-order-stack"),
+   * and that diagram type's tokenizer reserves `-` for arrow syntax
+   * (`--`/`-->`) in both spots, not just ids - see groupId. */
   groupName: string;
+  /** sanitizeLogicalId(groupName) (hyphens -> underscores, same convention
+   * already used for CIDR blocks elsewhere) - safe to use as both the
+   * `architecture-beta` node id AND its `[label]` for this group. */
+  groupId: string;
   resouces: string[];
   parameters: string[];
   cfnTemplate: CloudFormationTemplate;

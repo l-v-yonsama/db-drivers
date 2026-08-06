@@ -324,12 +324,14 @@ const parseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] => {
 
   list.forEach(({ fileName, templateJSONString }, fileIndex) => {
     const groupName = fileName.replace(/\.[^/.]+$/, ''); // strip extension
+    const groupId = sanitizeLogicalId(groupName);
 
     const cfnTemplate = parseCfnJsonTemplate(templateJSONString);
     diagramFiles.push({
       fileIndex,
       fileName,
       groupName,
+      groupId,
       cfnTemplate,
       resouces: Object.keys(cfnTemplate.Resources),
       parameters: includeParameters
@@ -456,19 +458,27 @@ const generateDiagramGroupByTemplate = (
     const outputsName = `${fileIndexName}_outputs`;
 
     contents.push(
-      `  group ${diagramFile.groupName}(logos:aws-cloudformation)[${diagramFile.groupName}]`,
+      // The label ([...]) turned out to be just as unsafe as the id for a
+      // raw hyphenated stack name - architecture-beta's parser chokes on a
+      // bare "-" there too (its tokenizer reserves "-" for arrow syntax like
+      // "--" / "-->", it isn't free-form quoted text). So groupId
+      // (sanitizeLogicalId'd - hyphens become underscores) is used for both,
+      // same convention already used for CIDR blocks elsewhere in this file.
+      // The original, unsanitized name survives in the `%% ---` comment
+      // above (comments aren't tokenized, so hyphens are fine there).
+      `  group ${diagramFile.groupId}(logos:aws-cloudformation)[${diagramFile.groupId}]`,
     );
     contents.push(
-      `  group ${resourcesName}[Resources] in ${diagramFile.groupName}`,
+      `  group ${resourcesName}[Resources] in ${diagramFile.groupId}`,
     );
     if (includeParameters && diagramFile.parameters.length > 0) {
       contents.push(
-        `  group ${parametersName}[Parameters] in ${diagramFile.groupName}`,
+        `  group ${parametersName}[Parameters] in ${diagramFile.groupId}`,
       );
     }
     if (includeOutputs && diagramFile.outputs.length > 0) {
       contents.push(
-        `  group ${outputsName}[Outputs] in ${diagramFile.groupName}`,
+        `  group ${outputsName}[Outputs] in ${diagramFile.groupId}`,
       );
     }
     contents.push('');
@@ -684,6 +694,14 @@ const getCfnIconString = (type: string): string => {
   // resolve `(logos:xxx)` by fetching that pack at render time. See the AWS Architecture
   // Diagram Guide for the caveat this implies (needs network access / a bundled icon pack
   // in whatever renders the diagram - a static preview extension may not have one).
+  // Every name below was checked against the real registry
+  // (https://api.iconify.design/logos.json?icons=<name>) before adding it -
+  // a name that merely "looks right" isn't enough, since a wrong one fails
+  // silently (getCfnIconString has no way to know an icon name is bogus,
+  // it can only know the *type* has no mapping at all). That's exactly how
+  // 'AWS::SQS::Queue' went unnoticed for a while (missing entirely, not
+  // just a name typo) and how 'aws-iam-role'/'aws-iam-policy' turned out to
+  // not exist (IAM only has one generic icon, no role/policy variants).
   const iconMap: Record<string, string> = {
     'AWS::EC2::Instance': 'aws-ec2',
     'AWS::EC2::SecurityGroup': 'aws-shield',
@@ -697,9 +715,17 @@ const getCfnIconString = (type: string): string => {
     'AWS::RDS::DBInstance': 'aws-rds',
     'AWS::RDS::DBSubnetGroup': 'aws-batch', // networks
     'AWS::SNS::Topic': 'aws-sns',
-    'AWS::IAM::Role': 'aws-iam-role',
-    'AWS::IAM::Policy': 'aws-iam-policy',
+    'AWS::SQS::Queue': 'aws-sqs',
+    'AWS::IAM::Role': 'aws-iam', // no separate role/policy icon exists
+    'AWS::IAM::Policy': 'aws-iam',
     'AWS::CloudFormation::Stack': 'aws-cloudformation',
+    'AWS::SecretsManager::Secret': 'aws-secrets-manager',
+    'AWS::Logs::LogGroup': 'aws-cloudwatch',
+    'AWS::CloudWatch::Alarm': 'aws-cloudwatch',
+    // Lambda::Permission has no icon of its own (it's a permission grant,
+    // not a service) - the IAM icon fits it the same way it already fits
+    // IAM::Role/Policy above.
+    'AWS::Lambda::Permission': 'aws-iam',
   };
 
   const icon = iconMap[type];
@@ -710,8 +736,18 @@ const getCfnIconString = (type: string): string => {
     if (type.startsWith('AWS::EC2::Subnet')) {
       return '(logos:aws-batch)'; // like networks
     }
+    if (type.startsWith('AWS::ApiGateway::')) {
+      // RestApi/Resource/Method/Deployment/Stage all share the one API
+      // Gateway icon - no per-sub-resource variants exist.
+      return '(logos:aws-api-gateway)';
+    }
     if (type.startsWith('AWS::SSM::Parameter')) {
-      return '(logos:aws-secrets-manager)';
+      // Was 'aws-secrets-manager' - a different AWS service's icon, wrong
+      // regardless of whether it happened to render.
+      return '(logos:aws-systems-manager)';
+    }
+    if (type.startsWith('AWS::SES::')) {
+      return '(logos:aws-ses)';
     }
     if (type.startsWith('AWS::Route53')) {
       return '(logos:aws-route53)';

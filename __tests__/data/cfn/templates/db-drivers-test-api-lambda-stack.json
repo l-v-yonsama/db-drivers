@@ -1,0 +1,79 @@
+{
+  "Resources": {
+    "GreetingFunctionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": "lambda.amazonaws.com" },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        }
+      }
+    },
+    "GreetingFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Runtime": "nodejs18.x",
+        "Handler": "index.handler",
+        "Role": { "Fn::GetAtt": ["GreetingFunctionRole", "Arn"] },
+        "Code": {
+          "ZipFile": "exports.handler = async () => ({ statusCode: 200, body: \"hello\" });"
+        }
+      }
+    },
+    "GreetingApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "db-drivers-test-greeting-api"
+      }
+    },
+    "GreetingResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": { "Ref": "GreetingApi" },
+        "ParentId": { "Fn::GetAtt": ["GreetingApi", "RootResourceId"] },
+        "PathPart": "greeting"
+      }
+    },
+    "GreetingMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": { "Ref": "GreetingApi" },
+        "ResourceId": { "Ref": "GreetingResource" },
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GreetingFunction.Arn}/invocations"
+          }
+        }
+      }
+    },
+    "GreetingApiDeployment": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "DependsOn": "GreetingMethod",
+      "Properties": {
+        "RestApiId": { "Ref": "GreetingApi" },
+        "StageName": "prod"
+      }
+    },
+    "GreetingApiInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": { "Ref": "GreetingFunction" },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GreetingApi}/*/*/*"
+        }
+      }
+    }
+  }
+}
