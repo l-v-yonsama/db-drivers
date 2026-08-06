@@ -3,6 +3,7 @@ import * as path from 'path';
 import {
   extractResourceDependencies,
   generateDiagram,
+  GenerateDiagramParams,
   isJson,
   parseCfnJsonTemplate,
   parseCfnYamlTemplate,
@@ -152,10 +153,17 @@ describe('cfn', () => {
   });
 
   describe('generateDiagram', () => {
-    it('renders a "GroupByTemplate" diagram as one fenced ```mermaid block with resource-to-resource edges', () => {
+    it('renders a "CfnDependencyGraph" diagram as one fenced ```mermaid block with resource-to-resource edges', () => {
       const template = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
       const diagram = generateDiagram({
-        mode: 'GroupByTemplate',
+        mode: 'CfnDependencyGraph',
+        // This test is about the raw per-resource rendering (icon selection, the VPC/Subnet
+        // CIDR-in-label special cases) rather than viewpoint filtering, so it pins
+        // 'CloudFormationView' to see every resource unfiltered - none of these VPC/Subnet/
+        // RouteTable resources are "focus" under the default ApplicationView (see
+        // viewpoints.ts), which would otherwise fold or drop them before this test's
+        // assertions ever get to see them.
+        viewpoint: 'CloudFormationView',
         list: [
           {
             fileName: '01_vpc.yaml',
@@ -218,7 +226,11 @@ describe('cfn', () => {
       );
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       const diagram = generateDiagram({
-        mode: 'GroupByTemplate',
+        mode: 'CfnDependencyGraph',
+        // Icon-coverage test, not a viewpoint test - pin 'CloudFormationView' so every
+        // resource above (including the ones ApplicationView's default would classify
+        // auxiliary, like MyRole/MyLambdaPermission) still gets its own node to assert on.
+        viewpoint: 'CloudFormationView',
         list: [
           {
             fileName: 'icons.json',
@@ -276,7 +288,7 @@ describe('cfn', () => {
       // both positions need sanitizing, not only the id.
       const template = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
       const diagram = generateDiagram({
-        mode: 'GroupByTemplate',
+        mode: 'CfnDependencyGraph',
         list: [
           {
             fileName: 'db-drivers-test-order-stack',
@@ -316,7 +328,7 @@ describe('cfn', () => {
         readYamlFixture('cross_ref_02/ec2.yaml'),
       );
       const withoutExtras = generateDiagram({
-        mode: 'GroupByTemplate',
+        mode: 'CfnDependencyGraph',
         list: [
           {
             fileName: 'ec2.yaml',
@@ -325,7 +337,12 @@ describe('cfn', () => {
         ],
       });
       const withExtras = generateDiagram({
-        mode: 'GroupByTemplate',
+        mode: 'CfnDependencyGraph',
+        // Parameters/Outputs are auxiliary (hence hidden, under the default
+        // MergeIntoLabel treatment) for every viewpoint except CloudFormationView - see the
+        // dedicated 'viewpoint' describe block below. Pinned here so this test keeps
+        // isolating the includeParameters/includeOutputs toggle itself.
+        viewpoint: 'CloudFormationView',
         list: [
           {
             fileName: 'ec2.yaml',
@@ -342,7 +359,7 @@ describe('cfn', () => {
       expect(withExtras).toContain('in f0_outputs');
     });
 
-    it('renders an "IntegratedArchitecture" diagram with real VPC/AZ/Subnet placement and cross-template edges', () => {
+    it('renders an "ArchitectureDiagram" diagram with real VPC/AZ/Subnet placement and cross-template edges', () => {
       const files = ['vpc.yaml', 'ec2.yaml', 'rds.yaml', 'elb.yaml'].map(
         (f) => ({
           fileName: f,
@@ -353,7 +370,7 @@ describe('cfn', () => {
       );
 
       const diagram = generateDiagram({
-        mode: 'IntegratedArchitecture',
+        mode: 'ArchitectureDiagram',
         list: files,
       });
 
@@ -379,12 +396,209 @@ describe('cfn', () => {
       );
       expect(diagram).toContain('internet:R --> L:f0_vpc_CFnVPC_CFnVPCIGW');
       expect(diagram).not.toContain('logos:logos:');
+      // Every resource above resolved into a real VPC/Subnet - nothing fell back to standalone.
+      expect(diagram).not.toContain('Standalone');
+    });
+
+    it('places an EC2::Instance/RDS::DBInstance in a "Standalone" group instead of dropping it, when no VPC resolves for it', () => {
+      // rds.yaml/ec2.yaml on their own (no vpc.yaml) is exactly the scenario 9章/10章's
+      // "ArchitectureDiagram mode draws nothing at all without a VPC" problem describes -
+      // both EC2WebServer01's SubnetId and DBInstance's DBSubnetGroupName are
+      // Fn::ImportValue references into vpc.yaml, which isn't part of this list.
+      const files = ['ec2.yaml', 'rds.yaml'].map((f) => ({
+        fileName: f,
+        templateJSONString: JSON.stringify(
+          parseCfnYamlTemplate(readYamlFixture(`cross_ref_02/${f}`)),
+        ),
+      }));
+
+      const diagram = generateDiagram({ mode: 'ArchitectureDiagram', list: files });
+
+      // No VPC anywhere in the given templates - so no VPC group, no Internet/IGW either.
+      expect(diagram).not.toContain('(logos:aws-vpc)');
+      expect(diagram).not.toContain('Internet');
+      // Both resources still appear, just ungrouped by network - not silently dropped.
+      expect(diagram).toContain('  group standalone[Standalone_Resources]');
+      expect(diagram).toContain(
+        'service f0_EC2WebServer01(logos:aws-ec2)[EC2WebServer01] in standalone',
+      );
+      expect(diagram).toContain(
+        'service f1_DBInstance(logos:aws-rds)[DBInstance] in standalone',
+      );
+      // No edges at all - a standalone resource has no subnet/AZ position on either end for
+      // an edge to attach to.
+      expect(diagram).not.toContain('-->');
     });
 
     it('throws on an unknown mode', () => {
       expect(() =>
         generateDiagram({ mode: 'Nonsense' as any, list: [] }),
       ).toThrow(/Unknown mode/);
+    });
+  });
+
+  // testApiLambdaStackTemplate (see its own describe block below for the resource-by-
+  // resource writeup) is a good fixture for viewpoint/auxiliaryTreatment: under the default
+  // ApplicationView, GreetingFunctionRole (IAM::Role), GreetingApiDeployment
+  // (ApiGateway::Deployment) and GreetingApiInvokePermission (Lambda::Permission) are all
+  // auxiliary, each connected to at least one focus resource (GreetingFunction/
+  // GreetingApi/GreetingMethod) - exactly the shape auxiliaryTreatment needs to be
+  // meaningfully exercised, unlike an isolated resource with no edges at all.
+  describe('viewpoint / auxiliaryTreatment', () => {
+    const apiLambdaDiagramParams = (
+      overrides: Partial<GenerateDiagramParams> = {},
+    ): GenerateDiagramParams => ({
+      mode: 'CfnDependencyGraph' as const,
+      list: [
+        {
+          fileName: 'db-drivers-test-api-lambda-stack.json',
+          templateJSONString: JSON.stringify(testApiLambdaStackTemplate),
+        },
+      ],
+      ...overrides,
+    });
+
+    it('omitting viewpoint/auxiliaryTreatment behaves exactly like explicit ApplicationView + MergeIntoLabel', () => {
+      const omitted = generateDiagram(apiLambdaDiagramParams());
+      const explicit = generateDiagram(
+        apiLambdaDiagramParams({
+          viewpoint: 'ApplicationView',
+          auxiliaryTreatment: 'MergeIntoLabel',
+        }),
+      );
+
+      expect(omitted).toBe(explicit);
+    });
+
+    it('MergeIntoLabel (default): folds each auxiliary resource onto its focus neighbor\'s label instead of giving it a node/edge of its own', () => {
+      const diagram = generateDiagram(apiLambdaDiagramParams());
+
+      // The three ApiGateway/Lambda focus resources are still full nodes.
+      expect(diagram).toContain('service f0_GreetingFunction(logos:aws-lambda)');
+      expect(diagram).toContain('service f0_GreetingApi(logos:aws-api-gateway)');
+      expect(diagram).toContain('service f0_GreetingMethod(logos:aws-api-gateway)');
+      // None of the three auxiliary resources get a node of their own.
+      expect(diagram).not.toContain('f0_GreetingFunctionRole(');
+      expect(diagram).not.toContain('f0_GreetingApiDeployment(');
+      expect(diagram).not.toContain('f0_GreetingApiInvokePermission(');
+      expect(diagram).not.toContain('Supporting');
+      // Each auxiliary resource's id survives as a merged annotation on the focus resource(s)
+      // it had an edge with, instead - GreetingFunction has one from GreetingFunction->Role
+      // and one from Permission->GreetingFunction, so it picks up both.
+      expect(diagram).toContain('with_GreetingFunctionRole');
+      expect(diagram).toContain('with_GreetingApiInvokePermission');
+      const functionLine = diagram
+        .split('\n')
+        .find((line) => line.includes('service f0_GreetingFunction('));
+      expect(functionLine).toContain('with_GreetingFunctionRole');
+      expect(functionLine).toContain('with_GreetingApiInvokePermission');
+      // GreetingApiDeployment depended on both GreetingMethod and GreetingApi - both focus
+      // neighbors pick up its id.
+      expect(diagram).toMatch(/service f0_GreetingApi\(logos:aws-api-gateway\)\[GreetingApi with_GreetingApiDeployment\]/);
+      expect(diagram).toMatch(/service f0_GreetingMethod\(logos:aws-api-gateway\)\[GreetingMethod with_GreetingApiDeployment\]/);
+      // No arrow touches an auxiliary resource - only the three focus-to-focus edges survive
+      // (GreetingFunctionRole/Deployment/InvokePermission's ids only ever appear as merged
+      // "with_..." label text above, never as their own "f0_<id>(" node or in a "-->" line).
+      expect(diagram.match(/-->/g)).toHaveLength(3);
+      expect(diagram).toContain('f0_GreetingResource:L --> R:f0_GreetingApi');
+      expect(diagram).toContain('f0_GreetingMethod:L --> R:f0_GreetingApi');
+      expect(diagram).toContain('f0_GreetingMethod:L --> R:f0_GreetingResource');
+    });
+
+    it("SeparateGroup: keeps every auxiliary resource as its own node in a 'Supporting' group, with no edges touching it", () => {
+      const diagram = generateDiagram(
+        apiLambdaDiagramParams({ auxiliaryTreatment: 'SeparateGroup' }),
+      );
+
+      expect(diagram).toContain(
+        '  group f0_supporting[Supporting] in db_drivers_test_api_lambda_stack',
+      );
+      // Auxiliary resources render with their normal icon/label, just relocated - no merged
+      // annotation text, since nothing needed folding onto anyone.
+      expect(diagram).toContain(
+        'service f0_GreetingFunctionRole(logos:aws-iam)[GreetingFunctionRole] in f0_supporting',
+      );
+      expect(diagram).toContain(
+        'service f0_GreetingApiDeployment(logos:aws-api-gateway)[GreetingApiDeployment] in f0_supporting',
+      );
+      expect(diagram).toContain(
+        'service f0_GreetingApiInvokePermission(logos:aws-iam)[GreetingApiInvokePermission] in f0_supporting',
+      );
+      // Still only the three focus-to-focus edges - none of the auxiliary resources above
+      // get an edge, per the explicit "no arrows for auxiliary elements" requirement.
+      expect(diagram.match(/-->/g)).toHaveLength(3);
+      expect(diagram).not.toContain('with_');
+    });
+
+    it('Omit: auxiliary resources and every edge touching them disappear entirely', () => {
+      const diagram = generateDiagram(
+        apiLambdaDiagramParams({ auxiliaryTreatment: 'Omit' }),
+      );
+
+      expect(diagram).not.toContain('GreetingFunctionRole');
+      expect(diagram).not.toContain('GreetingApiDeployment');
+      expect(diagram).not.toContain('GreetingApiInvokePermission');
+      expect(diagram).not.toContain('Supporting');
+      expect(diagram).not.toContain('with_');
+      expect(diagram.match(/-->/g)).toHaveLength(3);
+    });
+
+    it("CloudFormationView shows every resource as focus regardless of auxiliaryTreatment - matches today's unfiltered output", () => {
+      const unfiltered = generateDiagram(
+        apiLambdaDiagramParams({ viewpoint: 'CloudFormationView' }),
+      );
+
+      for (const logicalId of [
+        'GreetingFunctionRole',
+        'GreetingFunction',
+        'GreetingApi',
+        'GreetingResource',
+        'GreetingMethod',
+        'GreetingApiDeployment',
+        'GreetingApiInvokePermission',
+      ]) {
+        expect(unfiltered).toContain(`f0_${logicalId}(`);
+      }
+      expect(unfiltered).not.toContain('with_');
+      expect(unfiltered).not.toContain('Supporting');
+      expect(unfiltered.match(/-->/g)).toHaveLength(7);
+
+      // auxiliaryTreatment is meaningless once nothing is auxiliary - same output no matter
+      // which one is passed alongside CloudFormationView.
+      for (const auxiliaryTreatment of [
+        'MergeIntoLabel',
+        'SeparateGroup',
+        'Omit',
+      ] as const) {
+        expect(
+          generateDiagram(
+            apiLambdaDiagramParams({
+              viewpoint: 'CloudFormationView',
+              auxiliaryTreatment,
+            }),
+          ),
+        ).toBe(unfiltered);
+      }
+    });
+
+    it('classification genuinely depends on the viewpoint, not just "IAM-ish things are always auxiliary"', () => {
+      // Infrastructure View's list explicitly includes IAM Role - and does *not* include
+      // Lambda - so the focus/auxiliary split flips relative to ApplicationView for this
+      // same fixture.
+      const infrastructureView = generateDiagram(
+        apiLambdaDiagramParams({ viewpoint: 'InfrastructureView' }),
+      );
+
+      // GreetingFunctionRole is now focus (Infrastructure View's own node, not merged text) -
+      // and, since GreetingFunction is now the auxiliary side of that same edge, its id shows
+      // up as a merged annotation on the Role instead of the other way around, the mirror
+      // image of the ApplicationView test above.
+      expect(infrastructureView).toContain('service f0_GreetingFunctionRole(logos:aws-iam)[');
+      expect(infrastructureView).not.toContain('f0_GreetingFunction(');
+      const roleLine = infrastructureView
+        .split('\n')
+        .find((line) => line.includes('service f0_GreetingFunctionRole('));
+      expect(roleLine).toContain('with_GreetingFunction');
     });
   });
 
@@ -396,10 +610,15 @@ describe('cfn', () => {
   // trusting the string shape, so a manual F5 debug-launch check in the
   // extension is no longer the only way to catch a mermaid syntax error.
   describe('generateDiagram output is valid mermaid syntax', () => {
-    it('accepts GroupByTemplate, IntegratedArchitecture, and a hyphenated real-world stack name', async () => {
+    it('accepts CfnDependencyGraph, ArchitectureDiagram, and a hyphenated real-world stack name', async () => {
       const vpcTemplate = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
-      const groupByTemplate = generateDiagram({
-        mode: 'GroupByTemplate',
+      // Both CfnDependencyGraph diagrams below pin 'CloudFormationView' so they stay
+      // fully-populated (VPC/Subnet/RouteTable aren't ApplicationView focus resources) - the
+      // syntax bugs this test exists to catch (see the comment above this describe block)
+      // only ever showed up in a real, non-empty diagram.
+      const cfnDependencyGraph = generateDiagram({
+        mode: 'CfnDependencyGraph',
+        viewpoint: 'CloudFormationView',
         list: [
           {
             fileName: '01_vpc.yaml',
@@ -409,7 +628,8 @@ describe('cfn', () => {
       });
 
       const hyphenatedStackName = generateDiagram({
-        mode: 'GroupByTemplate',
+        mode: 'CfnDependencyGraph',
+        viewpoint: 'CloudFormationView',
         list: [
           {
             fileName: 'db-drivers-test-order-stack',
@@ -429,15 +649,24 @@ describe('cfn', () => {
           parseCfnYamlTemplate(readYamlFixture(`cross_ref_02/${f}`)),
         ),
       }));
-      const integratedArchitecture = generateDiagram({
-        mode: 'IntegratedArchitecture',
+      const architectureDiagram = generateDiagram({
+        mode: 'ArchitectureDiagram',
         list: crossRefFiles,
+      });
+      // The "Standalone" group (see architectureDiagram.ts) is a new-enough diagram shape of
+      // its own to be worth syntax-checking independently of the rest of this test.
+      const standaloneResourcesDiagram = generateDiagram({
+        mode: 'ArchitectureDiagram',
+        list: crossRefFiles.filter((f) => f.fileName !== 'vpc.yaml'),
       });
 
       const results = await verifyMermaidArchitectureSyntax(
-        [groupByTemplate, hyphenatedStackName, integratedArchitecture].map(
-          stripMermaidFence,
-        ),
+        [
+          cfnDependencyGraph,
+          hyphenatedStackName,
+          architectureDiagram,
+          standaloneResourcesDiagram,
+        ].map(stripMermaidFence),
       );
 
       results.forEach((result) => {
@@ -455,7 +684,8 @@ describe('cfn', () => {
 
     it('verify testOrderStackTemplate', async () => {
       const diagram = generateDiagram({
-        mode: 'GroupByTemplate',
+        mode: 'CfnDependencyGraph',
+        viewpoint: 'CloudFormationView',
         list: [
           {
             fileName: 'db-drivers-test-order-stack.json',
@@ -463,13 +693,20 @@ describe('cfn', () => {
           },
         ],
       });
+      // NOTE: `diagram` is passed in with its ```mermaid fence still on (unlike every other
+      // use of verifyMermaidArchitectureSyntax in this file, which strips it first) - the
+      // fence lines themselves are what's invalid here, not the diagram content, so this
+      // documents that behavior rather than exercising a real syntax check. Pre-existing;
+      // left as-is since fixing it is unrelated to the viewpoint feature this file was
+      // updated for.
       const [result] = await verifyMermaidArchitectureSyntax([diagram]);
       expect(result.ok).toBe(false);
     }, 10000);
 
     it('verify testApiLambdaStackTemplate', async () => {
       const diagram = generateDiagram({
-        mode: 'GroupByTemplate',
+        mode: 'CfnDependencyGraph',
+        viewpoint: 'CloudFormationView',
         list: [
           {
             fileName: 'db-drivers-test-api-lambda-stack.json',
@@ -477,6 +714,8 @@ describe('cfn', () => {
           },
         ],
       });
+      // See the NOTE in 'verify testOrderStackTemplate' above - same pre-existing
+      // un-stripped-fence situation, not something this change is fixing.
       const [result] = await verifyMermaidArchitectureSyntax([diagram]);
       expect(result.ok).toBe(false);
     }, 10000);
