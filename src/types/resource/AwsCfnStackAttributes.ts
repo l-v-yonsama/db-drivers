@@ -220,12 +220,52 @@ export type DiagramFile = {
   outputs: DiagramOutput[];
 };
 
+/** Who's looking at the diagram and what they're trying to understand - controls which
+ * resources `CfnDependencyGraph` mode treats as "focus" vs "auxiliary" (see
+ * utils/cfn/viewpoints.ts for the per-viewpoint resource-type tables, and
+ * AuxiliaryResourceTreatment for what "auxiliary" actually does to the rendered diagram).
+ * Not consulted by `ArchitectureDiagram` mode, which already only understands a small fixed
+ * set of network resource types regardless of who's asking.
+ *
+ * `CloudFormationView` is the one viewpoint with no focus/auxiliary distinction at all -
+ * every resource is shown, exactly like `CfnDependencyGraph` mode behaved before this field
+ * existed. Every other viewpoint is a curated allowlist for one role's mental model; a
+ * resource type that isn't on the active viewpoint's list defaults to auxiliary (not focus) -
+ * deliberately, since the point of a viewpoint is decluttering a real template that almost
+ * always contains far more resource types than any one role's list enumerates. */
+export type DiagramViewpoint =
+  | 'ApplicationView'
+  | 'InfrastructureView'
+  | 'SecurityView'
+  | 'DBView'
+  | 'OperationsView'
+  | 'CloudFormationView';
+
+/** How a resource `CfnDependencyGraph` mode classified "auxiliary" for the active
+ * DiagramViewpoint is actually displayed - meaningless (and ignored) when viewpoint is
+ * `CloudFormationView`, since nothing is auxiliary there.
+ *
+ * - `MergeIntoLabel`: the auxiliary resource gets no node/edge of its own - its logical id is
+ *   folded as extra text onto the label of whichever *focus* resource it has a dependency
+ *   edge with. Keeps the underlying data visible (nothing vanishes without a trace) while
+ *   cutting node/edge count the most.
+ * - `SeparateGroup`: the auxiliary resource keeps its own normal node, just relocated into a
+ *   dedicated "Supporting" group instead of "Resources" - but no edge is drawn to or from it
+ *   (to any resource, focus or auxiliary), so it doesn't add to the arrow clutter it would
+ *   otherwise create.
+ * - `Omit`: the auxiliary resource (and every edge touching it) doesn't appear anywhere. */
+export type AuxiliaryResourceTreatment = 'MergeIntoLabel' | 'SeparateGroup' | 'Omit';
+
 export type GenerateDiagramParams = {
   list: {
     fileName: string;
     templateJSONString: string;
   }[];
-  mode: 'GroupByTemplate' | 'IntegratedArchitecture';
+  mode: 'CfnDependencyGraph' | 'ArchitectureDiagram';
+  /** Defaults to 'ApplicationView' when omitted. */
+  viewpoint?: DiagramViewpoint;
+  /** Defaults to 'MergeIntoLabel' when omitted. */
+  auxiliaryTreatment?: AuxiliaryResourceTreatment;
   options?: {
     includeParameters?: boolean;
     includeOutputs?: boolean;
