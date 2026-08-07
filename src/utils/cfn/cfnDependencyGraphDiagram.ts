@@ -16,6 +16,16 @@ type RenderOptions = {
   auxiliaryTreatment: AuxiliaryResourceTreatment;
 };
 
+const dependencyEdgePorts: Record<
+  NonNullable<DiagramFile['dependencies'][number]['to']['via']>,
+  { from: 'L' | 'R' | 'T' | 'B'; to: 'L' | 'R' | 'T' | 'B' }
+> = {
+  Ref: { from: 'L', to: 'R' },
+  GetAtt: { from: 'B', to: 'T' },
+  DependsOn: { from: 'R', to: 'L' },
+  ImportValue: { from: 'T', to: 'B' },
+};
+
 /** Which logical/pseudo ids (resources, and - unless viewpoint is CloudFormationView -
  * every Parameter/Output id) count as "auxiliary" for this file under the active viewpoint,
  * plus (only when auxiliaryTreatment is 'MergeIntoLabel') what to fold onto each focus
@@ -51,7 +61,14 @@ export const generateDiagramCfnDependencyGraph = (
   const contents: string[] = [];
   contents.push('```mermaid');
   contents.push('architecture-beta');
-
+  if (params.options?.includeLegend !== false) {
+    contents.push('  %% architecture-beta does not support edge colors or line styles. The legend uses port direction instead.');
+    contents.push('  group dependencyLegend[Dependency_Legend]');
+    contents.push('  service dependencyRef(cloud)[Ref_left_to_right] in dependencyLegend');
+    contents.push('  service dependencyGetAtt(cloud)[GetAtt_bottom_to_top] in dependencyLegend');
+    contents.push('  service dependencyDependsOn(cloud)[DependsOn_right_to_left] in dependencyLegend');
+    contents.push('  service dependencyImportValue(cloud)[ImportValue_top_to_bottom] in dependencyLegend');
+  }
   diagramFiles.forEach((diagramFile) => {
     renderDiagramFileGroup(contents, diagramFile, options);
   });
@@ -362,6 +379,7 @@ const renderDependencyEdges = (
   classification: ResourceClassification,
 ): void => {
   contents.push('  %% Edges');
+  contents.push('  %% Dependency directions: Ref = L to R | GetAtt = B to T | DependsOn = R to L | ImportValue = T to B');
   diagramFile.dependencies.forEach(({ from, to }) => {
     if (
       classification.auxiliaryIds.has(from) ||
@@ -372,18 +390,20 @@ const renderDependencyEdges = (
 
     const serviceFromId = `${fileIndexName}_${from}`;
     const serviceToId = `${fileIndexName}_${to.logicalId}`;
+    const ports = dependencyEdgePorts[to.via ?? 'Ref'];
+    const edge = `  ${serviceFromId}:${ports.from} --> ${ports.to}:${serviceToId}`;
     switch (to.kind) {
       case 'Resources':
-        contents.push(`  ${serviceFromId}:L --> R:${serviceToId}`);
+        contents.push(edge);
         break;
       case 'Parameters':
         if (options.includeParameters) {
-          contents.push(`  ${serviceFromId}:B --> T:${serviceToId}`);
+          contents.push(edge);
         }
         break;
       case 'Outputs':
         if (options.includeOutputs) {
-          contents.push(`  ${serviceFromId}:B --> T:${serviceToId}`);
+          contents.push(edge);
         }
         break;
       default:

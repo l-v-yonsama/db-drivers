@@ -62,6 +62,7 @@
     "examples:postgres": "npm run build && node built/src/examples/postgres.js",
     "examples:rules": "npm run build && node built/src/examples/rules.js",
     "examples:aws": "npm run build && node built/src/examples/aws.js",
+    "diagram:cfn:localstack": "npm run build:core && node scripts/generate-cfn-validation-diagram-localstack.js",
     "examples:auth0": "npm run build && node built/src/examples/auth0.js",
     "examples:keycloak": "npm run build && node built/src/examples/keycloak.js",
     "test0": "jest --coverage",

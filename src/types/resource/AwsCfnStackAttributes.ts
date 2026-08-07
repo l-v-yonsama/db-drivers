@@ -181,6 +181,7 @@ export type RefValue = {
 export type DiagramDependencyTo = {
   kind: 'Resources' | 'Parameters' | 'Outputs';
   logicalId: string;
+  via?: 'Ref' | 'GetAtt' | 'DependsOn' | 'ImportValue';
 };
 
 export type DiagramOutput = {
@@ -261,7 +262,7 @@ export type GenerateDiagramParams = {
     fileName: string;
     templateJSONString: string;
   }[];
-  mode: 'CfnDependencyGraph' | 'ArchitectureDiagram';
+  mode: 'ApplicationDiagram' | 'CfnDependencyGraph' | 'ArchitectureDiagram';
   /** Defaults to 'ApplicationView' when omitted. */
   viewpoint?: DiagramViewpoint;
   /** Defaults to 'MergeIntoLabel' when omitted. */
@@ -269,5 +270,7 @@ export type GenerateDiagramParams = {
   options?: {
     includeParameters?: boolean;
     includeOutputs?: boolean;
+    /** Whether a relationship legend should be rendered. Defaults to true. */
+    includeLegend?: boolean;
   };
 };

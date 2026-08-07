@@ -70,10 +70,9 @@ export const walkIntrinsicRefs = (
         visit('Ref', v);
       } else if (
         (k === 'Fn::GetAtt' || k === '!GetAtt') &&
-        Array.isArray(v) &&
-        typeof v[0] === 'string'
+        ((Array.isArray(v) && typeof v[0] === 'string') || typeof v === 'string')
       ) {
-        visit('GetAtt', v[0]);
+        visit('GetAtt', Array.isArray(v) ? v[0] : v.split('.')[0]);
       } else if (
         (k === 'Fn::ImportValue' || k === '!ImportValue') &&
         typeof v === 'object'
@@ -86,6 +85,17 @@ export const walkIntrinsicRefs = (
             extractTemplateVariables(v2).forEach((varName) =>
               visit('ImportValue', varName),
             );
+          }
+        });
+      } else if (k === 'Fn::Sub' || k === '!Sub') {
+        const subValues = Array.isArray(v) ? [v[0], v[1]] : [v];
+        subValues.forEach((subValue) => {
+          if (typeof subValue === 'string') {
+            extractTemplateVariables(subValue).forEach((variable) => {
+              visit(variable.includes('.') ? 'GetAtt' : 'Ref', variable.split('.')[0]);
+            });
+          } else {
+            walkIntrinsicRefs(subValue, visit);
           }
         });
       } else {

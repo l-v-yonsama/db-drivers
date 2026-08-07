@@ -3,6 +3,9 @@ import * as path from 'path';
 import {
   extractResourceDependencies,
   generateDiagram,
+  generateDrawioApplicationDiagram,
+  generateDrawioArchitectureDiagram,
+  generateDrawioCfnDependencyGraph,
   GenerateDiagramParams,
   isJson,
   parseCfnJsonTemplate,
@@ -153,6 +156,194 @@ describe('cfn', () => {
   });
 
   describe('generateDiagram', () => {
+    it('renders an ApplicationDiagram as a layered runtime flow and resolves Fn::Sub Lambda references', () => {
+      const diagram = generateDiagram({
+        mode: 'ApplicationDiagram',
+        list: [
+          {
+            fileName: 'api-lambda-stack',
+            templateJSONString: JSON.stringify(testApiLambdaStackTemplate),
+          },
+        ],
+      });
+
+      expect(diagram).toContain('flowchart LR');
+      expect(diagram).toContain('subgraph ingress["Ingress"]');
+      expect(diagram).toContain('subgraph compute["Compute"]');
+      expect(diagram).toContain('f0_GreetingApi -->|invokes| f0_GreetingFunction');
+      expect(diagram).toContain('linkStyle 0 stroke:#2563eb,stroke-width:2px');
+      expect(diagram).toContain('subgraph legend["Relationship types"]');
+      expect(diagram).not.toContain('GreetingResource');
+      expect(diagram).not.toContain('GreetingMethod');
+      expect(diagram).not.toContain('GreetingFunctionRole');
+      expect(diagram).not.toContain('GreetingApiInvokePermission');
+    });
+
+    it('detects event delivery and dead-letter relationships from service properties', () => {
+      const diagram = generateDiagram({
+        mode: 'ApplicationDiagram',
+        list: [
+          {
+            fileName: 'event-stack',
+            templateJSONString: JSON.stringify({
+              Resources: {
+                DeadLetterQueue: { Type: 'AWS::SQS::Queue' },
+                OrderQueue: {
+                  Type: 'AWS::SQS::Queue',
+                  Properties: {
+                    RedrivePolicy: {
+                      deadLetterTargetArn: { 'Fn::GetAtt': ['DeadLetterQueue', 'Arn'] },
+                      maxReceiveCount: 3,
+                    },
+                  },
+                },
+                OrderHandler: { Type: 'AWS::Lambda::Function' },
+                OrderRule: {
+                  Type: 'AWS::Events::Rule',
+                  Properties: {
+                    Targets: [{ Arn: { 'Fn::GetAtt': ['OrderHandler', 'Arn'] } }],
+                  },
+                },
+              },
+            }),
+          },
+        ],
+      });
+
+      expect(diagram).toContain('f0_OrderQueue -.->|dead-letter| f0_DeadLetterQueue');
+      expect(diagram).toContain('f0_OrderRule -.->|delivers event| f0_OrderHandler');
+    });
+
+    it('renders the recommended validation templates with the expected application relationships', () => {
+      const apiDiagram = generateDiagram({
+        mode: 'ApplicationDiagram',
+        list: [{
+          fileName: 'api-application.yaml',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/api-application.yaml'))),
+        }],
+      });
+      const eventsDiagram = generateDiagram({
+        mode: 'ApplicationDiagram',
+        list: [{
+          fileName: 'events-and-dlq.yaml',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/events-and-dlq.yaml'))),
+        }],
+      });
+      const networkDiagram = generateDiagram({
+        mode: 'ArchitectureDiagram',
+        list: [{
+          fileName: 'vpc-foundation.yaml',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/vpc-foundation.yaml'))),
+        }],
+      });
+
+      expect(apiDiagram).toContain('f0_GreetingApi -->|invokes| f0_GreetingFunction');
+      expect(apiDiagram).toContain('GET /greeting');
+      expect(apiDiagram).toContain('f0_GreetingFunction -->|reads| f0_GreetingTable');
+      expect(apiDiagram).not.toContain('GreetingFunctionRole');
+      expect(eventsDiagram).toContain('f0_OrderEventRule -.->|delivers event| f0_OrderHandler');
+      expect(eventsDiagram).toContain('f0_OrderQueue -.->|dead-letter| f0_OrderQueueDLQ');
+      expect(networkDiagram).toContain('group f0_vpc_CfnDiagramVpc(logos:aws-vpc)[VPC_10_42_0_0_16]');
+      expect(networkDiagram).toContain('PUBLIC_SUBNET 10_42_0_0_24');
+      expect(networkDiagram).not.toContain('Standalone');
+      expect(generateDiagram({
+        mode: 'ApplicationDiagram',
+        options: { includeLegend: false },
+        list: [{
+          fileName: 'api-application.yaml',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/api-application.yaml'))),
+        }],
+      })).not.toContain('Relationship types');
+    });
+
+    it('adds an English note for an unresolved cross-stack ImportValue', () => {
+      const diagram = generateDiagram({
+        mode: 'ApplicationDiagram',
+        list: [{
+          fileName: 'application-stack',
+          templateJSONString: JSON.stringify({
+            Resources: {
+              Handler: {
+                Type: 'AWS::Lambda::Function',
+                Properties: {
+                  Environment: {
+                    Variables: {
+                      NETWORK_ID: { 'Fn::ImportValue': 'MissingNetworkId' },
+                    },
+                  },
+                },
+              },
+            },
+          }),
+        }],
+      });
+
+      expect(diagram).toContain('subgraph notes["Notes"]');
+      expect(diagram).toContain(
+        'Unresolved cross-stack reference: Handler references MissingNetworkId (export was not found)',
+      );
+    });
+
+    it('generates an editable draw.io ApplicationDiagram with colored relationship styles', () => {
+      const drawio = generateDrawioApplicationDiagram({
+        mode: 'ApplicationDiagram',
+        list: [
+          {
+            fileName: 'api-application.yaml',
+            templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/api-application.yaml'))),
+          },
+          {
+            fileName: 'events-and-dlq.yaml',
+            templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/events-and-dlq.yaml'))),
+          },
+        ],
+      });
+
+      expect(drawio).toContain('<mxfile');
+      expect(drawio).toContain('<mxGraphModel');
+      expect(drawio).toContain('Relationship types');
+      expect(drawio).toContain('strokeColor=#2563eb');
+      expect(drawio).toContain('strokeColor=#d97706');
+      expect(drawio).toContain('dashed=1;dashPattern=8 8;');
+      expect(drawio).toContain('value="invokes"');
+      expect(drawio).toContain('GET /greeting');
+      expect(generateDrawioApplicationDiagram({
+        mode: 'ApplicationDiagram',
+        options: { includeLegend: false },
+        list: [{
+          fileName: 'api-application.yaml',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/api-application.yaml'))),
+        }],
+      })).not.toContain('Relationship types');
+    });
+
+    it('generates editable draw.io ArchitectureDiagram and CfnDependencyGraph documents', () => {
+      const list = [
+        {
+          fileName: 'vpc-foundation.yaml',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/vpc-foundation.yaml'))),
+        },
+        {
+          fileName: 'api-application.yaml',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/api-application.yaml'))),
+        },
+      ];
+      const architecture = generateDrawioArchitectureDiagram({ list, mode: 'ArchitectureDiagram' });
+      const dependency = generateDrawioCfnDependencyGraph({ list, mode: 'CfnDependencyGraph' });
+
+      expect(architecture).toContain('<mxfile');
+      expect(architecture).toContain('VPC 10.42.0.0/16');
+      expect(architecture).toContain('Public Subnet 10.42.0.0/24');
+      expect(architecture).toContain('Cyan dashed: network route');
+      expect(architecture).toMatch(/id="internet"[^>]*parent="1"/);
+      expect(architecture).toMatch(/id="vpc_0_CfnDiagramVpc"[^>]*align=left;spacingLeft=40;/);
+      expect(architecture).toMatch(/id="vpc_0_CfnDiagramVpc_igw_InternetGateway"[^>]*parent="vpc_0_CfnDiagramVpc"/);
+      expect(dependency).toContain('<mxfile');
+      expect(dependency).toContain('vpc-foundation.yaml');
+      expect(dependency).toContain('Blue solid: Ref');
+      expect(dependency).toContain('Purple thick: ImportValue');
+    });
+
     it('renders a "CfnDependencyGraph" diagram as one fenced ```mermaid block with resource-to-resource edges', () => {
       const template = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
       const diagram = generateDiagram({
@@ -189,7 +380,7 @@ describe('cfn', () => {
         'service f0_PublicSubnet1(logos:aws-batch)[PublicSubnet1 Public_Subnet_10_0_0_0_24] in f0_resources',
       );
       expect(diagram).toContain(
-        'service f0_PublicRouteTable[PublicRouteTable RouteTable] in f0_resources',
+        'service f0_PublicRouteTable(logos:aws-vpc)[PublicRouteTable] in f0_resources',
       );
       expect(diagram).not.toContain('AWS_EC2_RouteTable');
     });
@@ -210,6 +401,9 @@ describe('cfn', () => {
         JSON.stringify({
           Resources: {
             MyQueue: { Type: 'AWS::SQS::Queue' },
+            MyRouteTable: { Type: 'AWS::EC2::RouteTable' },
+            MyRoute: { Type: 'AWS::EC2::Route' },
+            MyEventRule: { Type: 'AWS::Events::Rule' },
             MyRole: { Type: 'AWS::IAM::Role' },
             MyPolicy: { Type: 'AWS::IAM::Policy' },
             MySesIdentity: { Type: 'AWS::SES::EmailIdentity' },
@@ -245,6 +439,15 @@ describe('cfn', () => {
       warnSpy.mockRestore();
 
       expect(diagram).toContain('service f0_MyQueue(logos:aws-sqs)[MyQueue]');
+      expect(diagram).toContain(
+        'service f0_MyRouteTable(logos:aws-vpc)[MyRouteTable]',
+      );
+      expect(diagram).toContain(
+        'service f0_MyRoute(logos:aws-vpc)[MyRoute]',
+      );
+      expect(diagram).toContain(
+        'service f0_MyEventRule(logos:aws-eventbridge)[MyEventRule]',
+      );
       expect(diagram).toContain('service f0_MyRole(logos:aws-iam)[MyRole]');
       expect(diagram).toContain('service f0_MyPolicy(logos:aws-iam)[MyPolicy]');
       expect(diagram).toContain(
@@ -494,13 +697,14 @@ describe('cfn', () => {
       expect(functionLine).toContain('with_GreetingApiInvokePermission');
       // GreetingApiDeployment depended on both GreetingMethod and GreetingApi - both focus
       // neighbors pick up its id.
-      expect(diagram).toMatch(/service f0_GreetingApi\(logos:aws-api-gateway\)\[GreetingApi with_GreetingApiDeployment\]/);
+      expect(diagram).toMatch(/service f0_GreetingApi\(logos:aws-api-gateway\)\[GreetingApi with_GreetingApiDeployment with_GreetingApiInvokePermission\]/);
       expect(diagram).toMatch(/service f0_GreetingMethod\(logos:aws-api-gateway\)\[GreetingMethod with_GreetingApiDeployment\]/);
-      // No arrow touches an auxiliary resource - only the three focus-to-focus edges survive
+      // No arrow touches an auxiliary resource - the four focus-to-focus edges survive,
+      // including the Fn::Sub SourceArn reference from the invoke permission to the API.
       // (GreetingFunctionRole/Deployment/InvokePermission's ids only ever appear as merged
       // "with_..." label text above, never as their own "f0_<id>(" node or in a "-->" line).
-      expect(diagram.match(/-->/g)).toHaveLength(3);
-      expect(diagram).toContain('f0_GreetingResource:L --> R:f0_GreetingApi');
+      expect(diagram.match(/-->/g)).toHaveLength(4);
+      expect(diagram).toContain('f0_GreetingResource:B --> T:f0_GreetingApi');
       expect(diagram).toContain('f0_GreetingMethod:L --> R:f0_GreetingApi');
       expect(diagram).toContain('f0_GreetingMethod:L --> R:f0_GreetingResource');
     });
@@ -524,9 +728,9 @@ describe('cfn', () => {
       expect(diagram).toContain(
         'service f0_GreetingApiInvokePermission(logos:aws-iam)[GreetingApiInvokePermission] in f0_supporting',
       );
-      // Still only the three focus-to-focus edges - none of the auxiliary resources above
+      // Only the four focus-to-focus edges remain - none of the auxiliary resources above
       // get an edge, per the explicit "no arrows for auxiliary elements" requirement.
-      expect(diagram.match(/-->/g)).toHaveLength(3);
+      expect(diagram.match(/-->/g)).toHaveLength(4);
       expect(diagram).not.toContain('with_');
     });
 
@@ -540,7 +744,7 @@ describe('cfn', () => {
       expect(diagram).not.toContain('GreetingApiInvokePermission');
       expect(diagram).not.toContain('Supporting');
       expect(diagram).not.toContain('with_');
-      expect(diagram.match(/-->/g)).toHaveLength(3);
+      expect(diagram.match(/-->/g)).toHaveLength(4);
     });
 
     it("CloudFormationView shows every resource as focus regardless of auxiliaryTreatment - matches today's unfiltered output", () => {
@@ -561,7 +765,7 @@ describe('cfn', () => {
       }
       expect(unfiltered).not.toContain('with_');
       expect(unfiltered).not.toContain('Supporting');
-      expect(unfiltered.match(/-->/g)).toHaveLength(7);
+      expect(unfiltered.match(/-->/g)).toHaveLength(9);
 
       // auxiliaryTreatment is meaningless once nothing is auxiliary - same output no matter
       // which one is passed alongside CloudFormationView.

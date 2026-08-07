@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: API Gateway, Lambda, and DynamoDB application flow for diagram validation.
+
+Resources:
+  GreetingTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: cfn-diagram-validation-greetings
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  GreetingFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cfn-diagram-validation-greeting-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: cfn-diagram-validation-greeting-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                Resource: !GetAtt GreetingTable.Arn
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  GreetingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: cfn-diagram-validation-greeting
+      Runtime: nodejs20.x
+      Handler: index.handler
+      Role: !GetAtt GreetingFunctionRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref GreetingTable
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => ({
+            statusCode: 200,
+            body: JSON.stringify({ ok: true, path: event.path })
+          });
+
+  GreetingApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: cfn-diagram-validation-api
+
+  GreetingResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GreetingApi
+      ParentId: !GetAtt GreetingApi.RootResourceId
+      PathPart: greeting
+
+  GreetingMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GreetingApi
+      ResourceId: !Ref GreetingResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GreetingFunction.Arn}/invocations
+
+  GreetingApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: GreetingMethod
+    Properties:
+      RestApiId: !Ref GreetingApi
+      StageName: prod
+
+  GreetingApiInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GreetingFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GreetingApi}/*/*/*
+
+  GreetingLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${GreetingFunction}
+      RetentionInDays: 1
+
+Outputs:
+  ApiEndpoint:
+    Value: !Sub https://${GreetingApi}.execute-api.${AWS::Region}.amazonaws.com/prod/greeting
+  TableName:
+    Value: !Ref GreetingTable

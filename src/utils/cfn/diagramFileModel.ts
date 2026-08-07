@@ -86,22 +86,33 @@ const populateResourceDependencies = (diagramFile: DiagramFile): void => {
     dependsOnIds.forEach((dep) => {
       const to = findDiagramResource(diagramFile, dep);
       if (to) {
-        refs.push(to);
+        refs.push({ ...to, via: 'DependsOn' });
       }
     });
 
     if (resource.Properties) {
-      walkIntrinsicRefs(resource.Properties, (_via, targetId) => {
+      walkIntrinsicRefs(resource.Properties, (via, targetId) => {
         const to = findDiagramResource(diagramFile, targetId);
         if (to) {
-          refs.push(to);
+          refs.push({ ...to, via });
         }
       });
     }
 
-    const uniqueRefs = Array.from(
-      new Map(refs.map((ref) => [ref.logicalId, ref])).values(),
-    );
+    const viaPriority: Record<string, number> = {
+      DependsOn: 1,
+      Ref: 2,
+      GetAtt: 3,
+      ImportValue: 4,
+    };
+    const uniqueRefsByTarget = new Map<string, DiagramDependencyTo>();
+    refs.forEach((ref) => {
+      const existing = uniqueRefsByTarget.get(ref.logicalId);
+      if (!existing || (viaPriority[ref.via ?? 'Ref'] > viaPriority[existing.via ?? 'Ref'])) {
+        uniqueRefsByTarget.set(ref.logicalId, ref);
+      }
+    });
+    const uniqueRefs = Array.from(uniqueRefsByTarget.values());
     uniqueRefs.forEach((to) => {
       diagramFile.dependencies.push({ from: logicalId, to });
     });
@@ -119,7 +130,8 @@ const populateOutputs = (diagramFile: DiagramFile): void => {
 
   Object.entries(diagramFile.cfnTemplate.Outputs).forEach(
     ([outputId, output]) => {
-      const logicalId = parseRefValue(output.Value).value;
+      const outputRef = parseRefValue(output.Value);
+      const logicalId = outputRef.value;
       const res = findDiagramResource(diagramFile, logicalId);
       if (!res) {
         return;
@@ -129,12 +141,20 @@ const populateOutputs = (diagramFile: DiagramFile): void => {
         id: `out__${outputId}`,
         value: { logicalId },
         export: {
-          name: sanitizeLogicalId(JSON.stringify(output.Export?.Name)),
+          name: output.Export?.Name
+            ? sanitizeLogicalId(JSON.stringify(output.Export.Name))
+            : '',
         },
       });
       diagramFile.dependencies.push({
         from: `out__${outputId}`,
-        to: { kind: 'Outputs', logicalId },
+        to: {
+          kind: 'Outputs',
+          logicalId,
+          via: outputRef.type === 'plain'
+            ? undefined
+            : outputRef.type,
+        },
       });
     },
   );

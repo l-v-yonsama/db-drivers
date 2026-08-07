@@ -6,6 +6,18 @@
 export { CfnArchitectureDiagramStructure } from './architectureTopology';
 export { extractResourceDependencies } from './resourceDependencies';
 export { generateDiagram } from './generateDiagram';
+export { generateDrawioApplicationDiagram } from './drawioApplicationDiagram';
+export {
+  generateDrawioArchitectureDiagram,
+  generateDrawioCfnDependencyGraph,
+} from './drawioInfrastructureDiagrams';
+export type { ApplicationRelationKind } from './applicationRelations';
+export {
+  extractApplicationRelations,
+  extractUnresolvedApplicationReferences,
+  getApplicationIngressRoutes,
+  getApplicationNodes,
+} from './applicationRelations';
 export { parseRefValue } from './intrinsics';
 export { getCidrBlock, sanitizeAwsType, sanitizeLogicalId } from './naming';
 export { parseCfnJsonTemplate, parseCfnYamlTemplate } from './templateParsing';

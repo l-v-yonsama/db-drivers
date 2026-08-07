@@ -14,6 +14,10 @@ const EXACT_TYPE_ICONS: Record<string, string> = {
   'AWS::EC2::Instance': 'aws-ec2',
   'AWS::EC2::SecurityGroup': 'aws-shield',
   'AWS::EC2::InternetGateway': 'aws-api-gateway',
+  // Route tables and routes are network constructs rather than standalone AWS
+  // services, so the VPC icon is the least misleading available logo.
+  'AWS::EC2::RouteTable': 'aws-vpc',
+  'AWS::EC2::Route': 'aws-vpc',
   'AWS::ElasticLoadBalancingV2::LoadBalancer': 'aws-elb',
   'AWS::ElasticLoadBalancingV2::Listener': 'aws-elb',
   'AWS::ElasticLoadBalancingV2::TargetGroup': 'aws-elb',
@@ -24,6 +28,7 @@ const EXACT_TYPE_ICONS: Record<string, string> = {
   'AWS::RDS::DBSubnetGroup': 'aws-batch', // networks
   'AWS::SNS::Topic': 'aws-sns',
   'AWS::SQS::Queue': 'aws-sqs',
+  'AWS::Events::Rule': 'aws-eventbridge',
   'AWS::IAM::Role': 'aws-iam', // no separate role/policy icon exists
   'AWS::IAM::Policy': 'aws-iam',
   'AWS::CloudFormation::Stack': 'aws-cloudformation',
