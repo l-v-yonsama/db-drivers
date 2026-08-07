@@ -1,5 +1,6 @@
 import { GenerateDiagramParams } from '../../types';
 import { parseDiagramFiles } from './diagramFileModel';
+import { drawioPage, drawioTemplatePage, pageLink, wrapDrawioPages } from './drawioXml';
 import {
   ApplicationRelationKind,
   extractApplicationRelations,
@@ -78,10 +79,7 @@ export const generateDrawioApplicationDiagram = (
   const labelCounts = new Map<string, number>();
   nodes.forEach((node) => labelCounts.set(node.label, (labelCounts.get(node.label) ?? 0) + 1));
 
-  const cells: string[] = [
-    '<mxCell id="0"/>',
-    '<mxCell id="1" parent="0"/>',
-  ];
+  const cells: string[] = [];
   const nodeCellIds = new Map<string, string>();
   const layerX: Record<(typeof layerTitles)[number], number> = {
     Ingress: 40,
@@ -111,7 +109,7 @@ export const generateDrawioApplicationDiagram = (
       const routes = ingressRoutes.get(node.id)?.map((route) => `<br/>${route}`).join('') ?? '';
       const label = `${node.label}${stackSuffix}${routes}<br/><font color="#64748b">${node.type}</font>`;
       cells.push(
-        `<mxCell id="${cellId}" value="${xmlEscape(label)}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;spacing=8;" vertex="1" parent="${groupId}"><mxGeometry x="15" y="${40 + index * 85}" width="200" height="65" as="geometry"/></mxCell>`,
+        `<mxCell id="${cellId}" value="${xmlEscape(label)}"${files[node.fileIndex].templateSource ? pageLink(`template_${node.fileIndex}`) : ''} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;spacing=8;" vertex="1" parent="${groupId}"><mxGeometry x="15" y="${40 + index * 85}" width="200" height="65" as="geometry"/></mxCell>`,
       );
     });
   });
@@ -151,14 +149,9 @@ export const generateDrawioApplicationDiagram = (
     );
   });
 
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<mxfile host="app.diagrams.net" modified="2026-08-07T00:00:00.000Z" agent="db-drivers" version="24.7.17">',
-    '<diagram id="cfn-application" name="ApplicationDiagram">',
-    '<mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">',
-    `<root>${cells.join('')}</root>`,
-    '</mxGraphModel>',
-    '</diagram>',
-    '</mxfile>',
-  ].join('');
+  const pages = [drawioPage('cfn-application', 'ApplicationDiagram', cells)];
+  files.forEach((file) => {
+    if (file.templateSource) pages.push(drawioTemplatePage(`template_${file.fileIndex}`, file.fileName, file.templateSource));
+  });
+  return wrapDrawioPages(pages);
 };

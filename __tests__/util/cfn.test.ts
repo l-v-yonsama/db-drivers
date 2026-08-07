@@ -233,6 +233,7 @@ describe('cfn', () => {
         mode: 'ArchitectureDiagram',
         list: [{
           fileName: 'vpc-foundation.yaml',
+          templateSource: 'Resources:\n  CfnDiagramVpc:\n    Type: AWS::EC2::VPC',
           templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/vpc-foundation.yaml'))),
         }],
       });
@@ -321,6 +322,7 @@ describe('cfn', () => {
       const list = [
         {
           fileName: 'vpc-foundation.yaml',
+          templateSource: 'Resources:\n  CfnDiagramVpc:\n    Type: AWS::EC2::VPC',
           templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/vpc-foundation.yaml'))),
         },
         {
@@ -338,6 +340,9 @@ describe('cfn', () => {
       expect(architecture).toMatch(/id="internet"[^>]*parent="1"/);
       expect(architecture).toMatch(/id="vpc_0_CfnDiagramVpc"[^>]*align=left;spacingLeft=40;/);
       expect(architecture).toMatch(/id="vpc_0_CfnDiagramVpc_igw_InternetGateway"[^>]*parent="vpc_0_CfnDiagramVpc"/);
+      expect(architecture).toContain('name="Template: vpc-foundation.yaml"');
+      expect(architecture).toContain('white-space:pre-wrap;');
+      expect(architecture).toContain('&#xa;');
       expect(dependency).toContain('<mxfile');
       expect(dependency).toContain('vpc-foundation.yaml');
       expect(dependency).toContain('Blue solid: Ref');

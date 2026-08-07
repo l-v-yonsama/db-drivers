@@ -47,13 +47,14 @@ export const parseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] 
 const buildBaseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] => {
   const includeParameters = params.options?.includeParameters ?? false;
 
-  return params.list.map(({ fileName, templateJSONString }, fileIndex) => {
+  return params.list.map(({ fileName, templateJSONString, templateSource }, fileIndex) => {
     const groupName = fileName.replace(/\.[^/.]+$/, ''); // strip extension
     const cfnTemplate = parseCfnJsonTemplate(templateJSONString);
 
     return {
       fileIndex,
       fileName,
+      templateSource,
       groupName,
       groupId: sanitizeLogicalId(groupName),
       cfnTemplate,

@@ -1,6 +1,7 @@
 import { DiagramFile, GenerateDiagramParams } from '../../types';
 import { CfnArchitectureDiagramStructure } from './architectureTopology';
 import { parseDiagramFiles } from './diagramFileModel';
+import { drawioPage, drawioTemplatePage, pageLink, wrapDrawioPages } from './drawioXml';
 
 type EdgeKind = 'Ref' | 'GetAtt' | 'DependsOn' | 'ImportValue' | 'network';
 
@@ -24,22 +25,11 @@ const displayCidr = (value: string): string => {
   return match ? `${match[1]}.${match[2]}.${match[3]}.${match[4]}/${match[5]}` : value;
 };
 
-const wrap = (name: string, cells: string[]): string => [
-  '<?xml version="1.0" encoding="UTF-8"?>',
-  '<mxfile host="app.diagrams.net" modified="2026-08-07T00:00:00.000Z" agent="db-drivers" version="24.7.17">',
-  `<diagram id="${name}" name="${name}">`,
-  '<mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">',
-  `<root><mxCell id="0"/><mxCell id="1" parent="0"/>${cells.join('')}</root>`,
-  '</mxGraphModel>',
-  '</diagram>',
-  '</mxfile>',
-].join('');
-
 const groupCell = (id: string, label: string, x: number, y: number, width: number, height: number, parent = '1', fill = '#f8fafc', titleAlign: 'center' | 'left' = 'center'): string =>
   `<mxCell id="${id}" value="${xmlEscape(label)}" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=${fill};strokeColor=#94a3b8;fontStyle=1;align=${titleAlign};${titleAlign === 'left' ? 'spacingLeft=40;' : ''}" vertex="1" parent="${parent}"><mxGeometry x="${x}" y="${y}" width="${width}" height="${height}" as="geometry"/></mxCell>`;
 
-const nodeCell = (id: string, label: string, x: number, y: number, width: number, height: number, parent: string, fill = '#ffffff'): string =>
-  `<mxCell id="${id}" value="${xmlEscape(label)}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=${fill};strokeColor=#64748b;spacing=8;" vertex="1" parent="${parent}"><mxGeometry x="${x}" y="${y}" width="${width}" height="${height}" as="geometry"/></mxCell>`;
+const nodeCell = (id: string, label: string, x: number, y: number, width: number, height: number, parent: string, fill = '#ffffff', link = ''): string =>
+  `<mxCell id="${id}" value="${xmlEscape(label)}"${link} style="rounded=1;whiteSpace=wrap;html=1;fillColor=${fill};strokeColor=#64748b;spacing=8;" vertex="1" parent="${parent}"><mxGeometry x="${x}" y="${y}" width="${width}" height="${height}" as="geometry"/></mxCell>`;
 
 const edgeCell = (id: string, source: string, target: string, label: string, kind: EdgeKind): string => {
   const style = edgeStyles[kind];
@@ -69,6 +59,12 @@ export const generateDrawioArchitectureDiagram = (params: GenerateDiagramParams)
   const structure = new CfnArchitectureDiagramStructure(files);
   const cells: string[] = [];
   const nodeIds = new Map<string, string>();
+  const templatePageByLogicalId = new Map<string, string>();
+  files.forEach((file) => file.resouces.forEach((logicalId) => {
+    if (!templatePageByLogicalId.has(logicalId) && file.templateSource) {
+      templatePageByLogicalId.set(logicalId, pageLink(`template_${file.fileIndex}`));
+    }
+  }));
   let maxHeight = 250;
   let vpcX = 40;
   const vpcTop = 80;
@@ -93,7 +89,7 @@ export const generateDrawioArchitectureDiagram = (params: GenerateDiagramParams)
     if (vpc.igw) {
       const igwId = `${vpcId}_igw_${vpc.igw.logicalId}`;
       nodeIds.set(vpc.igw.logicalId, igwId);
-      cells.push(nodeCell(igwId, `${vpc.igw.logicalId}<br/><font color="#64748b">Internet Gateway</font>`, vpcWidth / 2 - 75, 15, 150, 50, vpcId, '#ecfeff'));
+      cells.push(nodeCell(igwId, `${vpc.igw.logicalId}<br/><font color="#64748b">Internet Gateway</font>`, vpcWidth / 2 - 75, 15, 150, 50, vpcId, '#ecfeff', templatePageByLogicalId.get(vpc.igw.logicalId) ?? ''));
       cells.push(edgeCell(`network_${vpcIndex}_igw`, 'internet', igwId, 'routes', 'network'));
     }
     vpc.availabilityZones.forEach((az, azIndex) => {
@@ -108,7 +104,7 @@ export const generateDrawioArchitectureDiagram = (params: GenerateDiagramParams)
         subnet.resources.forEach((resource, resourceIndex) => {
           const resourceId = `${subnetId}_${resource.logicalId}`;
           nodeIds.set(resource.logicalId, resourceId);
-          cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, 15, 40 + resourceIndex * 75, 270, 55, subnetId));
+          cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, 15, 40 + resourceIndex * 75, 270, 55, subnetId, '#ffffff', templatePageByLogicalId.get(resource.logicalId) ?? ''));
         });
         subnetY += subnetHeight + 10;
       });
@@ -116,7 +112,7 @@ export const generateDrawioArchitectureDiagram = (params: GenerateDiagramParams)
     if (vpc.elb) {
       const targetGroupId = `${vpcId}_target_${vpc.elb.logicalId}`;
       nodeIds.set(vpc.elb.logicalId, targetGroupId);
-      cells.push(nodeCell(targetGroupId, `${vpc.elb.logicalId}<br/><font color="#64748b">Target Group</font>`, 340, networkRowY, 140, 50, vpcId, '#ecfeff'));
+      cells.push(nodeCell(targetGroupId, `${vpc.elb.logicalId}<br/><font color="#64748b">Target Group</font>`, 340, networkRowY, 140, 50, vpcId, '#ecfeff', templatePageByLogicalId.get(vpc.elb.logicalId) ?? ''));
       vpc.elb.targetGroups.forEach((target, targetIndex) => {
         const targetResource = structure.getResourceFrom(target.logicalId);
         if (targetResource) {
@@ -133,12 +129,16 @@ export const generateDrawioArchitectureDiagram = (params: GenerateDiagramParams)
     const groupId = 'standalone';
     cells.push(groupCell(groupId, 'Standalone resources', 40, maxHeight + 30, 1100, 120, '1', '#f8fafc'));
     structure.standaloneResources.forEach((resource, index) => {
-      cells.push(nodeCell(`standalone_${resource.fileIndex}_${resource.logicalId}`, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, 15 + index * 220, 45, 200, 50, groupId));
+      cells.push(nodeCell(`standalone_${resource.fileIndex}_${resource.logicalId}`, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, 15 + index * 220, 45, 200, 50, groupId, '#ffffff', templatePageByLogicalId.get(resource.logicalId) ?? ''));
     });
     maxHeight += 180;
   }
   if (params.options?.includeLegend !== false) addLegend(cells, maxHeight + 30, true);
-  return wrap('architecture-diagram', cells);
+  const pages = [drawioPage('architecture-diagram', 'ArchitectureDiagram', cells)];
+  files.forEach((file) => {
+    if (file.templateSource) pages.push(drawioTemplatePage(`template_${file.fileIndex}`, file.fileName, file.templateSource));
+  });
+  return wrapDrawioPages(pages);
 };
 
 /** Generates an editable draw.io dependency graph. Unlike ArchitectureDiagram, this keeps all
@@ -158,7 +158,7 @@ export const generateDrawioCfnDependencyGraph = (params: GenerateDiagramParams):
       const id = `stack_${fileIndex}_${logicalId}`;
       nodeIds.set(`${fileIndex}:${logicalId}`, id);
       const resource = file.cfnTemplate.Resources[logicalId];
-      cells.push(nodeCell(id, `${logicalId}<br/><font color="#64748b">${resource.Type}</font>`, 15 + (index % columns) * 110, 45 + Math.floor(index / columns) * 85, 100, 65, groupId));
+      cells.push(nodeCell(id, `${logicalId}<br/><font color="#64748b">${resource.Type}</font>`, 15 + (index % columns) * 110, 45 + Math.floor(index / columns) * 85, 100, 65, groupId, '#ffffff', file.templateSource ? pageLink(`template_${fileIndex}`) : ''));
     });
     file.dependencies.forEach((dependency, dependencyIndex) => {
       const source = nodeIds.get(`${fileIndex}:${dependency.from}`);
@@ -170,5 +170,9 @@ export const generateDrawioCfnDependencyGraph = (params: GenerateDiagramParams):
     maxHeight = Math.max(maxHeight, 40 + Math.floor(fileIndex / 3) * 330 + height);
   });
   if (params.options?.includeLegend !== false) addLegend(cells, maxHeight + 30, false);
-  return wrap('cfn-dependency-graph', cells);
+  const pages = [drawioPage('cfn-dependency-graph', 'CfnDependencyGraph', cells)];
+  files.forEach((file) => {
+    if (file.templateSource) pages.push(drawioTemplatePage(`template_${file.fileIndex}`, file.fileName, file.templateSource));
+  });
+  return wrapDrawioPages(pages);
 };

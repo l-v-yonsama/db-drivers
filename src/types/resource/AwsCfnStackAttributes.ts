@@ -199,6 +199,7 @@ export type DiagramOutput = {
 export type DiagramFile = {
   fileIndex: number;
   fileName: string;
+  templateSource?: string;
   /** The raw, human-readable file/stack name (extension stripped) - kept for
    * deriving groupId and for the `%% ---` comment above the group (comments
    * aren't tokenized, so raw characters are safe there). NOT safe to put
@@ -261,6 +262,8 @@ export type GenerateDiagramParams = {
   list: {
     fileName: string;
     templateJSONString: string;
+    /** Optional original template text used by draw.io source pages. */
+    templateSource?: string;
   }[];
   mode: 'ApplicationDiagram' | 'CfnDependencyGraph' | 'ArchitectureDiagram';
   /** Defaults to 'ApplicationView' when omitted. */
