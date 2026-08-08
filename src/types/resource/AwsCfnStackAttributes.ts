@@ -181,6 +181,8 @@ export type RefValue = {
 export type DiagramDependencyTo = {
   kind: 'Resources' | 'Parameters' | 'Outputs';
   logicalId: string;
+  /** Target template index. Omitted for same-template dependencies. */
+  fileIndex?: number;
   via?: 'Ref' | 'GetAtt' | 'DependsOn' | 'ImportValue';
 };
 
@@ -190,7 +192,10 @@ export type DiagramOutput = {
     logicalId: string;
   };
   export: {
+    /** Mermaid-safe display form. */
     name: string;
+    /** Exact resolved CloudFormation export name used for ImportValue matching. */
+    rawName: string;
   };
 };
 
@@ -200,6 +205,9 @@ export type DiagramFile = {
   fileIndex: number;
   fileName: string;
   templateSource?: string;
+  /** Deployed parameter values, when known. These take precedence over template defaults. */
+  parameterValues?: Record<string, string>;
+  pseudoParameterValues?: Record<string, string>;
   /** The raw, human-readable file/stack name (extension stripped) - kept for
    * deriving groupId and for the `%% ---` comment above the group (comments
    * aren't tokenized, so raw characters are safe there). NOT safe to put
@@ -264,6 +272,10 @@ export type GenerateDiagramParams = {
     templateJSONString: string;
     /** Optional original template text used by draw.io source pages. */
     templateSource?: string;
+    /** Optional deployed stack parameter values used to resolve Fn::Sub/ImportValue names. */
+    parameterValues?: Record<string, string>;
+    /** Optional AWS::Region/AWS::AccountId/etc. values used in exported names. */
+    pseudoParameterValues?: Record<string, string>;
   }[];
   mode: 'ApplicationDiagram' | 'CfnDependencyGraph' | 'ArchitectureDiagram';
   /** Defaults to 'ApplicationView' when omitted. */

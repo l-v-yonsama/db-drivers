@@ -14,9 +14,17 @@ type DrawioStyle = {
   dashed?: boolean;
 };
 
+type NodeLayout = {
+  layerIndex: number;
+  rowIndex: number;
+  left: number;
+  top: number;
+};
+
 const relationStyles: Record<ApplicationRelationKind, DrawioStyle> = {
   'runtime-call': { color: '#2563eb', width: 2 },
   'event-delivery': { color: '#d97706', width: 2, dashed: true },
+  'data-access': { color: '#059669', width: 2 },
   'data-read': { color: '#059669', width: 2 },
   'data-write': { color: '#7c3aed', width: 3 },
   'network-route': { color: '#0891b2', width: 2, dashed: true },
@@ -30,6 +38,80 @@ const layerColors: Record<(typeof layerTitles)[number], string> = {
   Data: '#ede9fe',
 };
 
+const nodeTop = 40;
+const nodeLeft = 15;
+const nodeWidth = 200;
+const nodeHeight = 65;
+// Edge labels are rendered between vertically adjacent nodes. Keep at least four draw.io
+// grid rows free so the label and arrowhead do not overlap either node.
+const nodeVerticalGap = 50;
+const nodePitch = nodeHeight + nodeVerticalGap;
+const layerTop = 40;
+const layerWidth = 230;
+// A small offset makes corresponding rows form a staircase while preserving a common
+// horizontal routing corridor inside each 50px row gap.
+const layerStairStep = 10;
+const layerBottomPadding = 35;
+const layerHeight = (nodeCount: number, layerIndex: number): number => Math.max(
+  150,
+  nodeTop
+    + layerIndex * layerStairStep
+    + nodeCount * nodeHeight
+    + Math.max(0, nodeCount - 1) * nodeVerticalGap
+    + layerBottomPadding,
+);
+
+const nodeCenterY = (layout: NodeLayout): number => layout.top + nodeHeight / 2;
+
+/** Returns explicit global waypoints that keep connectors out of component rectangles.
+ * Line-to-line crossings are intentionally allowed and made visible with draw.io line jumps. */
+const edgeWaypoints = (
+  source: NodeLayout,
+  target: NodeLayout,
+): Array<{ x: number; y: number }> => {
+  if (source.layerIndex === target.layerIndex) {
+    if (Math.abs(source.rowIndex - target.rowIndex) <= 1) return [];
+    const channelX = source.left + nodeWidth + 20;
+    return [
+      { x: channelX, y: nodeCenterY(source) },
+      { x: channelX, y: nodeCenterY(target) },
+    ];
+  }
+
+  const goingRight = target.left > source.left;
+  if (Math.abs(source.layerIndex - target.layerIndex) === 1) {
+    const sourceSide = goingRight ? source.left + nodeWidth : source.left;
+    const targetSide = goingRight ? target.left : target.left + nodeWidth;
+    const channelX = (sourceSide + targetSide) / 2;
+    return [
+      { x: channelX, y: nodeCenterY(source) },
+      { x: channelX, y: nodeCenterY(target) },
+    ];
+  }
+
+  // All four layers share a clear horizontal band because the maximum staircase offset
+  // (30px) is smaller than nodeVerticalGap (50px). Route long edges through the band after
+  // the upper of the source/target rows so intermediate-layer nodes are not crossed.
+  const corridorRow = Math.min(source.rowIndex, target.rowIndex);
+  const maximumLayerOffset = (layerTitles.length - 1) * layerStairStep;
+  const corridorY = layerTop
+    + nodeTop
+    + maximumLayerOffset
+    + corridorRow * nodePitch
+    + nodeHeight
+    + (nodeVerticalGap - maximumLayerOffset) / 2;
+  return [
+    {
+      x: goingRight ? source.left + nodeWidth + 20 : source.left - 20,
+      y: corridorY,
+    },
+    {
+      x: goingRight ? target.left - 20 : target.left + nodeWidth + 20,
+      y: corridorY,
+    },
+  ];
+};
+
 const xmlEscape = (value: string): string => value
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -41,6 +123,7 @@ const visibleNodeTypes = new Set([
   'AWS::ApiGateway::Resource',
   'AWS::ApiGateway::Method',
   'AWS::ApiGatewayV2::Route',
+  'AWS::ApiGatewayV2::Integration',
 ]);
 
 /** Generates an editable, uncompressed diagrams.net XML document for the simplified
@@ -81,6 +164,7 @@ export const generateDrawioApplicationDiagram = (
 
   const cells: string[] = [];
   const nodeCellIds = new Map<string, string>();
+  const nodeLayouts = new Map<string, NodeLayout>();
   const layerX: Record<(typeof layerTitles)[number], number> = {
     Ingress: 40,
     Compute: 330,
@@ -94,29 +178,36 @@ export const generateDrawioApplicationDiagram = (
     layerNodes.set(title, nodes.filter((node) => node.layer === layer));
   });
 
-  layerTitles.forEach((title) => {
+  layerTitles.forEach((title, layerIndex) => {
     const items = layerNodes.get(title) ?? [];
     if (items.length === 0) return;
     const groupId = `layer_${title.toLowerCase()}`;
-    const groupHeight = Math.max(150, 55 + items.length * 90);
+    const groupHeight = layerHeight(items.length, layerIndex);
     cells.push(
-      `<mxCell id="${groupId}" value="${title}" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=${layerColors[title]};strokeColor=#94a3b8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="${layerX[title]}" y="40" width="230" height="${groupHeight}" as="geometry"/></mxCell>`,
+      `<mxCell id="${groupId}" value="${title}" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=${layerColors[title]};strokeColor=#94a3b8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="${layerX[title]}" y="${layerTop}" width="${layerWidth}" height="${groupHeight}" as="geometry"/></mxCell>`,
     );
     items.forEach((node, index) => {
       const cellId = `node_${node.id}`;
       nodeCellIds.set(node.id, cellId);
+      const y = nodeTop + layerIndex * layerStairStep + index * nodePitch;
+      nodeLayouts.set(node.id, {
+        layerIndex,
+        rowIndex: index,
+        left: layerX[title] + nodeLeft,
+        top: layerTop + y,
+      });
       const stackSuffix = (labelCounts.get(node.label) ?? 0) > 1 ? ` (${node.fileName})` : '';
       const routes = ingressRoutes.get(node.id)?.map((route) => `<br/>${route}`).join('') ?? '';
       const label = `${node.label}${stackSuffix}${routes}<br/><font color="#64748b">${node.type}</font>`;
       cells.push(
-        `<mxCell id="${cellId}" value="${xmlEscape(label)}"${files[node.fileIndex].templateSource ? pageLink(`template_${node.fileIndex}`) : ''} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;spacing=8;" vertex="1" parent="${groupId}"><mxGeometry x="15" y="${40 + index * 85}" width="200" height="65" as="geometry"/></mxCell>`,
+        `<mxCell id="${cellId}" value="${xmlEscape(label)}"${files[node.fileIndex].templateSource ? pageLink(`template_${node.fileIndex}`) : ''} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;spacing=8;" vertex="1" parent="${groupId}"><mxGeometry x="${nodeLeft}" y="${y}" width="${nodeWidth}" height="${nodeHeight}" as="geometry"/></mxCell>`,
       );
     });
   });
 
-  const legendY = 80 + Math.max(...layerTitles.map((title) => {
+  const legendY = 80 + Math.max(...layerTitles.map((title, layerIndex) => {
     const count = layerNodes.get(title)?.length ?? 0;
-    return Math.max(150, 55 + count * 90);
+    return layerHeight(count, layerIndex);
   }));
   if (params.options?.includeLegend !== false) {
     cells.push(
@@ -125,8 +216,7 @@ export const generateDrawioApplicationDiagram = (
     const legendItems: [string, string, ApplicationRelationKind][] = [
       ['legend_runtime', 'Blue solid: Runtime call', 'runtime-call'],
       ['legend_event', 'Orange dashed: Event delivery', 'event-delivery'],
-      ['legend_read', 'Green solid: Data read', 'data-read'],
-      ['legend_write', 'Purple thick: Data write', 'data-write'],
+      ['legend_access', 'Green solid: Data access', 'data-access'],
       ['legend_network', 'Cyan dashed: Network route', 'network-route'],
     ];
     legendItems.forEach(([id, label, kind], index) => {
@@ -144,8 +234,16 @@ export const generateDrawioApplicationDiagram = (
     const target = nodeCellIds.get(relation.to);
     if (!source || !target) return;
     const style = relationStyles[relation.kind];
+    const sourceLayout = nodeLayouts.get(relation.from);
+    const targetLayout = nodeLayouts.get(relation.to);
+    const waypoints = sourceLayout && targetLayout
+      ? edgeWaypoints(sourceLayout, targetLayout)
+      : [];
+    const geometry = waypoints.length > 0
+      ? `<mxGeometry relative="1" as="geometry"><Array as="points">${waypoints.map((point) => `<mxPoint x="${point.x}" y="${point.y}"/>`).join('')}</Array></mxGeometry>`
+      : '<mxGeometry relative="1" as="geometry"/>';
     cells.push(
-      `<mxCell id="edge_${index}" value="${xmlEscape(relation.label)}" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=${style.color};strokeWidth=${style.width};${style.dashed ? 'dashed=1;dashPattern=8 8;' : ''}endArrow=block;" edge="1" parent="1" source="${source}" target="${target}"><mxGeometry relative="1" as="geometry"/></mxCell>`,
+      `<mxCell id="edge_${index}" value="${xmlEscape(relation.label)}" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;jumpStyle=arc;jumpSize=8;html=1;strokeColor=${style.color};strokeWidth=${style.width};${style.dashed ? 'dashed=1;dashPattern=8 8;' : ''}endArrow=block;" edge="1" parent="1" source="${source}" target="${target}">${geometry}</mxCell>`,
     );
   });
 

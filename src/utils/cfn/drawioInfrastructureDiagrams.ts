@@ -61,8 +61,9 @@ export const generateDrawioArchitectureDiagram = (params: GenerateDiagramParams)
   const nodeIds = new Map<string, string>();
   const templatePageByLogicalId = new Map<string, string>();
   files.forEach((file) => file.resouces.forEach((logicalId) => {
-    if (!templatePageByLogicalId.has(logicalId) && file.templateSource) {
-      templatePageByLogicalId.set(logicalId, pageLink(`template_${file.fileIndex}`));
+    const identity = `${file.fileIndex}:${logicalId}`;
+    if (!templatePageByLogicalId.has(identity) && file.templateSource) {
+      templatePageByLogicalId.set(identity, pageLink(`template_${file.fileIndex}`));
     }
   }));
   let maxHeight = 250;
@@ -77,19 +78,24 @@ export const generateDrawioArchitectureDiagram = (params: GenerateDiagramParams)
   }
 
   structure.vpcs.forEach((vpc, vpcIndex) => {
-    const vpcId = `vpc_${vpcIndex}_${vpc.logicalId}`;
+    const vpcId = `vpc_${vpc.fileIndex}_${vpc.logicalId}`;
     const azHeights = vpc.availabilityZones.map((az) =>
       Math.max(70, 45 + az.subnets.reduce((sum, subnet) => sum + 75 + subnet.resources.length * 75, 0)),
     );
     const vpcWidth = vpcWidths[vpcIndex];
     const maxAzHeight = Math.max(...azHeights, 70);
     const networkRowY = azTop + maxAzHeight + 35;
-    const vpcHeight = Math.max(360, networkRowY + 50 + 30);
+    const networkContentHeight = vpc.loadBalancers.length > 0
+      ? 210
+      : vpc.resources.length > 0
+        ? 80
+        : 50;
+    const vpcHeight = Math.max(360, networkRowY + networkContentHeight + 30);
     cells.push(groupCell(vpcId, `VPC ${displayCidr(vpc.cidrBlock)}`, vpcX, vpcTop, vpcWidth, vpcHeight, '1', '#dbeafe', 'left'));
     if (vpc.igw) {
       const igwId = `${vpcId}_igw_${vpc.igw.logicalId}`;
-      nodeIds.set(vpc.igw.logicalId, igwId);
-      cells.push(nodeCell(igwId, `${vpc.igw.logicalId}<br/><font color="#64748b">Internet Gateway</font>`, vpcWidth / 2 - 75, 15, 150, 50, vpcId, '#ecfeff', templatePageByLogicalId.get(vpc.igw.logicalId) ?? ''));
+      nodeIds.set(`${vpc.igw.fileIndex}:${vpc.igw.logicalId}`, igwId);
+      cells.push(nodeCell(igwId, `${vpc.igw.logicalId}<br/><font color="#64748b">Internet Gateway</font>`, vpcWidth / 2 - 75, 15, 150, 50, vpcId, '#ecfeff', templatePageByLogicalId.get(`${vpc.igw.fileIndex}:${vpc.igw.logicalId}`) ?? ''));
       cells.push(edgeCell(`network_${vpcIndex}_igw`, 'internet', igwId, 'routes', 'network'));
     }
     vpc.availabilityZones.forEach((az, azIndex) => {
@@ -98,27 +104,50 @@ export const generateDrawioArchitectureDiagram = (params: GenerateDiagramParams)
       cells.push(groupCell(azId, `Availability Zone ${azIndex + 1}`, 15 + azIndex * 350, azTop, 330, azHeight, vpcId, '#eff6ff'));
       let subnetY = 42;
       az.subnets.forEach((subnet) => {
-        const subnetId = `${azId}_${subnet.logicalId}`;
+        const subnetId = `${azId}_f${subnet.fileIndex}_${subnet.logicalId}`;
         const subnetHeight = Math.max(60, 45 + subnet.resources.length * 75);
-        cells.push(groupCell(subnetId, `${subnet.public ? 'Public' : 'Private'} Subnet ${displayCidr(subnet.cidrBlock)}`, 15, subnetY, 300, subnetHeight, azId, subnet.public ? '#f0fdf4' : '#f8fafc'));
+        const subnetTitle = `${subnet.connectivity[0].toUpperCase()}${subnet.connectivity.slice(1)} Subnet ${displayCidr(subnet.cidrBlock)}`;
+        cells.push(groupCell(subnetId, subnetTitle, 15, subnetY, 300, subnetHeight, azId, subnet.connectivity === 'public' ? '#f0fdf4' : '#f8fafc'));
         subnet.resources.forEach((resource, resourceIndex) => {
-          const resourceId = `${subnetId}_${resource.logicalId}`;
-          nodeIds.set(resource.logicalId, resourceId);
-          cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, 15, 40 + resourceIndex * 75, 270, 55, subnetId, '#ffffff', templatePageByLogicalId.get(resource.logicalId) ?? ''));
+          const resourceId = `${subnetId}_f${resource.fileIndex}_${resource.logicalId}`;
+          nodeIds.set(`${resource.fileIndex}:${resource.logicalId}`, resourceId);
+          cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, 15, 40 + resourceIndex * 75, 270, 55, subnetId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? ''));
         });
         subnetY += subnetHeight + 10;
       });
     });
-    if (vpc.elb) {
-      const targetGroupId = `${vpcId}_target_${vpc.elb.logicalId}`;
-      nodeIds.set(vpc.elb.logicalId, targetGroupId);
-      cells.push(nodeCell(targetGroupId, `${vpc.elb.logicalId}<br/><font color="#64748b">Target Group</font>`, 340, networkRowY, 140, 50, vpcId, '#ecfeff', templatePageByLogicalId.get(vpc.elb.logicalId) ?? ''));
-      vpc.elb.targetGroups.forEach((target, targetIndex) => {
-        const targetResource = structure.getResourceFrom(target.logicalId);
-        if (targetResource) {
-          const targetNode = nodeIds.get(targetResource.resource.logicalId);
-          if (targetNode) cells.push(edgeCell(`network_${vpcIndex}_target_${targetIndex}`, targetGroupId, targetNode, 'targets', 'network'));
-        }
+    vpc.resources.forEach((resource, resourceIndex) => {
+      const resourceId = `${vpcId}_f${resource.fileIndex}_${resource.logicalId}`;
+      nodeIds.set(`${resource.fileIndex}:${resource.logicalId}`, resourceId);
+      cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.placement}</font>`, 20 + resourceIndex * 210, networkRowY, 200, 55, vpcId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? ''));
+    });
+    vpc.loadBalancers.forEach((loadBalancer, loadBalancerIndex) => {
+      const loadBalancerId = `${vpcId}_lb_f${loadBalancer.fileIndex}_${loadBalancer.logicalId}`;
+      nodeIds.set(`${loadBalancer.fileIndex}:${loadBalancer.logicalId}`, loadBalancerId);
+      cells.push(nodeCell(loadBalancerId, `${loadBalancer.logicalId}<br/><font color="#64748b">Load Balancer</font>`, 20 + loadBalancerIndex * 180, networkRowY + 70, 170, 50, vpcId, '#ecfeff', templatePageByLogicalId.get(`${loadBalancer.fileIndex}:${loadBalancer.logicalId}`) ?? ''));
+      if (vpc.igw && loadBalancer.internetFacing) {
+        const igwId = `${vpcId}_igw_${vpc.igw.logicalId}`;
+        cells.push(edgeCell(`network_${vpcIndex}_lb_${loadBalancerIndex}`, igwId, loadBalancerId, 'routes', 'network'));
+      }
+      loadBalancer.targetGroups.forEach((targetGroup, targetGroupIndex) => {
+        const targetGroupId = `${vpcId}_tg_f${targetGroup.fileIndex}_${targetGroup.logicalId}`;
+        nodeIds.set(`${targetGroup.fileIndex}:${targetGroup.logicalId}`, targetGroupId);
+        cells.push(nodeCell(targetGroupId, `${targetGroup.logicalId}<br/><font color="#64748b">Target Group</font>`, 20 + targetGroupIndex * 180, networkRowY + 130, 170, 50, vpcId, '#ecfeff', templatePageByLogicalId.get(`${targetGroup.fileIndex}:${targetGroup.logicalId}`) ?? ''));
+        cells.push(edgeCell(`network_${vpcIndex}_lb_tg_${targetGroupIndex}`, loadBalancerId, targetGroupId, 'forwards', 'network'));
+        targetGroup.targets.forEach((target, targetIndex) => {
+          const targetResource = structure.getResourceFrom(target);
+          const targetNode = targetResource
+            ? nodeIds.get(`${targetResource.resource.fileIndex}:${targetResource.resource.logicalId}`)
+            : undefined;
+          if (targetNode) cells.push(edgeCell(`network_${vpcIndex}_target_${targetGroupIndex}_${targetIndex}`, targetGroupId, targetNode, 'targets', 'network'));
+        });
+      });
+    });
+    if (vpc.igw) {
+      const igwId = `${vpcId}_igw_${vpc.igw.logicalId}`;
+      vpc.natGateways.forEach((natGateway, natIndex) => {
+        const natNode = nodeIds.get(`${natGateway.fileIndex}:${natGateway.logicalId}`);
+        if (natNode) cells.push(edgeCell(`network_${vpcIndex}_nat_${natIndex}`, natNode, igwId, 'egress', 'network'));
       });
     }
     maxHeight = Math.max(maxHeight, vpcTop + vpcHeight);
@@ -129,7 +158,7 @@ export const generateDrawioArchitectureDiagram = (params: GenerateDiagramParams)
     const groupId = 'standalone';
     cells.push(groupCell(groupId, 'Standalone resources', 40, maxHeight + 30, 1100, 120, '1', '#f8fafc'));
     structure.standaloneResources.forEach((resource, index) => {
-      cells.push(nodeCell(`standalone_${resource.fileIndex}_${resource.logicalId}`, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, 15 + index * 220, 45, 200, 50, groupId, '#ffffff', templatePageByLogicalId.get(resource.logicalId) ?? ''));
+      cells.push(nodeCell(`standalone_${resource.fileIndex}_${resource.logicalId}`, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, 15 + index * 220, 45, 200, 50, groupId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? ''));
     });
     maxHeight += 180;
   }
@@ -160,14 +189,16 @@ export const generateDrawioCfnDependencyGraph = (params: GenerateDiagramParams):
       const resource = file.cfnTemplate.Resources[logicalId];
       cells.push(nodeCell(id, `${logicalId}<br/><font color="#64748b">${resource.Type}</font>`, 15 + (index % columns) * 110, 45 + Math.floor(index / columns) * 85, 100, 65, groupId, '#ffffff', file.templateSource ? pageLink(`template_${fileIndex}`) : ''));
     });
+    maxHeight = Math.max(maxHeight, 40 + Math.floor(fileIndex / 3) * 330 + height);
+  });
+  files.forEach((file, fileIndex) => {
     file.dependencies.forEach((dependency, dependencyIndex) => {
       const source = nodeIds.get(`${fileIndex}:${dependency.from}`);
-      const target = nodeIds.get(`${fileIndex}:${dependency.to.logicalId}`);
+      const target = nodeIds.get(`${dependency.to.fileIndex ?? fileIndex}:${dependency.to.logicalId}`);
       if (source && target) {
         cells.push(edgeCell(`dependency_${fileIndex}_${dependencyIndex}`, source, target, dependency.to.via ?? 'Ref', dependency.to.via ?? 'Ref'));
       }
     });
-    maxHeight = Math.max(maxHeight, 40 + Math.floor(fileIndex / 3) * 330 + height);
   });
   if (params.options?.includeLegend !== false) addLegend(cells, maxHeight + 30, false);
   const pages = [drawioPage('cfn-dependency-graph', 'CfnDependencyGraph', cells)];

@@ -24,6 +24,7 @@ const relationStyle: Record<ApplicationRelationKind, {
 }> = {
   'runtime-call': { color: '#2563eb', width: 2, edge: '-->' },
   'event-delivery': { color: '#d97706', width: 2, edge: '-.->' },
+  'data-access': { color: '#059669', width: 2, edge: '-->' },
   'data-read': { color: '#059669', width: 2, edge: '-->' },
   'data-write': { color: '#7c3aed', width: 3, edge: '==>' },
   'network-route': { color: '#0891b2', width: 2, edge: '-.->' },
@@ -46,6 +47,7 @@ export const generateDiagramApplicationDiagram = (params: GenerateDiagramParams)
     'AWS::ApiGateway::Resource',
     'AWS::ApiGateway::Method',
     'AWS::ApiGatewayV2::Route',
+    'AWS::ApiGatewayV2::Integration',
   ]);
   const visibleNodes = nodes.filter((node) => !hiddenGatewayTypes.has(node.type));
   const gatewayByFile = new Map<number, string>();
@@ -106,8 +108,7 @@ export const generateDiagramApplicationDiagram = (params: GenerateDiagramParams)
     contents.push('  subgraph legend["Relationship types"]');
     contents.push('    runtime_legend["Blue solid: runtime call"]');
     contents.push('    event_legend["Orange dashed: event delivery"]');
-    contents.push('    read_legend["Green solid: data read"]');
-    contents.push('    write_legend["Purple thick: data write"]');
+    contents.push('    access_legend["Green solid: data access"]');
     contents.push('    network_legend["Cyan dashed: network route"]');
     contents.push('  end');
   }

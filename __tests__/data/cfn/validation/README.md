@@ -7,10 +7,16 @@
 | `vpc-foundation.yaml` | VPC / AZ / Public・Private Subnet / IGW / Export |
 | `api-application.yaml` | API Gateway → Lambda → DynamoDB、`Fn::Sub`、IAM補助リソース |
 | `events-and-dlq.yaml` | EventBridge → Lambda、SQS → DLQ |
+| `standard-web-application.yaml` | Route Tableで分類するPublic/Private/Isolated Subnet、AZごとのNAT、ALB → ECS/Fargate、RDS DB Subnet Group、SQS → Lambda |
+| `shared-data.yaml` / `shared-data-consumer.yaml` | ハイフンと`Fn::Sub`、実Stack Parameter値を使うクロスStack Export / ImportValue |
+
+`standard-web-application.yaml`は、一般的なAWS構成の図解精度を確認するローカルのテスト用CFnテンプレートです。現在のLocalStack構成ではECS、RDS、ELBv2を有効化していないため、再作成対象には含めません。構成図生成時にはローカルファイルから読み込み、5つのLocalStack Stackとは別の構成図として保存します。
+
+`shared-data.yaml`と`shared-data-consumer.yaml`は、実StackのParameter値を含むクロスStack参照を検証するため、LocalStackの再作成対象に含めます。producerを先に、consumerを`DataStack=cfn-diagram-validation-shared-data`で作成します。
 
 ## LocalStack
 
-既存の`docker/unit-test.yml`でLocalStackを起動している場合は、次の1コマンドで3つのStackを作成できます。
+既存の`docker/unit-test.yml`でLocalStackを起動している場合は、次の1コマンドで5つのStackを作成できます。
 
 `docker/unit-test.yml`では、CloudFormationの検証Stackを安定して扱うため、LocalStackのlegacy CloudFormation engineを使用します。また、VPCとEventBridgeを作成するため`ec2`と`events`サービスを有効化しています。設定変更後はLocalStackコンテナを再作成してください。
 
@@ -38,30 +44,34 @@ CFN_ENDPOINT=http://localhost:6005 \
 ```
 
 LocalStackでは、実際のHTTP呼び出しやイベント配送を確認することより、CloudFormationテンプレートの取得、Export / ImportValue、構成図生成の確認を目的にします。
+生成スクリプトは`DescribeStacks`から実際のParameter値も取得し、Parameterを上書きして構築された`Fn::Sub`形式のImportValueを解決します。
 
 ### 構成図をMarkdownで確認する
 
-db-notebookを起動せず、LocalStack上の3 Stackから構成図を生成できます。初回はビルドを行い、その後、`misc/localstack-cfn-validation-diagram.md`をVS CodeのMarkdownプレビューで開くか、`misc/localstack-cfn-validation-diagram.drawio`をdraw.io / diagrams.netで開いてください。
+db-notebookを起動せず、LocalStack上の5 Stackとローカルの`standard-web-application.yaml`から、それぞれ独立した構成図を生成できます。初回はビルドを行い、その後、各出力ディレクトリの`diagrams.md`をVS CodeのMarkdownプレビューで開くか、draw.ioファイルをdraw.io / diagrams.netで開いてください。
 
 ```sh
 cd /path/to/db-drivers
-CFN_ENDPOINT=http://localhost:6005 npm run diagram:cfn:localstack
+npm run diagram:cfn:localstack
 ```
 
-`ApplicationDiagram`、`ArchitectureDiagram`、`CfnDependencyGraph`の3種類を1ファイルに出力します。対象Stackを絞る場合は、スクリプトにStack名を渡せます。
+接続先、Region、認証情報、入力、出力先はテスト用の固定値です。`ApplicationDiagram`、`ArchitectureDiagram`、`CfnDependencyGraph`の3種類を1ファイルに出力します。
 
 同じコマンドで、ApplicationDiagramの編集可能なdraw.io XMLも出力します。draw.io側では、レイヤー、関係種別の色・線種、英語の凡例を確認できます。
 
-同じく、ArchitectureDiagramとCfnDependencyGraphのdraw.io版も別ファイルとして出力されます。
+LocalStack上の5 Stackは次のファイルへ出力されます。
 
-- `misc/localstack-cfn-architecture-diagram.drawio`
-- `misc/localstack-cfn-dependency-graph.drawio`
+- `misc/localstack-cfn-validation/diagrams.md`
+- `misc/localstack-cfn-validation/application.drawio`
+- `misc/localstack-cfn-validation/architecture.drawio`
+- `misc/localstack-cfn-validation/dependency-graph.drawio`
 
-```sh
-node scripts/generate-cfn-validation-diagram-localstack.js \
-  cfn-diagram-validation-api \
-  cfn-diagram-validation-events
-```
+標準Webテンプレート単独の構成図は次のファイルへ出力されます。
+
+- `misc/standard-web-application-cfn-validation/diagrams.md`
+- `misc/standard-web-application-cfn-validation/application.drawio`
+- `misc/standard-web-application-cfn-validation/architecture.drawio`
+- `misc/standard-web-application-cfn-validation/dependency-graph.drawio`
 
 ### 既にStackが存在する場合
 

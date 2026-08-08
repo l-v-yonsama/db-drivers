@@ -1,17 +1,25 @@
 import { DiagramFile, RefValue, TemplateResource } from '../../types';
-import { parseRefValue } from './intrinsics';
+import { parseRefValue, resolveCfnString } from './intrinsics';
 import { getCidrBlock, sanitizeLogicalId } from './naming';
 
+type SubnetConnectivity = 'public' | 'private' | 'isolated';
+
 type TopologySubnetResource = {
+  fileIndex: number;
   logicalId: string;
   exportedName?: string;
   detail: TemplateResource;
 };
 
+type TopologyVpcResource = TopologySubnetResource & {
+  placement: string;
+};
+
 type TopologySubnet = {
+  fileIndex: number;
   logicalId: string;
   exportedName?: string;
-  public: boolean;
+  connectivity: SubnetConnectivity;
   cidrBlock: string;
   resources: TopologySubnetResource[];
 };
@@ -21,188 +29,159 @@ type TopologyAvailabilityZone = {
   subnets: TopologySubnet[];
 };
 
-type TopologyElb = {
+type TopologyTarget = {
+  sourceFileIndex: number;
+  logicalId: RefValue;
+};
+
+type TopologyTargetGroup = {
+  fileIndex: number;
   logicalId: string;
-  targetGroups: {
-    logicalId: RefValue;
-  }[];
+  targets: TopologyTarget[];
+};
+
+type TopologyLoadBalancer = {
+  fileIndex: number;
+  logicalId: string;
+  internetFacing: boolean;
+  targetGroups: TopologyTargetGroup[];
 };
 
 type TopologyIgw = {
+  fileIndex: number;
   logicalId: string;
 };
 
+type TopologyNatGateway = {
+  fileIndex: number;
+  logicalId: string;
+  subnet: TopologySubnet;
+};
+
 type TopologyVpc = {
+  readonly fileIndex: number;
   readonly logicalId: string;
   exportedName?: string;
   readonly cidrBlock: string;
   readonly availabilityZones: TopologyAvailabilityZone[];
-  elb?: TopologyElb;
+  readonly resources: TopologyVpcResource[];
+  readonly loadBalancers: TopologyLoadBalancer[];
+  readonly natGateways: TopologyNatGateway[];
   igw?: TopologyIgw;
 };
 
-/** An EC2::Instance/RDS::DBInstance this class understands how to place, but couldn't - no
- * `AWS::EC2::VPC` resolved for its subnet at all (a template set with no VPC in it, the
- * problem this type exists to work around - see architectureDiagram.ts) or, same as ever,
- * its specific Subnet reference just didn't resolve (a cross-template `Fn::ImportValue` into
- * a stack that wasn't included). `fileIndex` is carried along so the renderer can build a
- * collision-safe node id the same way CfnDependencyGraph mode does (two different templates
- * are free to reuse the same logical id). */
 type TopologyStandaloneResource = {
   fileIndex: number;
   logicalId: string;
   detail: TemplateResource;
 };
 
-const findResource = (
-  resources: Record<string, TemplateResource>,
-  ref: RefValue,
-): {
-  logicalId: string;
-  detail: TemplateResource;
-} | null => {
-  const logicalId = Object.keys(resources).find((key) => key === ref.value);
-  return logicalId ? { logicalId, detail: resources[logicalId] } : null;
+const sortSubnets = (a: TopologySubnet, b: TopologySubnet): number => {
+  const priority: Record<SubnetConnectivity, number> = {
+    public: 0,
+    private: 1,
+    isolated: 2,
+  };
+  return priority[a.connectivity] - priority[b.connectivity] ||
+    a.cidrBlock.localeCompare(b.cidrBlock);
 };
 
-const sortPublicSubnetsFirst = (
-  a: TopologySubnet,
-  b: TopologySubnet,
-): number => {
-  if (a.public === b.public) {
-    return a.cidrBlock.localeCompare(b.cidrBlock);
-  }
-  return a.public ? -1 : 1;
-};
+const uniqueByIdentity = <T extends { fileIndex: number; logicalId: string }>(
+  values: T[],
+): T[] => Array.from(new Map(values.map((value) => [
+  `${value.fileIndex}:${value.logicalId}`,
+  value,
+])).values());
 
-/**
- * Builds a VPC/AvailabilityZone/Subnet-aware network topology out of one or more parsed
- * CloudFormation templates, for `generateDiagram({ mode: 'ArchitectureDiagram' })` (see
- * architectureDiagram.ts). Unlike `CfnDependencyGraph` mode (which just lists each template's
- * resources under its own group), this actually interprets `AWS::EC2::VPC`/`::Subnet`/
- * `::VPCGatewayAttachment`/`ElasticLoadBalancingV2::TargetGroup`/`RDS::DBInstance`/
- * `EC2::Instance` resources and places each one inside the VPC/AZ/subnet it actually
- * belongs to (resolving cross-template references via `Fn::ImportValue`/exported Output
- * names), so the resulting diagram reads as a real network diagram rather than a flat
- * per-template resource dump.
- *
- * The constructor runs three passes over every template, in order - each pass depends on the
- * previous one having already run for *all* templates, since a reference (VpcId, SubnetId, an
- * ELB's target) can point across template/stack boundaries via `Fn::ImportValue`:
- *   1. collectVpcs    - one TopologyVpc per `AWS::EC2::VPC` resource
- *   2. collectSubnets - place every `AWS::EC2::Subnet` under its VPC/AvailabilityZone
- *   3. attachResourcesToSubnets - place every other resource type this class understands
- *      under the subnet (or VPC, for an ELB/IGW) it actually belongs to
- *
- * An EC2::Instance/RDS::DBInstance that pass 3 can't resolve a subnet for - most notably
- * because the given template set has no VPC in it at all - lands in `standaloneResources`
- * instead of being dropped, so the diagram degrades to "these resources, with no network
- * context" rather than to nothing (see architectureDiagram.ts). A VPC-scoped concept with
- * nowhere sensible to render *without* its VPC - an ELB TargetGroup, an Internet Gateway -
- * has no standalone equivalent and is still silently skipped, same as before.
- */
+/** Builds a stack-aware VPC/AZ/subnet topology from all supplied templates. */
 export class CfnArchitectureDiagramStructure {
   public readonly vpcs: TopologyVpc[] = [];
   public readonly standaloneResources: TopologyStandaloneResource[] = [];
 
-  constructor(diagramFiles: DiagramFile[]) {
-    diagramFiles.forEach((diagramFile) => this.collectVpcs(diagramFile));
-    diagramFiles.forEach((diagramFile) => this.collectSubnets(diagramFile));
-    diagramFiles.forEach((diagramFile) =>
-      this.attachResourcesToSubnets(diagramFile),
-    );
+  constructor(private readonly diagramFiles: DiagramFile[]) {
+    diagramFiles.forEach((file) => this.collectVpcs(file));
+    diagramFiles.forEach((file) => this.collectSubnets(file));
+    diagramFiles.forEach((file) => this.classifySubnetConnectivity(file));
+    diagramFiles.forEach((file) => this.attachSubnetAndVpcResources(file));
+    diagramFiles.forEach((file) => this.attachInternetGateway(file));
+    diagramFiles.forEach((file) => this.collectLoadBalancers(file));
   }
 
-  /** Resolves an ELB target group's `Fn::ImportValue` reference back to the resource it
-   * actually points at (VPC + Subnet + the resource itself), by matching against the
-   * `exportedName` attachResourcesToSubnets() recorded for it. Only ImportValue-style
-   * references are resolvable this way - a plain `Ref` would mean the target lives in this
-   * same template, which is not how a TargetGroup's Targets are ever expressed. */
-  getResourceFrom(logicalId: RefValue):
+  /** Finds a rendered target using stack identity for local Refs and raw export names for
+   * ImportValue. A target may live directly at VPC level (for ECS/RDS placement candidates)
+   * or in a concrete subnet (for EC2/NAT). */
+  getResourceFrom(reference: TopologyTarget):
     | {
         vpc: TopologyVpc;
-        subnet: TopologySubnet;
-        resource: TopologySubnetResource;
+        subnet?: TopologySubnet;
+        resource: TopologySubnetResource | TopologyVpcResource;
       }
     | undefined {
-    if (logicalId.type !== 'ImportValue') {
-      return undefined;
-    }
-
+    const normalized = this.normalizeRef(reference.logicalId.rawValue, reference.sourceFileIndex);
     for (const vpc of this.vpcs) {
+      for (const resource of vpc.resources) {
+        if (this.resourceMatches(resource, normalized, reference.sourceFileIndex)) {
+          return { vpc, resource };
+        }
+      }
       for (const az of vpc.availabilityZones) {
         for (const subnet of az.subnets) {
-          const resource = subnet.resources.find(
-            (it) => it.exportedName === sanitizeLogicalId(logicalId.value),
-          );
-          if (resource) {
-            return { vpc, subnet, resource };
-          }
+          const resource = subnet.resources.find((candidate) =>
+            this.resourceMatches(candidate, normalized, reference.sourceFileIndex));
+          if (resource) return { vpc, subnet, resource };
         }
       }
     }
     return undefined;
   }
 
-  /** Pass 1: one TopologyVpc per `AWS::EC2::VPC` resource in this template, then (once every
-   * VPC in this template is known) attach the exported name of any VPC that has one - a
-   * later template's `Fn::ImportValue` needs that name to resolve back to it (see getVpc()). */
-  private collectVpcs(diagramFile: DiagramFile): void {
-    const { cfnTemplate } = diagramFile;
-
-    Object.entries(cfnTemplate.Resources)
+  private collectVpcs(file: DiagramFile): void {
+    Object.entries(file.cfnTemplate.Resources)
       .filter(([, resource]) => resource.Type === 'AWS::EC2::VPC')
       .forEach(([logicalId, resource]) => {
         this.vpcs.push({
+          fileIndex: file.fileIndex,
           logicalId,
           cidrBlock: getCidrBlock(resource.Properties),
           availabilityZones: [],
+          resources: [],
+          loadBalancers: [],
+          natGateways: [],
         });
       });
 
-    diagramFile.outputs.forEach((output) => {
-      const vpc = this.vpcs.find(
-        (v) => v.logicalId === output.value.logicalId,
-      );
-      if (vpc) {
-        vpc.exportedName = output.export.name;
-      }
+    file.outputs.forEach((output) => {
+      const vpc = this.vpcs.find((candidate) =>
+        candidate.fileIndex === file.fileIndex &&
+        candidate.logicalId === output.value.logicalId);
+      if (vpc && output.export.rawName) vpc.exportedName = output.export.rawName;
     });
   }
 
-  /** Pass 2: place every `AWS::EC2::Subnet` under the VPC/AvailabilityZone it belongs to
-   * (public subnets sorted first within each AZ, matching how the diagram groups them), then
-   * attach exported subnet names the same way collectVpcs() does for VPCs. Requires
-   * collectVpcs() to have already run for every template first - a subnet can reference a
-   * VPC defined in a different template via `Fn::ImportValue`. */
-  private collectSubnets(diagramFile: DiagramFile): void {
-    const { cfnTemplate } = diagramFile;
-
-    Object.entries(cfnTemplate.Resources)
+  private collectSubnets(file: DiagramFile): void {
+    Object.entries(file.cfnTemplate.Resources)
       .filter(([, resource]) => resource.Type === 'AWS::EC2::Subnet')
       .forEach(([logicalId, resource]) => {
-        const vpcId = parseRefValue(resource.Properties?.VpcId);
-        const vpc = this.getVpc(vpcId);
+        const vpc = this.getVpc(this.normalizeRef(resource.Properties?.VpcId, file.fileIndex), file.fileIndex);
         if (!vpc) {
-          console.warn(`VPC ${vpcId.value} not found for subnet ${logicalId}.`);
+          console.warn(`VPC not found for subnet ${file.fileName}:${logicalId}.`);
           return;
         }
-
         const az = this.getOrCreateAvailabilityZone(vpc, resource);
         az.subnets.push({
+          fileIndex: file.fileIndex,
           logicalId,
-          public: !!resource.Properties?.MapPublicIpOnLaunch,
+          connectivity: 'isolated',
           cidrBlock: getCidrBlock(resource.Properties),
           resources: [],
         });
-        az.subnets.sort(sortPublicSubnetsFirst);
       });
 
-    diagramFile.outputs.forEach((output) => {
-      const subnet = this.findSubnetByLogicalId(output.value.logicalId);
-      if (subnet) {
-        subnet.exportedName = output.export.name;
-      }
+    file.outputs.forEach((output) => {
+      const subnet = this.allSubnets().find((candidate) =>
+        candidate.fileIndex === file.fileIndex &&
+        candidate.logicalId === output.value.logicalId);
+      if (subnet && output.export.rawName) subnet.exportedName = output.export.rawName;
     });
   }
 
@@ -211,12 +190,9 @@ export class CfnArchitectureDiagramStructure {
     subnetResource: TemplateResource,
   ): TopologyAvailabilityZone {
     const azId = subnetResource.Properties?.AvailabilityZone
-      ? sanitizeLogicalId(
-          JSON.stringify(subnetResource.Properties.AvailabilityZone),
-        )
-      : 'undefined';
-
-    let az = vpc.availabilityZones.find((a) => a.id === azId);
+      ? sanitizeLogicalId(JSON.stringify(subnetResource.Properties.AvailabilityZone))
+      : 'unspecified';
+    let az = vpc.availabilityZones.find((candidate) => candidate.id === azId);
     if (!az) {
       az = { id: azId, subnets: [] };
       vpc.availabilityZones.push(az);
@@ -224,177 +200,358 @@ export class CfnArchitectureDiagramStructure {
     return az;
   }
 
-  /** Pass 3: attach every resource that isn't itself a VPC/Subnet to the subnet (or VPC) it
-   * belongs to. Understands ElasticLoadBalancingV2::TargetGroup (recorded on the VPC as its
-   * `elb`), EC2::VPCGatewayAttachment (recorded on the VPC as its `igw`), RDS::DBInstance
-   * (placed in every subnet its DBSubnetGroup lists), and EC2::Instance (placed in its own
-   * SubnetId). Any other resource type is silently skipped - it simply won't appear in an
-   * ArchitectureDiagram-mode diagram (see cfnDependencyGraphDiagram.ts for a mode that
-   * doesn't skip anything). */
-  private attachResourcesToSubnets(diagramFile: DiagramFile): void {
-    const { cfnTemplate } = diagramFile;
+  /** A subnet is public only when its associated route table has a default route to an
+   * Internet Gateway. NAT/EgressOnlyIGW default routes are private egress; no default route is
+   * isolated. MapPublicIpOnLaunch is intentionally not used for this classification. */
+  private classifySubnetConnectivity(file: DiagramFile): void {
+    const resources = file.cfnTemplate.Resources;
+    Object.values(resources)
+      .filter((resource) => resource.Type === 'AWS::EC2::SubnetRouteTableAssociation')
+      .forEach((association) => {
+        const subnet = this.getSubnet(
+          this.normalizeRef(association.Properties?.SubnetId, file.fileIndex),
+          file.fileIndex,
+        );
+        const routeTableRef = this.normalizeRef(
+          association.Properties?.RouteTableId,
+          file.fileIndex,
+        );
+        if (!subnet || routeTableRef.type === 'ImportValue') return;
 
-    Object.entries(cfnTemplate.Resources).forEach(([logicalId, resource]) => {
+        const routes = Object.values(resources).filter((resource) =>
+          resource.Type === 'AWS::EC2::Route' &&
+          this.normalizeRef(resource.Properties?.RouteTableId, file.fileIndex).value === routeTableRef.value &&
+          (resource.Properties?.DestinationCidrBlock === '0.0.0.0/0' ||
+            resource.Properties?.DestinationIpv6CidrBlock === '::/0'));
+
+        if (routes.some((route) => {
+          const gatewayValue = route.Properties?.GatewayId;
+          if (typeof gatewayValue === 'string') return gatewayValue.startsWith('igw-');
+          const gateway = this.findTemplateResource(
+            this.normalizeRef(gatewayValue, file.fileIndex),
+            file.fileIndex,
+          );
+          return gateway?.detail.Type === 'AWS::EC2::InternetGateway';
+        })) {
+          subnet.connectivity = 'public';
+        } else if (routes.some((route) =>
+          route.Properties?.NatGatewayId !== undefined ||
+          route.Properties?.EgressOnlyInternetGatewayId !== undefined)) {
+          subnet.connectivity = 'private';
+        } else {
+          subnet.connectivity = 'isolated';
+        }
+      });
+    this.vpcs.forEach((vpc) =>
+      vpc.availabilityZones.forEach((az) => az.subnets.sort(sortSubnets)));
+  }
+
+  private attachSubnetAndVpcResources(file: DiagramFile): void {
+    Object.entries(file.cfnTemplate.Resources).forEach(([logicalId, resource]) => {
       switch (resource.Type) {
-        case 'AWS::EC2::Subnet':
-        case 'AWS::EC2::VPC':
-          return;
-        case 'AWS::ElasticLoadBalancingV2::TargetGroup':
-          this.attachTargetGroup(logicalId, resource);
-          return;
-        case 'AWS::EC2::VPCGatewayAttachment':
-          this.attachInternetGateway(cfnTemplate.Resources, resource);
-          return;
-        case 'AWS::RDS::DBInstance':
-          this.attachRdsInstance(diagramFile, logicalId, resource);
-          return;
         case 'AWS::EC2::Instance':
-          this.attachEc2Instance(diagramFile, logicalId, resource);
-          return;
+          this.attachEc2Instance(file, logicalId, resource);
+          break;
+        case 'AWS::EC2::NatGateway':
+          this.attachNatGateway(file, logicalId, resource);
+          break;
+        case 'AWS::RDS::DBInstance':
+        case 'AWS::RDS::DBCluster':
+          this.attachDatabase(file, logicalId, resource);
+          break;
+        case 'AWS::ECS::Service':
+          this.attachEcsService(file, logicalId, resource);
+          break;
       }
     });
   }
 
-  private attachTargetGroup(logicalId: string, resource: TemplateResource): void {
-    const targets = resource.Properties?.Targets;
-    const vpc = this.getVpc(parseRefValue(resource.Properties?.VpcId));
-    if (!vpc || !Array.isArray(targets)) {
+  private attachEc2Instance(
+    file: DiagramFile,
+    logicalId: string,
+    resource: TemplateResource,
+  ): void {
+    const subnetValue = resource.Properties?.SubnetId ??
+      resource.Properties?.NetworkInterfaces?.[0]?.SubnetId;
+    const subnet = this.getSubnet(this.normalizeRef(subnetValue, file.fileIndex), file.fileIndex);
+    if (!subnet) {
+      this.addStandalone(file, logicalId, resource, 'EC2 Instance has no resolvable subnet');
       return;
     }
-    vpc.elb = {
+    subnet.resources.push(this.topologyResource(file, logicalId, resource));
+  }
+
+  private attachNatGateway(
+    file: DiagramFile,
+    logicalId: string,
+    resource: TemplateResource,
+  ): void {
+    const subnet = this.getSubnet(
+      this.normalizeRef(resource.Properties?.SubnetId, file.fileIndex),
+      file.fileIndex,
+    );
+    if (!subnet) return;
+    const vpc = this.vpcForSubnet(subnet);
+    if (!vpc) return;
+    const topologyResource = this.topologyResource(file, logicalId, resource);
+    subnet.resources.push(topologyResource);
+    vpc.natGateways.push({ fileIndex: file.fileIndex, logicalId, subnet });
+  }
+
+  private attachDatabase(
+    file: DiagramFile,
+    logicalId: string,
+    resource: TemplateResource,
+  ): void {
+    const subnetGroupRef = this.normalizeRef(
+      resource.Properties?.DBSubnetGroupName,
+      file.fileIndex,
+    );
+    const subnetGroup = this.findTemplateResource(subnetGroupRef, file.fileIndex);
+    const subnetIds = subnetGroup?.detail.Properties?.SubnetIds;
+    if (!subnetGroup || !Array.isArray(subnetIds)) {
+      this.addStandalone(file, logicalId, resource, 'database has no resolvable DB subnet group');
+      return;
+    }
+
+    const subnets = subnetIds
+      .map((value: any) => this.getSubnet(
+        this.normalizeRef(value, subnetGroup.file.fileIndex),
+        subnetGroup.file.fileIndex,
+      ))
+      .filter((subnet): subnet is TopologySubnet => Boolean(subnet));
+    const vpcs = uniqueByIdentity(subnets.flatMap((subnet) => {
+      const vpc = this.vpcForSubnet(subnet);
+      return vpc ? [vpc] : [];
+    }));
+    if (subnets.length === 0 || vpcs.length !== 1) {
+      this.addStandalone(file, logicalId, resource, 'database subnet group does not resolve to one VPC');
+      return;
+    }
+
+    vpcs[0].resources.push({
+      ...this.topologyResource(file, logicalId, resource),
+      placement: `DB subnet group ${subnetGroup.logicalId}: ${subnets.length} candidate subnets`,
+    });
+  }
+
+  private attachEcsService(
+    file: DiagramFile,
+    logicalId: string,
+    resource: TemplateResource,
+  ): void {
+    const subnetValues = resource.Properties?.NetworkConfiguration?.AwsvpcConfiguration?.Subnets;
+    if (!Array.isArray(subnetValues)) return;
+    const subnets = subnetValues
+      .map((value: any) => this.getSubnet(this.normalizeRef(value, file.fileIndex), file.fileIndex))
+      .filter((subnet): subnet is TopologySubnet => Boolean(subnet));
+    const vpcs = uniqueByIdentity(subnets.flatMap((subnet) => {
+      const vpc = this.vpcForSubnet(subnet);
+      return vpc ? [vpc] : [];
+    }));
+    if (vpcs.length !== 1) return;
+    vpcs[0].resources.push({
+      ...this.topologyResource(file, logicalId, resource),
+      placement: `ECS service: ${subnets.length} configured subnets`,
+    });
+  }
+
+  private attachInternetGateway(file: DiagramFile): void {
+    Object.values(file.cfnTemplate.Resources)
+      .filter((resource) => resource.Type === 'AWS::EC2::VPCGatewayAttachment')
+      .forEach((attachment) => {
+        const vpc = this.getVpc(
+          this.normalizeRef(attachment.Properties?.VpcId, file.fileIndex),
+          file.fileIndex,
+        );
+        const gateway = this.findTemplateResource(
+          this.normalizeRef(attachment.Properties?.InternetGatewayId, file.fileIndex),
+          file.fileIndex,
+        );
+        if (vpc && gateway?.detail.Type === 'AWS::EC2::InternetGateway') {
+          vpc.igw = {
+            fileIndex: gateway.file.fileIndex,
+            logicalId: gateway.logicalId,
+          };
+        }
+      });
+  }
+
+  private collectLoadBalancers(file: DiagramFile): void {
+    Object.entries(file.cfnTemplate.Resources)
+      .filter(([, resource]) => resource.Type === 'AWS::ElasticLoadBalancingV2::LoadBalancer')
+      .forEach(([logicalId, resource]) => {
+        const subnetValues = resource.Properties?.Subnets ??
+          resource.Properties?.SubnetMappings?.map((mapping: any) => mapping.SubnetId);
+        if (!Array.isArray(subnetValues)) return;
+        const subnets = subnetValues
+          .map((value: any) => this.getSubnet(this.normalizeRef(value, file.fileIndex), file.fileIndex))
+          .filter((subnet): subnet is TopologySubnet => Boolean(subnet));
+        const vpcs = uniqueByIdentity(subnets.flatMap((subnet) => {
+          const vpc = this.vpcForSubnet(subnet);
+          return vpc ? [vpc] : [];
+        }));
+        if (vpcs.length !== 1) return;
+
+        const targetGroups = this.targetGroupsForLoadBalancer(file, logicalId);
+        vpcs[0].loadBalancers.push({
+          fileIndex: file.fileIndex,
+          logicalId,
+          internetFacing: resource.Properties?.Scheme !== 'internal',
+          targetGroups,
+        });
+      });
+  }
+
+  private targetGroupsForLoadBalancer(
+    file: DiagramFile,
+    loadBalancerLogicalId: string,
+  ): TopologyTargetGroup[] {
+    const listeners = Object.entries(file.cfnTemplate.Resources)
+      .filter(([, resource]) =>
+        resource.Type === 'AWS::ElasticLoadBalancingV2::Listener' &&
+        this.normalizeRef(resource.Properties?.LoadBalancerArn, file.fileIndex).value === loadBalancerLogicalId);
+    const listenerIds = new Set(listeners.map(([logicalId]) => logicalId));
+    const listenerActions = listeners.flatMap(([, listener]) =>
+      Array.isArray(listener.Properties?.DefaultActions)
+        ? listener.Properties.DefaultActions
+        : []);
+    const listenerRuleActions = Object.values(file.cfnTemplate.Resources)
+      .filter((resource) =>
+        resource.Type === 'AWS::ElasticLoadBalancingV2::ListenerRule' &&
+        listenerIds.has(this.normalizeRef(resource.Properties?.ListenerArn, file.fileIndex).value))
+      .flatMap((rule) => Array.isArray(rule.Properties?.Actions) ? rule.Properties.Actions : []);
+
+    const targetGroupResources = [...listenerActions, ...listenerRuleActions]
+      .flatMap((action: any) => action.TargetGroupArn ? [action.TargetGroupArn] : [])
+      .map((value) => this.findTemplateResource(this.normalizeRef(value, file.fileIndex), file.fileIndex))
+      .filter((target): target is NonNullable<typeof target> =>
+        Boolean(target && target.detail.Type === 'AWS::ElasticLoadBalancingV2::TargetGroup'));
+
+    return uniqueByIdentity(targetGroupResources.map((targetGroup) => {
+      const staticTargets = Array.isArray(targetGroup.detail.Properties?.Targets)
+        ? targetGroup.detail.Properties.Targets.map((target: any) => ({
+            sourceFileIndex: targetGroup.file.fileIndex,
+            logicalId: this.normalizeRef(target.Id, targetGroup.file.fileIndex),
+          }))
+        : [];
+      const ecsTargets = this.diagramFiles.flatMap((candidateFile) =>
+        Object.entries(candidateFile.cfnTemplate.Resources).flatMap(([logicalId, resource]) => {
+          if (resource.Type !== 'AWS::ECS::Service' || !Array.isArray(resource.Properties?.LoadBalancers)) {
+            return [];
+          }
+          const matches = resource.Properties.LoadBalancers.some((binding: any) => {
+            const resolved = this.findTemplateResource(
+              this.normalizeRef(binding.TargetGroupArn, candidateFile.fileIndex),
+              candidateFile.fileIndex,
+            );
+            return resolved?.file.fileIndex === targetGroup.file.fileIndex &&
+              resolved.logicalId === targetGroup.logicalId;
+          });
+          return matches ? [{
+            sourceFileIndex: candidateFile.fileIndex,
+            logicalId: this.normalizeRef({ Ref: logicalId }, candidateFile.fileIndex),
+          }] : [];
+        }));
+      return {
+        fileIndex: targetGroup.file.fileIndex,
+        logicalId: targetGroup.logicalId,
+        targets: [...staticTargets, ...ecsTargets],
+      };
+    }));
+  }
+
+  private topologyResource(
+    file: DiagramFile,
+    logicalId: string,
+    detail: TemplateResource,
+  ): TopologySubnetResource {
+    return {
+      fileIndex: file.fileIndex,
       logicalId,
-      targetGroups: targets.map((target: any) => ({
-        logicalId: parseRefValue(target.Id),
-      })),
+      exportedName: file.outputs.find((output) =>
+        output.value.logicalId === logicalId)?.export.rawName,
+      detail,
     };
   }
 
-  private attachInternetGateway(
-    resources: Record<string, TemplateResource>,
-    resource: TemplateResource,
-  ): void {
-    const igwRef = resource.Properties?.InternetGatewayId;
-    const vpc = this.getVpc(parseRefValue(resource.Properties?.VpcId));
-    if (!vpc || !igwRef) {
-      return;
-    }
-    const igwRes = findResource(resources, parseRefValue(igwRef));
-    if (igwRes) {
-      vpc.igw = { logicalId: igwRes.logicalId };
-    }
-  }
-
-  /** Places the RDS instance in every subnet its DBSubnetGroup lists (normally more than one -
-   * that's the point of a DBSubnetGroup, Multi-AZ failover). Falls back to
-   * standaloneResources only when *none* of them resolved (including when there was no
-   * DBSubnetGroup to look up in the first place) - a partial resolution (some subnets found,
-   * some not) still places the instance normally in whichever ones it did find, rather than
-   * also adding a duplicate standalone node for it. */
-  private attachRdsInstance(
-    diagramFile: DiagramFile,
+  private addStandalone(
+    file: DiagramFile,
     logicalId: string,
-    resource: TemplateResource,
+    detail: TemplateResource,
+    reason: string,
   ): void {
-    const resources = diagramFile.cfnTemplate.Resources;
-    const subnetGroupId = parseRefValue(
-      resource.Properties?.DBSubnetGroupName,
-    ).value;
-    const subnetGroup = subnetGroupId ? resources[subnetGroupId] : undefined;
-    const subnetIds = subnetGroup?.Properties?.SubnetIds;
+    console.warn(`${file.fileName}:${logicalId} ${reason} - rendering it standalone.`);
+    this.standaloneResources.push({ fileIndex: file.fileIndex, logicalId, detail });
+  }
 
-    if (!subnetGroupId || !subnetGroup || !Array.isArray(subnetIds)) {
-      console.warn(
-        `RDS DBInstance ${logicalId} has no resolvable DBSubnetGroup/SubnetIds - rendering it standalone.`,
-      );
-      this.standaloneResources.push({
-        fileIndex: diagramFile.fileIndex,
-        logicalId,
-        detail: resource,
-      });
-      return;
+  private normalizeRef(value: any, sourceFileIndex: number): RefValue {
+    const parsed = parseRefValue(value);
+    if (parsed.type !== 'ImportValue') return parsed;
+    const importExpression = (value as any)?.['Fn::ImportValue'] ?? (value as any)?.['!ImportValue'];
+    const sourceFile = this.diagramFiles[sourceFileIndex];
+    return {
+      ...parsed,
+      value: resolveCfnString(importExpression, {
+        parameters: sourceFile?.cfnTemplate.Parameters,
+        parameterValues: sourceFile?.parameterValues,
+        pseudoParameters: sourceFile ? {
+          'AWS::StackName': sourceFile.groupName,
+          ...sourceFile.pseudoParameterValues,
+        } : undefined,
+      }) ?? parsed.value,
+    };
+  }
+
+  private findTemplateResource(
+    reference: RefValue,
+    sourceFileIndex: number,
+  ): { file: DiagramFile; logicalId: string; detail: TemplateResource } | undefined {
+    if (reference.type === 'ImportValue') {
+      for (const file of this.diagramFiles) {
+        const output = file.outputs.find((candidate) =>
+          candidate.export.rawName === reference.value);
+        if (output) {
+          const detail = file.cfnTemplate.Resources[output.value.logicalId];
+          if (detail) return { file, logicalId: output.value.logicalId, detail };
+        }
+      }
+      return undefined;
     }
-
-    const resolvedSubnets = subnetIds
-      .map((subnetId: any) => this.getSubnet(parseRefValue(subnetId)))
-      .filter((subnet): subnet is TopologySubnet => subnet !== undefined);
-
-    if (resolvedSubnets.length === 0) {
-      console.warn(
-        `RDS DBInstance ${logicalId} has no resolvable Subnet in DBSubnetGroup ${subnetGroupId} - rendering it standalone.`,
-      );
-      this.standaloneResources.push({
-        fileIndex: diagramFile.fileIndex,
-        logicalId,
-        detail: resource,
-      });
-      return;
-    }
-
-    resolvedSubnets.forEach((subnet) => {
-      subnet.resources.push({ logicalId, detail: resource });
-    });
+    const file = this.diagramFiles[sourceFileIndex];
+    const detail = file?.cfnTemplate.Resources[reference.value];
+    return detail ? { file, logicalId: reference.value, detail } : undefined;
   }
 
-  private attachEc2Instance(
-    diagramFile: DiagramFile,
-    logicalId: string,
-    resource: TemplateResource,
-  ): void {
-    const subnetRef = resource.Properties?.SubnetId
-      ? parseRefValue(resource.Properties?.SubnetId)
-      : parseRefValue(resource.Properties?.NetworkInterfaces?.[0]?.SubnetId);
-
-    const subnet = this.getSubnet(subnetRef);
-    if (!subnet) {
-      console.warn(
-        `EC2 Instance ${logicalId} has no resolvable Subnet ${subnetRef.value} - rendering it standalone.`,
-      );
-      this.standaloneResources.push({
-        fileIndex: diagramFile.fileIndex,
-        logicalId,
-        detail: resource,
-      });
-      return;
-    }
-    subnet.resources.push({
-      logicalId,
-      exportedName: this.getExportedName(diagramFile, logicalId),
-      detail: resource,
-    });
+  private getVpc(reference: RefValue, sourceFileIndex: number): TopologyVpc | undefined {
+    return this.vpcs.find((vpc) => reference.type === 'ImportValue'
+      ? vpc.exportedName === reference.value
+      : vpc.fileIndex === sourceFileIndex && vpc.logicalId === reference.value);
   }
 
-  private getExportedName(
-    diagramFile: DiagramFile,
-    id: string,
-  ): string | undefined {
-    return diagramFile.outputs.find(
-      (output) => output.value.logicalId === sanitizeLogicalId(id),
-    )?.export?.name;
+  private getSubnet(reference: RefValue, sourceFileIndex: number): TopologySubnet | undefined {
+    return this.allSubnets().find((subnet) => reference.type === 'ImportValue'
+      ? subnet.exportedName === reference.value
+      : subnet.fileIndex === sourceFileIndex && subnet.logicalId === reference.value);
   }
 
-  private getVpc(vpcId: RefValue): TopologyVpc | undefined {
-    return this.vpcs.find((vpc) =>
-      vpcId.type === 'ImportValue'
-        ? vpc.exportedName === sanitizeLogicalId(vpcId.value)
-        : vpc.logicalId === sanitizeLogicalId(vpcId.value),
-    );
+  private resourceMatches(
+    resource: TopologySubnetResource | TopologyVpcResource,
+    reference: RefValue,
+    sourceFileIndex: number,
+  ): boolean {
+    return reference.type === 'ImportValue'
+      ? resource.exportedName === reference.value
+      : resource.fileIndex === sourceFileIndex && resource.logicalId === reference.value;
   }
 
-  private findSubnetByLogicalId(logicalId: string): TopologySubnet | undefined {
-    return this.allSubnets().find((subnet) => subnet.logicalId === logicalId);
-  }
-
-  private getSubnet(subnetId: RefValue): TopologySubnet | undefined {
-    return this.allSubnets().find((subnet) =>
-      subnetId.type === 'ImportValue'
-        ? subnet.exportedName === sanitizeLogicalId(subnetId.value)
-        : subnet.logicalId === sanitizeLogicalId(subnetId.value),
-    );
+  private vpcForSubnet(target: TopologySubnet): TopologyVpc | undefined {
+    return this.vpcs.find((vpc) => vpc.availabilityZones.some((az) =>
+      az.subnets.includes(target)));
   }
 
   private allSubnets(): TopologySubnet[] {
-    return this.vpcs
-      .flatMap((vpc) => vpc.availabilityZones)
-      .flatMap((az) => az.subnets);
+    return this.vpcs.flatMap((vpc) =>
+      vpc.availabilityZones.flatMap((az) => az.subnets));
   }
 }

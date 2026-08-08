@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-# Recreates the three CloudFormation validation stacks in LocalStack. This deliberately
+# Recreates the five CloudFormation validation stacks in LocalStack. This deliberately
 # destroys existing stacks first so a previous CREATE_IN_PROGRESS/ROLLBACK_FAILED state never
 # needs to be diagnosed manually.
 
@@ -22,6 +22,8 @@ export AWS_DEFAULT_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_MAX_ATTEMP
 STACK_VPC="cfn-diagram-validation-vpc"
 STACK_API="cfn-diagram-validation-api"
 STACK_EVENTS="cfn-diagram-validation-events"
+STACK_SHARED_DATA="cfn-diagram-validation-shared-data"
+STACK_SHARED_DATA_CONSUMER="cfn-diagram-validation-shared-data-consumer"
 
 aws_cfn() {
   "$AWS_CLI" \
@@ -165,6 +167,8 @@ echo "Templates: $TEMPLATE_DIR"
 
 # Delete dependents first, then the foundation. This order is safe even when the stacks are
 # independent because it also works if a future validation template adds cross-stack imports.
+delete_if_present "$STACK_SHARED_DATA_CONSUMER"
+delete_if_present "$STACK_SHARED_DATA"
 delete_if_present "$STACK_EVENTS"
 delete_if_present "$STACK_API"
 delete_if_present "$STACK_VPC"
@@ -172,10 +176,19 @@ delete_if_present "$STACK_VPC"
 create_stack "$STACK_VPC" "vpc-foundation.yaml"
 create_stack "$STACK_API" "api-application.yaml" --capabilities CAPABILITY_NAMED_IAM
 create_stack "$STACK_EVENTS" "events-and-dlq.yaml" --capabilities CAPABILITY_NAMED_IAM
+create_stack "$STACK_SHARED_DATA" "shared-data.yaml"
+create_stack "$STACK_SHARED_DATA_CONSUMER" "shared-data-consumer.yaml" \
+  --capabilities CAPABILITY_IAM \
+  --parameters "ParameterKey=DataStack,ParameterValue=$STACK_SHARED_DATA"
 
 echo ""
 echo "All validation stacks are ready."
-for stack_name in "$STACK_VPC" "$STACK_API" "$STACK_EVENTS"; do
+for stack_name in \
+  "$STACK_VPC" \
+  "$STACK_API" \
+  "$STACK_EVENTS" \
+  "$STACK_SHARED_DATA" \
+  "$STACK_SHARED_DATA_CONSUMER"; do
   aws_cfn describe-stacks \
     --stack-name "$stack_name" \
     --query 'Stacks[].{Name:StackName,Status:StackStatus}' \

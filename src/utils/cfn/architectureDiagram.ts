@@ -59,23 +59,40 @@ const renderVpc = (
   contents: string[],
   structure: CfnArchitectureDiagramStructure,
   vpc: Vpc,
-  vpcIndex: number,
+  _vpcIndex: number,
 ): void => {
   contents.push(`  %% --- VPC: ${vpc.cidrBlock} ---`);
   contents.push('');
 
-  const vpcGroup = `f${vpcIndex}_vpc_${vpc.logicalId}`;
+  const vpcGroup = `f${vpc.fileIndex}_vpc_${vpc.logicalId}`;
   contents.push(`  group ${vpcGroup}(logos:aws-vpc)[VPC_${vpc.cidrBlock}]`);
 
   vpc.availabilityZones.forEach((az) => {
     renderAvailabilityZone(contents, vpcGroup, az);
   });
 
-  if (vpc.elb) {
-    renderElb(contents, structure, vpcGroup, vpc.elb);
-  }
+  vpc.resources.forEach((resource) => {
+    const serviceId = `${vpcGroup}_f${resource.fileIndex}_${resource.logicalId}`;
+    const iconStr = getCfnIconString(resource.detail.Type);
+    contents.push(
+      `  service ${serviceId}${iconStr}[${resourceServiceLabel(
+        `${resource.logicalId}_${resource.placement}`.replace(/[^a-zA-Z0-9_]/g, '_'),
+        resource.detail.Type,
+        iconStr,
+      )}] in ${vpcGroup}`,
+    );
+  });
+  vpc.loadBalancers.forEach((loadBalancer) => {
+    renderLoadBalancer(contents, structure, vpcGroup, loadBalancer);
+  });
   if (vpc.igw) {
-    renderIgw(contents, vpcGroup, vpc.igw, vpc.elb);
+    renderIgw(
+      contents,
+      vpcGroup,
+      vpc.igw,
+      vpc.loadBalancers,
+      vpc.natGateways,
+    );
   }
 
   contents.push('');
@@ -103,14 +120,14 @@ const renderSubnet = (
   azServiceId: string,
   subnet: Subnet,
 ): void => {
-  const subnetId = `${vpcGroup}_${subnet.logicalId}`;
-  const subnetKind = subnet.public ? 'PUBLIC_SUBNET' : 'PRIVATE_SUBNET';
+  const subnetId = `${vpcGroup}_f${subnet.fileIndex}_${subnet.logicalId}`;
+  const subnetKind = `${subnet.connectivity.toUpperCase()}_SUBNET`;
   contents.push(
     `  group ${subnetId}(logos:aws-batch)[${subnetKind} ${subnet.cidrBlock}] in ${azServiceId}`,
   );
 
   subnet.resources.forEach((resource) => {
-    const serviceId = `${subnetId}_${resource.logicalId}`;
+    const serviceId = `${subnetId}_f${resource.fileIndex}_${resource.logicalId}`;
     const iconStr = getCfnIconString(resource.detail.Type);
     contents.push(
       `  service ${serviceId}${iconStr}[${resourceServiceLabel(
@@ -122,31 +139,44 @@ const renderSubnet = (
   });
 };
 
-const renderElb = (
+const renderLoadBalancer = (
   contents: string[],
   structure: CfnArchitectureDiagramStructure,
   vpcGroup: string,
-  elb: NonNullable<Vpc['elb']>,
+  loadBalancer: Vpc['loadBalancers'][number],
 ): void => {
-  contents.push('  %% ELB');
-  const serviceId = `${vpcGroup}_${elb.logicalId}`;
-  const elbType = 'AWS::ElasticLoadBalancingV2::TargetGroup';
-  const iconStr = getCfnIconString(elbType);
+  contents.push('  %% Load Balancer');
+  const serviceId = `${vpcGroup}_f${loadBalancer.fileIndex}_${loadBalancer.logicalId}`;
+  const loadBalancerType = 'AWS::ElasticLoadBalancingV2::LoadBalancer';
+  const iconStr = getCfnIconString(loadBalancerType);
   contents.push(
     `  service ${serviceId}${iconStr}[${resourceServiceLabel(
-      elb.logicalId,
-      elbType,
+      loadBalancer.logicalId,
+      loadBalancerType,
       iconStr,
     )}] in ${vpcGroup}`,
   );
 
-  elb.targetGroups.forEach((targetGroup) => {
-    const res = structure.getResourceFrom(targetGroup.logicalId);
-    if (res) {
-      const subnetId = `${vpcGroup}_${res.subnet.logicalId}`;
-      const serviceToId = `${subnetId}_${res.resource.logicalId}`;
-      contents.push(`  ${serviceId}:R --> L:${serviceToId}`);
-    }
+  loadBalancer.targetGroups.forEach((targetGroup) => {
+    const targetGroupId = `${vpcGroup}_f${targetGroup.fileIndex}_${targetGroup.logicalId}`;
+    const targetGroupType = 'AWS::ElasticLoadBalancingV2::TargetGroup';
+    const targetGroupIcon = getCfnIconString(targetGroupType);
+    contents.push(
+      `  service ${targetGroupId}${targetGroupIcon}[${resourceServiceLabel(
+        targetGroup.logicalId,
+        targetGroupType,
+        targetGroupIcon,
+      )}] in ${vpcGroup}`,
+    );
+    contents.push(`  ${serviceId}:R --> L:${targetGroupId}`);
+    targetGroup.targets.forEach((target) => {
+      const resolved = structure.getResourceFrom(target);
+      if (!resolved) return;
+      const targetId = resolved.subnet
+        ? `${vpcGroup}_f${resolved.subnet.fileIndex}_${resolved.subnet.logicalId}_f${resolved.resource.fileIndex}_${resolved.resource.logicalId}`
+        : `${vpcGroup}_f${resolved.resource.fileIndex}_${resolved.resource.logicalId}`;
+      contents.push(`  ${targetGroupId}:R --> L:${targetId}`);
+    });
   });
 };
 
@@ -154,10 +184,11 @@ const renderIgw = (
   contents: string[],
   vpcGroup: string,
   igw: NonNullable<Vpc['igw']>,
-  elb: Vpc['elb'],
+  loadBalancers: Vpc['loadBalancers'],
+  natGateways: Vpc['natGateways'],
 ): void => {
   contents.push('  %% IGW');
-  const serviceId = `${vpcGroup}_${igw.logicalId}`;
+  const serviceId = `${vpcGroup}_f${igw.fileIndex}_${igw.logicalId}`;
   const igwType = 'AWS::EC2::InternetGateway';
   const iconStr = getCfnIconString(igwType);
   contents.push(
@@ -169,10 +200,16 @@ const renderIgw = (
   );
   contents.push(`  internet:R --> L:${serviceId}`);
 
-  if (elb) {
-    const elbServiceId = `${vpcGroup}_${elb.logicalId}`;
-    contents.push(`  ${serviceId}:R --> L:${elbServiceId}`);
-  }
+  loadBalancers.filter((loadBalancer) => loadBalancer.internetFacing)
+    .forEach((loadBalancer) => {
+      const loadBalancerId = `${vpcGroup}_f${loadBalancer.fileIndex}_${loadBalancer.logicalId}`;
+      contents.push(`  ${serviceId}:R --> L:${loadBalancerId}`);
+    });
+  natGateways.forEach((natGateway) => {
+    const subnetId = `${vpcGroup}_f${natGateway.subnet.fileIndex}_${natGateway.subnet.logicalId}`;
+    const natGatewayId = `${subnetId}_f${natGateway.fileIndex}_${natGateway.logicalId}`;
+    contents.push(`  ${natGatewayId}:R --> L:${serviceId}`);
+  });
 };
 
 /** Every resource CfnArchitectureDiagramStructure couldn't place in a VPC/Subnet, grouped on

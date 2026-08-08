@@ -3,7 +3,12 @@ import {
   DiagramFile,
   GenerateDiagramParams,
 } from '../../types';
-import { parseRefValue, walkIntrinsicRefs } from './intrinsics';
+import {
+  parseRefValue,
+  resolveCfnString,
+  walkImportValues,
+  walkIntrinsicRefs,
+} from './intrinsics';
 import { sanitizeLogicalId } from './naming';
 import { parseCfnJsonTemplate } from './templateParsing';
 
@@ -30,13 +35,14 @@ const findDiagramResource = (
 export const parseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] => {
   const diagramFiles = buildBaseDiagramFiles(params);
 
-  const includeOutputs = params.options?.includeOutputs ?? false;
   diagramFiles.forEach((diagramFile) => {
     populateResourceDependencies(diagramFile);
-    if (includeOutputs) {
-      populateOutputs(diagramFile);
-    }
+    // Outputs are always retained in the internal model because ApplicationDiagram,
+    // ArchitectureDiagram, and cross-stack dependency resolution need their raw export names.
+    // Rendering remains controlled by options.includeOutputs.
+    populateOutputs(diagramFile);
   });
+  populateCrossStackDependencies(diagramFiles);
 
   return diagramFiles;
 };
@@ -47,7 +53,13 @@ export const parseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] 
 const buildBaseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] => {
   const includeParameters = params.options?.includeParameters ?? false;
 
-  return params.list.map(({ fileName, templateJSONString, templateSource }, fileIndex) => {
+  return params.list.map(({
+    fileName,
+    templateJSONString,
+    templateSource,
+    parameterValues,
+    pseudoParameterValues,
+  }, fileIndex) => {
     const groupName = fileName.replace(/\.[^/.]+$/, ''); // strip extension
     const cfnTemplate = parseCfnJsonTemplate(templateJSONString);
 
@@ -55,6 +67,8 @@ const buildBaseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] => 
       fileIndex,
       fileName,
       templateSource,
+      parameterValues,
+      pseudoParameterValues,
       groupName,
       groupId: sanitizeLogicalId(groupName),
       cfnTemplate,
@@ -142,11 +156,21 @@ const populateOutputs = (diagramFile: DiagramFile): void => {
         id: `out__${outputId}`,
         value: { logicalId },
         export: {
-          name: output.Export?.Name
-            ? sanitizeLogicalId(JSON.stringify(output.Export.Name))
+          rawName: output.Export?.Name
+            ? resolveCfnString(output.Export.Name, {
+                parameters: diagramFile.cfnTemplate.Parameters,
+                parameterValues: diagramFile.parameterValues,
+                pseudoParameters: {
+                  'AWS::StackName': diagramFile.groupName,
+                  ...diagramFile.pseudoParameterValues,
+                },
+              }) ?? ''
             : '',
+          name: '',
         },
       });
+      const addedOutput = diagramFile.outputs[diagramFile.outputs.length - 1];
+      addedOutput.export.name = sanitizeLogicalId(addedOutput.export.rawName);
       diagramFile.dependencies.push({
         from: `out__${outputId}`,
         to: {
@@ -159,4 +183,52 @@ const populateOutputs = (diagramFile: DiagramFile): void => {
       });
     },
   );
+};
+
+/** Adds ImportValue edges between the supplied templates after every Output export is known. */
+const populateCrossStackDependencies = (diagramFiles: DiagramFile[]): void => {
+  const exportsByName = new Map<string, { fileIndex: number; logicalId: string }>();
+  diagramFiles.forEach((file) => file.outputs.forEach((output) => {
+    if (output.export.rawName) {
+      exportsByName.set(output.export.rawName, {
+        fileIndex: file.fileIndex,
+        logicalId: output.value.logicalId,
+      });
+    }
+  }));
+
+  diagramFiles.forEach((file) => file.resouces.forEach((logicalId) => {
+    const properties = file.cfnTemplate.Resources[logicalId].Properties;
+    if (!properties) return;
+
+    walkImportValues(properties, (importExpression) => {
+      const importName = resolveCfnString(importExpression, {
+        parameters: file.cfnTemplate.Parameters,
+        parameterValues: file.parameterValues,
+        pseudoParameters: {
+          'AWS::StackName': file.groupName,
+          ...file.pseudoParameterValues,
+        },
+      });
+      if (!importName) return;
+      const target = exportsByName.get(importName);
+      if (!target || target.fileIndex === file.fileIndex) return;
+      if (file.dependencies.some((dependency) =>
+        dependency.from === logicalId &&
+        dependency.to.logicalId === target.logicalId &&
+        dependency.to.fileIndex === target.fileIndex &&
+        dependency.to.via === 'ImportValue')) {
+        return;
+      }
+      file.dependencies.push({
+        from: logicalId,
+        to: {
+          kind: 'Resources',
+          logicalId: target.logicalId,
+          fileIndex: target.fileIndex,
+          via: 'ImportValue',
+        },
+      });
+    });
+  }));
 };

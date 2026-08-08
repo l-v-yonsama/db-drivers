@@ -12,19 +12,28 @@
 // generic icon, no role/policy variants).
 const EXACT_TYPE_ICONS: Record<string, string> = {
   'AWS::EC2::Instance': 'aws-ec2',
+  'AWS::EC2::EIP': 'aws-vpc',
   'AWS::EC2::SecurityGroup': 'aws-shield',
   'AWS::EC2::InternetGateway': 'aws-api-gateway',
+  'AWS::EC2::NatGateway': 'aws-vpc',
   // Route tables and routes are network constructs rather than standalone AWS
   // services, so the VPC icon is the least misleading available logo.
   'AWS::EC2::RouteTable': 'aws-vpc',
   'AWS::EC2::Route': 'aws-vpc',
   'AWS::ElasticLoadBalancingV2::LoadBalancer': 'aws-elb',
   'AWS::ElasticLoadBalancingV2::Listener': 'aws-elb',
+  'AWS::ElasticLoadBalancingV2::ListenerRule': 'aws-elb',
   'AWS::ElasticLoadBalancingV2::TargetGroup': 'aws-elb',
   'AWS::S3::Bucket': 'aws-s3',
   'AWS::Lambda::Function': 'aws-lambda',
+  'AWS::Lambda::EventSourceMapping': 'aws-lambda',
+  'AWS::ECS::Cluster': 'aws-ecs',
+  'AWS::ECS::Service': 'aws-ecs',
+  'AWS::ECS::TaskDefinition': 'aws-ecs',
+  'AWS::Kinesis::Stream': 'aws-kinesis',
   'AWS::DynamoDB::Table': 'aws-dynamodb',
   'AWS::RDS::DBInstance': 'aws-rds',
+  'AWS::RDS::DBCluster': 'aws-rds',
   'AWS::RDS::DBSubnetGroup': 'aws-batch', // networks
   'AWS::SNS::Topic': 'aws-sns',
   'AWS::SQS::Queue': 'aws-sqs',

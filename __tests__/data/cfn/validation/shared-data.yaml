@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Producer stack for raw Export/ImportValue diagram validation.
+
+Resources:
+  SharedTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+Outputs:
+  TableName:
+    Value: !Ref SharedTable
+    Export:
+      Name: !Sub ${AWS::StackName}-${AWS::Region}-TableName

@@ -70,7 +70,7 @@ export const generateDiagramCfnDependencyGraph = (
     contents.push('  service dependencyImportValue(cloud)[ImportValue_top_to_bottom] in dependencyLegend');
   }
   diagramFiles.forEach((diagramFile) => {
-    renderDiagramFileGroup(contents, diagramFile, options);
+    renderDiagramFileGroup(contents, diagramFile, diagramFiles, options);
   });
 
   contents.push('```');
@@ -104,13 +104,21 @@ const classifyDiagramFile = (
     });
     if (!isFocusParameterOrOutput(options.viewpoint)) {
       diagramFile.parameters.forEach((logicalId) => auxiliaryIds.add(logicalId));
-      diagramFile.outputs.forEach((output) => auxiliaryIds.add(output.id));
+      if (options.includeOutputs) {
+        diagramFile.outputs.forEach((output) => auxiliaryIds.add(output.id));
+      }
     }
   }
 
   const mergedAnnotationsByFocusId = new Map<string, string[]>();
   if (options.auxiliaryTreatment === 'MergeIntoLabel') {
     diagramFile.dependencies.forEach(({ from, to }) => {
+      // Cross-stack endpoints belong to another classification/label namespace. They render
+      // as ordinary edges when both endpoints are focus, but are never folded into this
+      // stack's labels.
+      if (to.fileIndex !== undefined && to.fileIndex !== diagramFile.fileIndex) {
+        return;
+      }
       const fromIsAuxiliary = auxiliaryIds.has(from);
       const toIsAuxiliary = auxiliaryIds.has(to.logicalId);
       if (fromIsAuxiliary === toIsAuxiliary) {
@@ -132,6 +140,7 @@ const classifyDiagramFile = (
 const renderDiagramFileGroup = (
   contents: string[],
   diagramFile: DiagramFile,
+  allDiagramFiles: DiagramFile[],
   options: RenderOptions,
 ): void => {
   const fileIndexName = `f${diagramFile.fileIndex}`;
@@ -212,7 +221,14 @@ const renderDiagramFileGroup = (
     renderOutputNodes(contents, diagramFile, fileIndexName, outputsGroupId);
   }
 
-  renderDependencyEdges(contents, diagramFile, fileIndexName, options, classification);
+  renderDependencyEdges(
+    contents,
+    diagramFile,
+    allDiagramFiles,
+    fileIndexName,
+    options,
+    classification,
+  );
 
   contents.push('');
 };
@@ -374,6 +390,7 @@ const renderOutputNodes = (
 const renderDependencyEdges = (
   contents: string[],
   diagramFile: DiagramFile,
+  allDiagramFiles: DiagramFile[],
   fileIndexName: string,
   options: RenderOptions,
   classification: ResourceClassification,
@@ -381,15 +398,25 @@ const renderDependencyEdges = (
   contents.push('  %% Edges');
   contents.push('  %% Dependency directions: Ref = L to R | GetAtt = B to T | DependsOn = R to L | ImportValue = T to B');
   diagramFile.dependencies.forEach(({ from, to }) => {
+    const targetFileIndex = to.fileIndex ?? diagramFile.fileIndex;
+    const targetFile = allDiagramFiles[targetFileIndex];
+    const targetIsAuxiliary = targetFileIndex === diagramFile.fileIndex
+      ? classification.auxiliaryIds.has(to.logicalId)
+      : targetFile
+        ? !isFocusResourceType(
+            options.viewpoint,
+            targetFile.cfnTemplate.Resources[to.logicalId]?.Type ?? '',
+          )
+        : true;
     if (
       classification.auxiliaryIds.has(from) ||
-      classification.auxiliaryIds.has(to.logicalId)
+      targetIsAuxiliary
     ) {
       return;
     }
 
     const serviceFromId = `${fileIndexName}_${from}`;
-    const serviceToId = `${fileIndexName}_${to.logicalId}`;
+    const serviceToId = `f${targetFileIndex}_${to.logicalId}`;
     const ports = dependencyEdgePorts[to.via ?? 'Ref'];
     const edge = `  ${serviceFromId}:${ports.from} --> ${ports.to}:${serviceToId}`;
     switch (to.kind) {

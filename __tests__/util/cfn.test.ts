@@ -179,6 +179,41 @@ describe('cfn', () => {
       expect(diagram).not.toContain('GreetingApiInvokePermission');
     });
 
+    it('folds an API Gateway v2 integration into its API and keeps the RouteKey', () => {
+      const diagram = generateDiagram({
+        mode: 'ApplicationDiagram',
+        list: [{
+          fileName: 'http-api',
+          templateJSONString: JSON.stringify({
+            Resources: {
+              HttpApi: { Type: 'AWS::ApiGatewayV2::Api' },
+              Handler: { Type: 'AWS::Lambda::Function' },
+              Integration: {
+                Type: 'AWS::ApiGatewayV2::Integration',
+                Properties: {
+                  ApiId: { Ref: 'HttpApi' },
+                  IntegrationUri: { 'Fn::GetAtt': ['Handler', 'Arn'] },
+                },
+              },
+              Route: {
+                Type: 'AWS::ApiGatewayV2::Route',
+                Properties: {
+                  ApiId: { Ref: 'HttpApi' },
+                  RouteKey: 'GET /health',
+                  Target: { 'Fn::Sub': 'integrations/${Integration}' },
+                },
+              },
+            },
+          }),
+        }],
+      });
+
+      expect(diagram).toContain('f0_HttpApi -->|invokes| f0_Handler');
+      expect(diagram).toContain('GET /health');
+      expect(diagram).not.toContain('f0_Integration[');
+      expect(diagram).not.toContain('f0_Route[');
+    });
+
     it('detects event delivery and dead-letter relationships from service properties', () => {
       const diagram = generateDiagram({
         mode: 'ApplicationDiagram',
@@ -240,7 +275,7 @@ describe('cfn', () => {
 
       expect(apiDiagram).toContain('f0_GreetingApi -->|invokes| f0_GreetingFunction');
       expect(apiDiagram).toContain('GET /greeting');
-      expect(apiDiagram).toContain('f0_GreetingFunction -->|reads| f0_GreetingTable');
+      expect(apiDiagram).toContain('f0_GreetingFunction -->|accesses| f0_GreetingTable');
       expect(apiDiagram).not.toContain('GreetingFunctionRole');
       expect(eventsDiagram).toContain('f0_OrderEventRule -.->|delivers event| f0_OrderHandler');
       expect(eventsDiagram).toContain('f0_OrderQueue -.->|dead-letter| f0_OrderQueueDLQ');
@@ -255,6 +290,144 @@ describe('cfn', () => {
           templateJSONString: JSON.stringify(parseCfnYamlTemplate(readYamlFixture('validation/api-application.yaml'))),
         }],
       })).not.toContain('Relationship types');
+    });
+
+    it('keeps the LocalStack diagram generator fixed and includes the local standard web template', () => {
+      const script = fs.readFileSync(path.join(
+        __dirname,
+        '../../scripts/generate-cfn-validation-diagram-localstack.js',
+      ), 'utf8');
+
+      expect(script).toContain("fileName: 'standard-web-application.yaml'");
+      expect(script).toContain("'../__tests__/data/cfn/validation/standard-web-application.yaml'");
+      expect(script).toContain('list: localStackList');
+      expect(script).toContain('list: [getStandardWebTemplate()]');
+      expect(script).toContain("'../misc/standard-web-application-cfn-validation'");
+      expect(script).not.toContain('process.env');
+      expect(script).not.toContain('process.argv');
+    });
+
+    it('renders a standard multi-AZ ALB/ECS/RDS architecture without inferring false runtime semantics', () => {
+      const template = parseCfnYamlTemplate(
+        readYamlFixture('validation/standard-web-application.yaml'),
+      );
+      const list = [{
+        fileName: 'standard-web-application.yaml',
+        templateJSONString: JSON.stringify(template),
+      }];
+
+      const application = generateDiagram({
+        mode: 'ApplicationDiagram',
+        options: { includeLegend: false },
+        list,
+      });
+      const architecture = generateDiagram({
+        mode: 'ArchitectureDiagram',
+        list,
+      });
+
+      expect(application).toContain('f0_LoadBalancer -.->|accepts via| f0_Listener');
+      expect(application).toContain('f0_Listener -.->|routes by rule| f0_ApplicationListenerRule');
+      expect(application).toContain('f0_ApplicationListenerRule -.->|forwards to| f0_TargetGroup');
+      expect(application).toContain('f0_TargetGroup -.->|targets| f0_WebService');
+      expect(application).toContain('f0_WebService -->|runs| f0_TaskDefinition');
+      expect(application).toContain('f0_WorkQueue -.->|triggers| f0_WorkerFunction');
+
+      // PublicSubnetA deliberately has MapPublicIpOnLaunch=false. Its IGW route, not that
+      // setting, makes it public. NAT-routed subnets are private; DB subnets are isolated.
+      expect(architecture).toContain('PUBLIC_SUBNET 10_80_0_0_24');
+      expect(architecture).toContain('PRIVATE_SUBNET 10_80_10_0_24');
+      expect(architecture).toContain('ISOLATED_SUBNET 10_80_20_0_24');
+      expect(architecture).toContain('NatGatewayA');
+      expect(architecture).toContain(
+        'f0_vpc_Vpc_f0_TargetGroup:R --> L:f0_vpc_Vpc_f0_WebService',
+      );
+      // A DB subnet group is a set of placement candidates, not one DB copy per subnet.
+      expect(architecture.match(/service f0_vpc_Vpc_f0_Database\(/g)).toHaveLength(1);
+      expect(architecture).toContain('2_candidate_subnets');
+    });
+
+    it('resolves raw hyphenated and Fn::Sub Export/ImportValue names across stacks', () => {
+      const files = [
+        {
+          fileName: 'cfn-diagram-validation-shared-data',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(
+            readYamlFixture('validation/shared-data.yaml'),
+          )),
+          pseudoParameterValues: {
+            'AWS::StackName': 'cfn-diagram-validation-shared-data',
+            'AWS::Region': 'ap-northeast-1',
+          },
+        },
+        {
+          fileName: 'cfn-diagram-validation-shared-data-consumer',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(
+            readYamlFixture('validation/shared-data-consumer.yaml'),
+          )),
+          parameterValues: {
+            DataStack: 'cfn-diagram-validation-shared-data',
+          },
+          pseudoParameterValues: {
+            'AWS::StackName': 'cfn-diagram-validation-shared-data-consumer',
+            'AWS::Region': 'ap-northeast-1',
+          },
+        },
+      ];
+
+      const application = generateDiagram({
+        mode: 'ApplicationDiagram',
+        options: { includeLegend: false },
+        list: files,
+      });
+      const dependency = generateDiagram({
+        mode: 'CfnDependencyGraph',
+        viewpoint: 'CloudFormationView',
+        options: { includeLegend: false },
+        list: files,
+      });
+      const drawio = generateDrawioCfnDependencyGraph({
+        mode: 'CfnDependencyGraph',
+        list: files,
+      });
+
+      expect(application).toContain(
+        'f1_ConsumerFunction -->|accesses| f0_SharedTable',
+      );
+      expect(application).not.toContain('Unresolved cross-stack reference');
+      expect(dependency).toContain('f1_ConsumerFunction:T --> B:f0_SharedTable');
+      expect(drawio).toMatch(/source="stack_1_ConsumerFunction" target="stack_0_SharedTable"/);
+    });
+
+    it('keeps repeated logical IDs isolated to their own stack topology', () => {
+      const stack = (cidr: string, subnetCidr: string, az: string) => ({
+        Resources: {
+          Vpc: { Type: 'AWS::EC2::VPC', Properties: { CidrBlock: cidr } },
+          Subnet: {
+            Type: 'AWS::EC2::Subnet',
+            Properties: {
+              VpcId: { Ref: 'Vpc' },
+              AvailabilityZone: az,
+              CidrBlock: subnetCidr,
+            },
+          },
+          Host: {
+            Type: 'AWS::EC2::Instance',
+            Properties: { SubnetId: { Ref: 'Subnet' } },
+          },
+        },
+      });
+      const diagram = generateDiagram({
+        mode: 'ArchitectureDiagram',
+        list: [
+          { fileName: 'stack-a', templateJSONString: JSON.stringify(stack('10.10.0.0/16', '10.10.1.0/24', 'ap-northeast-1a')) },
+          { fileName: 'stack-b', templateJSONString: JSON.stringify(stack('10.20.0.0/16', '10.20.1.0/24', 'ap-northeast-1c')) },
+        ],
+      });
+
+      expect(diagram).toContain('group f0_vpc_Vpc(logos:aws-vpc)[VPC_10_10_0_0_16]');
+      expect(diagram).toContain('group f1_vpc_Vpc(logos:aws-vpc)[VPC_10_20_0_0_16]');
+      expect(diagram.match(/f0_vpc_Vpc_f0_Subnet_f0_Host/g)).toHaveLength(1);
+      expect(diagram.match(/f1_vpc_Vpc_f1_Subnet_f1_Host/g)).toHaveLength(1);
     });
 
     it('adds an English note for an unresolved cross-stack ImportValue', () => {
@@ -306,8 +479,23 @@ describe('cfn', () => {
       expect(drawio).toContain('strokeColor=#2563eb');
       expect(drawio).toContain('strokeColor=#d97706');
       expect(drawio).toContain('dashed=1;dashPattern=8 8;');
+      expect(drawio).toContain('jumpStyle=arc;jumpSize=8;');
       expect(drawio).toContain('value="invokes"');
       expect(drawio).toContain('GET /greeting');
+      // Nodes are 65px tall and vertically separated by 50px (five draw.io grid rows),
+      // leaving enough room for an edge label and arrowhead between adjacent nodes. Each
+      // successive layer adds a 10px staircase offset.
+      expect(drawio).toMatch(
+        /id="node_f1_OrderHandler"[\s\S]*?<mxGeometry x="15" y="165" width="200" height="65"/,
+      );
+      expect(drawio).toMatch(
+        /id="node_f1_OrderEventRule"[\s\S]*?<mxGeometry x="15" y="290" width="200" height="65"/,
+      );
+      // The Lambda-to-DynamoDB edge skips the Messaging layer, so it is explicitly routed
+      // through the first shared horizontal gap instead of across a Messaging component.
+      expect(drawio).toMatch(
+        /value="accesses"[^>]*source="node_f0_GreetingFunction" target="node_f0_GreetingTable"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="565" y="185"\/><mxPoint x="905" y="185"\/><\/Array>/,
+      );
       expect(generateDrawioApplicationDiagram({
         mode: 'ApplicationDiagram',
         options: { includeLegend: false },
@@ -406,6 +594,7 @@ describe('cfn', () => {
         JSON.stringify({
           Resources: {
             MyQueue: { Type: 'AWS::SQS::Queue' },
+            MyEip: { Type: 'AWS::EC2::EIP' },
             MyRouteTable: { Type: 'AWS::EC2::RouteTable' },
             MyRoute: { Type: 'AWS::EC2::Route' },
             MyEventRule: { Type: 'AWS::Events::Rule' },
@@ -420,6 +609,7 @@ describe('cfn', () => {
             MyApiMethod: { Type: 'AWS::ApiGateway::Method' },
             MyApiDeployment: { Type: 'AWS::ApiGateway::Deployment' },
             MyLambdaPermission: { Type: 'AWS::Lambda::Permission' },
+            MyEcsCluster: { Type: 'AWS::ECS::Cluster' },
           },
         }),
       );
@@ -444,6 +634,7 @@ describe('cfn', () => {
       warnSpy.mockRestore();
 
       expect(diagram).toContain('service f0_MyQueue(logos:aws-sqs)[MyQueue]');
+      expect(diagram).toContain('service f0_MyEip(logos:aws-vpc)[MyEip]');
       expect(diagram).toContain(
         'service f0_MyRouteTable(logos:aws-vpc)[MyRouteTable]',
       );
@@ -482,6 +673,9 @@ describe('cfn', () => {
       );
       expect(diagram).toContain(
         'service f0_MyLambdaPermission(logos:aws-iam)[MyLambdaPermission]',
+      );
+      expect(diagram).toContain(
+        'service f0_MyEcsCluster(logos:aws-ecs)[MyEcsCluster]',
       );
       expect(diagram).not.toContain('aws-iam-role');
       expect(diagram).not.toContain('aws-iam-policy');
@@ -582,7 +776,8 @@ describe('cfn', () => {
         list: files,
       });
 
-      // Internet -> IGW -> ELB -> EC2 (in its public subnet), RDS in its private subnet -
+      // Internet -> IGW -> ALB -> target group -> EC2. RDS stays at VPC level with its DB
+      // subnet group represented as placement candidates rather than duplicated per subnet.
       // all resolved via cross-template Fn::ImportValue/exported Output names, not guessed.
       expect(diagram).toContain('service internet(internet)[Internet]');
       expect(diagram).toContain(
@@ -594,15 +789,15 @@ describe('cfn', () => {
       // used to hardcode the literal suffix " EC2" regardless of its real type, mislabeling
       // this RDS instance as if it were an EC2 instance.
       expect(diagram).toContain(
-        'service f0_vpc_CFnVPC_PublicSubnet1_EC2WebServer01(logos:aws-ec2)[EC2WebServer01] in f0_vpc_CFnVPC_PublicSubnet1',
+        'service f0_vpc_CFnVPC_f0_PublicSubnet1_f1_EC2WebServer01(logos:aws-ec2)[EC2WebServer01] in f0_vpc_CFnVPC_f0_PublicSubnet1',
       );
       expect(diagram).toContain(
-        'service f0_vpc_CFnVPC_PrivateSubnet1_DBInstance(logos:aws-rds)[DBInstance] in f0_vpc_CFnVPC_PrivateSubnet1',
+        'service f0_vpc_CFnVPC_f2_DBInstance(logos:aws-rds)[DBInstance_DB_subnet_group_DBSubnetGroup__2_candidate_subnets] in f0_vpc_CFnVPC',
       );
       expect(diagram).toContain(
-        'f0_vpc_CFnVPC_FrontLBTargetGroup:R --> L:f0_vpc_CFnVPC_PublicSubnet1_EC2WebServer01',
+        'f0_vpc_CFnVPC_f3_FrontLBTargetGroup:R --> L:f0_vpc_CFnVPC_f0_PublicSubnet1_f1_EC2WebServer01',
       );
-      expect(diagram).toContain('internet:R --> L:f0_vpc_CFnVPC_CFnVPCIGW');
+      expect(diagram).toContain('internet:R --> L:f0_vpc_CFnVPC_f0_CFnVPCIGW');
       expect(diagram).not.toContain('logos:logos:');
       // Every resource above resolved into a real VPC/Subnet - nothing fell back to standalone.
       expect(diagram).not.toContain('Standalone');
@@ -862,6 +1057,15 @@ describe('cfn', () => {
         mode: 'ArchitectureDiagram',
         list: crossRefFiles,
       });
+      const standardArchitectureDiagram = generateDiagram({
+        mode: 'ArchitectureDiagram',
+        list: [{
+          fileName: 'standard-web-application.yaml',
+          templateJSONString: JSON.stringify(parseCfnYamlTemplate(
+            readYamlFixture('validation/standard-web-application.yaml'),
+          )),
+        }],
+      });
       // The "Standalone" group (see architectureDiagram.ts) is a new-enough diagram shape of
       // its own to be worth syntax-checking independently of the rest of this test.
       const standaloneResourcesDiagram = generateDiagram({
@@ -874,6 +1078,7 @@ describe('cfn', () => {
           cfnDependencyGraph,
           hyphenatedStackName,
           architectureDiagram,
+          standardArchitectureDiagram,
           standaloneResourcesDiagram,
         ].map(stripMermaidFence),
       );
