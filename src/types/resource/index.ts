@@ -6,6 +6,7 @@ export * from './AwsDynamoTableAttributes';
 export * from './AwsSESIdentityAttributes';
 export * from './AwsSsmParameterAttributes';
 export * from './AwsSecretAttributes';
+export * from './AwsCfnStackAttributes';
 export * from './ConnectionSetting';
 export * from './DBType';
 export * from './ForeignKeyConstraint';

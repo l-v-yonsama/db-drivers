@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EventBridge, Lambda, SQS, and DLQ flow for diagram validation.
+
+Resources:
+  OrderQueueDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: cfn-diagram-validation-order-dlq
+
+  OrderQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: cfn-diagram-validation-order
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt OrderQueueDLQ.Arn
+        maxReceiveCount: 3
+
+  OrderHandlerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cfn-diagram-validation-order-handler-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: cfn-diagram-validation-order-handler-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  OrderHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: cfn-diagram-validation-order-handler
+      Runtime: nodejs20.x
+      Handler: index.handler
+      Role: !GetAtt OrderHandlerRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            console.log(JSON.stringify(event));
+            return { statusCode: 200 };
+          };
+
+  OrderEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: cfn-diagram-validation-order-rule
+      EventPattern:
+        source:
+          - cfn.diagram.validation
+        detail-type:
+          - OrderCreated
+      Targets:
+        - Id: OrderHandlerTarget
+          Arn: !GetAtt OrderHandler.Arn
+
+  OrderEventInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref OrderHandler
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt OrderEventRule.Arn
+
+Outputs:
+  OrderQueueUrl:
+    Value: !Ref OrderQueue
+  OrderEventRuleArn:
+    Value: !GetAtt OrderEventRule.Arn

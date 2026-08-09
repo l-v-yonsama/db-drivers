@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Minimal ECS-to-RDS endpoint reference for explicit data-access path validation.
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.90.0.0/16
+
+  ApplicationSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.90.10.0/24
+
+  ApplicationSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: ap-northeast-1c
+      CidrBlock: 10.90.11.0/24
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: explicit data-access validation
+      SubnetIds:
+        - !Ref ApplicationSubnetA
+        - !Ref ApplicationSubnetC
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: postgres
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      MasterUsername: diagram
+      MasterUserPassword: diagram-password-only
+      MultiAZ: true
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Cpu: '256'
+      Memory: '512'
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ContainerDefinitions:
+        - Name: web
+          Image: public.ecr.aws/nginx/nginx:latest
+          Environment:
+            - Name: DB_HOST
+              Value: !GetAtt Database.Endpoint.Address
+
+  WebService:
+    Type: AWS::ECS::Service
+    Properties:
+      DesiredCount: 0
+      LaunchType: FARGATE
+      TaskDefinition: !Ref TaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets:
+            - !Ref ApplicationSubnetA
+            - !Ref ApplicationSubnetC

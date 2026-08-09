@@ -1,5 +1,6 @@
 import {
   Auth0Database,
+  DbCfnStack,
   DbResourceGroup,
   DbSESIdentity,
   fromJson,
@@ -60,6 +61,33 @@ describe('DbResource', () => {
       expect((restored as DbSESIdentity).attr).toEqual({
         identityType: 'EmailAddress',
         verificationStatus: 'Success',
+      });
+    });
+
+    it('restores a DbCfnStack with its attr (including resources) intact', () => {
+      const original = new DbCfnStack('OrderProcessingStack', {
+        stackStatus: 'CREATE_COMPLETE',
+        resources: [
+          {
+            logicalId: 'OrderQueue',
+            physicalId: 'https://sqs.../OrderQueue',
+            resourceType: 'AWS::SQS::Queue',
+          },
+        ],
+      });
+
+      const restored = fromJson(JSON.parse(JSON.stringify(original)));
+
+      expect(restored).toBeInstanceOf(DbCfnStack);
+      expect((restored as DbCfnStack).attr).toEqual({
+        stackStatus: 'CREATE_COMPLETE',
+        resources: [
+          {
+            logicalId: 'OrderQueue',
+            physicalId: 'https://sqs.../OrderQueue',
+            resourceType: 'AWS::SQS::Queue',
+          },
+        ],
       });
     });
 

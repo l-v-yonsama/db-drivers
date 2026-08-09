@@ -98,10 +98,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - localstack_data:/var/lib/localstack
     environment:
-      - SERVICES=s3,sqs,ses,cloudwatch,cloudformation,logs,lambda,dynamodb,stepfunctions,iam,ssm,secretsmanager
+      - SERVICES=s3,sqs,ses,cloudwatch,cloudformation,logs,lambda,dynamodb,stepfunctions,iam,ssm,secretsmanager,apigateway,ec2,events
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=ap-northeast-1
+      # The legacy engine is more stable for the validation CloudFormation stacks.
+      - PROVIDER_OVERRIDE_CLOUDFORMATION=engine-legacy
       - DISABLE_CORS_CHECKS=1
       #      - LAMBDA_DOCKER_NETWORK=host
       - DYNAMODB_SHARE_DB=1

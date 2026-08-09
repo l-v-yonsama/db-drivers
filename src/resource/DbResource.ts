@@ -16,6 +16,7 @@ import {
   AwsSESIdentityAttributes,
   AwsSsmParameterAttributes,
   AwsSecretAttributes,
+  AwsCfnStackAttributes,
   ConnectionEnvironment,
   ConnectionSetting,
   DBType,
@@ -165,6 +166,12 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
         json,
       );
       break;
+    case ResourceType.CfnStack:
+      res = Object.assign(
+        new DbCfnStack(name, castTo<DbCfnStack>(json).attr),
+        json,
+      );
+      break;
     case ResourceType.Group:
       res = Object.assign(new DbResourceGroup(name), json);
       break;
@@ -236,6 +243,7 @@ export type AllSubDbResource =
   | DbSESIdentity
   | DbSsmParameter
   | DbSecretsManagerSecret
+  | DbCfnStack
   | DbResourceGroup
   | DbSubscription
   // IAM
@@ -466,6 +474,7 @@ export class AwsDatabase extends DbResource<
   | DbSESIdentity
   | DbSsmParameter
   | DbSecretsManagerSecret
+  | DbCfnStack
   | DbResourceGroup
 > {
   constructor(name: string, public readonly serviceType: AwsServiceType) {
@@ -1345,6 +1354,19 @@ export class DbSecretsManagerSecret extends AwsDbResource<AwsSecretAttributes> {
   constructor(name: string, attr: AwsSecretAttributes) {
     super(ResourceType.SecretsManagerSecret, name, attr);
     this.setPropertyFormat({ dates: ['lastChangedDate', 'lastAccessedDate'] });
+  }
+}
+
+// One CfnStack node per CloudFormation stack. The stack's own resources
+// (LogicalResourceId/PhysicalResourceId/ResourceType/dependsOn) are kept as
+// a plain `attr.resources` field rather than child DbResource nodes - they
+// are not individually scanned/operated on the way an S3 bucket or SQS
+// queue is, so giving them their own ResourceType/child nodes would only
+// add fromJson()/ResourceTreeProvider/StateStorage cases with no benefit.
+export class DbCfnStack extends AwsDbResource<AwsCfnStackAttributes> {
+  constructor(name: string, attr: AwsCfnStackAttributes) {
+    super(ResourceType.CfnStack, name, attr);
+    this.setPropertyFormat({ dates: ['creationTime'] });
   }
 }
 

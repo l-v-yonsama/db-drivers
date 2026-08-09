@@ -83,6 +83,15 @@ export type AwsSecretsManagerScanParams = ScanParamsBase & {
   nameContains?: string;
 };
 
+export type AwsCloudFormationScanParams = ScanParamsBase & {
+  kind: 'aws-cloudformation';
+  /** Restricts the listing to one status bucket - see ACTIVE_STATUSES etc. in
+   * AwsCfnStackAttributes.ts. Omitted/undefined lists every non-deleted stack. */
+  statusFilter?: 'active' | 'inProgress' | 'completed' | 'deleted' | 'failed';
+  /** Substring match against stack names. */
+  nameContains?: string;
+};
+
 export type AwsCloudWatchLogGroupScanParams = ScanParamsBase & {
   kind: 'aws-cloudwatch-loggroup';
   logGroupName: string;
@@ -139,6 +148,7 @@ export type ScanParams =
   | AwsSQSScanParams
   | AwsSsmScanParams
   | AwsSecretsManagerScanParams
+  | AwsCloudFormationScanParams
   | AwsCloudWatchLogGroupScanParams
   | AwsCloudWatchLogStreamScanParams
   | KeycloakScanParams

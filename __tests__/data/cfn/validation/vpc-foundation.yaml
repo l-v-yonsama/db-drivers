@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Minimal VPC foundation for CloudFormation diagram validation.
+
+Resources:
+  CfnDiagramVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.42.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: cfn-diagram-validation-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: cfn-diagram-validation-igw
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref CfnDiagramVpc
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CfnDiagramVpc
+      CidrBlock: 10.42.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: cfn-diagram-public-a
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CfnDiagramVpc
+      CidrBlock: 10.42.1.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: cfn-diagram-public-b
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CfnDiagramVpc
+      CidrBlock: 10.42.10.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: cfn-diagram-private-a
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CfnDiagramVpc
+      CidrBlock: 10.42.11.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: cfn-diagram-private-b
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CfnDiagramVpc
+      Tags:
+        - Key: Name
+          Value: cfn-diagram-public-routes
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetA
+
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetB
+
+Outputs:
+  VpcId:
+    Value: !Ref CfnDiagramVpc
+    Export:
+      Name: CfnDiagramValidation-VpcId
+  PublicSubnetA:
+    Value: !Ref PublicSubnetA
+    Export:
+      Name: CfnDiagramValidation-PublicSubnetA
+  PublicSubnetB:
+    Value: !Ref PublicSubnetB
+    Export:
+      Name: CfnDiagramValidation-PublicSubnetB
+  PrivateSubnetA:
+    Value: !Ref PrivateSubnetA
+    Export:
+      Name: CfnDiagramValidation-PrivateSubnetA
+  PrivateSubnetB:
+    Value: !Ref PrivateSubnetB
+    Export:
+      Name: CfnDiagramValidation-PrivateSubnetB

@@ -11,6 +11,7 @@ import {
   DbSQSQueue,
   DbSsmParameter,
   DbSecretsManagerSecret,
+  DbCfnStack,
 } from '../../../src';
 
 describe('AwsPromptHelper', () => {
@@ -248,6 +249,71 @@ describe('AwsPromptHelper', () => {
       );
       expect(promptText).toContain('- prod/api/key (rotation: disabled)');
       expect(promptText).not.toContain(secretValue);
+    });
+
+    const buildCfnDb = (): AwsDatabase => {
+      const awsDb = new AwsDatabase('CloudFormation', AwsServiceType.CloudFormation);
+      awsDb.addChild(
+        new DbCfnStack('OrderProcessingStack', {
+          stackStatus: 'CREATE_COMPLETE',
+          resources: [
+            {
+              logicalId: 'OrderQueue',
+              physicalId: 'https://sqs.us-east-1.amazonaws.com/123456789012/OrderQueue',
+              resourceType: 'AWS::SQS::Queue',
+            },
+            {
+              logicalId: 'OrderQueueDLQ',
+              physicalId: 'https://sqs.us-east-1.amazonaws.com/123456789012/OrderQueueDLQ',
+              resourceType: 'AWS::SQS::Queue',
+            },
+            {
+              logicalId: 'ProcessOrderFunction',
+              physicalId: 'arn:aws:lambda:us-east-1:123456789012:function:ProcessOrderFunction',
+              resourceType: 'AWS::Lambda::Function',
+              // L2a doesn't populate this yet (GetTemplate/Ref/GetAtt parsing
+              // is L2b) - included here only to prove the render path already
+              // supports it once a client starts populating it.
+              dependsOn: [
+                { logicalId: 'OrderQueue', via: 'GetAtt' },
+                { logicalId: 'OrderQueueDLQ', via: 'DependsOn' },
+              ],
+            },
+          ],
+        }),
+      );
+      return awsDb;
+    };
+
+    it('renders stack status and resource list under a Stacks heading', async () => {
+      const promptText = await createAwsSchemaDefinitionsForPrompt({
+        db: buildCfnDb(),
+      });
+
+      expect(promptText).toContain('-- CloudFormation --');
+      expect(promptText).toContain('--- Stacks (1 stack) ---');
+      expect(promptText).toContain(
+        '- OrderProcessingStack (status: CREATE_COMPLETE)',
+      );
+      expect(promptText).toContain(
+        '    OrderQueue (AWS::SQS::Queue, physical: https://sqs.us-east-1.amazonaws.com/123456789012/OrderQueue)',
+      );
+      expect(promptText).toContain(
+        '    OrderQueueDLQ (AWS::SQS::Queue, physical: https://sqs.us-east-1.amazonaws.com/123456789012/OrderQueueDLQ)',
+      );
+    });
+
+    it('renders a "depends on" line once a resource entry carries dependsOn (L2b data shape)', async () => {
+      const promptText = await createAwsSchemaDefinitionsForPrompt({
+        db: buildCfnDb(),
+      });
+
+      expect(promptText).toContain(
+        '    ProcessOrderFunction (AWS::Lambda::Function, physical: arn:aws:lambda:us-east-1:123456789012:function:ProcessOrderFunction)',
+      );
+      expect(promptText).toContain(
+        '        depends on: OrderQueue (via GetAtt), OrderQueueDLQ (via DependsOn)',
+      );
     });
 
     it('renders FIFO and parsed DLQ info for SQS queues under a Queues heading, and "DLQ: none" otherwise', async () => {

@@ -1,0 +1,20 @@
+{
+  "Resources": {
+    "OrderQueueDLQ": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "db-drivers-test-order-queue-dlq"
+      }
+    },
+    "OrderQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "db-drivers-test-order-queue",
+        "RedrivePolicy": {
+          "deadLetterTargetArn": { "Fn::GetAtt": ["OrderQueueDLQ", "Arn"] },
+          "maxReceiveCount": 3
+        }
+      }
+    }
+  }
+}
