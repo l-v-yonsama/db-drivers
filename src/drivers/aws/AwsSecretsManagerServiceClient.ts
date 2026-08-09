@@ -122,10 +122,15 @@ export class AwsSecretsManagerServiceClient
     if (!this.conRes) {
       return null;
     }
-    const dbDatabase = new AwsDatabase('SecretsManager', AwsServiceType.SecretsManager);
+    const dbDatabase = new AwsDatabase(
+      'SecretsManager',
+      AwsServiceType.SecretsManager,
+    );
 
     try {
-      const secrets = await this.listSecrets();
+      const secrets = (await this.listSecrets()).filter((it) =>
+        this.acceptResource(it.Name),
+      );
       secrets.forEach((it) => {
         dbDatabase.addChild(
           new DbSecretsManagerSecret(it.Name, {

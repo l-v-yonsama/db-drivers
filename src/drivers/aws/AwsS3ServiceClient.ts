@@ -35,12 +35,13 @@ import {
   DbS3Owner,
   S3KeyParams,
 } from '../../resource';
-import { AwsS3ScanParams, AwsServiceType, ConnectionSetting } from '../../types';
 import {
-  acceptResourceFilter,
-  parseContentType,
-  prettyFileSize,
-} from '../../utils';
+  AwsS3ScanParams,
+  AwsServiceType,
+  ConnectionSetting,
+  ResourceType,
+} from '../../types';
+import { parseContentType, prettyFileSize } from '../../utils';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
@@ -335,16 +336,16 @@ export class AwsS3ServiceClient
       const buckets = await this.s3Client.send(new ListBucketsCommand({}));
       if (buckets.Buckets) {
         for (const bucket of buckets.Buckets) {
-          const { resourceFilter } = this.conRes;
-          if (resourceFilter?.bucket) {
-            if (!acceptResourceFilter(bucket.Name, resourceFilter.bucket)) {
-              continue;
-            }
+          if (!this.acceptResource(bucket.Name)) {
+            continue;
           }
           const dbBucket = new DbS3Bucket(bucket.Name, bucket.CreationDate);
           dbDatabase.addChild(dbBucket);
         }
-        dbDatabase.comment = `${buckets.Buckets.length} ${plural('bucket')}`;
+        const bucketCount = dbDatabase.children.filter(
+          (it) => it.resourceType === ResourceType.Bucket,
+        ).length;
+        dbDatabase.comment = `${bucketCount} ${plural('bucket')}`;
       }
       if (buckets.Owner) {
         const dbOwner = new DbS3Owner(

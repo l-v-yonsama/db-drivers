@@ -29,7 +29,12 @@ import {
   FAILED_STATUSES,
   IN_PROGRESS_STATUSES,
 } from '../../types';
-import { extractResourceDependencies, isJson, parseCfnJsonTemplate, parseCfnYamlTemplate } from '../../utils';
+import {
+  extractResourceDependencies,
+  isJson,
+  parseCfnJsonTemplate,
+  parseCfnYamlTemplate,
+} from '../../utils';
 import yaml from 'js-yaml';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
@@ -230,11 +235,11 @@ export class AwsCloudFormationServiceClient
     );
 
     try {
-      const stacks = await this.listStacks();
+      const stacks = (await this.listStacks()).filter((it) =>
+        this.acceptResource(it.StackName),
+      );
       for (const stack of stacks) {
-        const resources = await this.describeStackResources(
-          stack.StackName,
-        );
+        const resources = await this.describeStackResources(stack.StackName);
         dbDatabase.addChild(
           new DbCfnStack(stack.StackName, {
             stackStatus: stack.StackStatus,

@@ -169,6 +169,9 @@ export class AwsSQSServiceClient
             if (idx) {
               name = name.substring(idx + 1);
             }
+            if (!this.acceptResource(name)) {
+              continue;
+            }
             const attrResult = await this.sqsClient.send(
               new GetQueueAttributesCommand({
                 QueueUrl: queueUrl,

@@ -14,7 +14,11 @@ import {
   createRdhKey,
 } from '@l-v-yonsama/rdh';
 import { AwsDatabase, DbSsmParameter } from '../../resource';
-import { AwsServiceType, AwsSsmScanParams, ConnectionSetting } from '../../types';
+import {
+  AwsServiceType,
+  AwsSsmScanParams,
+  ConnectionSetting,
+} from '../../types';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
@@ -121,7 +125,9 @@ export class AwsSsmServiceClient
     const dbDatabase = new AwsDatabase('SSM', AwsServiceType.SSM);
 
     try {
-      const parameters = await this.listParameters();
+      const parameters = (await this.listParameters()).filter((it) =>
+        this.acceptResource(it.Name),
+      );
       parameters.forEach((it) => {
         dbDatabase.addChild(
           new DbSsmParameter(it.Name, {

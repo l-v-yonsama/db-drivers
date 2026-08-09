@@ -149,7 +149,7 @@ describe('AwsCloudwatchClient', () => {
 
       it('prefix', async () => {
         driver2 = createDriver({
-          group: { type: 'prefix', value: 'a2-b1' },
+          resourceName: { type: 'prefix', value: 'a2-b1' },
         });
         await driver2.connect();
 
@@ -172,7 +172,7 @@ describe('AwsCloudwatchClient', () => {
 
       it('inclue', async () => {
         driver2 = createDriver({
-          group: { type: 'include', value: '-B2_FiL' },
+          resourceName: { type: 'include', value: '-B2_FiL' },
         });
         await driver2.connect();
 
@@ -196,7 +196,7 @@ describe('AwsCloudwatchClient', () => {
 
       it('suffix', async () => {
         driver2 = createDriver({
-          group: { type: 'suffix', value: 'c1-d2' },
+          resourceName: { type: 'suffix', value: 'c1-d2' },
         });
         await driver2.connect();
 
@@ -221,7 +221,7 @@ describe('AwsCloudwatchClient', () => {
 
       it('regex', async () => {
         driver2 = createDriver({
-          group: { type: 'regex', value: 'a[23]-B1' },
+          resourceName: { type: 'regex', value: 'a[23]-B1' },
         });
         await driver2.connect();
 

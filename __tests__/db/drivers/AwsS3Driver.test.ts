@@ -158,7 +158,7 @@ describe('AwsS3Driver', () => {
 
       it('prefix', async () => {
         driver2 = createDriver({
-          bucket: { type: 'prefix', value: 'a2-b1' },
+          resourceName: { type: 'prefix', value: 'a2-b1' },
         });
         await driver2.connect();
 
@@ -181,7 +181,7 @@ describe('AwsS3Driver', () => {
 
       it('inclue', async () => {
         driver2 = createDriver({
-          bucket: { type: 'include', value: '-b2-fil' },
+          resourceName: { type: 'include', value: '-b2-fil' },
         });
         await driver2.connect();
 
@@ -205,7 +205,7 @@ describe('AwsS3Driver', () => {
 
       it('suffix', async () => {
         driver2 = createDriver({
-          bucket: { type: 'suffix', value: 'c1.d2' },
+          resourceName: { type: 'suffix', value: 'c1.d2' },
         });
         await driver2.connect();
 
@@ -230,7 +230,7 @@ describe('AwsS3Driver', () => {
 
       it('regex', async () => {
         driver2 = createDriver({
-          bucket: { type: 'regex', value: 'A[23]-b1' },
+          resourceName: { type: 'regex', value: 'A[23]-b1' },
         });
         await driver2.connect();
 

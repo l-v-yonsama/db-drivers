@@ -36,7 +36,6 @@ import {
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
-import { acceptResourceFilter } from '../../utils';
 
 type CloudWatchScanParams =
   | AwsCloudWatchLogGroupScanParams
@@ -351,11 +350,7 @@ export class AwsCloudwatchServiceClient
         );
         if (result.logGroups) {
           for (const logGroup of result.logGroups) {
-            const { resourceFilter } = this.conRes;
-            if (
-              resourceFilter?.group &&
-              !acceptResourceFilter(logGroup.logGroupName, resourceFilter.group)
-            ) {
+            if (!this.acceptResource(logGroup.logGroupName)) {
               continue;
             }
 

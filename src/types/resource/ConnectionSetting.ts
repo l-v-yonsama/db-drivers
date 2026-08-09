@@ -22,10 +22,9 @@ export type ResourceFilterDetail = {
 };
 
 export type ResourceFilter = {
+  resourceName?: ResourceFilterDetail;
   schema?: ResourceFilterDetail;
   table?: ResourceFilterDetail;
-  bucket?: ResourceFilterDetail;
-  group?: ResourceFilterDetail;
 };
 
 export type SshSetting = {

@@ -587,7 +587,7 @@ describe('AwsDynamoDBDriver', () => {
 
       it('prefix', async () => {
         driver2 = createDriver('filterCheck', {
-          table: { type: 'prefix', value: 'a2-b1' },
+          resourceName: { type: 'prefix', value: 'a2-b1' },
         });
         await driver2.connect();
 
@@ -610,7 +610,7 @@ describe('AwsDynamoDBDriver', () => {
 
       it('inclue', async () => {
         driver2 = createDriver('filterCheck', {
-          table: { type: 'include', value: '-B2_FiL' },
+          resourceName: { type: 'include', value: '-B2_FiL' },
         });
         await driver2.connect();
 
@@ -634,7 +634,7 @@ describe('AwsDynamoDBDriver', () => {
 
       it('suffix', async () => {
         driver2 = createDriver('filterCheck', {
-          table: { type: 'suffix', value: 'c1-d2' },
+          resourceName: { type: 'suffix', value: 'c1-d2' },
         });
         await driver2.connect();
 
@@ -659,7 +659,7 @@ describe('AwsDynamoDBDriver', () => {
 
       it('regex', async () => {
         driver2 = createDriver('filterCheck', {
-          table: { type: 'regex', value: 'a[23]-b1' },
+          resourceName: { type: 'regex', value: 'a[23]-b1' },
         });
         await driver2.connect();
 

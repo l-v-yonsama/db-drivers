@@ -106,7 +106,7 @@ export class AwsSESServiceClient extends AwsServiceClient {
         identityType: IdentityType.EmailAddress,
       })),
       ...domains.map((name) => ({ name, identityType: IdentityType.Domain })),
-    ];
+    ].filter((it) => this.acceptResource(it.name));
 
     if (identities.length > 0) {
       const { VerificationAttributes } = await this.sesClient.send(

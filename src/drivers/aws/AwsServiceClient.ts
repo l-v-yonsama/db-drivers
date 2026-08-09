@@ -1,7 +1,8 @@
 /* eslint-disable no-async-promise-executor */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { ConnectionSetting } from '../../types';
+import { ConnectionSetting, ResourceFilterDetail } from '../../types';
+import { acceptResourceFilter } from '../../utils';
 import { AwsDriver, ClientConfigType } from '../AwsDriver';
 
 export abstract class AwsServiceClient {
@@ -81,6 +82,21 @@ export abstract class AwsServiceClient {
       this.initBaseStatus();
     }
     return errorReason;
+  }
+
+  /**
+   * Returns whether an AWS resource should be included in the information
+   * schema.
+   */
+  protected acceptResource(resourceName: string | undefined): boolean {
+    if (resourceName === undefined) {
+      return false;
+    }
+    const filterDetail: ResourceFilterDetail | undefined =
+      this.conRes.resourceFilter?.resourceName;
+    return filterDetail
+      ? acceptResourceFilter(resourceName, filterDetail)
+      : true;
   }
 
   protected abstract connectSub(): Promise<string>;
