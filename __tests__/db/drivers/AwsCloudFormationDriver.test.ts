@@ -270,25 +270,17 @@ describe('AwsCloudFormationDriver', () => {
         ]),
       );
 
-      // API Gateway method -> the API and the resource it's mounted on.
+      // API Gateway method -> the API and the resource it's mounted on via Ref, plus the
+      // Lambda invocation URI's `${GreetingFunction.Arn}` Fn::Sub variable via GetAtt.
       const method = result.find((it) => it.logicalId === 'GreetingMethod');
       expect(method.dependsOn).toEqual(
         expect.arrayContaining([
           { logicalId: 'GreetingApi', via: 'Ref' },
           { logicalId: 'GreetingResource', via: 'Ref' },
+          { logicalId: 'GreetingFunction', via: 'GetAtt' },
         ]),
       );
-      // The Lambda invocation URI lives inside an Fn::Sub *string*
-      // ("${GreetingFunction.Arn}") rather than a structured Ref/GetAtt -
-      // exactly the case the implementation plan scoped out of L2b's first
-      // pass (see cloudformation-diagram-l2-implementation-plan). Asserting
-      // it's absent here documents that limitation with a real example,
-      // rather than leaving it to be rediscovered by surprise later.
-      expect(method.dependsOn).not.toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ logicalId: 'GreetingFunction' }),
-        ]),
-      );
+      expect(method.dependsOn).toHaveLength(3);
 
       // Deployment -> the API (Ref, from its Properties) AND the method
       // (DependsOn, an explicit deploy-ordering attribute rather than a
@@ -306,16 +298,18 @@ describe('AwsCloudFormationDriver', () => {
       );
       expect(deployment.dependsOn).toHaveLength(2);
 
-      // Lambda permission -> the function it grants apigateway.amazonaws.com
-      // permission to invoke, via Ref FunctionName. Its SourceArn is another
-      // Fn::Sub string reference to GreetingApi, same "not extracted" story
-      // as the method's Uri above.
+      // Lambda permission -> the function it grants apigateway.amazonaws.com permission to
+      // invoke via Ref FunctionName, and the API in its `${GreetingApi}` Fn::Sub SourceArn.
       const permission = result.find(
         (it) => it.logicalId === 'GreetingApiInvokePermission',
       );
-      expect(permission.dependsOn).toEqual([
-        { logicalId: 'GreetingFunction', via: 'Ref' },
-      ]);
+      expect(permission.dependsOn).toEqual(
+        expect.arrayContaining([
+          { logicalId: 'GreetingFunction', via: 'Ref' },
+          { logicalId: 'GreetingApi', via: 'Ref' },
+        ]),
+      );
+      expect(permission.dependsOn).toHaveLength(2);
     });
   });
 
