@@ -23,7 +23,14 @@ process.stdin.on('end', async () => {
   const results = [];
   for (const body of bodies) {
     try {
-      await parse(diagramType, body);
+      if (/^flowchart\\s+(?:TB|TD|BT|RL|LR)\\s*$/m.test(body.split('\\n')[0])) {
+        const subgraphs = (body.match(/^\\s*subgraph\\s+/gm) || []).length;
+        const ends = (body.match(/^\\s*end\\s*$/gm) || []).length;
+        if (subgraphs !== ends) throw new Error('Unbalanced flowchart subgraphs');
+        if ((body.match(/"/g) || []).length % 2 !== 0) throw new Error('Unbalanced flowchart quotes');
+      } else {
+        await parse(diagramType, body);
+      }
       results.push({ ok: true });
     } catch (e) {
       results.push({ ok: false, message: String((e && e.message) || e) });
@@ -34,20 +41,21 @@ process.stdin.on('end', async () => {
 `;
 
 /**
- * Confirms one or more \`architecture-beta\` diagram bodies - the content
- * generateDiagram() returns with its \`\`\`mermaid fence stripped - are
- * accepted by mermaid's real parser, not just "looks plausible". This is
- * what actually caught the hyphen-in-id/-label bug that the fixture-based
- * cfn.test.ts assertions (which only check for specific substrings) missed,
- * since none of the existing fixtures happened to use a hyphenated name.
+ * Confirms generated Mermaid bodies have a supported root and balanced flowchart structure.
+ * The installed parser package validates architecture-beta bodies; flowchart output receives
+ * deterministic structural checks here and is additionally rendered in the browser QA step.
  */
 export const verifyMermaidArchitectureSyntax = (
   bodies: string[],
 ): Promise<MermaidParseResult[]> => {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ['--input-type=module', '-e', WORKER_SCRIPT], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const child = spawn(
+      process.execPath,
+      ['--input-type=module', '-e', WORKER_SCRIPT],
+      {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (chunk) => (stdout += chunk));
@@ -55,13 +63,21 @@ export const verifyMermaidArchitectureSyntax = (
     child.on('error', reject);
     child.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error(`mermaid syntax check process exited with ${code}: ${stderr}`));
+        reject(
+          new Error(
+            `mermaid syntax check process exited with ${code}: ${stderr}`,
+          ),
+        );
         return;
       }
       try {
         resolve(JSON.parse(stdout));
       } catch (e) {
-        reject(new Error(`Failed to parse mermaid syntax check output: ${stdout}\n${stderr}`));
+        reject(
+          new Error(
+            `Failed to parse mermaid syntax check output: ${stdout}\n${stderr}`,
+          ),
+        );
       }
     });
     child.stdin.write(JSON.stringify({ diagramType: 'architecture', bodies }));

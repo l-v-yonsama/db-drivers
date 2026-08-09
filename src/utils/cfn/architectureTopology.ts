@@ -13,6 +13,14 @@ type TopologySubnetResource = {
 
 type TopologyVpcResource = TopologySubnetResource & {
   placement: string;
+  candidateSubnets: TopologySubnet[];
+  multiAz?: boolean;
+};
+
+type TopologyDefaultRoute = {
+  kind: 'internet-gateway' | 'nat-gateway' | 'egress-only-internet-gateway';
+  fileIndex: number;
+  logicalId?: string;
 };
 
 type TopologySubnet = {
@@ -22,10 +30,12 @@ type TopologySubnet = {
   connectivity: SubnetConnectivity;
   cidrBlock: string;
   resources: TopologySubnetResource[];
+  defaultRoute?: TopologyDefaultRoute;
 };
 
 type TopologyAvailabilityZone = {
   id: string;
+  name: string;
   subnets: TopologySubnet[];
 };
 
@@ -37,6 +47,9 @@ type TopologyTarget = {
 type TopologyTargetGroup = {
   fileIndex: number;
   logicalId: string;
+  protocol?: string;
+  port?: string;
+  targetType?: string;
   targets: TopologyTarget[];
 };
 
@@ -44,7 +57,26 @@ type TopologyLoadBalancer = {
   fileIndex: number;
   logicalId: string;
   internetFacing: boolean;
+  subnets: TopologySubnet[];
   targetGroups: TopologyTargetGroup[];
+  listeners: TopologyListener[];
+};
+
+type TopologyListenerRule = {
+  fileIndex: number;
+  logicalId: string;
+  conditions: string[];
+  priority?: string;
+  targetGroups: TopologyTargetGroup[];
+};
+
+type TopologyListener = {
+  fileIndex: number;
+  logicalId: string;
+  protocol?: string;
+  port?: string;
+  targetGroups: TopologyTargetGroup[];
+  rules: TopologyListenerRule[];
 };
 
 type TopologyIgw = {
@@ -92,6 +124,58 @@ const uniqueByIdentity = <T extends { fileIndex: number; logicalId: string }>(
   `${value.fileIndex}:${value.logicalId}`,
   value,
 ])).values());
+
+const displayProperty = (value: any): string | undefined => {
+  const resolved = resolveCfnString(value);
+  if (resolved !== undefined) return resolved;
+  if (value === undefined || value === null) return undefined;
+  const serialized = JSON.stringify(value);
+  return serialized.length > 80 ? `${serialized.slice(0, 77)}...` : serialized;
+};
+
+const listenerRuleConditions = (conditions: any): string[] => {
+  if (!Array.isArray(conditions)) return [];
+  return conditions.flatMap((condition: any) => {
+    const field = displayProperty(condition?.Field) ?? 'condition';
+    const values = condition?.Values ??
+      condition?.PathPatternConfig?.Values ??
+      condition?.HostHeaderConfig?.Values ??
+      condition?.HttpHeaderConfig?.Values ??
+      condition?.QueryStringConfig?.Values ??
+      condition?.SourceIpConfig?.Values;
+    if (!Array.isArray(values) || values.length === 0) return [field];
+    return [`${field}: ${values.map((value: any) =>
+      displayProperty(value) ?? '?').join(', ')}`];
+  });
+};
+
+const availabilityZoneName = (value: any, file: DiagramFile): string => {
+  if (typeof value === 'string') return value;
+  const resolutionContext = {
+    parameters: file.cfnTemplate.Parameters,
+    parameterValues: file.parameterValues,
+    pseudoParameters: {
+      'AWS::StackName': file.groupName,
+      ...file.pseudoParameterValues,
+    },
+  };
+  const resolved = resolveCfnString(value, resolutionContext);
+  if (resolved) return resolved;
+
+  const select = value?.['Fn::Select'] ?? value?.['!Select'];
+  if (Array.isArray(select) && select.length >= 2) {
+    const index = resolveCfnString(select[0], resolutionContext);
+    const getAzs = select[1]?.['Fn::GetAZs'] ?? select[1]?.['!GetAZs'];
+    if (index !== undefined && getAzs !== undefined) {
+      const selectedRegion = resolveCfnString(getAzs, resolutionContext);
+      const region = selectedRegion || file.pseudoParameterValues?.['AWS::Region'];
+      return region
+        ? `${region} AZ index ${index}`
+        : `Availability Zone index ${index}`;
+    }
+  }
+  return value ? JSON.stringify(value) : 'unspecified';
+};
 
 /** Builds a stack-aware VPC/AZ/subnet topology from all supplied templates. */
 export class CfnArchitectureDiagramStructure {
@@ -167,7 +251,7 @@ export class CfnArchitectureDiagramStructure {
           console.warn(`VPC not found for subnet ${file.fileName}:${logicalId}.`);
           return;
         }
-        const az = this.getOrCreateAvailabilityZone(vpc, resource);
+        const az = this.getOrCreateAvailabilityZone(vpc, resource, file);
         az.subnets.push({
           fileIndex: file.fileIndex,
           logicalId,
@@ -188,13 +272,14 @@ export class CfnArchitectureDiagramStructure {
   private getOrCreateAvailabilityZone(
     vpc: TopologyVpc,
     subnetResource: TemplateResource,
+    file: DiagramFile,
   ): TopologyAvailabilityZone {
-    const azId = subnetResource.Properties?.AvailabilityZone
-      ? sanitizeLogicalId(JSON.stringify(subnetResource.Properties.AvailabilityZone))
-      : 'unspecified';
+    const availabilityZone = subnetResource.Properties?.AvailabilityZone;
+    const azName = availabilityZoneName(availabilityZone, file);
+    const azId = sanitizeLogicalId(azName);
     let az = vpc.availabilityZones.find((candidate) => candidate.id === azId);
     if (!az) {
-      az = { id: azId, subnets: [] };
+      az = { id: azId, name: azName, subnets: [] };
       vpc.availabilityZones.push(az);
     }
     return az;
@@ -224,7 +309,7 @@ export class CfnArchitectureDiagramStructure {
           (resource.Properties?.DestinationCidrBlock === '0.0.0.0/0' ||
             resource.Properties?.DestinationIpv6CidrBlock === '::/0'));
 
-        if (routes.some((route) => {
+        const internetRoute = routes.find((route) => {
           const gatewayValue = route.Properties?.GatewayId;
           if (typeof gatewayValue === 'string') return gatewayValue.startsWith('igw-');
           const gateway = this.findTemplateResource(
@@ -232,14 +317,41 @@ export class CfnArchitectureDiagramStructure {
             file.fileIndex,
           );
           return gateway?.detail.Type === 'AWS::EC2::InternetGateway';
-        })) {
+        });
+        const natRoute = routes.find((route) => route.Properties?.NatGatewayId !== undefined);
+        const egressOnlyRoute = routes.find((route) =>
+          route.Properties?.EgressOnlyInternetGatewayId !== undefined);
+
+        if (internetRoute) {
           subnet.connectivity = 'public';
-        } else if (routes.some((route) =>
-          route.Properties?.NatGatewayId !== undefined ||
-          route.Properties?.EgressOnlyInternetGatewayId !== undefined)) {
+          const gatewayRef = this.normalizeRef(internetRoute.Properties?.GatewayId, file.fileIndex);
+          subnet.defaultRoute = {
+            kind: 'internet-gateway',
+            fileIndex: file.fileIndex,
+            logicalId: gatewayRef.value || undefined,
+          };
+        } else if (natRoute) {
           subnet.connectivity = 'private';
+          const natRef = this.normalizeRef(natRoute.Properties?.NatGatewayId, file.fileIndex);
+          subnet.defaultRoute = {
+            kind: 'nat-gateway',
+            fileIndex: file.fileIndex,
+            logicalId: natRef.value || undefined,
+          };
+        } else if (egressOnlyRoute) {
+          subnet.connectivity = 'private';
+          const gatewayRef = this.normalizeRef(
+            egressOnlyRoute.Properties?.EgressOnlyInternetGatewayId,
+            file.fileIndex,
+          );
+          subnet.defaultRoute = {
+            kind: 'egress-only-internet-gateway',
+            fileIndex: file.fileIndex,
+            logicalId: gatewayRef.value || undefined,
+          };
         } else {
           subnet.connectivity = 'isolated';
+          subnet.defaultRoute = undefined;
         }
       });
     this.vpcs.forEach((vpc) =>
@@ -332,6 +444,8 @@ export class CfnArchitectureDiagramStructure {
     vpcs[0].resources.push({
       ...this.topologyResource(file, logicalId, resource),
       placement: `DB subnet group ${subnetGroup.logicalId}: ${subnets.length} candidate subnets`,
+      candidateSubnets: subnets,
+      multiAz: resource.Properties?.MultiAZ === true || resource.Type === 'AWS::RDS::DBCluster',
     });
   }
 
@@ -353,6 +467,7 @@ export class CfnArchitectureDiagramStructure {
     vpcs[0].resources.push({
       ...this.topologyResource(file, logicalId, resource),
       placement: `ECS service: ${subnets.length} configured subnets`,
+      candidateSubnets: subnets,
     });
   }
 
@@ -398,9 +513,69 @@ export class CfnArchitectureDiagramStructure {
           fileIndex: file.fileIndex,
           logicalId,
           internetFacing: resource.Properties?.Scheme !== 'internal',
+          subnets,
           targetGroups,
+          listeners: this.listenersForLoadBalancer(file, logicalId),
         });
       });
+  }
+
+  private listenersForLoadBalancer(
+    file: DiagramFile,
+    loadBalancerLogicalId: string,
+  ): TopologyListener[] {
+    return Object.entries(file.cfnTemplate.Resources)
+      .filter(([, resource]) =>
+        resource.Type === 'AWS::ElasticLoadBalancingV2::Listener' &&
+        this.normalizeRef(resource.Properties?.LoadBalancerArn, file.fileIndex).value === loadBalancerLogicalId)
+      .map(([logicalId, listener]) => {
+        const targetGroups = this.targetGroupsFromActions(
+          file,
+          Array.isArray(listener.Properties?.DefaultActions)
+            ? listener.Properties.DefaultActions
+            : [],
+        );
+        const rules = Object.entries(file.cfnTemplate.Resources)
+          .filter(([, resource]) =>
+            resource.Type === 'AWS::ElasticLoadBalancingV2::ListenerRule' &&
+            this.normalizeRef(resource.Properties?.ListenerArn, file.fileIndex).value === logicalId)
+          .map(([ruleLogicalId, rule]) => ({
+            fileIndex: file.fileIndex,
+            logicalId: ruleLogicalId,
+            conditions: listenerRuleConditions(rule.Properties?.Conditions),
+            priority: displayProperty(rule.Properties?.Priority),
+            targetGroups: this.targetGroupsFromActions(
+              file,
+              Array.isArray(rule.Properties?.Actions) ? rule.Properties.Actions : [],
+            ),
+          }));
+        return {
+          fileIndex: file.fileIndex,
+          logicalId,
+          protocol: displayProperty(listener.Properties?.Protocol),
+          port: displayProperty(listener.Properties?.Port),
+          targetGroups,
+          rules,
+        };
+      });
+  }
+
+  private targetGroupsFromActions(file: DiagramFile, actions: any[]): TopologyTargetGroup[] {
+    const targets = actions
+      .flatMap((action: any) => [
+        ...(action.TargetGroupArn ? [action.TargetGroupArn] : []),
+        ...(Array.isArray(action.ForwardConfig?.TargetGroups)
+          ? action.ForwardConfig.TargetGroups.flatMap((target: any) =>
+              target.TargetGroupArn ? [target.TargetGroupArn] : [])
+          : []),
+      ])
+      .map((value) => this.findTemplateResource(
+        this.normalizeRef(value, file.fileIndex),
+        file.fileIndex,
+      ))
+      .filter((target): target is NonNullable<typeof target> =>
+        Boolean(target && target.detail.Type === 'AWS::ElasticLoadBalancingV2::TargetGroup'));
+    return uniqueByIdentity(targets.map((target) => this.toTopologyTargetGroup(target)));
   }
 
   private targetGroupsForLoadBalancer(
@@ -423,42 +598,56 @@ export class CfnArchitectureDiagramStructure {
       .flatMap((rule) => Array.isArray(rule.Properties?.Actions) ? rule.Properties.Actions : []);
 
     const targetGroupResources = [...listenerActions, ...listenerRuleActions]
-      .flatMap((action: any) => action.TargetGroupArn ? [action.TargetGroupArn] : [])
+      .flatMap((action: any) => [
+        ...(action.TargetGroupArn ? [action.TargetGroupArn] : []),
+        ...(Array.isArray(action.ForwardConfig?.TargetGroups)
+          ? action.ForwardConfig.TargetGroups.flatMap((target: any) =>
+              target.TargetGroupArn ? [target.TargetGroupArn] : [])
+          : []),
+      ])
       .map((value) => this.findTemplateResource(this.normalizeRef(value, file.fileIndex), file.fileIndex))
       .filter((target): target is NonNullable<typeof target> =>
         Boolean(target && target.detail.Type === 'AWS::ElasticLoadBalancingV2::TargetGroup'));
 
-    return uniqueByIdentity(targetGroupResources.map((targetGroup) => {
-      const staticTargets = Array.isArray(targetGroup.detail.Properties?.Targets)
-        ? targetGroup.detail.Properties.Targets.map((target: any) => ({
-            sourceFileIndex: targetGroup.file.fileIndex,
-            logicalId: this.normalizeRef(target.Id, targetGroup.file.fileIndex),
-          }))
-        : [];
-      const ecsTargets = this.diagramFiles.flatMap((candidateFile) =>
-        Object.entries(candidateFile.cfnTemplate.Resources).flatMap(([logicalId, resource]) => {
-          if (resource.Type !== 'AWS::ECS::Service' || !Array.isArray(resource.Properties?.LoadBalancers)) {
-            return [];
-          }
-          const matches = resource.Properties.LoadBalancers.some((binding: any) => {
-            const resolved = this.findTemplateResource(
-              this.normalizeRef(binding.TargetGroupArn, candidateFile.fileIndex),
-              candidateFile.fileIndex,
-            );
-            return resolved?.file.fileIndex === targetGroup.file.fileIndex &&
-              resolved.logicalId === targetGroup.logicalId;
-          });
-          return matches ? [{
-            sourceFileIndex: candidateFile.fileIndex,
-            logicalId: this.normalizeRef({ Ref: logicalId }, candidateFile.fileIndex),
-          }] : [];
-        }));
-      return {
-        fileIndex: targetGroup.file.fileIndex,
-        logicalId: targetGroup.logicalId,
-        targets: [...staticTargets, ...ecsTargets],
-      };
-    }));
+    return uniqueByIdentity(targetGroupResources.map((targetGroup) =>
+      this.toTopologyTargetGroup(targetGroup)));
+  }
+
+  private toTopologyTargetGroup(
+    targetGroup: { file: DiagramFile; logicalId: string; detail: TemplateResource },
+  ): TopologyTargetGroup {
+    const staticTargets = Array.isArray(targetGroup.detail.Properties?.Targets)
+      ? targetGroup.detail.Properties.Targets.map((target: any) => ({
+          sourceFileIndex: targetGroup.file.fileIndex,
+          logicalId: this.normalizeRef(target.Id, targetGroup.file.fileIndex),
+        }))
+      : [];
+    const ecsTargets = this.diagramFiles.flatMap((candidateFile) =>
+      Object.entries(candidateFile.cfnTemplate.Resources).flatMap(([logicalId, resource]) => {
+        if (resource.Type !== 'AWS::ECS::Service' || !Array.isArray(resource.Properties?.LoadBalancers)) {
+          return [];
+        }
+        const matches = resource.Properties.LoadBalancers.some((binding: any) => {
+          const resolved = this.findTemplateResource(
+            this.normalizeRef(binding.TargetGroupArn, candidateFile.fileIndex),
+            candidateFile.fileIndex,
+          );
+          return resolved?.file.fileIndex === targetGroup.file.fileIndex &&
+            resolved.logicalId === targetGroup.logicalId;
+        });
+        return matches ? [{
+          sourceFileIndex: candidateFile.fileIndex,
+          logicalId: this.normalizeRef({ Ref: logicalId }, candidateFile.fileIndex),
+        }] : [];
+      }));
+    return {
+      fileIndex: targetGroup.file.fileIndex,
+      logicalId: targetGroup.logicalId,
+      protocol: displayProperty(targetGroup.detail.Properties?.Protocol),
+      port: displayProperty(targetGroup.detail.Properties?.Port),
+      targetType: displayProperty(targetGroup.detail.Properties?.TargetType),
+      targets: [...staticTargets, ...ecsTargets],
+    };
   }
 
   private topologyResource(

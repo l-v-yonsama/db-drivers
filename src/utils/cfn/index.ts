@@ -9,8 +9,13 @@ export { generateDiagram } from './generateDiagram';
 export { generateDrawioApplicationDiagram } from './drawioApplicationDiagram';
 export {
   generateDrawioArchitectureDiagram,
+  generateDrawioMultiAzDeploymentDataPaths,
   generateDrawioCfnDependencyGraph,
 } from './drawioInfrastructureDiagrams';
+export {
+  generateDiagramArchitectureDiagram,
+  generateDiagramMultiAzDeploymentDataPaths,
+} from './architectureDiagram';
 export type { ApplicationRelationKind } from './applicationRelations';
 export {
   extractApplicationRelations,

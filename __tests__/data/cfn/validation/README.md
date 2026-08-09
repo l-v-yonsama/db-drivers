@@ -48,29 +48,33 @@ LocalStackでは、実際のHTTP呼び出しやイベント配送を確認する
 
 ### 構成図をMarkdownで確認する
 
-db-notebookを起動せず、LocalStack上の5 Stackとローカルの`standard-web-application.yaml`から、それぞれ独立した構成図を生成できます。初回はビルドを行い、その後、各出力ディレクトリの`diagrams.md`をVS CodeのMarkdownプレビューで開くか、draw.ioファイルをdraw.io / diagrams.netで開いてください。
+db-notebookを起動せず、LocalStack上の5 Stackとローカルの`standard-web-application.yaml`から、それぞれ独立した構成図を生成できます。初回はビルドを行い、その後、各出力ディレクトリの3つのMarkdownファイルをVS CodeのMarkdownプレビューで開くか、draw.ioファイルをdraw.io / diagrams.netで開いてください。
 
 ```sh
 cd /path/to/db-drivers
 npm run diagram:cfn:localstack
 ```
 
-接続先、Region、認証情報、入力、出力先はテスト用の固定値です。`ApplicationDiagram`、`ArchitectureDiagram`、`CfnDependencyGraph`の3種類を1ファイルに出力します。
+接続先、Region、認証情報、入力、出力先はテスト用の固定値です。`ApplicationDiagram`、`MultiAzDeploymentDataPaths`、`CfnDependencyGraph`の3種類を、それぞれ独立したMarkdownファイルに出力します。
 
 同じコマンドで、ApplicationDiagramの編集可能なdraw.io XMLも出力します。draw.io側では、レイヤー、関係種別の色・線種、英語の凡例を確認できます。
 
 LocalStack上の5 Stackは次のファイルへ出力されます。
 
-- `misc/localstack-cfn-validation/diagrams.md`
+- `misc/localstack-cfn-validation/application.md`
+- `misc/localstack-cfn-validation/multi-az-deployment-data-paths.md`
+- `misc/localstack-cfn-validation/dependency-graph.md`
 - `misc/localstack-cfn-validation/application.drawio`
-- `misc/localstack-cfn-validation/architecture.drawio`
+- `misc/localstack-cfn-validation/multi-az-deployment-data-paths.drawio`
 - `misc/localstack-cfn-validation/dependency-graph.drawio`
 
 標準Webテンプレート単独の構成図は次のファイルへ出力されます。
 
-- `misc/standard-web-application-cfn-validation/diagrams.md`
+- `misc/standard-web-application-cfn-validation/application.md`
+- `misc/standard-web-application-cfn-validation/multi-az-deployment-data-paths.md`
+- `misc/standard-web-application-cfn-validation/dependency-graph.md`
 - `misc/standard-web-application-cfn-validation/application.drawio`
-- `misc/standard-web-application-cfn-validation/architecture.drawio`
+- `misc/standard-web-application-cfn-validation/multi-az-deployment-data-paths.drawio`
 - `misc/standard-web-application-cfn-validation/dependency-graph.drawio`
 
 ### 既にStackが存在する場合

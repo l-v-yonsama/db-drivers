@@ -17,7 +17,7 @@ export const sanitizeAwsType = (s: string): string => {
  * neighbors rather than wrapping, so keeping it short matters more here than it does on
  * `group` labels, which do get more room.
  */
-const shortResourceTypeName = (type: string): string => {
+export const shortResourceTypeName = (type: string): string => {
   const withoutGenericParam = type.split('<')[0];
   const segments = withoutGenericParam.split('::');
   return segments[segments.length - 1] || type;
@@ -34,7 +34,8 @@ export const resourceServiceLabel = (
   logicalId: string,
   type: string,
   iconStr: string,
-): string => (iconStr ? logicalId : `${logicalId} ${shortResourceTypeName(type)}`);
+): string =>
+  iconStr ? logicalId : `${logicalId} ${shortResourceTypeName(type)}`;
 
 export const getCidrBlock = (properties?: Record<string, Refable>): string => {
   if (!properties || !properties.CidrBlock) {

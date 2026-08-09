@@ -5,8 +5,12 @@ import {
   GenerateDiagramParams,
 } from '../../types';
 import { parseDiagramFiles } from './diagramFileModel';
-import { getCfnIconString } from './icons';
-import { getCidrBlock, resourceServiceLabel } from './naming';
+import {
+  escapeMermaidLabel,
+  mermaidCompactLegendLabel,
+  mermaidTextCardLabel,
+} from './mermaidFlowchart';
+import { shortResourceTypeName } from './naming';
 import { isFocusParameterOrOutput, isFocusResourceType } from './viewpoints';
 
 type RenderOptions = {
@@ -16,36 +20,32 @@ type RenderOptions = {
   auxiliaryTreatment: AuxiliaryResourceTreatment;
 };
 
-const dependencyEdgePorts: Record<
-  NonNullable<DiagramFile['dependencies'][number]['to']['via']>,
-  { from: 'L' | 'R' | 'T' | 'B'; to: 'L' | 'R' | 'T' | 'B' }
+type DependencyKind = NonNullable<
+  DiagramFile['dependencies'][number]['to']['via']
+>;
+
+const dependencyStyle: Record<
+  DependencyKind,
+  {
+    color: string;
+    width: number;
+    dashed: boolean;
+  }
 > = {
-  Ref: { from: 'L', to: 'R' },
-  GetAtt: { from: 'B', to: 'T' },
-  DependsOn: { from: 'R', to: 'L' },
-  ImportValue: { from: 'T', to: 'B' },
+  Ref: { color: '#2563eb', width: 2, dashed: false },
+  GetAtt: { color: '#059669', width: 2, dashed: true },
+  DependsOn: { color: '#6b7280', width: 2, dashed: true },
+  ImportValue: { color: '#7c3aed', width: 3, dashed: false },
 };
 
-/** Which logical/pseudo ids (resources, and - unless viewpoint is CloudFormationView -
- * every Parameter/Output id) count as "auxiliary" for this file under the active viewpoint,
- * plus (only when auxiliaryTreatment is 'MergeIntoLabel') what to fold onto each focus
- * resource's label on their behalf. See classifyDiagramFile(). */
 type ResourceClassification = {
   auxiliaryIds: ReadonlySet<string>;
   mergedAnnotationsByFocusId: ReadonlyMap<string, string[]>;
 };
 
 /**
- * Renders `CfnDependencyGraph` mode: every template becomes its own group, every *focus*
- * resource in it (see viewpoints.ts) becomes a `service` node (icon + label chosen by
- * resource Type - see getCfnIconString / resourceServiceLabel), and every dependency edge
- * parseDiagramFiles found between two focus resources becomes an arrow. Anything classified
- * *auxiliary* for the active viewpoint is folded in, set aside, or dropped instead, per
- * `auxiliaryTreatment` - see classifyDiagramFile() and AuxiliaryResourceTreatment. With
- * viewpoint 'CloudFormationView' there is no focus/auxiliary distinction at all, so this is
- * "list what's here and how it points at itself" with nothing left out - see
- * architectureDiagram.ts for the VPC-aware alternative that instead places resources inside
- * the network topology they actually belong to.
+ * Renders CloudFormation dependencies as a styled flowchart. Text cards make resource types
+ * visible without external icon-pack registration, while every edge states its dependency kind.
  */
 export const generateDiagramCfnDependencyGraph = (
   params: GenerateDiagramParams,
@@ -57,38 +57,71 @@ export const generateDiagramCfnDependencyGraph = (
     viewpoint: params.viewpoint ?? 'ApplicationView',
     auxiliaryTreatment: params.auxiliaryTreatment ?? 'MergeIntoLabel',
   };
+  const classifications = new Map(
+    diagramFiles.map((file) => [
+      file.fileIndex,
+      classifyDiagramFile(file, options),
+    ]),
+  );
+  const contents = ['```mermaid', 'flowchart TB'];
 
-  const contents: string[] = [];
-  contents.push('```mermaid');
-  contents.push('architecture-beta');
-  if (params.options?.includeLegend !== false) {
-    contents.push('  %% architecture-beta does not support edge colors or line styles. The legend uses port direction instead.');
-    contents.push('  group dependencyLegend[Dependency_Legend]');
-    contents.push('  service dependencyRef(cloud)[Ref_left_to_right] in dependencyLegend');
-    contents.push('  service dependencyGetAtt(cloud)[GetAtt_bottom_to_top] in dependencyLegend');
-    contents.push('  service dependencyDependsOn(cloud)[DependsOn_right_to_left] in dependencyLegend');
-    contents.push('  service dependencyImportValue(cloud)[ImportValue_top_to_bottom] in dependencyLegend');
-  }
   diagramFiles.forEach((diagramFile) => {
-    renderDiagramFileGroup(contents, diagramFile, diagramFiles, options);
+    renderDiagramFileGroup(
+      contents,
+      diagramFile,
+      options,
+      classifications.get(diagramFile.fileIndex) as ResourceClassification,
+    );
   });
 
+  const edgeStyles: string[] = [];
+  diagramFiles.forEach((diagramFile) => {
+    renderDependencyEdges(
+      contents,
+      edgeStyles,
+      diagramFile,
+      diagramFiles,
+      options,
+      classifications,
+    );
+  });
+  contents.push(...edgeStyles);
+
+  if (params.options?.includeLegend !== false && edgeStyles.length > 0) {
+    contents.push('  subgraph dependency_legend["Dependency types"]');
+    contents.push(
+      `    dependency_legend_card["${mermaidCompactLegendLabel('Edge styles', [
+        'Blue: Ref',
+        'Green dashed: GetAtt',
+        'Gray dashed: DependsOn',
+        'Purple thick: ImportValue',
+      ])}"]:::legendNode`,
+    );
+    contents.push('  end');
+    contents.push(
+      '  style dependency_legend fill:#f8fafc,stroke:#94a3b8,stroke-dasharray:4 3',
+    );
+  }
+
+  contents.push(
+    '  classDef resourceNode fill:#ffffff,stroke:#2563eb,color:#0f172a,stroke-width:1px',
+  );
+  contents.push(
+    '  classDef supportingNode fill:#f8fafc,stroke:#64748b,color:#334155,stroke-dasharray:4 3',
+  );
+  contents.push(
+    '  classDef parameterNode fill:#fff7ed,stroke:#ea580c,color:#7c2d12',
+  );
+  contents.push(
+    '  classDef outputNode fill:#f0fdf4,stroke:#16a34a,color:#14532d',
+  );
+  contents.push(
+    '  classDef legendNode fill:#ffffff,stroke:#94a3b8,color:#334155,font-size:11px',
+  );
   contents.push('```');
   return contents.join('\n');
 };
 
-/** Classifies every resource/parameter/output in this file as focus-or-auxiliary for
- * `options.viewpoint` (everything is focus under 'CloudFormationView' - see
- * isFocusResourceType/isFocusParameterOrOutput), then - only when `auxiliaryTreatment` is
- * 'MergeIntoLabel' - walks every dependency edge once to work out what each auxiliary id
- * should be folded onto: an edge with exactly one auxiliary endpoint donates that endpoint's
- * id as an annotation on the *other* (focus) endpoint's label; an edge where both ends are
- * focus needs no folding (it renders as a normal arrow instead - see renderDependencyEdges),
- * and one where both ends are auxiliary has no focus endpoint to fold onto, so it - and both
- * resources, if they have no other edge to a focus resource either - simply don't appear
- * anywhere. That last case is a known, accepted gap: an auxiliary resource with no relationship
- * recorded to anything focus-worthy has nowhere to surface at all under MergeIntoLabel
- * (switching to 'SeparateGroup' or picking 'CloudFormationView' are the ways to still see it). */
 const classifyDiagramFile = (
   diagramFile: DiagramFile,
   options: RenderOptions,
@@ -98,12 +131,13 @@ const classifyDiagramFile = (
   if (options.viewpoint !== 'CloudFormationView') {
     diagramFile.resouces.forEach((logicalId) => {
       const { Type } = diagramFile.cfnTemplate.Resources[logicalId];
-      if (!isFocusResourceType(options.viewpoint, Type)) {
+      if (!isFocusResourceType(options.viewpoint, Type))
         auxiliaryIds.add(logicalId);
-      }
     });
     if (!isFocusParameterOrOutput(options.viewpoint)) {
-      diagramFile.parameters.forEach((logicalId) => auxiliaryIds.add(logicalId));
+      diagramFile.parameters.forEach((logicalId) =>
+        auxiliaryIds.add(logicalId),
+      );
       if (options.includeOutputs) {
         diagramFile.outputs.forEach((output) => auxiliaryIds.add(output.id));
       }
@@ -113,48 +147,32 @@ const classifyDiagramFile = (
   const mergedAnnotationsByFocusId = new Map<string, string[]>();
   if (options.auxiliaryTreatment === 'MergeIntoLabel') {
     diagramFile.dependencies.forEach(({ from, to }) => {
-      // Cross-stack endpoints belong to another classification/label namespace. They render
-      // as ordinary edges when both endpoints are focus, but are never folded into this
-      // stack's labels.
-      if (to.fileIndex !== undefined && to.fileIndex !== diagramFile.fileIndex) {
+      if (to.fileIndex !== undefined && to.fileIndex !== diagramFile.fileIndex)
         return;
-      }
       const fromIsAuxiliary = auxiliaryIds.has(from);
       const toIsAuxiliary = auxiliaryIds.has(to.logicalId);
-      if (fromIsAuxiliary === toIsAuxiliary) {
-        return; // both focus (renders as a normal arrow) or both auxiliary (nowhere to fold onto)
-      }
+      if (fromIsAuxiliary === toIsAuxiliary) return;
       const focusId = fromIsAuxiliary ? to.logicalId : from;
       const auxiliaryId = fromIsAuxiliary ? from : to.logicalId;
       const annotations = mergedAnnotationsByFocusId.get(focusId) ?? [];
-      annotations.push(`with_${auxiliaryId}`);
+      annotations.push(auxiliaryId);
       mergedAnnotationsByFocusId.set(focusId, annotations);
     });
   }
-
   return { auxiliaryIds, mergedAnnotationsByFocusId };
 };
 
-/** One template's whole group section: its header, resource/supporting/parameter/output
- * nodes, and its dependency edges. */
 const renderDiagramFileGroup = (
   contents: string[],
   diagramFile: DiagramFile,
-  allDiagramFiles: DiagramFile[],
   options: RenderOptions,
+  classification: ResourceClassification,
 ): void => {
-  const fileIndexName = `f${diagramFile.fileIndex}`;
-  const resourcesGroupId = `${fileIndexName}_resources`;
-  const parametersGroupId = `${fileIndexName}_parameters`;
-  const outputsGroupId = `${fileIndexName}_outputs`;
-  const supportingGroupId = `${fileIndexName}_supporting`;
-
-  const classification = classifyDiagramFile(diagramFile, options);
-  // Parameters/Outputs are all-or-nothing per viewpoint (see classifyDiagramFile) - unlike
-  // resources, there's no per-item focus/auxiliary split to check.
-  const parametersAndOutputsAreAuxiliary = options.viewpoint !== 'CloudFormationView';
-  const keepsAuxiliaryAsOwnNode = options.auxiliaryTreatment === 'SeparateGroup';
-
+  const prefix = `f${diagramFile.fileIndex}`;
+  const keepsAuxiliaryAsOwnNode =
+    options.auxiliaryTreatment === 'SeparateGroup';
+  const parametersAndOutputsAreAuxiliary =
+    options.viewpoint !== 'CloudFormationView';
   const hasParameters =
     options.includeParameters &&
     diagramFile.parameters.length > 0 &&
@@ -165,277 +183,187 @@ const renderDiagramFileGroup = (
     (!parametersAndOutputsAreAuxiliary || keepsAuxiliaryAsOwnNode);
   const hasSupporting =
     keepsAuxiliaryAsOwnNode &&
-    diagramFile.resouces.some((logicalId) => classification.auxiliaryIds.has(logicalId));
-
-  contents.push(`  %% --- ${diagramFile.fileName} ---`);
-  contents.push('');
+    diagramFile.resouces.some((logicalId) =>
+      classification.auxiliaryIds.has(logicalId),
+    );
 
   contents.push(
-    // The label ([...]) turned out to be just as unsafe as the id for a
-    // raw hyphenated stack name - architecture-beta's parser chokes on a
-    // bare "-" there too (its tokenizer reserves "-" for arrow syntax like
-    // "--" / "-->", it isn't free-form quoted text). So groupId
-    // (sanitizeLogicalId'd - hyphens become underscores) is used for both,
-    // same convention already used for CIDR blocks elsewhere in this file.
-    // The original, unsanitized name survives in the `%% ---` comment
-    // above (comments aren't tokenized, so hyphens are fine there).
-    `  group ${diagramFile.groupId}(logos:aws-cloudformation)[${diagramFile.groupId}]`,
+    `  subgraph ${diagramFile.groupId}["${escapeMermaidLabel(
+      diagramFile.fileName,
+    )}"]`,
   );
+  contents.push('    direction TB');
+  renderResourceGroup(contents, diagramFile, prefix, classification);
+  if (hasSupporting)
+    renderSupportingGroup(contents, diagramFile, prefix, classification);
+  if (hasParameters) renderParameterGroup(contents, diagramFile, prefix);
+  if (hasOutputs) renderOutputGroup(contents, diagramFile, prefix);
+  contents.push('  end');
   contents.push(
-    `  group ${resourcesGroupId}[Resources] in ${diagramFile.groupId}`,
+    `  style ${diagramFile.groupId} fill:#eff6ff,stroke:#2563eb,stroke-width:2px`,
   );
-  if (hasParameters) {
-    contents.push(
-      `  group ${parametersGroupId}[Parameters] in ${diagramFile.groupId}`,
-    );
-  }
-  if (hasOutputs) {
-    contents.push(
-      `  group ${outputsGroupId}[Outputs] in ${diagramFile.groupId}`,
-    );
-  }
-  if (hasSupporting) {
-    contents.push(
-      `  group ${supportingGroupId}[Supporting] in ${diagramFile.groupId}`,
-    );
-  }
-  contents.push('');
-
-  renderResourceNodes(contents, diagramFile, fileIndexName, resourcesGroupId, classification);
-
-  if (hasSupporting) {
-    renderSupportingResourceNodes(
-      contents,
-      diagramFile,
-      fileIndexName,
-      supportingGroupId,
-      classification,
-    );
-  }
-
-  if (hasParameters) {
-    renderParameterNodes(contents, diagramFile, fileIndexName, parametersGroupId);
-  }
-
-  if (hasOutputs) {
-    renderOutputNodes(contents, diagramFile, fileIndexName, outputsGroupId);
-  }
-
-  renderDependencyEdges(
-    contents,
-    diagramFile,
-    allDiagramFiles,
-    fileIndexName,
-    options,
-    classification,
-  );
-
-  contents.push('');
 };
 
-/** Every *focus* resource, in template order, under the Resources group - an auxiliary one
- * is skipped here regardless of treatment (MergeIntoLabel/Omit: it never gets a node of its
- * own at all; SeparateGroup: it gets one via renderSupportingResourceNodes instead). */
-const renderResourceNodes = (
+const renderResourceGroup = (
   contents: string[],
   diagramFile: DiagramFile,
-  fileIndexName: string,
-  resourcesGroupId: string,
+  prefix: string,
   classification: ResourceClassification,
 ): void => {
-  contents.push('  %% Resources');
+  const groupId = `${prefix}_resources`;
+  contents.push(`    subgraph ${groupId}["Resources"]`);
   diagramFile.resouces.forEach((logicalId) => {
-    if (classification.auxiliaryIds.has(logicalId)) {
-      return;
-    }
+    if (classification.auxiliaryIds.has(logicalId)) return;
     renderResourceNode(
       contents,
       diagramFile,
-      fileIndexName,
-      resourcesGroupId,
+      prefix,
       logicalId,
       classification,
+      'resourceNode',
     );
   });
-  contents.push('');
+  contents.push('    end');
+  contents.push(`    style ${groupId} fill:#ffffff,stroke:#93c5fd`);
 };
 
-/** Every *auxiliary* resource, relocated into its own "Supporting" group instead of being
- * folded into a focus label or dropped - only called when auxiliaryTreatment is
- * 'SeparateGroup'. Its node looks exactly like a normal resource node (same icon/label
- * logic); only which group it's placed `in` differs. */
-const renderSupportingResourceNodes = (
+const renderSupportingGroup = (
   contents: string[],
   diagramFile: DiagramFile,
-  fileIndexName: string,
-  supportingGroupId: string,
+  prefix: string,
   classification: ResourceClassification,
 ): void => {
-  contents.push('  %% Supporting resources (auxiliary for this viewpoint)');
+  const groupId = `${prefix}_supporting`;
+  contents.push(`    subgraph ${groupId}["Supporting"]`);
   diagramFile.resouces.forEach((logicalId) => {
-    if (!classification.auxiliaryIds.has(logicalId)) {
-      return;
-    }
+    if (!classification.auxiliaryIds.has(logicalId)) return;
     renderResourceNode(
       contents,
       diagramFile,
-      fileIndexName,
-      supportingGroupId,
+      prefix,
       logicalId,
       classification,
+      'supportingNode',
     );
   });
-  contents.push('');
+  contents.push('    end');
+  contents.push(
+    `    style ${groupId} fill:#f8fafc,stroke:#64748b,stroke-dasharray:4 3`,
+  );
 };
 
 const renderResourceNode = (
   contents: string[],
   diagramFile: DiagramFile,
-  fileIndexName: string,
-  groupId: string,
+  prefix: string,
   logicalId: string,
   classification: ResourceClassification,
+  className: 'resourceNode' | 'supportingNode',
 ): void => {
   const resource = diagramFile.cfnTemplate.Resources[logicalId];
-  const serviceId = `${fileIndexName}_${logicalId}`;
-  // Only ever non-empty when auxiliaryTreatment is 'MergeIntoLabel' - classifyDiagramFile()
-  // doesn't populate mergedAnnotationsByFocusId under any other treatment.
-  const mergedSuffix = mergedAnnotationSuffix(classification, logicalId);
-
-  switch (resource.Type) {
-    case 'AWS::EC2::VPC':
-      contents.push(
-        `  service ${serviceId}${getCfnIconString(
-          resource.Type,
-        )}[${logicalId} VPC_${getCidrBlock(
-          resource.Properties,
-        )}${mergedSuffix}] in ${groupId}`,
-      );
-      break;
-    case 'AWS::EC2::Subnet':
-      contents.push(
-        `  service ${serviceId}${getCfnIconString(
-          resource.Type,
-        )}[${logicalId} ${
-          resource.Properties?.MapPublicIpOnLaunch ? 'Public_' : ''
-        }Subnet_${getCidrBlock(resource.Properties)}${mergedSuffix}] in ${groupId}`,
-      );
-      break;
-    default: {
-      const iconStr = getCfnIconString(resource.Type);
-      contents.push(
-        `  service ${serviceId}${iconStr}[${resourceServiceLabel(
-          logicalId,
-          resource.Type,
-          iconStr,
-        )}${mergedSuffix}] in ${groupId}`,
-      );
-      break;
-    }
-  }
+  const annotations =
+    classification.mergedAnnotationsByFocusId.get(logicalId) ?? [];
+  const detail = [
+    shortResourceTypeName(resource.Type),
+    annotations.length > 0 ? `with ${annotations.join(', ')}` : undefined,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  contents.push(
+    `      ${prefix}_${logicalId}["${mermaidTextCardLabel(
+      logicalId,
+      detail,
+    )}"]:::${className}`,
+  );
 };
 
-const mergedAnnotationSuffix = (
-  classification: ResourceClassification,
-  logicalId: string,
-): string => {
-  const annotations = classification.mergedAnnotationsByFocusId.get(logicalId);
-  return annotations && annotations.length > 0 ? ` ${annotations.join(' ')}` : '';
-};
-
-const renderParameterNodes = (
+const renderParameterGroup = (
   contents: string[],
   diagramFile: DiagramFile,
-  fileIndexName: string,
-  parametersGroupId: string,
+  prefix: string,
 ): void => {
-  contents.push('  %% Parameters');
+  const groupId = `${prefix}_parameters`;
+  contents.push(`    subgraph ${groupId}["Parameters"]`);
   diagramFile.parameters.forEach((logicalId) => {
-    const serviceId = `${fileIndexName}_${logicalId}`;
     const parameter = diagramFile.cfnTemplate.Parameters[logicalId];
-    const iconStr = getCfnIconString(parameter.Type);
     contents.push(
-      `  service ${serviceId}${iconStr}[${resourceServiceLabel(
+      `      ${prefix}_${logicalId}["${mermaidTextCardLabel(
         logicalId,
-        parameter.Type,
-        iconStr,
-      )}] in ${parametersGroupId}`,
+        shortResourceTypeName(parameter.Type),
+      )}"]:::parameterNode`,
     );
   });
-  contents.push('');
+  contents.push('    end');
+  contents.push(`    style ${groupId} fill:#fff7ed,stroke:#ea580c`);
 };
 
-const renderOutputNodes = (
+const renderOutputGroup = (
   contents: string[],
   diagramFile: DiagramFile,
-  fileIndexName: string,
-  outputsGroupId: string,
+  prefix: string,
 ): void => {
-  contents.push('  %% Outputs');
+  const groupId = `${prefix}_outputs`;
+  contents.push(`    subgraph ${groupId}["Outputs"]`);
   diagramFile.outputs.forEach((output) => {
-    const serviceId = `${fileIndexName}_${output.id}`;
     contents.push(
-      `  service ${serviceId}[${output.export.name}] in ${outputsGroupId}`,
+      `      ${prefix}_${output.id}["${mermaidTextCardLabel(
+        output.id,
+        `Export: ${output.export.name}`,
+      )}"]:::outputNode`,
     );
   });
-  contents.push('');
+  contents.push('    end');
+  contents.push(`    style ${groupId} fill:#f0fdf4,stroke:#16a34a`);
 };
 
-/** An edge renders only when *both* endpoints are focus - true regardless of
- * auxiliaryTreatment (an edge with an auxiliary endpoint either got folded into a label
- * instead under 'MergeIntoLabel', or is explicitly not drawn for a 'SeparateGroup'/'Omit'
- * auxiliary resource) and trivially true for everyone under 'CloudFormationView' (nothing is
- * auxiliary there, so this is unfiltered - identical to how this function behaved before
- * viewpoints existed). */
 const renderDependencyEdges = (
   contents: string[],
+  edgeStyles: string[],
   diagramFile: DiagramFile,
   allDiagramFiles: DiagramFile[],
-  fileIndexName: string,
   options: RenderOptions,
-  classification: ResourceClassification,
+  classifications: ReadonlyMap<number, ResourceClassification>,
 ): void => {
-  contents.push('  %% Edges');
-  contents.push('  %% Dependency directions: Ref = L to R | GetAtt = B to T | DependsOn = R to L | ImportValue = T to B');
   diagramFile.dependencies.forEach(({ from, to }) => {
     const targetFileIndex = to.fileIndex ?? diagramFile.fileIndex;
-    const targetFile = allDiagramFiles[targetFileIndex];
-    const targetIsAuxiliary = targetFileIndex === diagramFile.fileIndex
-      ? classification.auxiliaryIds.has(to.logicalId)
-      : targetFile
-        ? !isFocusResourceType(
-            options.viewpoint,
-            targetFile.cfnTemplate.Resources[to.logicalId]?.Type ?? '',
-          )
-        : true;
+    const targetFile = allDiagramFiles.find(
+      (file) => file.fileIndex === targetFileIndex,
+    );
+    const sourceClassification = classifications.get(diagramFile.fileIndex);
+    const targetClassification = classifications.get(targetFileIndex);
     if (
-      classification.auxiliaryIds.has(from) ||
-      targetIsAuxiliary
-    ) {
+      !sourceClassification ||
+      !targetClassification ||
+      !targetFile ||
+      sourceClassification.auxiliaryIds.has(from) ||
+      targetClassification.auxiliaryIds.has(to.logicalId)
+    )
+      return;
+
+    if (
+      (to.kind === 'Parameters' && !options.includeParameters) ||
+      (to.kind === 'Outputs' && !options.includeOutputs)
+    )
+      return;
+    if (!['Resources', 'Parameters', 'Outputs'].includes(to.kind)) {
+      console.warn(`Unknown dependency kind: ${to.kind}`);
       return;
     }
 
-    const serviceFromId = `${fileIndexName}_${from}`;
-    const serviceToId = `f${targetFileIndex}_${to.logicalId}`;
-    const ports = dependencyEdgePorts[to.via ?? 'Ref'];
-    const edge = `  ${serviceFromId}:${ports.from} --> ${ports.to}:${serviceToId}`;
-    switch (to.kind) {
-      case 'Resources':
-        contents.push(edge);
-        break;
-      case 'Parameters':
-        if (options.includeParameters) {
-          contents.push(edge);
-        }
-        break;
-      case 'Outputs':
-        if (options.includeOutputs) {
-          contents.push(edge);
-        }
-        break;
-      default:
-        console.warn(`Unknown dependency kind: ${to.kind}`);
-        break;
-    }
+    const dependencyKind = to.via ?? 'Ref';
+    const style = dependencyStyle[dependencyKind];
+    const edge = style.dashed
+      ? '-.->'
+      : dependencyKind === 'ImportValue'
+      ? '==>'
+      : '-->';
+    contents.push(
+      `  f${diagramFile.fileIndex}_${from} ${edge}|"${dependencyKind}"| f${targetFileIndex}_${to.logicalId}`,
+    );
+    edgeStyles.push(
+      `  linkStyle ${edgeStyles.length} stroke:${style.color},stroke-width:${
+        style.width
+      }px${style.dashed ? ',stroke-dasharray:5 5' : ''}`,
+    );
   });
 };

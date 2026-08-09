@@ -234,7 +234,7 @@ export type DiagramFile = {
  * resources `CfnDependencyGraph` mode treats as "focus" vs "auxiliary" (see
  * utils/cfn/viewpoints.ts for the per-viewpoint resource-type tables, and
  * AuxiliaryResourceTreatment for what "auxiliary" actually does to the rendered diagram).
- * Not consulted by `ArchitectureDiagram` mode, which already only understands a small fixed
+ * Not consulted by `MultiAzDeploymentDataPaths` mode, which already understands a curated
  * set of network resource types regardless of who's asking.
  *
  * `CloudFormationView` is the one viewpoint with no focus/auxiliary distinction at all -
@@ -277,7 +277,12 @@ export type GenerateDiagramParams = {
     /** Optional AWS::Region/AWS::AccountId/etc. values used in exported names. */
     pseudoParameterValues?: Record<string, string>;
   }[];
-  mode: 'ApplicationDiagram' | 'CfnDependencyGraph' | 'ArchitectureDiagram';
+  mode:
+    | 'ApplicationDiagram'
+    | 'CfnDependencyGraph'
+    | 'MultiAzDeploymentDataPaths'
+    /** @deprecated Use MultiAzDeploymentDataPaths instead. */
+    | 'ArchitectureDiagram';
   /** Defaults to 'ApplicationView' when omitted. */
   viewpoint?: DiagramViewpoint;
   /** Defaults to 'MergeIntoLabel' when omitted. */

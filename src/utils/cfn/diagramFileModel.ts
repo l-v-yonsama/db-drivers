@@ -38,7 +38,7 @@ export const parseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] 
   diagramFiles.forEach((diagramFile) => {
     populateResourceDependencies(diagramFile);
     // Outputs are always retained in the internal model because ApplicationDiagram,
-    // ArchitectureDiagram, and cross-stack dependency resolution need their raw export names.
+    // MultiAzDeploymentDataPaths and cross-stack dependency resolution need raw export names.
     // Rendering remains controlled by options.includeOutputs.
     populateOutputs(diagramFile);
   });

@@ -11,8 +11,8 @@ const {
 const {
   generateDiagram,
   generateDrawioApplicationDiagram,
-  generateDrawioArchitectureDiagram,
   generateDrawioCfnDependencyGraph,
+  generateDrawioMultiAzDeploymentDataPaths,
   parseCfnYamlTemplate,
 } = require('../built/src');
 
@@ -112,39 +112,60 @@ const generateArtifactSet = ({
   outputDirectory,
 }) => {
   const application = generateDiagram({ list, mode: 'ApplicationDiagram' });
-  const architecture = generateDiagram({ list, mode: 'ArchitectureDiagram' });
+  const multiAzDeploymentDataPaths = generateDiagram({
+    list,
+    mode: 'MultiAzDeploymentDataPaths',
+  });
   const dependency = generateDiagram({
     list,
     mode: 'CfnDependencyGraph',
     viewpoint: 'CloudFormationView',
   });
 
-  const markdown = [
-    `# ${title}`,
-    '',
-    ...metadata,
-    '',
-    '## ApplicationDiagram',
-    '',
-    application,
-    '',
-    '## ArchitectureDiagram',
-    '',
-    architecture,
-    '',
-    '## CfnDependencyGraph',
-    '',
-    dependency,
-    '',
-  ].join('\n');
+  const markdownOutputs = [
+    {
+      fileName: 'application.md',
+      viewTitle: 'ApplicationDiagram',
+      diagram: application,
+    },
+    {
+      fileName: 'multi-az-deployment-data-paths.md',
+      viewTitle: 'Multi-AZ Deployment & Data Paths',
+      diagram: multiAzDeploymentDataPaths,
+    },
+    {
+      fileName: 'dependency-graph.md',
+      viewTitle: 'CfnDependencyGraph',
+      diagram: dependency,
+    },
+  ];
 
-  const outputFile = path.resolve(outputDirectory, 'diagrams.md');
   const drawioOutputFile = path.resolve(outputDirectory, 'application.drawio');
-  const architectureDrawioOutputFile = path.resolve(outputDirectory, 'architecture.drawio');
+  const multiAzDrawioOutputFile = path.resolve(
+    outputDirectory,
+    'multi-az-deployment-data-paths.drawio',
+  );
   const dependencyDrawioOutputFile = path.resolve(outputDirectory, 'dependency-graph.drawio');
   fs.mkdirSync(outputDirectory, { recursive: true });
-  fs.writeFileSync(outputFile, markdown, 'utf8');
-  console.log(`Generated: ${outputFile}`);
+  for (const { fileName, viewTitle, diagram } of markdownOutputs) {
+    const outputFile = path.resolve(outputDirectory, fileName);
+    const markdown = [
+      `# ${title}: ${viewTitle}`,
+      '',
+      ...metadata,
+      '',
+      diagram,
+      '',
+    ].join('\n');
+    fs.writeFileSync(outputFile, markdown, 'utf8');
+    console.log(`Generated: ${outputFile}`);
+  }
+
+  const legacyOutputFile = path.resolve(outputDirectory, 'diagrams.md');
+  if (fs.existsSync(legacyOutputFile)) {
+    fs.unlinkSync(legacyOutputFile);
+    console.log(`Removed legacy output: ${legacyOutputFile}`);
+  }
 
   fs.writeFileSync(drawioOutputFile, generateDrawioApplicationDiagram({
     list,
@@ -152,11 +173,11 @@ const generateArtifactSet = ({
   }), 'utf8');
   console.log(`Generated: ${drawioOutputFile}`);
 
-  fs.writeFileSync(architectureDrawioOutputFile, generateDrawioArchitectureDiagram({
+  fs.writeFileSync(multiAzDrawioOutputFile, generateDrawioMultiAzDeploymentDataPaths({
     list,
-    mode: 'ArchitectureDiagram',
+    mode: 'MultiAzDeploymentDataPaths',
   }), 'utf8');
-  console.log(`Generated: ${architectureDrawioOutputFile}`);
+  console.log(`Generated: ${multiAzDrawioOutputFile}`);
 
   fs.writeFileSync(dependencyDrawioOutputFile, generateDrawioCfnDependencyGraph({
     list,
@@ -167,6 +188,17 @@ const generateArtifactSet = ({
 };
 
 const main = async () => {
+  // The offline reference remains reproducible even when LocalStack is not running.
+  generateArtifactSet({
+    list: [getStandardWebTemplate()],
+    title: 'Standard web application CloudFormation validation diagrams',
+    metadata: [
+      `- Local template: \`${standardWebTemplate.fileName}\``,
+      '- Deployment: not deployed to LocalStack',
+    ],
+    outputDirectory: standardWebOutputDirectory,
+  });
+
   const localStackList = await getLocalStackTemplates();
   generateArtifactSet({
     list: localStackList,
@@ -176,16 +208,6 @@ const main = async () => {
       `- Stacks: ${stacks.map((stack) => `\`${stack}\``).join(', ')}`,
     ],
     outputDirectory: localStackOutputDirectory,
-  });
-
-  generateArtifactSet({
-    list: [getStandardWebTemplate()],
-    title: 'Standard web application CloudFormation validation diagrams',
-    metadata: [
-      `- Local template: \`${standardWebTemplate.fileName}\``,
-      '- Deployment: not deployed to LocalStack',
-    ],
-    outputDirectory: standardWebOutputDirectory,
   });
 };
 

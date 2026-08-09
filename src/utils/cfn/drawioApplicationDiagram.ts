@@ -1,6 +1,13 @@
 import { GenerateDiagramParams } from '../../types';
 import { parseDiagramFiles } from './diagramFileModel';
-import { drawioPage, drawioTemplatePage, pageLink, wrapDrawioPages } from './drawioXml';
+import {
+  drawioLineLegendCells,
+  drawioPage,
+  drawioTemplatePage,
+  pageLink,
+  wrapDrawioPages,
+  xmlEscape,
+} from './drawioXml';
 import {
   ApplicationRelationKind,
   extractApplicationRelations,
@@ -112,13 +119,6 @@ const edgeWaypoints = (
   ];
 };
 
-const xmlEscape = (value: string): string => value
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;')
-  .replace(/'/g, '&apos;');
-
 const visibleNodeTypes = new Set([
   'AWS::ApiGateway::Resource',
   'AWS::ApiGateway::Method',
@@ -158,7 +158,6 @@ export const generateDrawioApplicationDiagram = (
     }))
     .filter((relation) => relation.from !== relation.to);
   const ingressRoutes = getApplicationIngressRoutes(files);
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const labelCounts = new Map<string, number>();
   nodes.forEach((node) => labelCounts.set(node.label, (labelCounts.get(node.label) ?? 0) + 1));
 
@@ -210,23 +209,24 @@ export const generateDrawioApplicationDiagram = (
     return layerHeight(count, layerIndex);
   }));
   if (params.options?.includeLegend !== false) {
-    cells.push(
-      `<mxCell id="legend" value="Relationship types" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=#f8fafc;strokeColor=#94a3b8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="${legendY}" width="1100" height="145" as="geometry"/></mxCell>`,
-    );
     const legendItems: [string, string, ApplicationRelationKind][] = [
-      ['legend_runtime', 'Blue solid: Runtime call', 'runtime-call'],
-      ['legend_event', 'Orange dashed: Event delivery', 'event-delivery'],
-      ['legend_access', 'Green solid: Data access', 'data-access'],
-      ['legend_network', 'Cyan dashed: Network route', 'network-route'],
+      ['Runtime', 'Runtime call', 'runtime-call'],
+      ['Event', 'Event delivery', 'event-delivery'],
+      ['Access', 'Data access', 'data-access'],
+      ['Network', 'Network route', 'network-route'],
     ];
-    legendItems.forEach(([id, label, kind], index) => {
-      const style = relationStyles[kind];
-      cells.push(
-        `<mxCell id="${id}" value="${label}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=${style.color};strokeWidth=${style.width};${style.dashed ? 'dashed=1;dashPattern=8 8;' : ''}" vertex="1" parent="legend"><mxGeometry x="15" y="45" width="205" height="65" as="geometry"/></mxCell>`,
-      );
-      // Move all legend entries horizontally inside the group.
-      cells[cells.length - 1] = cells[cells.length - 1].replace('x="15"', `x="${15 + index * 215}"`);
-    });
+    cells.push(...drawioLineLegendCells({
+      title: 'Relationship types',
+      x: 40,
+      y: legendY,
+      width: 1100,
+      jumpSize: 8,
+      items: legendItems.map(([id, label, kind]) => ({
+        id,
+        label,
+        ...relationStyles[kind],
+      })),
+    }));
   }
 
   relations.forEach((relation, index) => {

@@ -253,7 +253,8 @@ const relationFor = (
   if (sourceType === 'AWS::StepFunctions::StateMachine') {
     return { kind: 'runtime-call', label: 'runs' };
   }
-  if (sourceType === 'AWS::Lambda::Function' && layerOf(targetType) === 'data') {
+  if ((sourceType === 'AWS::Lambda::Function' || sourceType === 'AWS::ECS::TaskDefinition') &&
+      layerOf(targetType) === 'data') {
     return { kind: 'data-access', label: 'accesses' };
   }
   return undefined;
