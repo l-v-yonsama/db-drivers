@@ -53,6 +53,7 @@
     "lint:fix": "eslint --fix . --ext .ts --ext .mts",
     "examples:cw": "npm run build && node built/src/examples/cw.js",
     "examples:cfn": "npm run build && node built/src/examples/cfn.js",
+    "examples:cfn-diagrams": "npm run build && node built/src/examples/cfn/generateDiagrams.js",
     "examples:dynamo": "npm run build && node built/src/examples/dynamo.js",
     "examples:memcached": "npm run build && node built/src/examples/memcached.js --detectOpenHandles",
     "examples:mysql": "npm run build && node built/src/examples/mysql.js",

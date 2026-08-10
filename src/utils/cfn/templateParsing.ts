@@ -35,6 +35,10 @@ const CFN_SEQ_TAGS = [
   '!Select',
   '!Split',
   '!Join',
+  // !Sub also has a 2-element sequence form ([template, variables]) alongside the plain
+  // scalar form already covered by CFN_TAGS above - both need registering since js-yaml
+  // dispatches on tag+kind together.
+  '!Sub',
 ];
 
 /**
