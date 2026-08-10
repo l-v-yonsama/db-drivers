@@ -7,10 +7,13 @@
 | `vpc-foundation.yaml` | VPC / AZ / Public・Private Subnet / IGW / Export |
 | `api-application.yaml` | API Gateway → Lambda → DynamoDB、`Fn::Sub`、IAM補助リソース |
 | `events-and-dlq.yaml` | EventBridge → Lambda、SQS → DLQ |
-| `standard-web-application.yaml` | Route Tableで分類するPublic/Private/Isolated Subnet、AZごとのNAT、ALB → ECS/Fargate、RDS DB Subnet Group、SQS → Lambda |
+| `standard-web-application.yaml` | Route Tableで分類するPublic/Private/Isolated Subnet、AZごとのNAT、Regional WAF → ALB → ECS/Fargate、RDS DB Subnet Group、SQS → Lambda |
+| `waf-alb-application.yaml` | 関連付け済みAWS WAF → ALB、未関連付けWeb ACLのApplicationDiagram除外 |
 | `shared-data.yaml` / `shared-data-consumer.yaml` | ハイフンと`Fn::Sub`、実Stack Parameter値を使うクロスStack Export / ImportValue |
 
-`standard-web-application.yaml`は、一般的なAWS構成の図解精度を確認するローカルのテスト用CFnテンプレートです。現在のLocalStack構成ではECS、RDS、ELBv2を有効化していないため、再作成対象には含めません。構成図生成時にはローカルファイルから読み込み、5つのLocalStack Stackとは別の構成図として保存します。
+`standard-web-application.yaml`は、一般的なAWS構成の図解精度を確認するローカルのテスト用CFnテンプレートです。Regional WAFはVPC外へ配置し、関連付け先ALBへの赤い`protects`エッジとして表示します。現在のLocalStack構成ではWAF、ECS、RDS、ELBv2を有効化していないため、再作成対象には含めません。構成図生成時にはローカルファイルから読み込み、5つのLocalStack Stackとは別の構成図として保存します。
+
+`waf-alb-application.yaml`は、MIT-0ライセンスの[AWS sample amazon-cloudfront-waf-secretsmanager](https://github.com/aws-samples/amazon-cloudfront-waf-secretsmanager)と[AWS Security Blog](https://aws.amazon.com/blogs/security/how-to-enhance-amazon-cloudfront-origin-security-with-aws-waf-and-aws-secrets-manager/)を参照し、WAFとALBの意味関係だけを残した縮約・改変fixtureです。`AWS::WAFv2::WebACLAssociation`から関連付け済みWeb ACLとALBを解決できること、および未関連付けWeb ACLをApplicationDiagramに表示しないことを単体テストで確認します。外部アーティファクトやLambdaコードは含まず、デプロイ検証の対象にはしません。
 
 `shared-data.yaml`と`shared-data-consumer.yaml`は、実StackのParameter値を含むクロスStack参照を検証するため、LocalStackの再作成対象に含めます。producerを先に、consumerを`DataStack=cfn-diagram-validation-shared-data`で作成します。
 
@@ -48,34 +51,43 @@ LocalStackでは、実際のHTTP呼び出しやイベント配送を確認する
 
 ### 構成図をMarkdownで確認する
 
-db-notebookを起動せず、LocalStack上の5 Stackとローカルの`standard-web-application.yaml`から、それぞれ独立した構成図を生成できます。初回はビルドを行い、その後、各出力ディレクトリの3つのMarkdownファイルをVS CodeのMarkdownプレビューで開くか、draw.ioファイルをdraw.io / diagrams.netで開いてください。
+db-notebookを起動せず、LocalStack上の5 Stackとローカルの`standard-web-application.yaml`、`waf-alb-application.yaml`から、それぞれ独立した構成図を生成できます。初回はビルドを行い、その後、各出力ディレクトリの3つのMarkdownファイルをVS CodeのMarkdownプレビューで開くか、draw.ioファイルをdraw.io / diagrams.netで開いてください。
 
 ```sh
 cd /path/to/db-drivers
 npm run diagram:cfn:localstack
 ```
 
-接続先、Region、認証情報、入力、出力先はテスト用の固定値です。`ApplicationDiagram`、`MultiAzDeploymentDataPaths`、`CfnDependencyGraph`の3種類を、それぞれ独立したMarkdownファイルに出力します。
+接続先、Region、認証情報、入力、出力先はテスト用の固定値です。`ApplicationDiagram`、`MultiAzDeploymentTrafficPathsAndProtection`、`CfnDependencyGraph`の3種類を、それぞれ独立したMarkdownファイルに出力します。
 
 同じコマンドで、ApplicationDiagramの編集可能なdraw.io XMLも出力します。draw.io側では、レイヤー、関係種別の色・線種、英語の凡例を確認できます。
 
 LocalStack上の5 Stackは次のファイルへ出力されます。
 
 - `misc/localstack-cfn-validation/application.md`
-- `misc/localstack-cfn-validation/multi-az-deployment-data-paths.md`
+- `misc/localstack-cfn-validation/multi-az-deployment-traffic-paths-and-protection.md`
 - `misc/localstack-cfn-validation/dependency-graph.md`
 - `misc/localstack-cfn-validation/application.drawio`
-- `misc/localstack-cfn-validation/multi-az-deployment-data-paths.drawio`
+- `misc/localstack-cfn-validation/multi-az-deployment-traffic-paths-and-protection.drawio`
 - `misc/localstack-cfn-validation/dependency-graph.drawio`
 
 標準Webテンプレート単独の構成図は次のファイルへ出力されます。
 
 - `misc/standard-web-application-cfn-validation/application.md`
-- `misc/standard-web-application-cfn-validation/multi-az-deployment-data-paths.md`
+- `misc/standard-web-application-cfn-validation/multi-az-deployment-traffic-paths-and-protection.md`
 - `misc/standard-web-application-cfn-validation/dependency-graph.md`
 - `misc/standard-web-application-cfn-validation/application.drawio`
-- `misc/standard-web-application-cfn-validation/multi-az-deployment-data-paths.drawio`
+- `misc/standard-web-application-cfn-validation/multi-az-deployment-traffic-paths-and-protection.drawio`
 - `misc/standard-web-application-cfn-validation/dependency-graph.drawio`
+
+WAF・ALBテンプレート単独の構成図は次のファイルへ出力されます。
+
+- `misc/waf-alb-application-cfn-validation/application.md`
+- `misc/waf-alb-application-cfn-validation/multi-az-deployment-traffic-paths-and-protection.md`
+- `misc/waf-alb-application-cfn-validation/dependency-graph.md`
+- `misc/waf-alb-application-cfn-validation/application.drawio`
+- `misc/waf-alb-application-cfn-validation/multi-az-deployment-traffic-paths-and-protection.drawio`
+- `misc/waf-alb-application-cfn-validation/dependency-graph.drawio`
 
 ### 既にStackが存在する場合
 

@@ -32,6 +32,7 @@ const relationStyle: Record<
   'data-read': { color: '#059669', width: 2, edge: '-->' },
   'data-write': { color: '#7c3aed', width: 3, edge: '==>' },
   'network-route': { color: '#0891b2', width: 2, edge: '-.->' },
+  'security-protection': { color: '#dc2626', width: 2, edge: '-->' },
 };
 
 /** Renders the user-facing application flow. Unlike CfnDependencyGraph, this intentionally
@@ -153,6 +154,7 @@ export const generateDiagramApplicationDiagram = (
         'Orange dashed: event',
         'Green/purple solid: data',
         'Cyan dashed: network',
+        'Red solid: security',
       ])}"]`,
     );
     contents.push('  end');

@@ -5,44 +5,45 @@ import {
   getApplicationIngressRoutes,
   getApplicationNodes,
 } from './applicationRelations';
-import { CfnArchitectureDiagramStructure } from './architectureTopology';
+import { CfnDeploymentTopologyStructure } from './deploymentTopology';
 import { parseRefValue } from './intrinsics';
 
-export type DeploymentPathKind =
+export type TrafficProtectionPathKind =
   | 'client-request-response'
   | 'egress-return'
   | 'event-delivery'
-  | 'data-access';
+  | 'data-access'
+  | 'security-protection';
 
-export type DeploymentPathEndpoint = {
+export type TrafficProtectionPathEndpoint = {
   id: string;
   fileIndex: number;
   logicalId: string;
 };
 
-export type DeploymentPathNode = {
-  endpoint: DeploymentPathEndpoint;
+export type TrafficProtectionPathNode = {
+  endpoint: TrafficProtectionPathEndpoint;
   type: string;
   label: string;
 };
 
-export type DeploymentSemanticPath = {
-  from: DeploymentPathEndpoint;
-  to: DeploymentPathEndpoint;
-  kind: DeploymentPathKind;
+export type TrafficProtectionPath = {
+  from: TrafficProtectionPathEndpoint;
+  to: TrafficProtectionPathEndpoint;
+  kind: TrafficProtectionPathKind;
   label: string;
   bidirectional: boolean;
 };
 
-export type MultiAzDeploymentDataPaths = {
-  regionalNodes: DeploymentPathNode[];
-  paths: DeploymentSemanticPath[];
+export type MultiAzDeploymentTrafficPathsAndProtection = {
+  regionalNodes: TrafficProtectionPathNode[];
+  paths: TrafficProtectionPath[];
 };
 
-type TopologyVpc = CfnArchitectureDiagramStructure['vpcs'][number];
+type TopologyVpc = CfnDeploymentTopologyStructure['vpcs'][number];
 type TopologySubnet = TopologyVpc['availabilityZones'][number]['subnets'][number];
 
-export const internetEndpoint: DeploymentPathEndpoint = {
+export const internetEndpoint: TrafficProtectionPathEndpoint = {
   id: 'internet',
   fileIndex: -1,
   logicalId: 'internet',
@@ -51,7 +52,7 @@ export const internetEndpoint: DeploymentPathEndpoint = {
 export const resourceEndpoint = (
   fileIndex: number,
   logicalId: string,
-): DeploymentPathEndpoint => ({
+): TrafficProtectionPathEndpoint => ({
   id: `f${fileIndex}_${logicalId}`,
   fileIndex,
   logicalId,
@@ -61,29 +62,29 @@ const nodeFromResource = (
   file: DiagramFile,
   logicalId: string,
   resource: TemplateResource,
-): DeploymentPathNode => ({
+): TrafficProtectionPathNode => ({
   endpoint: resourceEndpoint(file.fileIndex, logicalId),
   type: resource.Type,
   label: logicalId,
 });
 
-const applicationEndpoint = (node: ApplicationNode): DeploymentPathEndpoint =>
+const applicationEndpoint = (node: ApplicationNode): TrafficProtectionPathEndpoint =>
   resourceEndpoint(node.fileIndex, node.logicalId);
 
 /**
  * Builds the semantic paths consumed by both Mermaid and draw.io. The renderers decide where
  * nodes are placed, but they do not independently infer network or application relationships.
  */
-export const buildMultiAzDeploymentDataPaths = (
+export const buildMultiAzDeploymentTrafficPathsAndProtection = (
   files: DiagramFile[],
-  structure = new CfnArchitectureDiagramStructure(files),
-): MultiAzDeploymentDataPaths => {
-  const paths: DeploymentSemanticPath[] = [];
+  structure = new CfnDeploymentTopologyStructure(files),
+): MultiAzDeploymentTrafficPathsAndProtection => {
+  const paths: TrafficProtectionPath[] = [];
   const pathKeys = new Set<string>();
   const addPath = (
-    from: DeploymentPathEndpoint,
-    to: DeploymentPathEndpoint,
-    kind: DeploymentPathKind,
+    from: TrafficProtectionPathEndpoint,
+    to: TrafficProtectionPathEndpoint,
+    kind: TrafficProtectionPathKind,
     label: string,
     bidirectional: boolean,
   ): void => {
@@ -94,7 +95,7 @@ export const buildMultiAzDeploymentDataPaths = (
   };
 
   const topologyNodeIds = collectTopologyNodeIds(structure);
-  const nodeCandidates = new Map<string, DeploymentPathNode>();
+  const nodeCandidates = new Map<string, TrafficProtectionPathNode>();
   files.forEach((file) => Object.entries(file.cfnTemplate.Resources)
     .forEach(([logicalId, resource]) => {
       const node = nodeFromResource(file, logicalId, resource);
@@ -210,6 +211,20 @@ export const buildMultiAzDeploymentDataPaths = (
     }));
 
   applicationRelations.forEach((relation) => {
+    if (relation.kind === 'security-protection') {
+      const from = applicationNodeById.get(relation.from);
+      const to = applicationNodeById.get(relation.to);
+      if (from && to && topologyNodeIds.has(to.id)) {
+        addPath(
+          applicationEndpoint(from),
+          applicationEndpoint(to),
+          'security-protection',
+          relation.label,
+          false,
+        );
+      }
+      return;
+    }
     if (relation.kind === 'event-delivery') {
       if (eventMappingPairs.has(`${relation.from}:${relation.to}`)) return;
       const from = applicationNodeById.get(relation.from);
@@ -254,11 +269,11 @@ export const buildMultiAzDeploymentDataPaths = (
 
 const addClientPaths = (
   vpc: TopologyVpc,
-  structure: CfnArchitectureDiagramStructure,
+  structure: CfnDeploymentTopologyStructure,
   addPath: (
-    from: DeploymentPathEndpoint,
-    to: DeploymentPathEndpoint,
-    kind: DeploymentPathKind,
+    from: TrafficProtectionPathEndpoint,
+    to: TrafficProtectionPathEndpoint,
+    kind: TrafficProtectionPathKind,
     label: string,
     bidirectional: boolean,
   ) => void,
@@ -279,7 +294,7 @@ const addClientPaths = (
 
     const renderedTargetGroups = new Set<string>();
     const addTargetGroupPaths = (
-      from: DeploymentPathEndpoint,
+      from: TrafficProtectionPathEndpoint,
       targetGroups: typeof loadBalancer.targetGroups,
     ): void => targetGroups.forEach((targetGroup) => {
       const targetGroupEndpoint = resourceEndpoint(
@@ -334,9 +349,9 @@ const addClientPaths = (
 const addEgressPaths = (
   vpc: TopologyVpc,
   addPath: (
-    from: DeploymentPathEndpoint,
-    to: DeploymentPathEndpoint,
-    kind: DeploymentPathKind,
+    from: TrafficProtectionPathEndpoint,
+    to: TrafficProtectionPathEndpoint,
+    kind: TrafficProtectionPathKind,
     label: string,
     bidirectional: boolean,
   ) => void,
@@ -412,7 +427,7 @@ const collectServicesByTaskDefinition = (
 };
 
 const collectTopologyNodeIds = (
-  structure: CfnArchitectureDiagramStructure,
+  structure: CfnDeploymentTopologyStructure,
 ): Set<string> => {
   const ids = new Set<string>();
   structure.vpcs.forEach((vpc) => {

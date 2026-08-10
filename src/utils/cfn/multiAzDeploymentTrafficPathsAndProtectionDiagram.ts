@@ -1,12 +1,12 @@
 import { GenerateDiagramParams } from '../../types';
-import { CfnArchitectureDiagramStructure } from './architectureTopology';
+import { CfnDeploymentTopologyStructure } from './deploymentTopology';
 import { parseDiagramFiles } from './diagramFileModel';
 import {
-  buildMultiAzDeploymentDataPaths,
-  DeploymentPathEndpoint,
-  DeploymentPathKind,
+  buildMultiAzDeploymentTrafficPathsAndProtection,
+  TrafficProtectionPathEndpoint,
+  TrafficProtectionPathKind,
   internetEndpoint,
-} from './multiAzDeploymentDataPaths';
+} from './multiAzDeploymentTrafficPathsAndProtection';
 import {
   escapeMermaidLabel,
   mermaidCompactLegendLabel,
@@ -14,15 +14,15 @@ import {
 } from './mermaidFlowchart';
 import { shortResourceTypeName } from './naming';
 
-type Vpc = CfnArchitectureDiagramStructure['vpcs'][number];
+type Vpc = CfnDeploymentTopologyStructure['vpcs'][number];
 type AvailabilityZone = Vpc['availabilityZones'][number];
 type Subnet = AvailabilityZone['subnets'][number];
 type StandaloneResource =
-  CfnArchitectureDiagramStructure['standaloneResources'][number];
-type DataPaths = ReturnType<typeof buildMultiAzDeploymentDataPaths>;
+  CfnDeploymentTopologyStructure['standaloneResources'][number];
+type TrafficPathsAndProtection = ReturnType<typeof buildMultiAzDeploymentTrafficPathsAndProtection>;
 
 const pathStyle: Record<
-  DeploymentPathKind,
+  TrafficProtectionPathKind,
   {
     color: string;
     width: number;
@@ -33,6 +33,7 @@ const pathStyle: Record<
   'egress-return': { color: '#0891b2', width: 2, dashed: true },
   'event-delivery': { color: '#d97706', width: 2, dashed: true },
   'data-access': { color: '#059669', width: 2, dashed: false },
+  'security-protection': { color: '#dc2626', width: 2, dashed: false },
 };
 
 const vpcId = (vpc: Vpc): string => `f${vpc.fileIndex}_vpc_${vpc.logicalId}`;
@@ -69,17 +70,17 @@ const displayAvailabilityZone = (value: string): string =>
  * Renders the deployment topology and proven runtime paths as a preview-stable flowchart.
  * Quoted labels retain CIDRs/AZ names and text cards deliberately avoid external icon packs.
  */
-export const generateDiagramMultiAzDeploymentDataPaths = (
+export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
   params: GenerateDiagramParams,
 ): string => {
   const diagramFiles = parseDiagramFiles({
     ...params,
     options: { includeOutputs: true, includeParameters: true },
   });
-  const structure = new CfnArchitectureDiagramStructure(diagramFiles);
-  const dataPaths = buildMultiAzDeploymentDataPaths(diagramFiles, structure);
+  const structure = new CfnDeploymentTopologyStructure(diagramFiles);
+  const trafficPathsAndProtection = buildMultiAzDeploymentTrafficPathsAndProtection(diagramFiles, structure);
   const contents = ['```mermaid', 'flowchart TB'];
-  const hasInternet = dataPaths.paths.some(
+  const hasInternet = trafficPathsAndProtection.paths.some(
     (path) =>
       path.from.id === internetEndpoint.id ||
       path.to.id === internetEndpoint.id,
@@ -93,18 +94,18 @@ export const generateDiagramMultiAzDeploymentDataPaths = (
   if (structure.standaloneResources.length > 0) {
     renderStandaloneResources(contents, structure.standaloneResources);
   }
-  renderRegionalServices(contents, dataPaths.regionalNodes);
+  renderRegionalServices(contents, trafficPathsAndProtection.regionalNodes);
 
   const edgeStyles: string[] = [];
-  dataPaths.paths.forEach((path) => {
+  trafficPathsAndProtection.paths.forEach((path) => {
     const source = nodeIdForEndpoint(
       structure,
-      dataPaths.regionalNodes,
+      trafficPathsAndProtection.regionalNodes,
       path.from,
     );
     const target = nodeIdForEndpoint(
       structure,
-      dataPaths.regionalNodes,
+      trafficPathsAndProtection.regionalNodes,
       path.to,
     );
     if (!source || !target) return;
@@ -125,14 +126,15 @@ export const generateDiagramMultiAzDeploymentDataPaths = (
   });
   contents.push(...edgeStyles);
 
-  if (params.options?.includeLegend !== false && dataPaths.paths.length > 0) {
-    contents.push('  subgraph path_legend["Path types"]');
+  if (params.options?.includeLegend !== false && trafficPathsAndProtection.paths.length > 0) {
+    contents.push('  subgraph path_legend["Traffic and protection types"]');
     contents.push(
       `    path_legend_card["${mermaidCompactLegendLabel('Edge styles', [
         'Blue: client request / response',
         'Cyan dashed: egress / return',
         'Orange dashed: event delivery',
         'Green: data access',
+        'Red: security protection',
       ])}"]`,
     );
     contents.push('  end');
@@ -148,7 +150,7 @@ export const generateDiagramMultiAzDeploymentDataPaths = (
     '  classDef legendNode fill:#ffffff,stroke:#94a3b8,color:#334155,font-size:11px',
   );
   if (hasInternet) contents.push('  class internet internetNode');
-  if (params.options?.includeLegend !== false && dataPaths.paths.length > 0) {
+  if (params.options?.includeLegend !== false && trafficPathsAndProtection.paths.length > 0) {
     contents.push('  class path_legend_card legendNode');
     contents.push(
       '  style path_legend fill:#f8fafc,stroke:#94a3b8,stroke-dasharray:4 3',
@@ -157,10 +159,6 @@ export const generateDiagramMultiAzDeploymentDataPaths = (
   contents.push('```');
   return contents.join('\n');
 };
-
-/** @deprecated Use generateDiagramMultiAzDeploymentDataPaths instead. */
-export const generateDiagramArchitectureDiagram =
-  generateDiagramMultiAzDeploymentDataPaths;
 
 const renderVpc = (contents: string[], vpc: Vpc): void => {
   const groupId = vpcId(vpc);
@@ -350,7 +348,7 @@ const renderLoadBalancer = (
 
 const renderRegionalServices = (
   contents: string[],
-  nodes: DataPaths['regionalNodes'],
+  nodes: TrafficPathsAndProtection['regionalNodes'],
 ): void => {
   if (nodes.length === 0) return;
   contents.push('  subgraph regional["Regional managed services"]');
@@ -390,9 +388,9 @@ const renderStandaloneResources = (
 };
 
 const nodeIdForEndpoint = (
-  structure: CfnArchitectureDiagramStructure,
-  regionalNodes: DataPaths['regionalNodes'],
-  endpoint: DeploymentPathEndpoint,
+  structure: CfnDeploymentTopologyStructure,
+  regionalNodes: TrafficPathsAndProtection['regionalNodes'],
+  endpoint: TrafficProtectionPathEndpoint,
 ): string | undefined => {
   if (endpoint.id === internetEndpoint.id) return 'internet';
   for (const vpc of structure.vpcs) {

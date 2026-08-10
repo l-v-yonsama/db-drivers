@@ -12,13 +12,13 @@ const {
   generateDiagram,
   generateDrawioApplicationDiagram,
   generateDrawioCfnDependencyGraph,
-  generateDrawioMultiAzDeploymentDataPaths,
+  generateDrawioMultiAzDeploymentTrafficPathsAndProtection,
   parseCfnYamlTemplate,
 } = require('../built/src');
 
 // This is a repository-local validation script, not a configurable CLI. Keep its inputs fixed so
-// every run produces one diagram set for the five LocalStack stacks and a separate diagram set
-// for the offline-only standard web template.
+// every run produces one diagram set for the five LocalStack stacks and separate diagram sets
+// for the offline-only standard web and WAF-to-ALB templates.
 const stacks = [
   'cfn-diagram-validation-vpc',
   'cfn-diagram-validation-api',
@@ -34,6 +34,14 @@ const standardWebTemplate = {
     '../__tests__/data/cfn/validation/standard-web-application.yaml',
   ),
 };
+const wafAlbTemplate = {
+  fileName: 'waf-alb-application.yaml',
+  stackName: 'cfn-diagram-validation-waf-alb-application',
+  templatePath: path.resolve(
+    __dirname,
+    '../__tests__/data/cfn/validation/waf-alb-application.yaml',
+  ),
+};
 
 const endpoint = 'http://localhost:6005';
 const region = 'ap-northeast-1';
@@ -44,6 +52,10 @@ const localStackOutputDirectory = path.resolve(
 const standardWebOutputDirectory = path.resolve(
   __dirname,
   '../misc/standard-web-application-cfn-validation',
+);
+const wafAlbOutputDirectory = path.resolve(
+  __dirname,
+  '../misc/waf-alb-application-cfn-validation',
 );
 
 const client = new CloudFormationClient({
@@ -90,14 +102,14 @@ const getLocalStackTemplates = async () => Promise.all(
   }),
 );
 
-const getStandardWebTemplate = () => {
-  const templateSource = fs.readFileSync(standardWebTemplate.templatePath, 'utf8');
+const getOfflineTemplate = (templateDefinition) => {
+  const templateSource = fs.readFileSync(templateDefinition.templatePath, 'utf8');
   return {
-    fileName: standardWebTemplate.fileName,
+    fileName: templateDefinition.fileName,
     templateSource,
     templateJSONString: JSON.stringify(parseCfnYamlTemplate(templateSource)),
     pseudoParameterValues: {
-      'AWS::StackName': standardWebTemplate.stackName,
+      'AWS::StackName': templateDefinition.stackName,
       'AWS::Region': region,
       'AWS::Partition': 'aws',
       'AWS::AccountId': '000000000000',
@@ -112,9 +124,9 @@ const generateArtifactSet = ({
   outputDirectory,
 }) => {
   const application = generateDiagram({ list, mode: 'ApplicationDiagram' });
-  const multiAzDeploymentDataPaths = generateDiagram({
+  const multiAzDeploymentTrafficPathsAndProtection = generateDiagram({
     list,
-    mode: 'MultiAzDeploymentDataPaths',
+    mode: 'MultiAzDeploymentTrafficPathsAndProtection',
   });
   const dependency = generateDiagram({
     list,
@@ -129,9 +141,9 @@ const generateArtifactSet = ({
       diagram: application,
     },
     {
-      fileName: 'multi-az-deployment-data-paths.md',
-      viewTitle: 'Multi-AZ Deployment & Data Paths',
-      diagram: multiAzDeploymentDataPaths,
+      fileName: 'multi-az-deployment-traffic-paths-and-protection.md',
+      viewTitle: 'Multi-AZ Deployment, Traffic Paths & Protection',
+      diagram: multiAzDeploymentTrafficPathsAndProtection,
     },
     {
       fileName: 'dependency-graph.md',
@@ -143,7 +155,7 @@ const generateArtifactSet = ({
   const drawioOutputFile = path.resolve(outputDirectory, 'application.drawio');
   const multiAzDrawioOutputFile = path.resolve(
     outputDirectory,
-    'multi-az-deployment-data-paths.drawio',
+    'multi-az-deployment-traffic-paths-and-protection.drawio',
   );
   const dependencyDrawioOutputFile = path.resolve(outputDirectory, 'dependency-graph.drawio');
   fs.mkdirSync(outputDirectory, { recursive: true });
@@ -161,11 +173,18 @@ const generateArtifactSet = ({
     console.log(`Generated: ${outputFile}`);
   }
 
-  const legacyOutputFile = path.resolve(outputDirectory, 'diagrams.md');
-  if (fs.existsSync(legacyOutputFile)) {
-    fs.unlinkSync(legacyOutputFile);
-    console.log(`Removed legacy output: ${legacyOutputFile}`);
-  }
+  const obsoleteOutputFiles = [
+    'diagrams.md',
+    'multi-az-deployment-data-paths.md',
+    'multi-az-deployment-data-paths.drawio',
+  ];
+  obsoleteOutputFiles.forEach((fileName) => {
+    const obsoleteOutputFile = path.resolve(outputDirectory, fileName);
+    if (fs.existsSync(obsoleteOutputFile)) {
+      fs.unlinkSync(obsoleteOutputFile);
+      console.log(`Removed obsolete output: ${obsoleteOutputFile}`);
+    }
+  });
 
   fs.writeFileSync(drawioOutputFile, generateDrawioApplicationDiagram({
     list,
@@ -173,9 +192,9 @@ const generateArtifactSet = ({
   }), 'utf8');
   console.log(`Generated: ${drawioOutputFile}`);
 
-  fs.writeFileSync(multiAzDrawioOutputFile, generateDrawioMultiAzDeploymentDataPaths({
+  fs.writeFileSync(multiAzDrawioOutputFile, generateDrawioMultiAzDeploymentTrafficPathsAndProtection({
     list,
-    mode: 'MultiAzDeploymentDataPaths',
+    mode: 'MultiAzDeploymentTrafficPathsAndProtection',
   }), 'utf8');
   console.log(`Generated: ${multiAzDrawioOutputFile}`);
 
@@ -188,15 +207,24 @@ const generateArtifactSet = ({
 };
 
 const main = async () => {
-  // The offline reference remains reproducible even when LocalStack is not running.
+  // The offline references remain reproducible even when LocalStack is not running.
   generateArtifactSet({
-    list: [getStandardWebTemplate()],
+    list: [getOfflineTemplate(standardWebTemplate)],
     title: 'Standard web application CloudFormation validation diagrams',
     metadata: [
       `- Local template: \`${standardWebTemplate.fileName}\``,
       '- Deployment: not deployed to LocalStack',
     ],
     outputDirectory: standardWebOutputDirectory,
+  });
+  generateArtifactSet({
+    list: [getOfflineTemplate(wafAlbTemplate)],
+    title: 'WAF to ALB CloudFormation validation diagrams',
+    metadata: [
+      `- Local template: \`${wafAlbTemplate.fileName}\``,
+      '- Deployment: not deployed to LocalStack',
+    ],
+    outputDirectory: wafAlbOutputDirectory,
   });
 
   const localStackList = await getLocalStackTemplates();

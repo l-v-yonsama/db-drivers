@@ -9,6 +9,8 @@ import {
   xmlEscape,
 } from './drawioXml';
 import {
+  ApplicationNode,
+  ApplicationRelation,
   ApplicationRelationKind,
   extractApplicationRelations,
   getApplicationIngressRoutes,
@@ -35,6 +37,7 @@ const relationStyles: Record<ApplicationRelationKind, DrawioStyle> = {
   'data-read': { color: '#059669', width: 2 },
   'data-write': { color: '#7c3aed', width: 3 },
   'network-route': { color: '#0891b2', width: 2, dashed: true },
+  'security-protection': { color: '#dc2626', width: 2 },
 };
 
 const layerTitles = ['Ingress', 'Compute', 'Messaging', 'Data'] as const;
@@ -126,6 +129,51 @@ const visibleNodeTypes = new Set([
   'AWS::ApiGatewayV2::Integration',
 ]);
 
+/** Orders nodes within one layer by semantic flow while preserving template order whenever
+ * relations do not constrain the result. Cycles fall back to their original order. */
+const orderLayerNodes = (
+  nodes: ApplicationNode[],
+  relations: ApplicationRelation[],
+): ApplicationNode[] => {
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  const originalIndex = new Map(nodes.map((node, index) => [node.id, index]));
+  const outgoing = new Map(nodes.map((node) => [node.id, [] as string[]]));
+  const inDegree = new Map(nodes.map((node) => [node.id, 0]));
+  const seenEdges = new Set<string>();
+
+  relations.forEach((relation) => {
+    if (!nodeIds.has(relation.from) || !nodeIds.has(relation.to)) return;
+    const edgeKey = `${relation.from}:${relation.to}`;
+    if (seenEdges.has(edgeKey)) return;
+    seenEdges.add(edgeKey);
+    outgoing.get(relation.from)?.push(relation.to);
+    inDegree.set(relation.to, (inDegree.get(relation.to) ?? 0) + 1);
+  });
+
+  const ready = nodes.filter((node) => inDegree.get(node.id) === 0);
+  const ordered: ApplicationNode[] = [];
+  while (ready.length > 0) {
+    ready.sort(
+      (left, right) =>
+        (originalIndex.get(left.id) ?? 0) - (originalIndex.get(right.id) ?? 0),
+    );
+    const node = ready.shift() as ApplicationNode;
+    ordered.push(node);
+    (outgoing.get(node.id) ?? []).forEach((targetId) => {
+      const nextDegree = (inDegree.get(targetId) ?? 0) - 1;
+      inDegree.set(targetId, nextDegree);
+      if (nextDegree === 0) {
+        const target = nodes.find((candidate) => candidate.id === targetId);
+        if (target) ready.push(target);
+      }
+    });
+  }
+
+  if (ordered.length === nodes.length) return ordered;
+  const orderedIds = new Set(ordered.map((node) => node.id));
+  return [...ordered, ...nodes.filter((node) => !orderedIds.has(node.id))];
+};
+
 /** Generates an editable, uncompressed diagrams.net XML document for the simplified
  * application view. This intentionally targets ApplicationDiagram only; network topology
  * and raw CloudFormation dependency graphs remain Mermaid outputs for now. */
@@ -174,7 +222,13 @@ export const generateDrawioApplicationDiagram = (
 
   layerTitles.forEach((title) => {
     const layer = title.toLowerCase() as typeof nodes[number]['layer'];
-    layerNodes.set(title, nodes.filter((node) => node.layer === layer));
+    layerNodes.set(
+      title,
+      orderLayerNodes(
+        nodes.filter((node) => node.layer === layer),
+        relations,
+      ),
+    );
   });
 
   layerTitles.forEach((title, layerIndex) => {
@@ -214,6 +268,7 @@ export const generateDrawioApplicationDiagram = (
       ['Event', 'Event delivery', 'event-delivery'],
       ['Access', 'Data access', 'data-access'],
       ['Network', 'Network route', 'network-route'],
+      ['Security', 'Security protection', 'security-protection'],
     ];
     cells.push(...drawioLineLegendCells({
       title: 'Relationship types',

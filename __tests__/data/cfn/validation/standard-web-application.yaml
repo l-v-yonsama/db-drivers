@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Offline reference architecture for ALB, ECS Fargate, RDS, NAT, and SQS-to-Lambda diagram validation.
+Description: Offline reference architecture for WAF, ALB, ECS Fargate, RDS, NAT, and SQS-to-Lambda diagram validation.
 
 Resources:
   Vpc:
@@ -164,6 +164,17 @@ Resources:
       MultiAZ: true
       DBSubnetGroupName: !Ref DatabaseSubnetGroup
 
+  ProtectedWebAcl:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: true
+        MetricName: standard-web-protected-acl
+        SampledRequestsEnabled: true
+
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -190,6 +201,12 @@ Resources:
         - Type: fixed-response
           FixedResponseConfig:
             StatusCode: '404'
+
+  WebAclAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      WebACLArn: !GetAtt ProtectedWebAcl.Arn
+      ResourceArn: !Ref LoadBalancer
 
   ApplicationListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule

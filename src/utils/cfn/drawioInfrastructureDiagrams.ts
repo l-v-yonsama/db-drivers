@@ -1,5 +1,5 @@
 import { GenerateDiagramParams } from '../../types';
-import { CfnArchitectureDiagramStructure } from './architectureTopology';
+import { CfnDeploymentTopologyStructure } from './deploymentTopology';
 import { parseDiagramFiles } from './diagramFileModel';
 import {
   drawioLineLegendCells,
@@ -10,9 +10,9 @@ import {
   xmlEscape,
 } from './drawioXml';
 import {
-  buildMultiAzDeploymentDataPaths,
-  DeploymentPathKind,
-} from './multiAzDeploymentDataPaths';
+  buildMultiAzDeploymentTrafficPathsAndProtection,
+  TrafficProtectionPathKind,
+} from './multiAzDeploymentTrafficPathsAndProtection';
 
 type EdgeKind =
   | 'Ref'
@@ -22,7 +22,8 @@ type EdgeKind =
   | 'client'
   | 'egress'
   | 'event'
-  | 'data';
+  | 'data'
+  | 'security';
 
 const edgeStyles: Record<EdgeKind, { color: string; width: number; dashed?: boolean }> = {
   Ref: { color: '#2563eb', width: 2 },
@@ -33,6 +34,7 @@ const edgeStyles: Record<EdgeKind, { color: string; width: number; dashed?: bool
   egress: { color: '#0d9488', width: 2 },
   event: { color: '#ea580c', width: 2, dashed: true },
   data: { color: '#059669', width: 2 },
+  security: { color: '#dc2626', width: 2 },
 };
 
 const displayCidr = (value: string): string => {
@@ -94,15 +96,16 @@ const addDependencyLegend = (cells: string[], y: number): void => {
   }));
 };
 
-const addDataPathLegend = (cells: string[], y: number): void => {
+const addTrafficProtectionLegend = (cells: string[], y: number): void => {
   const items: [string, string, EdgeKind, boolean][] = [
     ['Client', 'Client request / response', 'client', true],
     ['Egress', 'Outbound / return route', 'egress', true],
     ['Event', 'Asynchronous event', 'event', false],
     ['Data', 'Explicit data access', 'data', false],
+    ['Security', 'Security protection', 'security', false],
   ];
   cells.push(...drawioLineLegendCells({
-    title: 'Data path types',
+    title: 'Traffic and protection types',
     x: 40,
     y,
     width: 1100,
@@ -127,12 +130,13 @@ type ConnectionLayout = {
   targetSide: ConnectionSide;
 };
 
-const edgeKindForPath = (kind: DeploymentPathKind): EdgeKind => {
+const edgeKindForPath = (kind: TrafficProtectionPathKind): EdgeKind => {
   switch (kind) {
     case 'client-request-response': return 'client';
     case 'egress-return': return 'egress';
     case 'event-delivery': return 'event';
     case 'data-access': return 'data';
+    case 'security-protection': return 'security';
   }
 };
 
@@ -144,7 +148,7 @@ const nodeCenter = (position: NodePosition): { x: number; y: number } => ({
 const connectionLayout = (
   source: NodePosition,
   target: NodePosition,
-  kind: DeploymentPathKind,
+  kind: TrafficProtectionPathKind,
   label: string,
 ): ConnectionLayout => {
   const sourceCenter = nodeCenter(source);
@@ -194,7 +198,7 @@ const routePoints = (
   target: NodePosition,
   sourcePoint: { x: number; y: number },
   targetPoint: { x: number; y: number },
-  kind: DeploymentPathKind,
+  kind: TrafficProtectionPathKind,
   label: string,
 ): { x: number; y: number }[] => {
   const sourceCenter = nodeCenter(source);
@@ -218,10 +222,10 @@ const routePoints = (
 };
 
 /** Generates the editable Multi-AZ placement and data-path view. */
-export const generateDrawioMultiAzDeploymentDataPaths = (params: GenerateDiagramParams): string => {
+export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params: GenerateDiagramParams): string => {
   const files = parseDiagramFiles({ ...params, options: { ...params.options, includeOutputs: true, includeParameters: true } });
-  const structure = new CfnArchitectureDiagramStructure(files);
-  const dataPaths = buildMultiAzDeploymentDataPaths(files, structure);
+  const structure = new CfnDeploymentTopologyStructure(files);
+  const trafficPathsAndProtection = buildMultiAzDeploymentTrafficPathsAndProtection(files, structure);
   const cells: string[] = [];
   const nodeIds = new Map<string, string>();
   const nodePositions = new Map<string, NodePosition>();
@@ -250,12 +254,12 @@ export const generateDrawioMultiAzDeploymentDataPaths = (params: GenerateDiagram
     Math.max(900, 50 + Math.max(1, vpc.availabilityZones.length) * (azWidth + azGap)));
   const totalVpcWidth = vpcWidths.reduce((sum, width) => sum + width, 0) +
     Math.max(0, structure.vpcs.length - 1) * 40;
-  const regionalWidth = dataPaths.regionalNodes.length > 0 ? 360 : 0;
+  const regionalWidth = trafficPathsAndProtection.regionalNodes.length > 0 ? 360 : 0;
   const canvasWidth = 80 + totalVpcWidth + regionalWidth;
   let maxHeight = vpcTop + vpcHeight;
   let vpcX = 40;
 
-  if (dataPaths.paths.some((path) =>
+  if (trafficPathsAndProtection.paths.some((path) =>
     path.from.id === 'internet' || path.to.id === 'internet')) {
     const internetPosition = {
       x: 40 + totalVpcWidth / 2 - 75,
@@ -454,10 +458,10 @@ export const generateDrawioMultiAzDeploymentDataPaths = (params: GenerateDiagram
   });
 
   const regionalX = 60 + totalVpcWidth;
-  if (dataPaths.regionalNodes.length > 0) {
-    const regionalHeight = 65 + dataPaths.regionalNodes.length * 150;
+  if (trafficPathsAndProtection.regionalNodes.length > 0) {
+    const regionalHeight = 65 + trafficPathsAndProtection.regionalNodes.length * 150;
     cells.push(groupCell('regional', 'Regional managed services (outside VPC)', regionalX, 140, 320, regionalHeight, '1', '#fff7ed'));
-    dataPaths.regionalNodes.forEach((node, index) => {
+    trafficPathsAndProtection.regionalNodes.forEach((node, index) => {
       const cellId = `node_${node.endpoint.id}`;
       const localPosition = { x: 20, y: 45 + index * 150, width: 280, height: 65 };
       cells.push(nodeCell(cellId, `${node.label}<br/><font color="#64748b">${node.type}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, 'regional', '#fff7ed', templatePageByLogicalId.get(`${node.endpoint.fileIndex}:${node.endpoint.logicalId}`) ?? ''));
@@ -479,7 +483,7 @@ export const generateDrawioMultiAzDeploymentDataPaths = (params: GenerateDiagram
     maxHeight += 180;
   }
 
-  const drawablePaths = dataPaths.paths.flatMap((path) => {
+  const drawablePaths = trafficPathsAndProtection.paths.flatMap((path) => {
     const source = nodeIds.get(path.from.id);
     const target = nodeIds.get(path.to.id);
     const sourcePosition = nodePositions.get(path.from.id);
@@ -541,19 +545,15 @@ export const generateDrawioMultiAzDeploymentDataPaths = (params: GenerateDiagram
     ));
   });
 
-  if (params.options?.includeLegend !== false) addDataPathLegend(cells, maxHeight + 30);
-  const pages = [drawioPage('multi-az-data-paths', 'Multi-AZ Deployment & Data Paths', cells)];
+  if (params.options?.includeLegend !== false) addTrafficProtectionLegend(cells, maxHeight + 30);
+  const pages = [drawioPage('multi-az-traffic-paths-protection', 'Multi-AZ Deployment, Traffic Paths & Protection', cells)];
   files.forEach((file) => {
     if (file.templateSource) pages.push(drawioTemplatePage(`template_${file.fileIndex}`, file.fileName, file.templateSource));
   });
   return wrapDrawioPages(pages);
 };
 
-/** @deprecated Use generateDrawioMultiAzDeploymentDataPaths instead. */
-export const generateDrawioArchitectureDiagram =
-  generateDrawioMultiAzDeploymentDataPaths;
-
-/** Generates an editable draw.io dependency graph. Unlike MultiAzDeploymentDataPaths, this keeps all
+/** Generates an editable draw.io dependency graph. Unlike MultiAzDeploymentTrafficPathsAndProtection, this keeps all
  * resources and preserves the dependency kind used to color each connector. */
 export const generateDrawioCfnDependencyGraph = (params: GenerateDiagramParams): string => {
   const files = parseDiagramFiles({ ...params, mode: 'CfnDependencyGraph', viewpoint: 'CloudFormationView', options: { ...params.options, includeOutputs: true, includeParameters: true } });

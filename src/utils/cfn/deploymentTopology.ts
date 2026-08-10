@@ -178,7 +178,7 @@ const availabilityZoneName = (value: any, file: DiagramFile): string => {
 };
 
 /** Builds a stack-aware VPC/AZ/subnet topology from all supplied templates. */
-export class CfnArchitectureDiagramStructure {
+export class CfnDeploymentTopologyStructure {
   public readonly vpcs: TopologyVpc[] = [];
   public readonly standaloneResources: TopologyStandaloneResource[] = [];
 

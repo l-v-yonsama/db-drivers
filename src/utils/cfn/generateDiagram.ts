@@ -1,5 +1,5 @@
 import { GenerateDiagramParams } from '../../types';
-import { generateDiagramMultiAzDeploymentDataPaths } from './architectureDiagram';
+import { generateDiagramMultiAzDeploymentTrafficPathsAndProtection } from './multiAzDeploymentTrafficPathsAndProtectionDiagram';
 import { generateDiagramApplicationDiagram } from './applicationDiagram';
 import { generateDiagramCfnDependencyGraph } from './cfnDependencyGraphDiagram';
 
@@ -15,9 +15,8 @@ export const generateDiagram = (params: GenerateDiagramParams): string => {
       return generateDiagramApplicationDiagram(params);
     case 'CfnDependencyGraph':
       return generateDiagramCfnDependencyGraph(params);
-    case 'MultiAzDeploymentDataPaths':
-    case 'ArchitectureDiagram':
-      return generateDiagramMultiAzDeploymentDataPaths(params);
+    case 'MultiAzDeploymentTrafficPathsAndProtection':
+      return generateDiagramMultiAzDeploymentTrafficPathsAndProtection(params);
     default: {
       const _exhaustiveCheck: never = params.mode;
       throw new Error(`Unknown mode: ${_exhaustiveCheck}`);

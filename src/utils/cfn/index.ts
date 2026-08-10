@@ -3,19 +3,17 @@
 // own module (e.g. walkIntrinsicRefs, getCfnIconString, parseDiagramFiles) stays an
 // implementation detail shared between these files instead of silently becoming part of the
 // package's public API just because it now lives in an exported-looking place.
-export { CfnArchitectureDiagramStructure } from './architectureTopology';
+export { CfnDeploymentTopologyStructure } from './deploymentTopology';
 export { extractResourceDependencies } from './resourceDependencies';
 export { generateDiagram } from './generateDiagram';
 export { generateDrawioApplicationDiagram } from './drawioApplicationDiagram';
 export {
-  generateDrawioArchitectureDiagram,
-  generateDrawioMultiAzDeploymentDataPaths,
+  generateDrawioMultiAzDeploymentTrafficPathsAndProtection,
   generateDrawioCfnDependencyGraph,
 } from './drawioInfrastructureDiagrams';
 export {
-  generateDiagramArchitectureDiagram,
-  generateDiagramMultiAzDeploymentDataPaths,
-} from './architectureDiagram';
+  generateDiagramMultiAzDeploymentTrafficPathsAndProtection,
+} from './multiAzDeploymentTrafficPathsAndProtectionDiagram';
 export type { ApplicationRelationKind } from './applicationRelations';
 export {
   extractApplicationRelations,

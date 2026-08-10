@@ -7,7 +7,8 @@ export type ApplicationRelationKind =
   | 'data-access'
   | 'data-read'
   | 'data-write'
-  | 'network-route';
+  | 'network-route'
+  | 'security-protection';
 
 export type ApplicationRelation = {
   from: string;
@@ -98,6 +99,7 @@ const APP_TYPES: Record<ApplicationNode['layer'], ReadonlySet<string>> = {
     'AWS::ElasticLoadBalancingV2::Listener',
     'AWS::ElasticLoadBalancingV2::ListenerRule',
     'AWS::ElasticLoadBalancingV2::TargetGroup',
+    'AWS::WAFv2::WebACL',
   ]),
   compute: new Set([
     'AWS::Lambda::Function',
@@ -192,6 +194,50 @@ const collectRefs = (
   }
 };
 
+type ResolvedWafAssociation = {
+  webAclId: string;
+  loadBalancerId: string;
+};
+
+/** Resolves only associations whose two endpoints are proven within the same template. */
+const resolveWafAssociations = (
+  files: DiagramFile[],
+): ResolvedWafAssociation[] => files.flatMap((file) => {
+  const resources = file.cfnTemplate.Resources;
+  return file.resouces.flatMap((logicalId) => {
+    const association = resources[logicalId];
+    if (association.Type !== 'AWS::WAFv2::WebACLAssociation') return [];
+
+    const webAclHits: RefHit[] = [];
+    const loadBalancerHits: RefHit[] = [];
+    collectRefs(
+      association.Properties?.WebACLArn,
+      'Properties.WebACLArn',
+      webAclHits,
+      file,
+    );
+    collectRefs(
+      association.Properties?.ResourceArn,
+      'Properties.ResourceArn',
+      loadBalancerHits,
+      file,
+    );
+    const webAclLogicalId = webAclHits.find((hit) =>
+      resources[hit.targetId]?.Type === 'AWS::WAFv2::WebACL'
+    )?.targetId;
+    const loadBalancerLogicalId = loadBalancerHits.find((hit) =>
+      resources[hit.targetId]?.Type ===
+        'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    )?.targetId;
+    if (!webAclLogicalId || !loadBalancerLogicalId) return [];
+
+    return [{
+      webAclId: `f${file.fileIndex}_${webAclLogicalId}`,
+      loadBalancerId: `f${file.fileIndex}_${loadBalancerLogicalId}`,
+    }];
+  });
+});
+
 const relationFor = (
   source: TemplateResource,
   target: TemplateResource,
@@ -260,13 +306,21 @@ const relationFor = (
   return undefined;
 };
 
-export const getApplicationNodes = (files: DiagramFile[]): ApplicationNode[] =>
-  files.flatMap((file) => file.resouces.flatMap((logicalId) => {
+export const getApplicationNodes = (files: DiagramFile[]): ApplicationNode[] => {
+  const associatedWebAclIds = new Set(
+    resolveWafAssociations(files).map((association) => association.webAclId),
+  );
+  return files.flatMap((file) => file.resouces.flatMap((logicalId) => {
     const resource = file.cfnTemplate.Resources[logicalId];
     const layer = layerOf(resource.Type);
     if (!layer) return [];
+    const id = `f${file.fileIndex}_${logicalId}`;
+    if (
+      resource.Type === 'AWS::WAFv2::WebACL' &&
+      !associatedWebAclIds.has(id)
+    ) return [];
     return [{
-      id: `f${file.fileIndex}_${logicalId}`,
+      id,
       fileIndex: file.fileIndex,
       fileName: file.groupName,
       logicalId,
@@ -275,9 +329,11 @@ export const getApplicationNodes = (files: DiagramFile[]): ApplicationNode[] =>
       layer,
     }];
   }));
+};
 
 export const extractApplicationRelations = (files: DiagramFile[]): ApplicationRelation[] => {
   const nodes = getApplicationNodes(files);
+  const wafAssociations = resolveWafAssociations(files);
   const byFileAndLogicalId = new Map(files.flatMap((file) => file.resouces.map((logicalId) => [
     `${file.fileIndex}:${logicalId}`,
     { id: `f${file.fileIndex}_${logicalId}`, resource: file.cfnTemplate.Resources[logicalId] },
@@ -289,14 +345,27 @@ export const extractApplicationRelations = (files: DiagramFile[]): ApplicationRe
   }));
 
   const result: ApplicationRelation[] = [];
+  wafAssociations.forEach((association) => {
+    result.push({
+      from: association.webAclId,
+      to: association.loadBalancerId,
+      propertyPath: 'Properties',
+      kind: 'security-protection',
+      label: 'protects',
+    });
+  });
   files.forEach((file) => file.resouces.forEach((logicalId) => {
     const sourceResource = file.cfnTemplate.Resources[logicalId];
     const sourceNode = nodes.find((node) => node.id === `f${file.fileIndex}_${logicalId}`);
     const hits: RefHit[] = [];
     collectRefs(sourceResource.Properties, 'Properties', hits, file);
-    const resolveTarget = (hit: RefHit) => hit.importName
-      ? byImportName.get(hit.importName)
-      : byFileAndLogicalId.get(`${file.fileIndex}:${hit.targetId}`);
+    const resolveTarget = (
+      hit: RefHit,
+    ): { id: string; resource: TemplateResource } | undefined => hit.importName
+        ? byImportName.get(hit.importName)
+        : byFileAndLogicalId.get(`${file.fileIndex}:${hit.targetId}`);
+
+    if (sourceResource.Type === 'AWS::WAFv2::WebACLAssociation') return;
 
     if (sourceResource.Type === 'AWS::Lambda::EventSourceMapping') {
       const targets = hits.map(resolveTarget).filter(

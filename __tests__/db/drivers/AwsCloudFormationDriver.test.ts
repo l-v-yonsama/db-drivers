@@ -34,7 +34,7 @@ const connectOption = {
 // something real to assert against from the same stack. EC2/VPC-flavored
 // resources aren't used here since this LocalStack instance's SERVICES list
 // (docker/unit-test.yml) doesn't include `ec2` - see cfn.test.ts for the
-// VPC/ArchitectureDiagram-mode coverage, which runs entirely offline
+// VPC/MultiAzDeploymentTrafficPathsAndProtection-mode coverage, which runs entirely offline
 // against the recovered __tests__/data/cfn/ fixtures instead.
 const stackName = 'db-drivers-test-order-stack';
 const template = testOrderStackTemplate;
@@ -43,7 +43,7 @@ const template = testOrderStackTemplate;
 // one real stack sitting in LocalStack at once - both for a second live data
 // point in the tests below (IAM/Lambda/ApiGateway dependency wiring, not
 // just SQS), and so the "create CloudFormation diagram" button's multi-stack
-// selection / CloudFormation-service-node ArchitectureDiagram mode
+// selection / CloudFormation-service-node MultiAzDeploymentTrafficPathsAndProtection mode
 // (db-notebook side) has more than one stack to actually exercise during a
 // manual F5 check - `SERVICES` in docker/unit-test.yml needed `apigateway`
 // added for this (it wasn't enabled before).

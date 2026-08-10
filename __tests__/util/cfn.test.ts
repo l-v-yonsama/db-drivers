@@ -4,9 +4,8 @@ import {
   extractResourceDependencies,
   generateDiagram,
   generateDrawioApplicationDiagram,
-  generateDrawioArchitectureDiagram,
   generateDrawioCfnDependencyGraph,
-  generateDrawioMultiAzDeploymentDataPaths,
+  generateDrawioMultiAzDeploymentTrafficPathsAndProtection,
   GenerateDiagramParams,
   getCidrBlock,
   isJson,
@@ -351,7 +350,7 @@ describe('cfn', () => {
         ],
       });
       const networkDiagram = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: [
           {
             fileName: 'vpc-foundation.yaml',
@@ -404,7 +403,7 @@ describe('cfn', () => {
       ).not.toContain('Relationship types');
     });
 
-    it('keeps the LocalStack diagram generator fixed and includes the local standard web template', () => {
+    it('keeps the LocalStack diagram generator fixed and includes both offline templates', () => {
       const script = fs.readFileSync(
         path.join(
           __dirname,
@@ -417,16 +416,25 @@ describe('cfn', () => {
       expect(script).toContain(
         "'../__tests__/data/cfn/validation/standard-web-application.yaml'",
       );
+      expect(script).toContain("fileName: 'waf-alb-application.yaml'");
+      expect(script).toContain(
+        "'../__tests__/data/cfn/validation/waf-alb-application.yaml'",
+      );
       expect(script).toContain('list: localStackList');
-      expect(script).toContain('list: [getStandardWebTemplate()]');
+      expect(script).toContain(
+        'list: [getOfflineTemplate(standardWebTemplate)]',
+      );
+      expect(script).toContain('list: [getOfflineTemplate(wafAlbTemplate)]');
       expect(script).toContain(
         "'../misc/standard-web-application-cfn-validation'",
       );
+      expect(script).toContain("'../misc/waf-alb-application-cfn-validation'");
       expect(script).toContain("fileName: 'application.md'");
-      expect(script).toContain("fileName: 'multi-az-deployment-data-paths.md'");
+      expect(script).toContain("fileName: 'multi-az-deployment-traffic-paths-and-protection.md'");
       expect(script).toContain("fileName: 'dependency-graph.md'");
-      expect(script).toContain("path.resolve(outputDirectory, 'diagrams.md')");
-      expect(script).toContain('fs.unlinkSync(legacyOutputFile)');
+      expect(script).toContain("'multi-az-deployment-data-paths.md'");
+      expect(script).toContain("'multi-az-deployment-data-paths.drawio'");
+      expect(script).toContain('fs.unlinkSync(obsoleteOutputFile)');
       expect(script).not.toContain('process.env');
       expect(script).not.toContain('process.argv');
     });
@@ -448,7 +456,7 @@ describe('cfn', () => {
         list,
       });
       const architecture = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list,
       });
 
@@ -469,6 +477,9 @@ describe('cfn', () => {
       );
       expect(application).toContain(
         'f0_WorkQueue -.->|triggers| f0_WorkerFunction',
+      );
+      expect(application).toContain(
+        'f0_ProtectedWebAcl -->|protects| f0_LoadBalancer',
       );
 
       // PublicSubnetA deliberately has MapPublicIpOnLaunch=false. Its IGW route, not that
@@ -492,6 +503,14 @@ describe('cfn', () => {
       expect(architecture).toContain(
         'regional_f0_QueueEventSource -.->|"invokes"| regional_f0_WorkerFunction',
       );
+      expect(architecture).toContain(
+        'regional_f0_ProtectedWebAcl -->|"protects"| f0_vpc_Vpc_f0_LoadBalancer',
+      );
+      expect(architecture).toContain(
+        'regional_f0_ProtectedWebAcl["ProtectedWebAcl<br/>WebACL"]',
+      );
+      expect(architecture).toContain('stroke:#dc2626,stroke-width:2px');
+      expect(architecture).toContain('Red: security protection');
       expect(architecture).not.toMatch(/NatGateway[^\n]*request \/ response/);
       expect(architecture).not.toContain('|"accesses"|');
       // A DB subnet group is a set of placement candidates, not one DB copy per subnet.
@@ -506,8 +525,8 @@ describe('cfn', () => {
       expect(architecture).toContain('Availability Zone ap-northeast-1a');
       expect(architecture).not.toContain('logos:');
 
-      const drawio = generateDrawioMultiAzDeploymentDataPaths({
-        mode: 'MultiAzDeploymentDataPaths',
+      const drawio = generateDrawioMultiAzDeploymentTrafficPathsAndProtection({
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list,
       });
       expect(drawio).toContain('Availability Zone ap-northeast-1a');
@@ -515,6 +534,16 @@ describe('cfn', () => {
       expect(drawio).toContain('node_f0_Listener');
       expect(drawio).toContain('node_f0_ApplicationListenerRule');
       expect(drawio).toContain('node_f0_QueueEventSource');
+      expect(drawio).toMatch(
+        /id="node_f0_ProtectedWebAcl"[^>]*parent="regional"/,
+      );
+      expect(drawio).toMatch(
+        /value="protects"[^>]*strokeColor=#dc2626;strokeWidth=2;(?![^>]*startArrow)[^>]*endArrow=block;[^>]*source="node_f0_ProtectedWebAcl" target="node_f0_LoadBalancer"/,
+      );
+      expect(drawio).toContain('id="legend_Security_line"');
+      expect(drawio).toContain(
+        'id="legend_Security_label" value="Security protection"',
+      );
       expect(drawio).toContain('HTTP :80');
       expect(drawio).toContain('path-pattern: /app/*');
       expect(drawio).toContain('priority: 1');
@@ -563,6 +592,88 @@ describe('cfn', () => {
       );
     });
 
+    it('folds a WAFv2 WebACLAssociation into a protected WAF-to-ALB application flow', () => {
+      const template = parseCfnYamlTemplate(
+        readYamlFixture('validation/waf-alb-application.yaml'),
+      );
+      const list = [
+        {
+          fileName: 'waf-alb-application.yaml',
+          templateJSONString: JSON.stringify(template),
+        },
+      ];
+
+      const diagram = generateDiagram({ mode: 'ApplicationDiagram', list });
+
+      expect(diagram).toContain('f0_ProtectedWebAcl["ProtectedWebAcl"]');
+      expect(diagram).toContain(
+        'f0_ApplicationLoadBalancer["ApplicationLoadBalancer"]',
+      );
+      expect(diagram).toContain(
+        'f0_ProtectedWebAcl -->|protects| f0_ApplicationLoadBalancer',
+      );
+      expect(diagram).toContain(
+        'stroke:#dc2626,stroke-width:2px',
+      );
+      expect(diagram).toContain('Red solid: security');
+      expect(diagram).not.toContain('UnassociatedWebAcl');
+      expect(diagram).not.toContain('WebAclAssociation');
+
+      const withoutLegend = generateDiagram({
+        mode: 'ApplicationDiagram',
+        options: { includeLegend: false },
+        list,
+      });
+      expect(withoutLegend).not.toContain('Relationship types');
+      expect(withoutLegend).not.toContain('Red solid: security');
+
+      const unresolvedTopology = generateDiagram({
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
+        options: { includeLegend: false },
+        list,
+      });
+      expect(unresolvedTopology).not.toContain('ProtectedWebAcl');
+      expect(unresolvedTopology).not.toContain('|"protects"|');
+
+      const dependencyGraph = generateDiagram({
+        mode: 'CfnDependencyGraph',
+        viewpoint: 'CloudFormationView',
+        options: { includeLegend: false },
+        list,
+      });
+      expect(dependencyGraph).toContain('f0_ProtectedWebAcl');
+      expect(dependencyGraph).toContain('f0_WebAclAssociation');
+
+      const longFormTemplate = JSON.parse(JSON.stringify(template));
+      longFormTemplate.Resources.WebAclAssociation.Properties = {
+        WebACLArn: { 'Fn::GetAtt': ['ProtectedWebAcl', 'Arn'] },
+        ResourceArn: { Ref: 'ApplicationLoadBalancer' },
+      };
+      expect(generateDiagram({
+        mode: 'ApplicationDiagram',
+        list: [{
+          fileName: 'waf-alb-long-form.json',
+          templateJSONString: JSON.stringify(longFormTemplate),
+        }],
+      })).toContain(
+        'f0_ProtectedWebAcl -->|protects| f0_ApplicationLoadBalancer',
+      );
+
+      const unsupportedTargetTemplate = JSON.parse(JSON.stringify(template));
+      unsupportedTargetTemplate.Resources.WebAclAssociation.Properties.ResourceArn = {
+        Ref: 'TargetGroup',
+      };
+      const unsupportedTargetDiagram = generateDiagram({
+        mode: 'ApplicationDiagram',
+        list: [{
+          fileName: 'waf-unsupported-target.json',
+          templateJSONString: JSON.stringify(unsupportedTargetTemplate),
+        }],
+      });
+      expect(unsupportedTargetDiagram).not.toContain('ProtectedWebAcl');
+      expect(unsupportedTargetDiagram).not.toContain('|protects|');
+    });
+
     it('draws explicit ECS-to-RDS endpoint access but not SecurityGroup/DependsOn-only evidence', () => {
       const explicitTemplate = parseCfnYamlTemplate(
         readYamlFixture('validation/explicit-db-access.yaml'),
@@ -574,7 +685,7 @@ describe('cfn', () => {
         },
       ];
       const explicitDiagram = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: explicitList,
       });
       expect(explicitDiagram).toContain('|"accesses"|');
@@ -606,7 +717,7 @@ describe('cfn', () => {
         },
       };
       const securityGroupOnlyDiagram = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: [
           {
             fileName: 'security-group-only.yaml',
@@ -617,33 +728,6 @@ describe('cfn', () => {
       expect(securityGroupOnlyDiagram).not.toContain('|"accesses"|');
       expect(securityGroupOnlyDiagram).not.toContain(
         'f0_vpc_Vpc_f0_WebService -->|"accesses"| f0_vpc_Vpc_f0_Database',
-      );
-    });
-
-    it('keeps ArchitectureDiagram APIs as deprecated aliases of the new mode', () => {
-      const list = [
-        {
-          fileName: 'standard-web-application.yaml',
-          templateJSONString: JSON.stringify(
-            parseCfnYamlTemplate(
-              readYamlFixture('validation/standard-web-application.yaml'),
-            ),
-          ),
-        },
-      ];
-      expect(generateDiagram({ mode: 'ArchitectureDiagram', list })).toBe(
-        generateDiagram({ mode: 'MultiAzDeploymentDataPaths', list }),
-      );
-      expect(
-        generateDrawioArchitectureDiagram({
-          mode: 'ArchitectureDiagram',
-          list,
-        }),
-      ).toBe(
-        generateDrawioMultiAzDeploymentDataPaths({
-          mode: 'MultiAzDeploymentDataPaths',
-          list,
-        }),
       );
     });
 
@@ -729,7 +813,7 @@ describe('cfn', () => {
         },
       });
       const diagram = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: [
           {
             fileName: 'stack-a',
@@ -853,7 +937,67 @@ describe('cfn', () => {
       ).not.toContain('Relationship types');
     });
 
-    it('generates editable draw.io Multi-AZ Deployment & Data Paths and CfnDependencyGraph documents', () => {
+    it('renders WAF protection as a red solid draw.io edge without association plumbing', () => {
+      const template = parseCfnYamlTemplate(
+        readYamlFixture('validation/waf-alb-application.yaml'),
+      );
+      const list = [
+        {
+          fileName: 'waf-alb-application.yaml',
+          templateJSONString: JSON.stringify(template),
+        },
+      ];
+
+      const drawio = generateDrawioApplicationDiagram({
+        mode: 'ApplicationDiagram',
+        list,
+      });
+
+      expect(drawio).toContain('id="node_f0_ProtectedWebAcl"');
+      expect(drawio).toContain('id="node_f0_ApplicationLoadBalancer"');
+      expect(drawio).not.toContain('node_f0_UnassociatedWebAcl');
+      expect(drawio).not.toContain('node_f0_WebAclAssociation');
+      expect(drawio).toMatch(
+        /id="node_f0_ProtectedWebAcl"[\s\S]*?<mxGeometry x="15" y="40" width="200" height="65"/,
+      );
+      expect(drawio).toMatch(
+        /id="node_f0_ApplicationLoadBalancer"[\s\S]*?<mxGeometry x="15" y="155" width="200" height="65"/,
+      );
+      expect(drawio).toMatch(
+        /id="node_f0_Listener"[\s\S]*?<mxGeometry x="15" y="270" width="200" height="65"/,
+      );
+      expect(drawio).toMatch(
+        /id="node_f0_TargetGroup"[\s\S]*?<mxGeometry x="15" y="385" width="200" height="65"/,
+      );
+      expect(drawio).toMatch(
+        /value="protects"[^>]*strokeColor=#dc2626;strokeWidth=2;(?![^>]*dashed=1)[^>]*endArrow=block;[^>]*source="node_f0_ProtectedWebAcl" target="node_f0_ApplicationLoadBalancer"/,
+      );
+      expect(drawio).toMatch(
+        /value="protects"[^>]*source="node_f0_ProtectedWebAcl" target="node_f0_ApplicationLoadBalancer"><mxGeometry relative="1" as="geometry"\/><\/mxCell>/,
+      );
+      expect(drawio).toMatch(
+        /value="accepts via"[^>]*source="node_f0_ApplicationLoadBalancer" target="node_f0_Listener"><mxGeometry relative="1" as="geometry"\/><\/mxCell>/,
+      );
+      expect(drawio).toMatch(
+        /value="forwards to"[^>]*source="node_f0_Listener" target="node_f0_TargetGroup"><mxGeometry relative="1" as="geometry"\/><\/mxCell>/,
+      );
+      expect(drawio).toContain('id="legend_Security_line"');
+      expect(drawio).toContain(
+        'id="legend_Security_label" value="Security protection"',
+      );
+      expect(drawio.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
+      expect(drawio.endsWith('</mxfile>')).toBe(true);
+
+      expect(
+        generateDrawioApplicationDiagram({
+          mode: 'ApplicationDiagram',
+          options: { includeLegend: false },
+          list,
+        }),
+      ).not.toContain('legend_Security');
+    });
+
+    it('generates editable draw.io Multi-AZ Deployment, Traffic Paths & Protection and CfnDependencyGraph documents', () => {
       const list = [
         {
           fileName: 'vpc-foundation.yaml',
@@ -875,9 +1019,9 @@ describe('cfn', () => {
           ),
         },
       ];
-      const architecture = generateDrawioMultiAzDeploymentDataPaths({
+      const architecture = generateDrawioMultiAzDeploymentTrafficPathsAndProtection({
         list,
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
       });
       const dependency = generateDrawioCfnDependencyGraph({
         list,
@@ -891,8 +1035,9 @@ describe('cfn', () => {
         'Availability Zone ap-northeast-1 AZ index 0',
       );
       expect(architecture).toContain(
-        'name="Multi-AZ Deployment &amp; Data Paths"',
+        'name="Multi-AZ Deployment, Traffic Paths &amp; Protection"',
       );
+      expect(architecture).toContain('Traffic and protection types');
       expect(architecture).toContain('Client request / response');
       expect(architecture).toContain('Outbound / return route');
       expect(architecture).toContain('Asynchronous event');
@@ -1107,7 +1252,7 @@ describe('cfn', () => {
       expect(withExtras).toContain('subgraph f0_outputs["Outputs"]');
     });
 
-    it('renders a MultiAzDeploymentDataPaths diagram with real VPC/AZ/Subnet placement and cross-template edges', () => {
+    it('renders a MultiAzDeploymentTrafficPathsAndProtection diagram with real VPC/AZ/Subnet placement and cross-template edges', () => {
       const files = ['vpc.yaml', 'ec2.yaml', 'rds.yaml', 'elb.yaml'].map(
         (f) => ({
           fileName: f,
@@ -1118,7 +1263,7 @@ describe('cfn', () => {
       );
 
       const diagram = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: files,
       });
 
@@ -1151,7 +1296,7 @@ describe('cfn', () => {
 
     it('places an EC2::Instance/RDS::DBInstance in a "Standalone" group instead of dropping it, when no VPC resolves for it', () => {
       // rds.yaml/ec2.yaml on their own (no vpc.yaml) is exactly the scenario 9章/10章's
-      // The legacy "ArchitectureDiagram draws nothing at all without a VPC" problem describes -
+      // The previous topology view drawing nothing at all without a VPC problem describes -
       // both EC2WebServer01's SubnetId and DBInstance's DBSubnetGroupName are
       // Fn::ImportValue references into vpc.yaml, which isn't part of this list.
       const files = ['ec2.yaml', 'rds.yaml'].map((f) => ({
@@ -1162,7 +1307,7 @@ describe('cfn', () => {
       }));
 
       const diagram = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: files,
       });
 
@@ -1373,7 +1518,7 @@ describe('cfn', () => {
   // trusting the string shape, so a manual F5 debug-launch check in the
   // extension is no longer the only way to catch a mermaid syntax error.
   describe('generateDiagram output is valid mermaid syntax', () => {
-    it('accepts CfnDependencyGraph, MultiAzDeploymentDataPaths, and a hyphenated real-world stack name', async () => {
+    it('accepts CfnDependencyGraph, MultiAzDeploymentTrafficPathsAndProtection, and a hyphenated real-world stack name', async () => {
       const vpcTemplate = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
       // Both CfnDependencyGraph diagrams below pin 'CloudFormationView' so they stay
       // fully-populated (VPC/Subnet/RouteTable aren't ApplicationView focus resources) - the
@@ -1413,11 +1558,11 @@ describe('cfn', () => {
         ),
       }));
       const architectureDiagram = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: crossRefFiles,
       });
       const standardMultiAzDiagram = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: [
           {
             fileName: 'standard-web-application.yaml',
@@ -1432,7 +1577,7 @@ describe('cfn', () => {
       // The "Standalone" group (see architectureDiagram.ts) is a new-enough diagram shape of
       // its own to be worth syntax-checking independently of the rest of this test.
       const standaloneResourcesDiagram = generateDiagram({
-        mode: 'MultiAzDeploymentDataPaths',
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: crossRefFiles.filter((f) => f.fileName !== 'vpc.yaml'),
       });
 
