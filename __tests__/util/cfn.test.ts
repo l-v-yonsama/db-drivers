@@ -57,6 +57,24 @@ describe('cfn', () => {
 
       expect(template.Resources.PublicRoute.DependsOn).toBe('CFnVPCIGW');
     });
+
+    it('parses the sequence form of !Sub ([template, variables]) into the long-form shape', () => {
+      const template = parseCfnYamlTemplate(
+        [
+          'Resources:',
+          '  Bucket:',
+          '    Type: AWS::S3::Bucket',
+          '    Properties:',
+          '      BucketName: !Sub',
+          "        - '${Prefix}-bucket'",
+          '        - Prefix: !Ref AWS::StackName',
+        ].join('\n'),
+      );
+
+      expect(template.Resources.Bucket.Properties.BucketName).toEqual({
+        '!Sub': ['${Prefix}-bucket', { Prefix: { '!Ref': 'AWS::StackName' } }],
+      });
+    });
   });
 
   describe('parseCfnJsonTemplate', () => {
