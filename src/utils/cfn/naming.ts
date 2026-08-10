@@ -42,9 +42,13 @@ export const getCidrBlock = (properties?: Record<string, Refable>): string => {
     return '';
   }
   if (typeof properties.CidrBlock === 'object') {
-    // If CidrBlock is an object, it might be a Ref or Fn::GetAtt
+    // If CidrBlock is an object, it might be a Ref or Fn::GetAtt - parseRefValue resolves
+    // those to the referenced logical id (a string). Anything else (e.g. Fn::FindInMap,
+    // which needs the template's Mappings section to resolve and isn't available here) falls
+    // through parseRefValue's "plain" case with the raw intrinsic object still as `value` -
+    // skip rather than guess, matching how an unresolved Output value is handled elsewhere.
     const refVal = parseRefValue(properties.CidrBlock);
-    return refVal.value.replace(/[/.]/g, '_');
+    return typeof refVal.value === 'string' ? refVal.value.replace(/[/.]/g, '_') : '';
   }
   return (properties?.CidrBlock ?? '').replace(/[/.]/g, '_');
 };

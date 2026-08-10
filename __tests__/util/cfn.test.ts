@@ -8,6 +8,7 @@ import {
   generateDrawioCfnDependencyGraph,
   generateDrawioMultiAzDeploymentDataPaths,
   GenerateDiagramParams,
+  getCidrBlock,
   isJson,
   parseCfnJsonTemplate,
   parseCfnYamlTemplate,
@@ -75,6 +76,28 @@ describe('cfn', () => {
         '!Sub': ['${Prefix}-bucket', { Prefix: { '!Ref': 'AWS::StackName' } }],
       });
     });
+
+    it('parses !Base64 wrapping a long-form Fn::Sub mapping into the long-form shape', () => {
+      const template = parseCfnYamlTemplate(
+        [
+          'Resources:',
+          '  LaunchTemplate:',
+          '    Type: AWS::EC2::LaunchTemplate',
+          '    Properties:',
+          '      LaunchTemplateData:',
+          '        UserData: !Base64',
+          '          Fn::Sub: |',
+          '            #!/bin/bash',
+          '            echo ${EnvironmentName}',
+        ].join('\n'),
+      );
+
+      expect(
+        template.Resources.LaunchTemplate.Properties.LaunchTemplateData.UserData,
+      ).toEqual({
+        '!Base64': { 'Fn::Sub': '#!/bin/bash\necho ${EnvironmentName}\n' },
+      });
+    });
   });
 
   describe('parseCfnJsonTemplate', () => {
@@ -132,6 +155,26 @@ describe('cfn', () => {
         value: 't2.micro',
         rawValue: 't2.micro',
       });
+    });
+  });
+
+  describe('getCidrBlock', () => {
+    it('falls back to an empty string instead of crashing on a Fn::FindInMap CidrBlock', () => {
+      // A subnet's CidrBlock authored as !FindInMap (looking its CIDR up in a Mappings
+      // section) isn't a Ref/GetAtt/ImportValue, so parseRefValue's "plain" fallback passes
+      // the raw { '!FindInMap': [...] } object straight through as `value` - getCidrBlock
+      // has no Mappings context to resolve it and must not call String.replace on that object.
+      expect(
+        getCidrBlock({
+          CidrBlock: {
+            '!FindInMap': ['SubnetConfig', 'Public1', 'CIDR'],
+          },
+        } as any),
+      ).toBe('');
+    });
+
+    it('still resolves a plain string CidrBlock', () => {
+      expect(getCidrBlock({ CidrBlock: '10.0.1.0/24' } as any)).toBe('10_0_1_0_24');
     });
   });
 
