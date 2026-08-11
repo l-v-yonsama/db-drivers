@@ -23,6 +23,8 @@ type EdgeKind =
   | 'egress'
   | 'event'
   | 'data'
+  | 'membership'
+  | 'permission'
   | 'security';
 
 const edgeStyles: Record<EdgeKind, { color: string; width: number; dashed?: boolean }> = {
@@ -34,6 +36,8 @@ const edgeStyles: Record<EdgeKind, { color: string; width: number; dashed?: bool
   egress: { color: '#0d9488', width: 2 },
   event: { color: '#ea580c', width: 2, dashed: true },
   data: { color: '#059669', width: 2 },
+  membership: { color: '#64748b', width: 2, dashed: true },
+  permission: { color: '#7c3aed', width: 2, dashed: true },
   security: { color: '#dc2626', width: 2 },
 };
 
@@ -102,6 +106,8 @@ const addTrafficProtectionLegend = (cells: string[], y: number): void => {
     ['Egress', 'Outbound / return route', 'egress', true],
     ['Event', 'Asynchronous event', 'event', false],
     ['Data', 'Explicit data access', 'data', false],
+    ['Membership', 'Resource membership', 'membership', false],
+    ['Permission', 'Security-group permission', 'permission', false],
     ['Security', 'Security protection', 'security', false],
   ];
   cells.push(...drawioLineLegendCells({
@@ -136,6 +142,8 @@ const edgeKindForPath = (kind: TrafficProtectionPathKind): EdgeKind => {
     case 'egress-return': return 'egress';
     case 'event-delivery': return 'event';
     case 'data-access': return 'data';
+    case 'resource-membership': return 'membership';
+    case 'security-permission': return 'permission';
     case 'security-protection': return 'security';
   }
 };
@@ -305,7 +313,11 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
         const subnetId = `${azId}_f${subnet.fileIndex}_${subnet.logicalId}`;
         const subnetIndex = rowCounts[subnet.connectivity]++;
         const subnetY = rowY[subnet.connectivity] + subnetIndex * 18;
-        const subnetHeight = 140;
+        // VPC-level resources such as an ASG, DB cluster/instances, or an ElastiCache
+        // replication group are drawn across their candidate subnets. Private/isolated rows
+        // reserve enough height for a two-row grid when several resources share the same
+        // candidate subnet set; otherwise every resource would receive the same geometry.
+        const subnetHeight = subnet.connectivity === 'public' ? 140 : 195;
         const subnetTitle = `${subnet.connectivity[0].toUpperCase()}${subnet.connectivity.slice(1)} Subnet ${displayCidr(subnet.cidrBlock)}`;
         const fill = subnet.connectivity === 'public'
           ? '#f0fdf4'
@@ -339,11 +351,28 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       });
     });
 
+    const resourceLayoutGroups = new Map<string, typeof vpc.resources>();
+    vpc.resources.forEach((resource) => {
+      const candidateKey = resource.candidateSubnets
+        .map((subnet) => `${subnet.fileIndex}:${subnet.logicalId}`)
+        .sort()
+        .join('|');
+      const key = candidateKey || `connectivity:${resource.candidateSubnets[0]?.connectivity ?? 'private'}`;
+      resourceLayoutGroups.set(key, [...resourceLayoutGroups.get(key) ?? [], resource]);
+    });
+
     vpc.resources.forEach((resource) => {
       const endpointId = `f${resource.fileIndex}_${resource.logicalId}`;
       const resourceId = `node_${endpointId}`;
       const connectivity = resource.candidateSubnets[0]?.connectivity ?? 'private';
       const localY = connectivity === 'isolated' ? 1250 : connectivity === 'public' ? 810 : 1050;
+      const candidateKey = resource.candidateSubnets
+        .map((subnet) => `${subnet.fileIndex}:${subnet.logicalId}`)
+        .sort()
+        .join('|');
+      const layoutGroupKey = candidateKey || `connectivity:${connectivity}`;
+      const layoutGroup = resourceLayoutGroups.get(layoutGroupKey) ?? [resource];
+      const resourceIndex = layoutGroup.indexOf(resource);
       const candidatePositions = resource.candidateSubnets
         .map((subnet) => subnetPositions.get(`${subnet.fileIndex}:${subnet.logicalId}`))
         .filter((position): position is NodePosition => Boolean(position));
@@ -363,25 +392,49 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       const horizontalInset = 15;
       const verticalTopInset = 50;
       const verticalBottomInset = 15;
+      const columnGap = 10;
+      const rowGap = 15;
       const fitsCandidateRow = candidateTop !== undefined && candidateBottom !== undefined &&
         candidateBottom - candidateTop >=
           verticalTopInset + resourceHeight + verticalBottomInset;
       const localPosition = candidateLeft !== undefined && candidateRight !== undefined &&
           fitsCandidateRow
-        ? {
-            x: candidateLeft + horizontalInset,
-            y: candidateTop + verticalTopInset,
-            width: candidateRight - candidateLeft - horizontalInset * 2,
-            height: resourceHeight,
-          }
+        ? layoutGroup.length === 1
+          ? {
+              x: candidateLeft + horizontalInset,
+              y: candidateTop + verticalTopInset,
+              width: candidateRight - candidateLeft - horizontalInset * 2,
+              height: resourceHeight,
+            }
+          : ((): NodePosition => {
+              // Keep at most two rows so cards remain readable inside the shared subnet band.
+              // The stable resource order makes regenerated diagrams deterministic.
+              const columns = Math.ceil(layoutGroup.length / 2);
+              const rows = Math.ceil(layoutGroup.length / columns);
+              const availableWidth = candidateRight - candidateLeft - horizontalInset * 2;
+              const nodeWidth = (availableWidth - columnGap * (columns - 1)) / columns;
+              const gridHeight = rows * resourceHeight + (rows - 1) * rowGap;
+              const topInset = Math.max(10, (candidateBottom - candidateTop - gridHeight) / 2);
+              const column = resourceIndex % columns;
+              const row = Math.floor(resourceIndex / columns);
+              return {
+                x: candidateLeft + horizontalInset + column * (nodeWidth + columnGap),
+                y: candidateTop + topInset + row * (resourceHeight + rowGap),
+                width: nodeWidth,
+                height: resourceHeight,
+              };
+            })()
         : {
             x: vpcWidth / 2 - 145,
             y: localY,
             width: 290,
             height: resourceHeight,
           };
-      const multiAz = resource.multiAz ? '; Multi-AZ' : '';
-      cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.placement}${multiAz}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, vpcId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? ''));
+      const details = [
+        ...(resource.multiAz ? ['Multi-AZ'] : []),
+        ...(resource.traits ?? []),
+      ].map((entry) => `; ${entry}`).join('');
+      cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.placement}${details}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, vpcId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? ''));
       registerNode(endpointId, resourceId, { ...localPosition, x: vpcX + localPosition.x, y: vpcTop + localPosition.y });
     });
 

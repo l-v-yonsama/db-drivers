@@ -33,6 +33,8 @@ const pathStyle: Record<
   'egress-return': { color: '#0891b2', width: 2, dashed: true },
   'event-delivery': { color: '#d97706', width: 2, dashed: true },
   'data-access': { color: '#059669', width: 2, dashed: false },
+  'resource-membership': { color: '#64748b', width: 2, dashed: true },
+  'security-permission': { color: '#7c3aed', width: 2, dashed: true },
   'security-protection': { color: '#dc2626', width: 2, dashed: false },
 };
 
@@ -134,6 +136,8 @@ export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
         'Cyan dashed: egress / return',
         'Orange dashed: event delivery',
         'Green: data access',
+        'Gray dashed: membership',
+        'Purple dashed: security-group permission',
         'Red: security protection',
       ])}"]`,
     );
@@ -177,9 +181,11 @@ const renderVpc = (contents: string[], vpc: Vpc): void => {
     const multiAzGroupId = `${groupId}_multi_az`;
     contents.push(`    subgraph ${multiAzGroupId}["Multi-AZ / VPC resources"]`);
     vpc.resources.forEach((resource) => {
-      const placement = resource.multiAz
-        ? `${resource.placement}; Multi-AZ`
-        : resource.placement;
+      const placement = [
+        resource.placement,
+        ...(resource.multiAz ? ['Multi-AZ'] : []),
+        ...(resource.traits ?? []),
+      ].join('; ');
       contents.push(
         `      ${resourceId(
           vpc,

@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Minimal ElastiCache ReplicationGroup Multi-AZ placement fixture: a two-AZ CacheSubnetGroup,
+  an Auto Scaling Group whose Launch Template references the replication group's primary
+  endpoint, for offline diagram-generation validation only. Not deployed to LocalStack.
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.91.0.0/16
+
+  AppSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.91.10.0/24
+
+  AppSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: ap-northeast-1c
+      CidrBlock: 10.91.11.0/24
+
+  CacheSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.91.20.0/24
+
+  CacheSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: ap-northeast-1c
+      CidrBlock: 10.91.21.0/24
+
+  AppLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: ami-0000000000000000
+        InstanceType: t3.micro
+        UserData: !Base64
+          Fn::Sub: |
+            #!/bin/bash
+            echo "REDIS_HOST=${ApplicationCache.PrimaryEndPoint.Address}" >> /etc/app.env
+            echo "REDIS_PORT=${ApplicationCache.PrimaryEndPoint.Port}" >> /etc/app.env
+
+  WebAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref AppSubnetA
+        - !Ref AppSubnetC
+      LaunchTemplate:
+        LaunchTemplateId: !Ref AppLaunchTemplate
+        Version: !GetAtt AppLaunchTemplate.LatestVersionNumber
+      MinSize: '2'
+      MaxSize: '2'
+      DesiredCapacity: '2'
+
+  CacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Subnet group for the ElastiCache Multi-AZ validation fixture
+      SubnetIds:
+        - !Ref CacheSubnetA
+        - !Ref CacheSubnetC
+
+  ApplicationCache:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupDescription: Multi-AZ Redis cache for the ElastiCache validation fixture
+      Engine: redis
+      CacheNodeType: cache.t3.micro
+      CacheSubnetGroupName: !Ref CacheSubnetGroup
+      NumCacheClusters: 2
+      AutomaticFailoverEnabled: true
+      MultiAZEnabled: true
+      Port: 6379

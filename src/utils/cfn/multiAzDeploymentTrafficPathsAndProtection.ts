@@ -13,6 +13,8 @@ export type TrafficProtectionPathKind =
   | 'egress-return'
   | 'event-delivery'
   | 'data-access'
+  | 'resource-membership'
+  | 'security-permission'
   | 'security-protection';
 
 export type TrafficProtectionPathEndpoint = {
@@ -225,6 +227,20 @@ export const buildMultiAzDeploymentTrafficPathsAndProtection = (
       }
       return;
     }
+    if (relation.kind === 'resource-membership') {
+      const from = applicationNodeById.get(relation.from);
+      const to = applicationNodeById.get(relation.to);
+      if (from && to && topologyNodeIds.has(from.id) && topologyNodeIds.has(to.id)) {
+        addPath(
+          applicationEndpoint(from),
+          applicationEndpoint(to),
+          'resource-membership',
+          relation.label,
+          false,
+        );
+      }
+      return;
+    }
     if (relation.kind === 'event-delivery') {
       if (eventMappingPairs.has(`${relation.from}:${relation.to}`)) return;
       const from = applicationNodeById.get(relation.from);
@@ -256,6 +272,8 @@ export const buildMultiAzDeploymentTrafficPathsAndProtection = (
     ));
   });
 
+  addSecurityPermissionPaths(files, topologyNodeIds, paths, addPath);
+
   const regionalNodeIds = new Set(paths.flatMap((path) => [path.from.id, path.to.id])
     .filter((id) => id !== internetEndpoint.id && !topologyNodeIds.has(id)));
   const regionalNodes = Array.from(regionalNodeIds)
@@ -265,6 +283,157 @@ export const buildMultiAzDeploymentTrafficPathsAndProtection = (
     });
 
   return { regionalNodes, paths };
+};
+
+type SecurityGroupAttachments = Map<string, TrafficProtectionPathEndpoint[]>;
+
+const localRefs = (value: any): string[] => {
+  const values = Array.isArray(value) ? value : value === undefined ? [] : [value];
+  return values.flatMap((candidate) => {
+    const parsed = parseRefValue(candidate);
+    return parsed.type === 'Ref' && parsed.value ? [parsed.value] : [];
+  });
+};
+
+const collectSecurityGroupAttachments = (
+  files: DiagramFile[],
+  topologyNodeIds: Set<string>,
+): SecurityGroupAttachments => {
+  const result: SecurityGroupAttachments = new Map();
+  const attach = (fileIndex: number, logicalId: string, securityGroupIds: string[]): void => {
+    const endpoint = resourceEndpoint(fileIndex, logicalId);
+    if (!topologyNodeIds.has(endpoint.id)) return;
+    securityGroupIds.forEach((securityGroupId) => {
+      const key = `${fileIndex}:${securityGroupId}`;
+      result.set(key, [...result.get(key) ?? [], endpoint]);
+    });
+  };
+
+  files.forEach((file) => Object.entries(file.cfnTemplate.Resources)
+    .forEach(([logicalId, resource]) => {
+      const properties = resource.Properties ?? {};
+      let securityGroupValues: any[] = [];
+      switch (resource.Type) {
+        case 'AWS::EC2::Instance':
+          securityGroupValues = [
+            ...properties.SecurityGroupIds ?? [],
+            ...properties.NetworkInterfaces?.flatMap((item: any) => item?.GroupSet ?? []) ?? [],
+          ];
+          break;
+        case 'AWS::ElasticLoadBalancingV2::LoadBalancer':
+          securityGroupValues = properties.SecurityGroups ?? [];
+          break;
+        case 'AWS::ECS::Service':
+          securityGroupValues = properties.NetworkConfiguration?.AwsvpcConfiguration?.SecurityGroups ?? [];
+          break;
+        case 'AWS::RDS::DBInstance':
+        case 'AWS::RDS::DBCluster':
+          securityGroupValues = properties.VpcSecurityGroupIds ?? [];
+          break;
+        case 'AWS::ElastiCache::CacheCluster':
+        case 'AWS::ElastiCache::ReplicationGroup':
+          securityGroupValues = properties.SecurityGroupIds ?? [];
+          break;
+        case 'AWS::AutoScaling::AutoScalingGroup': {
+          const launchTemplateId = parseRefValue(properties.LaunchTemplate?.LaunchTemplateId).value;
+          const launchTemplate = file.cfnTemplate.Resources[launchTemplateId];
+          const data = launchTemplate?.Type === 'AWS::EC2::LaunchTemplate'
+            ? launchTemplate.Properties?.LaunchTemplateData
+            : undefined;
+          securityGroupValues = [
+            ...data?.SecurityGroupIds ?? [],
+            ...data?.NetworkInterfaces?.flatMap((item: any) => item?.Groups ?? []) ?? [],
+          ];
+          break;
+        }
+      }
+      attach(file.fileIndex, logicalId, localRefs(securityGroupValues));
+    }));
+  return result;
+};
+
+const hasProvenTrafficPath = (
+  paths: TrafficProtectionPath[],
+  sourceId: string,
+  targetId: string,
+): boolean => {
+  const trafficKinds = new Set<TrafficProtectionPathKind>([
+    'client-request-response',
+    'event-delivery',
+    'data-access',
+  ]);
+  const adjacency = new Map<string, Set<string>>();
+  paths.filter((path) => trafficKinds.has(path.kind)).forEach((path) => {
+    adjacency.set(path.from.id, new Set([...adjacency.get(path.from.id) ?? [], path.to.id]));
+    if (path.bidirectional) {
+      adjacency.set(path.to.id, new Set([...adjacency.get(path.to.id) ?? [], path.from.id]));
+    }
+  });
+  const pending = [sourceId];
+  const visited = new Set(pending);
+  while (pending.length > 0) {
+    const current = pending.shift();
+    if (current === undefined) break;
+    if (current === targetId) return true;
+    (adjacency.get(current) ?? []).forEach((next) => {
+      if (!visited.has(next)) {
+        visited.add(next);
+        pending.push(next);
+      }
+    });
+  }
+  return false;
+};
+
+const securityPermissionLabel = (rule: any): string => {
+  const protocol = typeof rule.IpProtocol === 'string'
+    ? rule.IpProtocol.toUpperCase()
+    : 'protocol';
+  const fromPort = rule.FromPort;
+  const toPort = rule.ToPort;
+  const port = fromPort === undefined
+    ? ''
+    : fromPort === toPort || toPort === undefined
+      ? ` :${fromPort}`
+      : ` :${fromPort}-${toPort}`;
+  const service = protocol === 'TCP' && Number(fromPort) === 22
+    ? 'SSH'
+    : protocol === 'TCP' && Number(fromPort) === 80
+      ? 'HTTP'
+      : 'Connection';
+  return `${service} permitted ${protocol}${port}`;
+};
+
+const addSecurityPermissionPaths = (
+  files: DiagramFile[],
+  topologyNodeIds: Set<string>,
+  paths: TrafficProtectionPath[],
+  addPath: (
+    from: TrafficProtectionPathEndpoint,
+    to: TrafficProtectionPathEndpoint,
+    kind: TrafficProtectionPathKind,
+    label: string,
+    bidirectional: boolean,
+  ) => void,
+): void => {
+  const attachments = collectSecurityGroupAttachments(files, topologyNodeIds);
+  files.forEach((file) => Object.entries(file.cfnTemplate.Resources)
+    .filter(([, resource]) => resource.Type === 'AWS::EC2::SecurityGroup')
+    .forEach(([securityGroupId, securityGroup]) => {
+      const targets = attachments.get(`${file.fileIndex}:${securityGroupId}`) ?? [];
+      const ingress = Array.isArray(securityGroup.Properties?.SecurityGroupIngress)
+        ? securityGroup.Properties.SecurityGroupIngress
+        : [];
+      ingress.forEach((rule: any) => {
+        const sourceSecurityGroupId = parseRefValue(rule.SourceSecurityGroupId).value;
+        if (!sourceSecurityGroupId) return;
+        const sources = attachments.get(`${file.fileIndex}:${sourceSecurityGroupId}`) ?? [];
+        sources.forEach((source) => targets.forEach((target) => {
+          if (source.id === target.id || hasProvenTrafficPath(paths, source.id, target.id)) return;
+          addPath(source, target, 'security-permission', securityPermissionLabel(rule), false);
+        }));
+      });
+    }));
 };
 
 const addClientPaths = (

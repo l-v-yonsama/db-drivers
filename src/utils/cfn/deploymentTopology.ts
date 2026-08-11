@@ -15,6 +15,12 @@ type TopologyVpcResource = TopologySubnetResource & {
   placement: string;
   candidateSubnets: TopologySubnet[];
   multiAz?: boolean;
+  /** Additional structured, individually-optional placement descriptors (for example
+   * ElastiCache's Multi-AZ/automatic-failover/node-count traits) rendered after `placement`
+   * (and the `multiAz` suffix, when set) in this order. Left undefined for resource kinds -
+   * RDS included - that only use `placement`/`multiAz`, so their rendered strings are
+   * unchanged. */
+  traits?: string[];
 };
 
 type TopologyDefaultRoute = {
@@ -131,6 +137,44 @@ const displayProperty = (value: any): string | undefined => {
   if (value === undefined || value === null) return undefined;
   const serialized = JSON.stringify(value);
   return serialized.length > 80 ? `${serialized.slice(0, 77)}...` : serialized;
+};
+
+/** Reads a literal or `Fn::Sub`/pseudo-parameter-resolvable integer property. Returns
+ * undefined rather than a guessed value when it cannot be resolved (for example an
+ * unresolved CloudFormation Parameter), matching how the rest of this topology model treats
+ * unresolvable data. */
+const resolveInteger = (value: any): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const resolved = typeof value === 'string' ? value : resolveCfnString(value);
+  if (resolved === undefined || !/^\d+$/.test(resolved)) return undefined;
+  return Number(resolved);
+};
+
+const pluralize = (count: number, noun: string): string =>
+  `${count} ${noun}${count === 1 ? '' : 's'}`;
+
+/** Builds ElastiCache ReplicationGroup placement traits in the documented, stable order:
+ * Multi-AZ, then automatic failover, then a resolvable node/shard count. Cluster-mode-disabled
+ * replication groups report `NumCacheClusters` as a flat node count; cluster-mode-enabled ones
+ * report `NumNodeGroups`/`ReplicasPerNodeGroup` as shard/replica-per-shard counts instead. Only
+ * traits that are explicitly proven by the template are included - CloudFormation never proves
+ * which AZ actually holds the primary versus a replica, so this never claims one. */
+const buildElastiCacheReplicationGroupTraits = (properties: any): string[] => {
+  const traits: string[] = [];
+  if (properties?.MultiAZEnabled === true) traits.push('Multi-AZ');
+  if (properties?.AutomaticFailoverEnabled === true) traits.push('automatic failover');
+
+  const numNodeGroups = resolveInteger(properties?.NumNodeGroups);
+  const replicasPerNodeGroup = resolveInteger(properties?.ReplicasPerNodeGroup);
+  if (numNodeGroups !== undefined) {
+    traits.push(replicasPerNodeGroup !== undefined
+      ? `${pluralize(numNodeGroups, 'shard')} · ${pluralize(replicasPerNodeGroup, 'replica')} per shard`
+      : pluralize(numNodeGroups, 'shard'));
+  } else {
+    const numCacheClusters = resolveInteger(properties?.NumCacheClusters);
+    if (numCacheClusters !== undefined) traits.push(pluralize(numCacheClusters, 'cache node'));
+  }
+  return traits;
 };
 
 const listenerRuleConditions = (conditions: any): string[] => {
@@ -374,6 +418,12 @@ export class CfnDeploymentTopologyStructure {
         case 'AWS::ECS::Service':
           this.attachEcsService(file, logicalId, resource);
           break;
+        case 'AWS::ElastiCache::ReplicationGroup':
+          this.attachElastiCacheReplicationGroup(file, logicalId, resource);
+          break;
+        case 'AWS::AutoScaling::AutoScalingGroup':
+          this.attachAutoScalingGroup(file, logicalId, resource);
+          break;
       }
     });
   }
@@ -446,7 +496,25 @@ export class CfnDeploymentTopologyStructure {
       placement: `DB subnet group ${subnetGroup.logicalId}: ${subnets.length} candidate subnets`,
       candidateSubnets: subnets,
       multiAz: resource.Properties?.MultiAZ === true || resource.Type === 'AWS::RDS::DBCluster',
+      traits: resource.Type === 'AWS::RDS::DBCluster'
+        ? this.databaseClusterTraits(file, logicalId, resource)
+        : undefined,
     });
+  }
+
+  private databaseClusterTraits(
+    file: DiagramFile,
+    logicalId: string,
+    resource: TemplateResource,
+  ): string[] {
+    const memberCount = Object.values(file.cfnTemplate.Resources).filter((candidate) =>
+      candidate.Type === 'AWS::RDS::DBInstance' &&
+      this.normalizeRef(candidate.Properties?.DBClusterIdentifier, file.fileIndex).value === logicalId
+    ).length;
+    const traits = memberCount > 0 ? [pluralize(memberCount, 'DB instance')] : [];
+    const engine = displayProperty(resource.Properties?.Engine)?.toLowerCase();
+    if (engine?.startsWith('aurora')) traits.push('writer/reader roles dynamic');
+    return traits;
   }
 
   private attachEcsService(
@@ -468,6 +536,111 @@ export class CfnDeploymentTopologyStructure {
       ...this.topologyResource(file, logicalId, resource),
       placement: `ECS service: ${subnets.length} configured subnets`,
       candidateSubnets: subnets,
+    });
+  }
+
+  /** Reuses RDS's VPC-level placement model: resolve `CacheSubnetGroupName` to a template-local
+   * `AWS::ElastiCache::SubnetGroup`, resolve its `SubnetIds` as candidate subnets, and place the
+   * replication group once at VPC level only when those candidates resolve to exactly one VPC. */
+  private attachElastiCacheReplicationGroup(
+    file: DiagramFile,
+    logicalId: string,
+    resource: TemplateResource,
+  ): void {
+    const subnetGroupRef = this.normalizeRef(
+      resource.Properties?.CacheSubnetGroupName,
+      file.fileIndex,
+    );
+    const subnetGroup = this.findTemplateResource(subnetGroupRef, file.fileIndex);
+    const subnetIds = subnetGroup?.detail.Properties?.SubnetIds;
+    if (
+      !subnetGroup ||
+      subnetGroup.detail.Type !== 'AWS::ElastiCache::SubnetGroup' ||
+      !Array.isArray(subnetIds)
+    ) {
+      this.addStandalone(
+        file,
+        logicalId,
+        resource,
+        'ElastiCache replication group has no resolvable cache subnet group',
+      );
+      return;
+    }
+
+    const subnets = subnetIds
+      .map((value: any) => this.getSubnet(
+        this.normalizeRef(value, subnetGroup.file.fileIndex),
+        subnetGroup.file.fileIndex,
+      ))
+      .filter((subnet): subnet is TopologySubnet => Boolean(subnet));
+    const vpcs = uniqueByIdentity(subnets.flatMap((subnet) => {
+      const vpc = this.vpcForSubnet(subnet);
+      return vpc ? [vpc] : [];
+    }));
+    if (subnets.length === 0 || vpcs.length !== 1) {
+      this.addStandalone(
+        file,
+        logicalId,
+        resource,
+        'ElastiCache cache subnet group does not resolve to one VPC',
+      );
+      return;
+    }
+
+    vpcs[0].resources.push({
+      ...this.topologyResource(file, logicalId, resource),
+      placement: `Cache subnet group ${subnetGroup.logicalId}: ${subnets.length} candidate subnets`,
+      candidateSubnets: subnets,
+      traits: buildElastiCacheReplicationGroupTraits(resource.Properties),
+    });
+  }
+
+  /** Reuses the same VPC-level placement model via `VPCZoneIdentifier`, the Auto Scaling Group
+   * equivalent of an ECS service's `NetworkConfiguration.AwsvpcConfiguration.Subnets`. The
+   * `AWS::EC2::LaunchTemplate` it references is configuration attached to the group, not a
+   * separately placed resource - see applicationRelations.ts for how a Launch Template's data
+   * references are read back as the group's own `accesses` relationships. */
+  private attachAutoScalingGroup(
+    file: DiagramFile,
+    logicalId: string,
+    resource: TemplateResource,
+  ): void {
+    const subnetValues = resource.Properties?.VPCZoneIdentifier;
+    if (!Array.isArray(subnetValues)) {
+      this.addStandalone(
+        file,
+        logicalId,
+        resource,
+        'Auto Scaling Group has no resolvable VPCZoneIdentifier',
+      );
+      return;
+    }
+    const subnets = subnetValues
+      .map((value: any) => this.getSubnet(this.normalizeRef(value, file.fileIndex), file.fileIndex))
+      .filter((subnet): subnet is TopologySubnet => Boolean(subnet));
+    const vpcs = uniqueByIdentity(subnets.flatMap((subnet) => {
+      const vpc = this.vpcForSubnet(subnet);
+      return vpc ? [vpc] : [];
+    }));
+    if (subnets.length === 0 || vpcs.length !== 1) {
+      this.addStandalone(
+        file,
+        logicalId,
+        resource,
+        'Auto Scaling Group VPCZoneIdentifier does not resolve to one VPC',
+      );
+      return;
+    }
+
+    vpcs[0].resources.push({
+      ...this.topologyResource(file, logicalId, resource),
+      placement: `Auto Scaling group: ${subnets.length} configured subnets`,
+      candidateSubnets: subnets,
+      traits: [
+        ['desired', resolveInteger(resource.Properties?.DesiredCapacity)],
+        ['min', resolveInteger(resource.Properties?.MinSize)],
+        ['max', resolveInteger(resource.Properties?.MaxSize)],
+      ].flatMap(([label, value]) => value === undefined ? [] : [`${label} ${value}`]),
     });
   }
 
@@ -640,13 +813,30 @@ export class CfnDeploymentTopologyStructure {
           logicalId: this.normalizeRef({ Ref: logicalId }, candidateFile.fileIndex),
         }] : [];
       }));
+    const autoScalingTargets = this.diagramFiles.flatMap((candidateFile) =>
+      Object.entries(candidateFile.cfnTemplate.Resources).flatMap(([logicalId, resource]) => {
+        if (resource.Type !== 'AWS::AutoScaling::AutoScalingGroup' ||
+            !Array.isArray(resource.Properties?.TargetGroupARNs)) return [];
+        const matches = resource.Properties.TargetGroupARNs.some((targetGroupArn: any) => {
+          const resolved = this.findTemplateResource(
+            this.normalizeRef(targetGroupArn, candidateFile.fileIndex),
+            candidateFile.fileIndex,
+          );
+          return resolved?.file.fileIndex === targetGroup.file.fileIndex &&
+            resolved.logicalId === targetGroup.logicalId;
+        });
+        return matches ? [{
+          sourceFileIndex: candidateFile.fileIndex,
+          logicalId: this.normalizeRef({ Ref: logicalId }, candidateFile.fileIndex),
+        }] : [];
+      }));
     return {
       fileIndex: targetGroup.file.fileIndex,
       logicalId: targetGroup.logicalId,
       protocol: displayProperty(targetGroup.detail.Properties?.Protocol),
       port: displayProperty(targetGroup.detail.Properties?.Port),
       targetType: displayProperty(targetGroup.detail.Properties?.TargetType),
-      targets: [...staticTargets, ...ecsTargets],
+      targets: [...staticTargets, ...ecsTargets, ...autoScalingTargets],
     };
   }
 

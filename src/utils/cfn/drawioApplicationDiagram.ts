@@ -37,6 +37,7 @@ const relationStyles: Record<ApplicationRelationKind, DrawioStyle> = {
   'data-read': { color: '#059669', width: 2 },
   'data-write': { color: '#7c3aed', width: 3 },
   'network-route': { color: '#0891b2', width: 2, dashed: true },
+  'resource-membership': { color: '#64748b', width: 2, dashed: true },
   'security-protection': { color: '#dc2626', width: 2 },
 };
 
@@ -268,6 +269,7 @@ export const generateDrawioApplicationDiagram = (
       ['Event', 'Event delivery', 'event-delivery'],
       ['Access', 'Data access', 'data-access'],
       ['Network', 'Network route', 'network-route'],
+      ['Membership', 'Resource membership', 'resource-membership'],
       ['Security', 'Security protection', 'security-protection'],
     ];
     cells.push(...drawioLineLegendCells({

@@ -10,12 +10,18 @@
 | `standard-web-application.yaml` | Route Tableで分類するPublic/Private/Isolated Subnet、AZごとのNAT、Regional WAF → ALB → ECS/Fargate、RDS DB Subnet Group、SQS → Lambda |
 | `waf-alb-application.yaml` | 関連付け済みAWS WAF → ALB、未関連付けWeb ACLのApplicationDiagram除外 |
 | `shared-data.yaml` / `shared-data-consumer.yaml` | ハイフンと`Fn::Sub`、実Stack Parameter値を使うクロスStack Export / ImportValue |
+| `elasticache-multi-az.yaml` | ElastiCache ReplicationGroupの2 AZ CacheSubnetGroup配置、Multi-AZ/自動フェイルオーバー表示、LaunchTemplate参照のAuto Scaling Group `accesses`への読み替え |
+| `asg-routing-membership-security.yaml` | Target Group → Auto Scaling Groupのリクエスト経路、DB Instance → Aurora Cluster所属、capacity/member情報、Bastion SSH接続許可 |
 
 `standard-web-application.yaml`は、一般的なAWS構成の図解精度を確認するローカルのテスト用CFnテンプレートです。Regional WAFはVPC外へ配置し、関連付け先ALBへの赤い`protects`エッジとして表示します。現在のLocalStack構成ではWAF、ECS、RDS、ELBv2を有効化していないため、再作成対象には含めません。構成図生成時にはローカルファイルから読み込み、5つのLocalStack Stackとは別の構成図として保存します。
 
 `waf-alb-application.yaml`は、MIT-0ライセンスの[AWS sample amazon-cloudfront-waf-secretsmanager](https://github.com/aws-samples/amazon-cloudfront-waf-secretsmanager)と[AWS Security Blog](https://aws.amazon.com/blogs/security/how-to-enhance-amazon-cloudfront-origin-security-with-aws-waf-and-aws-secrets-manager/)を参照し、WAFとALBの意味関係だけを残した縮約・改変fixtureです。`AWS::WAFv2::WebACLAssociation`から関連付け済みWeb ACLとALBを解決できること、および未関連付けWeb ACLをApplicationDiagramに表示しないことを単体テストで確認します。外部アーティファクトやLambdaコードは含まず、デプロイ検証の対象にはしません。
 
 `shared-data.yaml`と`shared-data-consumer.yaml`は、実StackのParameter値を含むクロスStack参照を検証するため、LocalStackの再作成対象に含めます。producerを先に、consumerを`DataStack=cfn-diagram-validation-shared-data`で作成します。
+
+`elasticache-multi-az.yaml`は、`AWS::ElastiCache::ReplicationGroup`のVPCレベル配置専用の最小fixtureです。今回対応するのは`ReplicationGroup`のみで、`CacheCluster`や`ServerlessCache`は対象外です。2つのAZに分かれたapp用サブネットとcache用サブネットの候補配置、`MultiAZEnabled`/`AutomaticFailoverEnabled`によるMulti-AZ・自動フェイルオーバー表示、および`AppLaunchTemplate`のUserData内`Fn::Sub`が参照する`ApplicationCache.PrimaryEndPoint.Address`/`Port`を`WebAutoScalingGroup`からの`accesses`関係へ読み替えることを検証します。ALB、NAT、RouteTable、RDS、WAF、Security Groupは検証に不要なため含めていません。RouteTableを持たないサブネットは既存仕様によりisolatedへ分類されます。実AWSまたはLocalStackへのデプロイ対象ではなく、オフラインの構成図生成テスト専用です。
+
+`asg-routing-membership-security.yaml`は、`TargetGroupARNs`で証明されたTarget Group → Auto Scaling Groupの要求経路、`DBClusterIdentifier`で証明されたDB Instance → Aurora Clusterの所属、Auto Scalingのdesired/min/maxとAurora member数、および`SourceSecurityGroupId`で証明されたBastion → Auto Scaling GroupのSSH接続許可を検証する最小fixtureです。接続許可は実通信ではなく、Multi-AZ図だけに紫色点線で表示します。ALB → Auto Scaling Groupには証明済み要求経路があるため、重複するHTTP許可線を表示しません。実AWSまたはLocalStackへのデプロイ対象ではありません。
 
 ## LocalStack
 

@@ -8,6 +8,7 @@ export type ApplicationRelationKind =
   | 'data-read'
   | 'data-write'
   | 'network-route'
+  | 'resource-membership'
   | 'security-protection';
 
 export type ApplicationRelation = {
@@ -107,6 +108,7 @@ const APP_TYPES: Record<ApplicationNode['layer'], ReadonlySet<string>> = {
     'AWS::ECS::TaskDefinition',
     'AWS::StepFunctions::StateMachine',
     'AWS::EC2::Instance',
+    'AWS::AutoScaling::AutoScalingGroup',
   ]),
   messaging: new Set([
     'AWS::SQS::Queue',
@@ -273,6 +275,16 @@ const relationFor = (
       lowerPath.includes('targets')) {
     return { kind: 'network-route', label: 'targets' };
   }
+  if (sourceType === 'AWS::AutoScaling::AutoScalingGroup' &&
+      targetType === 'AWS::ElasticLoadBalancingV2::TargetGroup' &&
+      lowerPath.includes('targetgrouparns')) {
+    return { kind: 'network-route', label: 'targets', reverse: true };
+  }
+  if (sourceType === 'AWS::RDS::DBInstance' &&
+      targetType === 'AWS::RDS::DBCluster' &&
+      lowerPath.includes('dbclusteridentifier')) {
+    return { kind: 'resource-membership', label: 'member of' };
+  }
   if (sourceType === 'AWS::ECS::Service') {
     if (targetType === 'AWS::ElasticLoadBalancingV2::TargetGroup' && lowerPath.includes('loadbalancers')) {
       return { kind: 'network-route', label: 'targets', reverse: true };
@@ -407,6 +419,55 @@ export const extractApplicationRelations = (files: DiagramFile[]): ApplicationRe
       });
     });
   }));
+
+  // An Auto Scaling Group never references a data resource directly - it names an
+  // AWS::EC2::LaunchTemplate, which is configuration rather than an execution actor (so it is
+  // deliberately absent from APP_TYPES/nodes above). When that Launch Template contains an
+  // explicit Ref/GetAtt/Fn::Sub reference to a Data-layer resource - an ElastiCache
+  // PrimaryEndPoint, an RDS endpoint, or any other supported data type - it is read back as the
+  // group's own `accesses` relationship, the same "instance runs resolved configuration"
+  // reasoning already used for LoadBalancer -> Listener -> TargetGroup -> ECS Service above.
+  // Two references into the same target (for example separate Address/Port Fn::Sub
+  // substitutions) collapse into one relation via the final dedupe below; Security Group
+  // references, DependsOn, and a shared SubnetGroup never qualify because they are never
+  // collected as Ref/GetAtt/Fn::Sub hits in the first place.
+  files.forEach((file) => file.resouces.forEach((logicalId) => {
+    const sourceResource = file.cfnTemplate.Resources[logicalId];
+    if (sourceResource.Type !== 'AWS::AutoScaling::AutoScalingGroup') return;
+    const sourceNode = nodes.find((node) => node.id === `f${file.fileIndex}_${logicalId}`);
+    if (!sourceNode) return;
+
+    const resolveTarget = (
+      hit: RefHit,
+    ): { id: string; resource: TemplateResource } | undefined => hit.importName
+        ? byImportName.get(hit.importName)
+        : byFileAndLogicalId.get(`${file.fileIndex}:${hit.targetId}`);
+
+    const launchTemplateHits: RefHit[] = [];
+    collectRefs(sourceResource.Properties?.LaunchTemplate, 'Properties.LaunchTemplate', launchTemplateHits, file);
+    const launchTemplate = launchTemplateHits
+      .map(resolveTarget)
+      .find((target): target is { id: string; resource: TemplateResource } =>
+        target?.resource.Type === 'AWS::EC2::LaunchTemplate');
+    if (!launchTemplate) return;
+
+    const dataHits: RefHit[] = [];
+    collectRefs(launchTemplate.resource.Properties, 'Properties (via LaunchTemplate)', dataHits, file);
+    dataHits.forEach((hit) => {
+      const target = resolveTarget(hit);
+      if (!target || target.id === sourceNode.id) return;
+      const targetNode = nodes.find((node) => node.id === target.id);
+      if (!targetNode || targetNode.layer !== 'data') return;
+      result.push({
+        from: sourceNode.id,
+        to: targetNode.id,
+        propertyPath: hit.path,
+        kind: 'data-access',
+        label: 'accesses',
+      });
+    });
+  }));
+
   return Array.from(new Map(result.map((relation) => [
     `${relation.from}:${relation.to}:${relation.kind}`,
     relation,

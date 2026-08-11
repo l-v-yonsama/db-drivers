@@ -32,6 +32,7 @@ const relationStyle: Record<
   'data-read': { color: '#059669', width: 2, edge: '-->' },
   'data-write': { color: '#7c3aed', width: 3, edge: '==>' },
   'network-route': { color: '#0891b2', width: 2, edge: '-.->' },
+  'resource-membership': { color: '#64748b', width: 2, edge: '-.->' },
   'security-protection': { color: '#dc2626', width: 2, edge: '-->' },
 };
 
@@ -154,6 +155,7 @@ export const generateDiagramApplicationDiagram = (
         'Orange dashed: event',
         'Green/purple solid: data',
         'Cyan dashed: network',
+        'Gray dashed: membership',
         'Red solid: security',
       ])}"]`,
     );
