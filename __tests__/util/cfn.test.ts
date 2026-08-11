@@ -175,6 +175,43 @@ describe('cfn', () => {
     it('still resolves a plain string CidrBlock', () => {
       expect(getCidrBlock({ CidrBlock: '10.0.1.0/24' } as any)).toBe('10_0_1_0_24');
     });
+
+    it('resolves a Ref CidrBlock against the Parameter Default when no context is a guess', () => {
+      // A VPC declared as `CidrBlock: !Ref VpcCIDR` is a very common CloudFormation authoring
+      // style. The Parameter's own `Default` is explicit template data, not a guess, so it
+      // should be used the same way availabilityZoneName() already resolves other Ref values.
+      expect(
+        getCidrBlock(
+          { CidrBlock: { Ref: 'VpcCIDR' } } as any,
+          { parameters: { VpcCIDR: { Default: '10.77.0.0/16' } } },
+        ),
+      ).toBe('10_77_0_0_16');
+    });
+
+    it('prefers a supplied parameterValues override over the Parameter Default', () => {
+      expect(
+        getCidrBlock(
+          { CidrBlock: { Ref: 'VpcCIDR' } } as any,
+          {
+            parameters: { VpcCIDR: { Default: '10.77.0.0/16' } },
+            parameterValues: { VpcCIDR: '10.88.0.0/16' },
+          },
+        ),
+      ).toBe('10_88_0_0_16');
+    });
+
+    it('falls back to an empty string for an unresolved Ref instead of showing the Parameter name', () => {
+      // Without a resolution context (or without a Default/override for that Parameter), the
+      // previous implementation returned the Ref's target logical id ("VpcCIDR") as if it were
+      // the resolved CIDR value, which is misleading rather than merely incomplete.
+      expect(getCidrBlock({ CidrBlock: { Ref: 'VpcCIDR' } } as any)).toBe('');
+      expect(
+        getCidrBlock(
+          { CidrBlock: { Ref: 'VpcCIDR' } } as any,
+          { parameters: { VpcCIDR: {} } },
+        ),
+      ).toBe('');
+    });
   });
 
   describe('extractResourceDependencies', () => {
@@ -958,7 +995,7 @@ describe('cfn', () => {
         templateJSONString: JSON.stringify(template),
       }];
 
-      it('extends ApplicationDiagram through TargetGroup -> AutoScalingGroup and shows DB membership without security permission', () => {
+      it('extends ApplicationDiagram through TargetGroup -> AutoScalingGroup and nests DB membership instead of a "member of" edge', () => {
         const diagram = generateDiagram({
           mode: 'ApplicationDiagram',
           list: relationshipList(relationshipTemplate()),
@@ -967,17 +1004,18 @@ describe('cfn', () => {
         expect(diagram).toContain(
           'f0_WebTargetGroup -.->|targets| f0_WebAutoScalingGroup',
         );
-        expect(diagram).toContain(
-          'f0_DatabaseInstance1 -.->|member of| f0_DatabaseCluster',
-        );
-        expect(diagram).toContain(
-          'f0_DatabaseInstance2 -.->|member of| f0_DatabaseCluster',
-        );
-        expect(diagram).toContain('Gray dashed: membership');
+        // DatabaseInstance1/2 are proven, by DBClusterIdentifier, to be members of
+        // DatabaseCluster - that containment is drawn directly as a nested subgraph instead of a
+        // separate "member of" dashed edge, matching the Multi-AZ diagram's representation.
+        expect(diagram).toContain('subgraph f0_DatabaseCluster[');
+        expect(diagram).toContain('      f0_DatabaseInstance1["DatabaseInstance1"]');
+        expect(diagram).toContain('      f0_DatabaseInstance2["DatabaseInstance2"]');
+        expect(diagram).not.toContain('-.->|member of|');
+        expect(diagram).not.toContain('Gray dashed: membership');
         expect(diagram).not.toContain('SSH permitted');
       });
 
-      it('renders ApplicationDiagram TargetGroup and membership draw.io edges with distinct styles', () => {
+      it('renders ApplicationDiagram TargetGroup draw.io edges and nests DB membership cards instead of a "member of" edge', () => {
         const drawio = generateDrawioApplicationDiagram({
           mode: 'ApplicationDiagram',
           list: relationshipList(relationshipTemplate()),
@@ -986,9 +1024,14 @@ describe('cfn', () => {
         expect(drawio).toMatch(
           /value="targets"[^>]*strokeColor=#0891b2;strokeWidth=2;dashed=1;[^>]*source="node_f0_WebTargetGroup" target="node_f0_WebAutoScalingGroup"/,
         );
-        expect(drawio).toMatch(
-          /value="member of"[^>]*strokeColor=#64748b;strokeWidth=2;dashed=1;[^>]*source="node_f0_DatabaseInstance1" target="node_f0_DatabaseCluster"/,
-        );
+        expect(drawio).not.toContain('value="member of"');
+        const parentOfMatch = (id: string): string => {
+          const match = drawio.match(new RegExp(`id="${id}"[^>]*parent="([^"]+)"`));
+          if (!match) throw new Error(`no cell found for ${id}`);
+          return match[1];
+        };
+        expect(parentOfMatch('node_f0_DatabaseInstance1')).toBe('node_f0_DatabaseCluster');
+        expect(parentOfMatch('node_f0_DatabaseInstance2')).toBe('node_f0_DatabaseCluster');
         expect(drawio).not.toContain('SSH permitted');
       });
 
@@ -1007,46 +1050,107 @@ describe('cfn', () => {
         expect(diagram).toContain(
           'DB subnet group DatabaseSubnetGroup: 2 candidate subnets; Multi-AZ; 2 DB instances; writer/reader roles dynamic',
         );
+        // DatabaseInstance1/2 are proven, by DBClusterIdentifier, to be members of
+        // DatabaseCluster - that containment is drawn directly as a nested subgraph instead of a
+        // separate "member of" dashed edge.
+        expect(diagram).toContain('subgraph f0_vpc_Vpc_f0_DatabaseCluster[');
         expect(diagram).toContain(
-          'f0_vpc_Vpc_f0_DatabaseInstance1 -.->|"member of"| f0_vpc_Vpc_f0_DatabaseCluster',
+          '        f0_vpc_Vpc_f0_DatabaseInstance1["DatabaseInstance1<br/>DBInstance"]',
         );
         expect(diagram).toContain(
-          'f0_vpc_Vpc_f0_DatabaseInstance2 -.->|"member of"| f0_vpc_Vpc_f0_DatabaseCluster',
+          '        f0_vpc_Vpc_f0_DatabaseInstance2["DatabaseInstance2<br/>DBInstance"]',
         );
+        expect(diagram).not.toContain('-.->|"member of"|');
         expect(diagram).not.toContain('DatabaseInstance1: writer');
         expect(diagram).not.toContain('DatabaseInstance2: reader');
       });
 
-      it('gives DB cluster members distinct draw.io geometry when they share candidate subnets', () => {
+      it('keeps the nested DB Cluster subgraph structurally valid Mermaid (balanced subgraph/end and quotes)', async () => {
+        const diagram = generateDiagram({
+          mode: 'MultiAzDeploymentTrafficPathsAndProtection',
+          list: relationshipList(relationshipTemplate()),
+        });
+        const [result] = await verifyMermaidArchitectureSyntax([
+          stripMermaidFence(diagram),
+        ]);
+        expect(result.ok).toBe(true);
+      });
+
+      const geometryOf = (
+        drawio: string,
+        id: string,
+      ): { x: number; y: number; width: number; height: number } => {
+        const match = drawio.match(
+          new RegExp(`id="${id}"[^>]*>\\s*<mxGeometry x="(-?[\\d.]+)" y="(-?[\\d.]+)" width="([\\d.]+)" height="([\\d.]+)"`),
+        );
+        if (!match) throw new Error(`no geometry found for ${id}`);
+        return {
+          x: Number(match[1]),
+          y: Number(match[2]),
+          width: Number(match[3]),
+          height: Number(match[4]),
+        };
+      };
+      const parentOf = (drawio: string, id: string): string => {
+        const match = drawio.match(new RegExp(`id="${id}"[^>]*parent="([^"]+)"`));
+        if (!match) throw new Error(`no cell found for ${id}`);
+        return match[1];
+      };
+
+      it('nests DB Instance members inside their DB Cluster box instead of giving them a separate top-level card', () => {
         const drawio = generateDrawioMultiAzDeploymentTrafficPathsAndProtection({
           mode: 'MultiAzDeploymentTrafficPathsAndProtection',
           list: relationshipList(relationshipTemplate()),
         });
-        const geometryOf = (id: string): { x: number; y: number; width: number; height: number } => {
-          const match = drawio.match(
-            new RegExp(`id="${id}"[^>]*>\\s*<mxGeometry x="(-?[\\d.]+)" y="(-?[\\d.]+)" width="([\\d.]+)" height="([\\d.]+)"`),
-          );
-          if (!match) throw new Error(`no geometry found for ${id}`);
-          return {
-            x: Number(match[1]),
-            y: Number(match[2]),
-            width: Number(match[3]),
-            height: Number(match[4]),
-          };
-        };
-        const geometries = [
-          geometryOf('node_f0_DatabaseCluster'),
-          geometryOf('node_f0_DatabaseInstance1'),
-          geometryOf('node_f0_DatabaseInstance2'),
-        ];
 
-        geometries.forEach((left, index) => geometries.slice(index + 1).forEach((right) => {
-          const overlaps = left.x < right.x + right.width &&
-            left.x + left.width > right.x &&
-            left.y < right.y + right.height &&
-            left.y + left.height > right.y;
-          expect(overlaps).toBe(false);
-        }));
+        // DatabaseInstance1/2 are proven, by DBClusterIdentifier, to be members of
+        // DatabaseCluster - that containment is now drawn directly (member card nested inside
+        // the parent's own box) instead of as a separate "member of" dashed edge.
+        expect(parentOf(drawio, 'node_f0_DatabaseInstance1')).toBe('node_f0_DatabaseCluster');
+        expect(parentOf(drawio, 'node_f0_DatabaseInstance2')).toBe('node_f0_DatabaseCluster');
+        expect(parentOf(drawio, 'node_f0_DatabaseCluster')).toBe('vpc_0_Vpc');
+        expect(drawio).not.toContain('value="member of"');
+
+        const instance1 = geometryOf(drawio, 'node_f0_DatabaseInstance1');
+        const instance2 = geometryOf(drawio, 'node_f0_DatabaseInstance2');
+        const overlaps = instance1.x < instance2.x + instance2.width &&
+          instance1.x + instance1.width > instance2.x &&
+          instance1.y < instance2.y + instance2.height &&
+          instance1.y + instance1.height > instance2.y;
+        expect(overlaps).toBe(false);
+      });
+
+      it('keeps the DB Cluster spanning the full candidate-subnet width while its members stack vertically inside it', () => {
+        const drawio = generateDrawioMultiAzDeploymentTrafficPathsAndProtection({
+          mode: 'MultiAzDeploymentTrafficPathsAndProtection',
+          list: relationshipList(relationshipTemplate()),
+        });
+
+        // DatabaseCluster resolves to DatabaseSubnetGroup (DatabaseSubnetA + DatabaseSubnetC), so
+        // a naming impression like "this DB Cluster only exists in one AZ" must not appear: it
+        // keeps the same full left/right span an unshared resource would get. The Auto Scaling
+        // Group is the only other resource placed across AppSubnetA/AppSubnetC, so its width is a
+        // known-good reference for "spans the full candidate-subnet range".
+        const cluster = geometryOf(drawio, 'node_f0_DatabaseCluster');
+        const autoScalingGroup = geometryOf(drawio, 'node_f0_WebAutoScalingGroup');
+        expect(cluster.width).toBe(autoScalingGroup.width);
+
+        // Members are positioned relative to the cluster's own box, stacked below its header
+        // text with a consistent gap, and stay within the cluster's own width.
+        const instance1 = geometryOf(drawio, 'node_f0_DatabaseInstance1');
+        const instance2 = geometryOf(drawio, 'node_f0_DatabaseInstance2');
+        expect(instance1.x).toBe(instance2.x);
+        expect(instance1.width).toBe(instance2.width);
+        expect(instance1.width).toBeLessThan(cluster.width);
+        expect(instance2.y - instance1.y).toBe(instance1.height + 15);
+
+        // The AZ boxes and the VPC box itself must grow to keep containing the taller cluster
+        // box, and the legend (drawn below the VPC) must not end up overlapping it.
+        const az0 = geometryOf(drawio, 'vpc_0_Vpc_az_0');
+        const vpc = geometryOf(drawio, 'vpc_0_Vpc');
+        const legend = geometryOf(drawio, 'legend');
+        expect(az0.y + az0.height).toBeLessThanOrEqual(vpc.height);
+        expect(vpc.y + vpc.height).toBeLessThanOrEqual(legend.y);
       });
 
       it('shows only the non-duplicate Bastion SSH permission in Multi-AZ Mermaid and draw.io', () => {
@@ -1069,6 +1173,62 @@ describe('cfn', () => {
           /value="SSH permitted TCP :22"[^>]*strokeColor=#7c3aed;strokeWidth=2;dashed=1;[^>]*source="node_f0_BastionHost" target="node_f0_WebAutoScalingGroup"/,
         );
         expect(drawio).not.toContain('HTTP permitted');
+      });
+
+      it('connects the Auto Scaling Group to its NAT Gateways with a solid teal egress-return path and filters the legend to the kinds actually present', () => {
+        const list = relationshipList(relationshipTemplate());
+        const diagram = generateDiagram({
+          mode: 'MultiAzDeploymentTrafficPathsAndProtection',
+          list,
+        });
+        const drawio = generateDrawioMultiAzDeploymentTrafficPathsAndProtection({
+          mode: 'MultiAzDeploymentTrafficPathsAndProtection',
+          list,
+        });
+
+        // A: AppSubnetA/AppSubnetC now have a NAT default route, so the Auto Scaling Group
+        // placed there gets the same "egress available" proof already given to ECS Service /
+        // EC2 Instance resources.
+        expect(diagram).toContain(
+          'f0_vpc_Vpc_f0_WebAutoScalingGroup <-->|"egress available"| f0_vpc_Vpc_f0_PublicSubnetA_f0_NatGatewayA',
+        );
+        expect(diagram).toContain(
+          'f0_vpc_Vpc_f0_WebAutoScalingGroup <-->|"egress available"| f0_vpc_Vpc_f0_PublicSubnetC_f0_NatGatewayC',
+        );
+        expect(drawio).toMatch(
+          /id="path_\d+_egress-return"[\s\S]*?source="node_f0_WebAutoScalingGroup" target="node_f0_NatGatewayA"/,
+        );
+
+        // B: egress-return is specified as "Teal solid" - Mermaid must match draw.io instead of
+        // rendering it as a dashed cyan line.
+        expect(diagram).toMatch(/linkStyle \d+ stroke:#0d9488,stroke-width:2px$/m);
+        expect(diagram).not.toMatch(/stroke:#0891b2/);
+        expect(diagram).toContain('Teal: egress / return');
+        expect(diagram).not.toContain('Cyan dashed');
+        expect(drawio).toMatch(
+          /value="egress available"[^>]*strokeColor=#0d9488;strokeWidth=2;(?!dashed=1)[^>]*startArrow=block;endArrow=block;[^>]*source="node_f0_WebAutoScalingGroup" target="node_f0_NatGatewayA"/,
+        );
+
+        // D: this fixture never proves a data-access, event-delivery, or security-protection
+        // relationship, so those legend rows must not appear even though the fixed
+        // relation-kind list still defines them. DatabaseInstance1/2's resource-membership is
+        // fully absorbed into DatabaseCluster's containment (no "member of" edge is drawn), so
+        // the membership legend row must not appear either - only the kinds actually drawn as
+        // edges (client, egress, permission) appear.
+        expect(diagram).toContain('Blue: client request / response');
+        expect(diagram).toContain('Purple dashed: security-group permission');
+        expect(diagram).not.toContain('Gray dashed: membership');
+        expect(diagram).not.toContain('Green: data access');
+        expect(diagram).not.toContain('Orange dashed: event delivery');
+        expect(diagram).not.toContain('Red: security protection');
+        expect(drawio).toContain('id="legend_Client_label" value="Client request / response"');
+        expect(drawio).toContain(
+          'id="legend_Permission_label" value="Security-group permission"',
+        );
+        expect(drawio).not.toContain('id="legend_Membership_label"');
+        expect(drawio).not.toContain('id="legend_Data_label"');
+        expect(drawio).not.toContain('id="legend_Event_label"');
+        expect(drawio).not.toContain('id="legend_Security_label"');
       });
 
       it('requires each explicit CloudFormation relation and keeps the raw dependency graph unchanged', () => {
@@ -1213,6 +1373,35 @@ describe('cfn', () => {
       expect(diagram).toContain('subgraph f1_vpc_Vpc["VPC 10.20.0.0/16"]');
       expect(diagram.match(/f0_vpc_Vpc_f0_Subnet_f0_Host/g)).toHaveLength(1);
       expect(diagram.match(/f1_vpc_Vpc_f1_Subnet_f1_Host/g)).toHaveLength(1);
+    });
+
+    it('resolves a VPC CidrBlock authored as !Ref against the Parameter Default instead of showing the Parameter name', () => {
+      const template = {
+        Parameters: {
+          VpcCIDR: { Type: 'String', Default: '10.77.0.0/16' },
+        },
+        Resources: {
+          Vpc: { Type: 'AWS::EC2::VPC', Properties: { CidrBlock: { Ref: 'VpcCIDR' } } },
+        },
+      };
+      const list: GenerateDiagramParams['list'] = [{
+        fileName: 'ref-cidr-vpc.yaml',
+        templateJSONString: JSON.stringify(template),
+      }];
+
+      const diagram = generateDiagram({
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
+        list,
+      });
+      const drawio = generateDrawioMultiAzDeploymentTrafficPathsAndProtection({
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
+        list,
+      });
+
+      expect(diagram).toContain('subgraph f0_vpc_Vpc["VPC 10.77.0.0/16"]');
+      expect(diagram).not.toContain('VPC VpcCIDR');
+      expect(drawio).toContain('value="VPC 10.77.0.0/16"');
+      expect(drawio).not.toContain('VPC VpcCIDR');
     });
 
     it('adds an English note for an unresolved cross-stack ImportValue', () => {
@@ -1419,8 +1608,14 @@ describe('cfn', () => {
       expect(architecture).toContain('Traffic and protection types');
       expect(architecture).toContain('Client request / response');
       expect(architecture).toContain('Outbound / return route');
-      expect(architecture).toContain('Asynchronous event');
       expect(architecture).toContain('Explicit data access');
+      // vpc-foundation.yaml + api-application.yaml never prove an event-delivery (no
+      // EventSourceMapping/SNS/EventBridge), resource-membership, or security-protection
+      // relationship, so the legend must not list rows with zero matching edges.
+      expect(architecture).not.toContain('Asynchronous event');
+      expect(architecture).not.toContain('Resource membership');
+      expect(architecture).not.toContain('Security-group permission');
+      expect(architecture).not.toContain('Security protection');
       expect(architecture).toContain('id="legend_Client_line"');
       expect(architecture).toContain('edge="1" parent="legend"');
       expect(architecture).toMatch(/id="internet"[^>]*parent="1"/);
@@ -1457,6 +1652,127 @@ describe('cfn', () => {
       );
       expect(dependency).toContain('edge="1" parent="legend"');
       expect(dependency).not.toContain('id="legend_Ref" value="Blue solid:');
+    });
+
+    it('gives CfnDependencyGraph draw.io cards enough width/gap for full AWS type names, so adjacent cards and edges do not overlap', () => {
+      const template = parseCfnYamlTemplate(
+        readYamlFixture('validation/vpc-foundation.yaml'),
+      );
+      const drawio = generateDrawioCfnDependencyGraph({
+        mode: 'CfnDependencyGraph',
+        list: [{
+          fileName: 'vpc-foundation.yaml',
+          templateJSONString: JSON.stringify(template),
+        }],
+      });
+
+      const geometryOf = (
+        id: string,
+      ): { x: number; y: number; width: number; height: number } => {
+        const match = drawio.match(
+          new RegExp(`id="${id}"[^>]*>\\s*<mxGeometry x="(-?[\\d.]+)" y="(-?[\\d.]+)" width="([\\d.]+)" height="([\\d.]+)"`),
+        );
+        if (!match) throw new Error(`no geometry found for ${id}`);
+        return {
+          x: Number(match[1]),
+          y: Number(match[2]),
+          width: Number(match[3]),
+          height: Number(match[4]),
+        };
+      };
+
+      // "AWS::EC2::VPCGatewayAttachment" is the longest type name in this fixture (the exact
+      // resource whose label overflowed its neighbors in the reported screenshot). The card
+      // must be wide/tall enough that its wrapped label has real room, not just barely fit a
+      // short type name like "AWS::EC2::VPC".
+      const attachment = geometryOf('stack_0_InternetGatewayAttachment');
+      expect(attachment.width).toBeGreaterThanOrEqual(150);
+      expect(attachment.height).toBeGreaterThanOrEqual(70);
+
+      // CfnDiagramVpc (column 0, row 0) and InternetGateway (column 1, row 0) are
+      // horizontally adjacent in the 3-column grid; PublicSubnetA (column 0, row 1) is
+      // directly below CfnDiagramVpc. Both gaps must be wide enough to leave a real routing
+      // corridor for edges/labels instead of the near-zero gaps that caused lines to run
+      // directly across neighboring card interiors.
+      const vpc = geometryOf('stack_0_CfnDiagramVpc');
+      const internetGateway = geometryOf('stack_0_InternetGateway');
+      const publicSubnetA = geometryOf('stack_0_PublicSubnetA');
+      expect(internetGateway.x - (vpc.x + vpc.width)).toBeGreaterThanOrEqual(30);
+      expect(publicSubnetA.y - (vpc.y + vpc.height)).toBeGreaterThanOrEqual(30);
+    });
+
+    it('lays out CfnDependencyGraph draw.io resources mechanically in template declaration order, one plain 3-column grid per resource, with no relationship-based re-clustering', () => {
+      const template = parseCfnYamlTemplate(
+        readYamlFixture('validation/asg-routing-membership-security.yaml'),
+      );
+      const drawio = generateDrawioCfnDependencyGraph({
+        mode: 'CfnDependencyGraph',
+        list: [{
+          fileName: 'asg-routing-membership-security.yaml',
+          templateJSONString: JSON.stringify(template),
+        }],
+      });
+
+      const geometryOf = (
+        id: string,
+      ): { x: number; y: number; width: number; height: number } => {
+        const match = drawio.match(
+          new RegExp(`id="${id}"[^>]*>\\s*<mxGeometry x="(-?[\\d.]+)" y="(-?[\\d.]+)" width="([\\d.]+)" height="([\\d.]+)"`),
+        );
+        if (!match) throw new Error(`no geometry found for ${id}`);
+        return {
+          x: Number(match[1]),
+          y: Number(match[2]),
+          width: Number(match[3]),
+          height: Number(match[4]),
+        };
+      };
+
+      // DatabaseCluster/DatabaseInstance1/DatabaseInstance2 are declared consecutively in this
+      // fixture and land on consecutive column slots of the same declaration-order grid row
+      // (a plain 3-column grid, not a relationship-derived hub/member cluster centered on
+      // DatabaseCluster) - simply because 3 consecutive resources fill exactly one row of the
+      // 3-column grid, the same as any other unrelated triple of resources would.
+      const cluster = geometryOf('stack_0_DatabaseCluster');
+      const instance1 = geometryOf('stack_0_DatabaseInstance1');
+      const instance2 = geometryOf('stack_0_DatabaseInstance2');
+      expect(cluster.y).toBe(instance1.y);
+      expect(instance1.y).toBe(instance2.y);
+      expect(instance1.x - cluster.x).toBe(cluster.width + 40);
+      expect(instance2.x - instance1.x).toBe(instance1.width + 40);
+    });
+
+    it('encloses each template file\'s resources in its own labeled box titled with the file name', () => {
+      const vpcTemplate = parseCfnYamlTemplate(
+        readYamlFixture('validation/vpc-foundation.yaml'),
+      );
+      const apiTemplate = parseCfnYamlTemplate(
+        readYamlFixture('validation/api-application.yaml'),
+      );
+      const drawio = generateDrawioCfnDependencyGraph({
+        mode: 'CfnDependencyGraph',
+        list: [
+          { fileName: 'vpc-foundation.yaml', templateJSONString: JSON.stringify(vpcTemplate) },
+          { fileName: 'api-application.yaml', templateJSONString: JSON.stringify(apiTemplate) },
+        ],
+      });
+
+      // Each CFN template file is itself an intentional, meaningful grouping the author chose,
+      // so every resource stays enclosed in a swimlane titled with its own source file name -
+      // not re-clustered by any relationship across or within files.
+      expect(drawio).toMatch(
+        /id="stack_0" value="vpc-foundation\.yaml"[^>]*style="swimlane;/,
+      );
+      expect(drawio).toMatch(
+        /id="stack_1" value="api-application\.yaml"[^>]*style="swimlane;/,
+      );
+      const parentOf = (id: string): string => {
+        const match = drawio.match(new RegExp(`id="${id}"[^>]*parent="([^"]+)"`));
+        if (!match) throw new Error(`no cell found for ${id}`);
+        return match[1];
+      };
+      expect(parentOf('stack_0_CfnDiagramVpc')).toBe('stack_0');
+      expect(parentOf('stack_1_GreetingFunction')).toBe('stack_1');
     });
 
     it('renders a "CfnDependencyGraph" diagram as one fenced ```mermaid block with resource-to-resource edges', () => {

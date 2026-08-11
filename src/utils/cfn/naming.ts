@@ -1,5 +1,5 @@
 import { Refable } from '../../types';
-import { parseRefValue } from './intrinsics';
+import { CfnStringResolutionContext, resolveCfnString } from './intrinsics';
 
 export const sanitizeLogicalId = (id: string): string => {
   return id.replace(/["{}!_\]\\[]/g, '').replace(/[^a-zA-Z0-9_]/g, '_');
@@ -37,18 +37,25 @@ export const resourceServiceLabel = (
 ): string =>
   iconStr ? logicalId : `${logicalId} ${shortResourceTypeName(type)}`;
 
-export const getCidrBlock = (properties?: Record<string, Refable>): string => {
+export const getCidrBlock = (
+  properties?: Record<string, Refable>,
+  context?: CfnStringResolutionContext,
+): string => {
   if (!properties || !properties.CidrBlock) {
     return '';
   }
   if (typeof properties.CidrBlock === 'object') {
-    // If CidrBlock is an object, it might be a Ref or Fn::GetAtt - parseRefValue resolves
-    // those to the referenced logical id (a string). Anything else (e.g. Fn::FindInMap,
-    // which needs the template's Mappings section to resolve and isn't available here) falls
-    // through parseRefValue's "plain" case with the raw intrinsic object still as `value` -
-    // skip rather than guess, matching how an unresolved Output value is handled elsewhere.
-    const refVal = parseRefValue(properties.CidrBlock);
-    return typeof refVal.value === 'string' ? refVal.value.replace(/[/.]/g, '_') : '';
+    // CidrBlock is most commonly authored as `!Ref` to a Parameter (typically one with a
+    // Default), but can also be Fn::Sub/Fn::Join/Fn::ImportValue - resolveCfnString() already
+    // understands all of those against the supplied Parameters/parameterValues/pseudoParameters
+    // context, the same helper availabilityZoneName() uses. Fn::FindInMap needs the template's
+    // Mappings section, which resolveCfnString() does not resolve, so it (like any other
+    // unresolved value, including a bare Ref with neither a supplied value nor a Default) falls
+    // through to undefined - skip rather than guess, matching how an unresolved Output value is
+    // handled elsewhere. In particular, an unresolved Ref must not fall back to its target
+    // logical id (e.g. "VpcCIDR") as if that were the resolved CIDR value.
+    const resolved = resolveCfnString(properties.CidrBlock, context ?? {});
+    return typeof resolved === 'string' ? resolved.replace(/[/.]/g, '_') : '';
   }
   return (properties?.CidrBlock ?? '').replace(/[/.]/g, '_');
 };

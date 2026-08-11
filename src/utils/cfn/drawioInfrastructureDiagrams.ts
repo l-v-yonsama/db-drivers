@@ -49,8 +49,8 @@ const displayCidr = (value: string): string => {
 const groupCell = (id: string, label: string, x: number, y: number, width: number, height: number, parent = '1', fill = '#f8fafc', titleAlign: 'center' | 'left' = 'center'): string =>
   `<mxCell id="${id}" value="${xmlEscape(label)}" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=${fill};strokeColor=#94a3b8;fontStyle=1;align=${titleAlign};${titleAlign === 'left' ? 'spacingLeft=40;' : ''}" vertex="1" parent="${parent}"><mxGeometry x="${x}" y="${y}" width="${width}" height="${height}" as="geometry"/></mxCell>`;
 
-const nodeCell = (id: string, label: string, x: number, y: number, width: number, height: number, parent: string, fill = '#ffffff', link = ''): string =>
-  `<mxCell id="${id}" value="${xmlEscape(label)}"${link} style="rounded=1;whiteSpace=wrap;html=1;fillColor=${fill};strokeColor=#64748b;spacing=8;" vertex="1" parent="${parent}"><mxGeometry x="${x}" y="${y}" width="${width}" height="${height}" as="geometry"/></mxCell>`;
+const nodeCell = (id: string, label: string, x: number, y: number, width: number, height: number, parent: string, fill = '#ffffff', link = '', topAlign = false): string =>
+  `<mxCell id="${id}" value="${xmlEscape(label)}"${link} style="rounded=1;whiteSpace=wrap;html=1;fillColor=${fill};strokeColor=#64748b;spacing=8;${topAlign ? 'verticalAlign=top;align=left;' : ''}" vertex="1" parent="${parent}"><mxGeometry x="${x}" y="${y}" width="${width}" height="${height}" as="geometry"/></mxCell>`;
 
 type EdgeAnchors = {
   exitX: number;
@@ -100,22 +100,33 @@ const addDependencyLegend = (cells: string[], y: number): void => {
   }));
 };
 
-const addTrafficProtectionLegend = (cells: string[], y: number): void => {
-  const items: [string, string, EdgeKind, boolean][] = [
-    ['Client', 'Client request / response', 'client', true],
-    ['Egress', 'Outbound / return route', 'egress', true],
-    ['Event', 'Asynchronous event', 'event', false],
-    ['Data', 'Explicit data access', 'data', false],
-    ['Membership', 'Resource membership', 'membership', false],
-    ['Permission', 'Security-group permission', 'permission', false],
-    ['Security', 'Security protection', 'security', false],
+/** Only lists a legend row for a relationship kind that actually occurs among `usedKinds` - the
+ * generated paths for this specific diagram - instead of always listing the full fixed set of
+ * seven kinds. A row with zero matching edges (for example "Security protection" when no WAF Web
+ * ACL association is proven) sends a reader unfamiliar with the notation hunting for an arrow
+ * that was never drawn. */
+const addTrafficProtectionLegend = (
+  cells: string[],
+  y: number,
+  usedKinds: Set<TrafficProtectionPathKind>,
+): void => {
+  const items: [string, string, EdgeKind, boolean, TrafficProtectionPathKind][] = [
+    ['Client', 'Client request / response', 'client', true, 'client-request-response'],
+    ['Egress', 'Outbound / return route', 'egress', true, 'egress-return'],
+    ['Event', 'Asynchronous event', 'event', false, 'event-delivery'],
+    ['Data', 'Explicit data access', 'data', false, 'data-access'],
+    ['Membership', 'Resource membership', 'membership', false, 'resource-membership'],
+    ['Permission', 'Security-group permission', 'permission', false, 'security-permission'],
+    ['Security', 'Security protection', 'security', false, 'security-protection'],
   ];
+  const visibleItems = items.filter(([, , , , pathKind]) => usedKinds.has(pathKind));
+  if (visibleItems.length === 0) return;
   cells.push(...drawioLineLegendCells({
     title: 'Traffic and protection types',
     x: 40,
     y,
     width: 1100,
-    items: items.map(([id, label, kind, bidirectional]) => {
+    items: visibleItems.map(([id, label, kind, bidirectional]) => {
       const style = edgeStyles[kind];
       return { id, label, bidirectional, ...style };
     }),
@@ -239,6 +250,10 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
   const nodePositions = new Map<string, NodePosition>();
   const subnetPositions = new Map<string, NodePosition>();
   const templatePageByLogicalId = new Map<string, string>();
+  // Endpoint ids absorbed into a parent's containment box (see resource-membership handling
+  // below), across all VPCs - their "member of" edge is dropped from the drawn path list since
+  // containment already shows the relationship.
+  const containedMemberIds = new Set<string>();
   files.forEach((file) => file.resouces.forEach((logicalId) => {
     const identity = `${file.fileIndex}:${logicalId}`;
     if (!templatePageByLogicalId.has(identity) && file.templateSource) {
@@ -254,7 +269,10 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
     nodePositions.set(endpointId, position);
   };
   const vpcTop = 100;
-  const vpcHeight = 1420;
+  // The height a VPC box needs when no subnet tier has to stack more than one VPC-level
+  // resource - matches the previous fixed layout exactly. A VPC whose isolated/private tier
+  // needs to stack several resources (see azHeight below) grows taller than this.
+  const defaultVpcHeight = 1420;
   const azTop = 720;
   const azWidth = 340;
   const azGap = 20;
@@ -264,7 +282,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
     Math.max(0, structure.vpcs.length - 1) * 40;
   const regionalWidth = trafficPathsAndProtection.regionalNodes.length > 0 ? 360 : 0;
   const canvasWidth = 80 + totalVpcWidth + regionalWidth;
-  let maxHeight = vpcTop + vpcHeight;
+  let maxHeight = vpcTop + defaultVpcHeight;
   let vpcX = 40;
 
   if (trafficPathsAndProtection.paths.some((path) =>
@@ -291,6 +309,97 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
   structure.vpcs.forEach((vpc, vpcIndex) => {
     const vpcId = `vpc_${vpc.fileIndex}_${vpc.logicalId}`;
     const vpcWidth = vpcWidths[vpcIndex];
+
+    // A resource-membership relation proven between two resources both placed at VPC level (for
+    // example an Aurora DB Instance's DBClusterIdentifier pointing at its DB Cluster) is rendered
+    // as containment rather than as a separate dashed edge: the member is drawn as a child card
+    // nested inside its parent's own box instead of as an independent top-level card. This is a
+    // rendering choice about an already-proven relationship, not a new inference - the underlying
+    // path still comes from buildMultiAzDeploymentTrafficPathsAndProtection() and is filtered out
+    // of the edge list below once it has been absorbed into containment.
+    const vpcResourceEndpointIds = new Set(vpc.resources.map((resource) =>
+      `f${resource.fileIndex}_${resource.logicalId}`));
+    const memberParentId = new Map<string, string>();
+    trafficPathsAndProtection.paths
+      .filter((path) => path.kind === 'resource-membership')
+      .forEach((path) => {
+        if (vpcResourceEndpointIds.has(path.from.id) && vpcResourceEndpointIds.has(path.to.id)) {
+          memberParentId.set(path.from.id, path.to.id);
+        }
+      });
+    const parentMembers = new Map<string, typeof vpc.resources>();
+    vpc.resources.forEach((resource) => {
+      const parentId = memberParentId.get(`f${resource.fileIndex}_${resource.logicalId}`);
+      if (!parentId) return;
+      parentMembers.set(parentId, [...parentMembers.get(parentId) ?? [], resource]);
+      containedMemberIds.add(`f${resource.fileIndex}_${resource.logicalId}`);
+    });
+    // Only resources that are not themselves a member of another VPC-level resource take part in
+    // the top-level candidate-subnet layout below; a member is instead nested inside its parent.
+    const topLevelResources = vpc.resources.filter((resource) =>
+      !memberParentId.has(`f${resource.fileIndex}_${resource.logicalId}`));
+
+    // VPC-level resources (an ASG, DB cluster, an ElastiCache replication group, ...) that resolve
+    // to the exact same set of candidate subnets are grouped so they can be stacked vertically -
+    // one full-width card per resource - instead of overlapping. This has to be computed before
+    // the VPC/AZ/subnet cells below so the VPC box, the AZ boxes, and the private/isolated subnet
+    // tiers can all reserve enough height for the tallest stack that will be drawn across them.
+    const resourceLayoutGroups = new Map<string, typeof vpc.resources>();
+    topLevelResources.forEach((resource) => {
+      const candidateKey = resource.candidateSubnets
+        .map((subnet) => `${subnet.fileIndex}:${subnet.logicalId}`)
+        .sort()
+        .join('|');
+      const key = candidateKey || `connectivity:${resource.candidateSubnets[0]?.connectivity ?? 'private'}`;
+      resourceLayoutGroups.set(key, [...resourceLayoutGroups.get(key) ?? [], resource]);
+    });
+    const resourceHeight = 65;
+    const horizontalInset = 15;
+    const verticalTopInset = 50;
+    const verticalBottomInset = 15;
+    const rowGap = 15;
+    // A resource that contains member cards needs room for its own header text (the same height
+    // as an ordinary card) plus one stacked row per member; a resource with no members is just an
+    // ordinary card.
+    const individualHeight = (resource: typeof vpc.resources[number]): number => {
+      const members = parentMembers.get(`f${resource.fileIndex}_${resource.logicalId}`);
+      if (!members || members.length === 0) return resourceHeight;
+      return resourceHeight + rowGap +
+        members.length * resourceHeight + Math.max(0, members.length - 1) * rowGap +
+        verticalBottomInset;
+    };
+    const stackedGroupHeight = (group: typeof vpc.resources): number =>
+      verticalTopInset +
+      group.reduce((sum, resource) => sum + individualHeight(resource), 0) +
+      Math.max(0, group.length - 1) * rowGap +
+      verticalBottomInset;
+    const maxGroupHeightByConnectivity: Record<'public' | 'private' | 'isolated', number> = {
+      public: 0,
+      private: 0,
+      isolated: 0,
+    };
+    resourceLayoutGroups.forEach((group) => {
+      const connectivity = group[0]?.candidateSubnets[0]?.connectivity;
+      if (!connectivity) return;
+      maxGroupHeightByConnectivity[connectivity] =
+        Math.max(maxGroupHeightByConnectivity[connectivity], stackedGroupHeight(group));
+    });
+    // Defaults (140/195/195, rows starting at 45/245/445, AZ height 650, VPC height 1420) exactly
+    // match the previous fixed layout when no tier needs to stack more than one resource, so a
+    // template with no shared candidate-subnet set renders pixel-identical diagrams to before.
+    const tierHeight = {
+      public: 140,
+      private: Math.max(195, maxGroupHeightByConnectivity.private),
+      isolated: Math.max(195, maxGroupHeightByConnectivity.isolated),
+    };
+    const baseRowY = {
+      public: 45,
+      private: 245,
+      isolated: 245 + tierHeight.private + 5,
+    };
+    const azHeight = baseRowY.isolated + tierHeight.isolated + 10;
+    const vpcHeight = Math.max(defaultVpcHeight, azTop + azHeight + 50);
+
     cells.push(groupCell(vpcId, `VPC ${displayCidr(vpc.cidrBlock)}`, vpcX, vpcTop, vpcWidth, vpcHeight, '1', '#dbeafe', 'left'));
     if (vpc.igw) {
       const endpointId = `f${vpc.igw.fileIndex}_${vpc.igw.logicalId}`;
@@ -306,18 +415,13 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
         Math.max(0, vpc.availabilityZones.length - 1) * azGap;
       const azStartX = (vpcWidth - azGridWidth) / 2;
       const azX = azStartX + azIndex * (azWidth + azGap);
-      cells.push(groupCell(azId, `Availability Zone ${az.name}`, azX, azTop, azWidth, 650, vpcId, '#eff6ff'));
+      cells.push(groupCell(azId, `Availability Zone ${az.name}`, azX, azTop, azWidth, azHeight, vpcId, '#eff6ff'));
       const rowCounts: Record<string, number> = { public: 0, private: 0, isolated: 0 };
-      const rowY: Record<string, number> = { public: 45, private: 245, isolated: 445 };
       az.subnets.forEach((subnet) => {
         const subnetId = `${azId}_f${subnet.fileIndex}_${subnet.logicalId}`;
         const subnetIndex = rowCounts[subnet.connectivity]++;
-        const subnetY = rowY[subnet.connectivity] + subnetIndex * 18;
-        // VPC-level resources such as an ASG, DB cluster/instances, or an ElastiCache
-        // replication group are drawn across their candidate subnets. Private/isolated rows
-        // reserve enough height for a two-row grid when several resources share the same
-        // candidate subnet set; otherwise every resource would receive the same geometry.
-        const subnetHeight = subnet.connectivity === 'public' ? 140 : 195;
+        const subnetY = baseRowY[subnet.connectivity] + subnetIndex * 18;
+        const subnetHeight = tierHeight[subnet.connectivity];
         const subnetTitle = `${subnet.connectivity[0].toUpperCase()}${subnet.connectivity.slice(1)} Subnet ${displayCidr(subnet.cidrBlock)}`;
         const fill = subnet.connectivity === 'public'
           ? '#f0fdf4'
@@ -351,17 +455,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       });
     });
 
-    const resourceLayoutGroups = new Map<string, typeof vpc.resources>();
-    vpc.resources.forEach((resource) => {
-      const candidateKey = resource.candidateSubnets
-        .map((subnet) => `${subnet.fileIndex}:${subnet.logicalId}`)
-        .sort()
-        .join('|');
-      const key = candidateKey || `connectivity:${resource.candidateSubnets[0]?.connectivity ?? 'private'}`;
-      resourceLayoutGroups.set(key, [...resourceLayoutGroups.get(key) ?? [], resource]);
-    });
-
-    vpc.resources.forEach((resource) => {
+    topLevelResources.forEach((resource) => {
       const endpointId = `f${resource.fileIndex}_${resource.logicalId}`;
       const resourceId = `node_${endpointId}`;
       const connectivity = resource.candidateSubnets[0]?.connectivity ?? 'private';
@@ -373,6 +467,13 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       const layoutGroupKey = candidateKey || `connectivity:${connectivity}`;
       const layoutGroup = resourceLayoutGroups.get(layoutGroupKey) ?? [resource];
       const resourceIndex = layoutGroup.indexOf(resource);
+      const ownHeight = individualHeight(resource);
+      // Heights vary once a resource with member cards sits beside an ordinary one-row resource
+      // in the same group, so each row's offset is the cumulative height of the rows above it
+      // rather than a fixed multiple of resourceHeight.
+      const cumulativeOffset = layoutGroup
+        .slice(0, resourceIndex)
+        .reduce((offset, prior) => offset + individualHeight(prior) + rowGap, 0);
       const candidatePositions = resource.candidateSubnets
         .map((subnet) => subnetPositions.get(`${subnet.fileIndex}:${subnet.logicalId}`))
         .filter((position): position is NodePosition => Boolean(position));
@@ -388,54 +489,59 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       const candidateBottom = candidatePositions.length > 0
         ? Math.min(...candidatePositions.map((position) => position.y + position.height))
         : undefined;
-      const resourceHeight = 65;
-      const horizontalInset = 15;
-      const verticalTopInset = 50;
-      const verticalBottomInset = 15;
-      const columnGap = 10;
-      const rowGap = 15;
+      // Every resource sharing this exact candidate-subnet set is stacked vertically, one row
+      // per resource, each still spanning the full left-to-right width of those candidate
+      // subnets - so a DB Cluster (or ElastiCache Replication Group, ...) with a subnet group
+      // spanning both AZs keeps visually spanning both AZs even when a sibling resource without
+      // member cards (or its own member cards nested inside it - see below) is drawn alongside
+      // it. Stacking (instead of a grid that divides the width) keeps that "this candidate set
+      // covers both AZs" impression intact for every card in the group, not just the first one.
+      const stackedHeight = stackedGroupHeight(layoutGroup);
       const fitsCandidateRow = candidateTop !== undefined && candidateBottom !== undefined &&
-        candidateBottom - candidateTop >=
-          verticalTopInset + resourceHeight + verticalBottomInset;
+        candidateBottom - candidateTop >= stackedHeight;
       const localPosition = candidateLeft !== undefined && candidateRight !== undefined &&
           fitsCandidateRow
-        ? layoutGroup.length === 1
-          ? {
-              x: candidateLeft + horizontalInset,
-              y: candidateTop + verticalTopInset,
-              width: candidateRight - candidateLeft - horizontalInset * 2,
-              height: resourceHeight,
-            }
-          : ((): NodePosition => {
-              // Keep at most two rows so cards remain readable inside the shared subnet band.
-              // The stable resource order makes regenerated diagrams deterministic.
-              const columns = Math.ceil(layoutGroup.length / 2);
-              const rows = Math.ceil(layoutGroup.length / columns);
-              const availableWidth = candidateRight - candidateLeft - horizontalInset * 2;
-              const nodeWidth = (availableWidth - columnGap * (columns - 1)) / columns;
-              const gridHeight = rows * resourceHeight + (rows - 1) * rowGap;
-              const topInset = Math.max(10, (candidateBottom - candidateTop - gridHeight) / 2);
-              const column = resourceIndex % columns;
-              const row = Math.floor(resourceIndex / columns);
-              return {
-                x: candidateLeft + horizontalInset + column * (nodeWidth + columnGap),
-                y: candidateTop + topInset + row * (resourceHeight + rowGap),
-                width: nodeWidth,
-                height: resourceHeight,
-              };
-            })()
+        ? {
+            x: candidateLeft + horizontalInset,
+            y: candidateTop + verticalTopInset + cumulativeOffset,
+            width: candidateRight - candidateLeft - horizontalInset * 2,
+            height: ownHeight,
+          }
         : {
             x: vpcWidth / 2 - 145,
             y: localY,
             width: 290,
-            height: resourceHeight,
+            height: ownHeight,
           };
       const details = [
         ...(resource.multiAz ? ['Multi-AZ'] : []),
         ...(resource.traits ?? []),
       ].map((entry) => `; ${entry}`).join('');
-      cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.placement}${details}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, vpcId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? ''));
+      const members = parentMembers.get(endpointId) ?? [];
+      cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.placement}${details}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, vpcId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? '', members.length > 0));
       registerNode(endpointId, resourceId, { ...localPosition, x: vpcX + localPosition.x, y: vpcTop + localPosition.y });
+
+      // Members proven by a resource-membership relation (for example an Aurora DB Instance's
+      // DBClusterIdentifier) are nested inside their parent's own box as child cards, stacked
+      // vertically below the parent's header text, instead of getting an independent top-level
+      // card connected by a dashed "member of" edge.
+      members.forEach((member, memberIndex) => {
+        const memberEndpointId = `f${member.fileIndex}_${member.logicalId}`;
+        const memberCellId = `node_${memberEndpointId}`;
+        const memberLocalPosition = {
+          x: horizontalInset,
+          y: resourceHeight + rowGap + memberIndex * (resourceHeight + rowGap),
+          width: localPosition.width - horizontalInset * 2,
+          height: resourceHeight,
+        };
+        cells.push(nodeCell(memberCellId, `${member.logicalId}<br/><font color="#64748b">${member.detail.Type}</font>`, memberLocalPosition.x, memberLocalPosition.y, memberLocalPosition.width, memberLocalPosition.height, resourceId, '#f8fafc', templatePageByLogicalId.get(`${member.fileIndex}:${member.logicalId}`) ?? ''));
+        registerNode(memberEndpointId, memberCellId, {
+          x: vpcX + localPosition.x + memberLocalPosition.x,
+          y: vpcTop + localPosition.y + memberLocalPosition.y,
+          width: memberLocalPosition.width,
+          height: memberLocalPosition.height,
+        });
+      });
     });
 
     const renderedIngressNodes = new Set<string>();
@@ -507,6 +613,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
         );
       });
     });
+    maxHeight = Math.max(maxHeight, vpcTop + vpcHeight);
     vpcX += vpcWidth + 40;
   });
 
@@ -537,6 +644,10 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
   }
 
   const drawablePaths = trafficPathsAndProtection.paths.flatMap((path) => {
+    // A "member of" path already absorbed into containment (the member is nested inside its
+    // parent's own box - see the resource-membership handling above) would otherwise draw a
+    // redundant dashed edge pointing into the box that already visually contains it.
+    if (path.kind === 'resource-membership' && containedMemberIds.has(path.from.id)) return [];
     const source = nodeIds.get(path.from.id);
     const target = nodeIds.get(path.to.id);
     const sourcePosition = nodePositions.get(path.from.id);
@@ -598,7 +709,10 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
     ));
   });
 
-  if (params.options?.includeLegend !== false) addTrafficProtectionLegend(cells, maxHeight + 30);
+  if (params.options?.includeLegend !== false) {
+    const usedKinds = new Set(drawablePaths.map(({ path }) => path.kind));
+    addTrafficProtectionLegend(cells, maxHeight + 30, usedKinds);
+  }
   const pages = [drawioPage('multi-az-traffic-paths-protection', 'Multi-AZ Deployment, Traffic Paths & Protection', cells)];
   files.forEach((file) => {
     if (file.templateSource) pages.push(drawioTemplatePage(`template_${file.fileIndex}`, file.fileName, file.templateSource));
@@ -607,25 +721,75 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
 };
 
 /** Generates an editable draw.io dependency graph. Unlike MultiAzDeploymentTrafficPathsAndProtection, this keeps all
- * resources and preserves the dependency kind used to color each connector. */
+ * resources and preserves the dependency kind used to color each connector. Resources are laid
+ * out mechanically in template declaration order, one flat 3-column grid per template file - a
+ * CFN template file is itself already an intentional, meaningful grouping the author chose, so
+ * that grouping (rendered as one labeled box per file, titled with the file name) is the only
+ * structure this raw view imposes; it does not try to re-derive additional relationship-based
+ * groupings on top of it. */
 export const generateDrawioCfnDependencyGraph = (params: GenerateDiagramParams): string => {
   const files = parseDiagramFiles({ ...params, mode: 'CfnDependencyGraph', viewpoint: 'CloudFormationView', options: { ...params.options, includeOutputs: true, includeParameters: true } });
   const cells: string[] = [];
   const nodeIds = new Map<string, string>();
   let maxHeight = 200;
+  // Wide enough for the longest real AWS type name (e.g. "AWS::EC2::VPCGatewayAttachment")
+  // to wrap onto two lines instead of overflowing into neighboring cards, with a real routing
+  // corridor between adjacent cards so edges/labels do not run across card interiors.
+  const columns = 3;
+  const nodeWidth = 160;
+  const nodeHeight = 80;
+  const columnGap = 40;
+  const rowGap = 40;
+  const groupInset = 20;
+  const groupTopInset = 45;
+  const groupBottomInset = 20;
+  const groupWidth = groupInset * 2 + columns * nodeWidth + (columns - 1) * columnGap;
+  const stackGap = 40;
+  const stacksPerRow = 3;
+  let cursorX = 40;
+  let cursorY = 40;
+  let rowMaxHeight = 0;
+  let columnsInRow = 0;
   files.forEach((file, fileIndex) => {
+    if (columnsInRow === stacksPerRow) {
+      cursorX = 40;
+      cursorY += rowMaxHeight + stackGap;
+      rowMaxHeight = 0;
+      columnsInRow = 0;
+    }
     const groupId = `stack_${fileIndex}`;
-    const columns = 3;
+    const link = file.templateSource ? pageLink(`template_${fileIndex}`) : '';
     const rows = Math.ceil(file.resouces.length / columns);
-    const height = Math.max(180, 55 + rows * 85);
-    cells.push(groupCell(groupId, file.fileName, 40 + (fileIndex % 3) * 380, 40 + Math.floor(fileIndex / 3) * 330, 350, height, '1', '#f8fafc'));
+    const groupHeight = Math.max(
+      220,
+      groupTopInset + rows * nodeHeight + Math.max(0, rows - 1) * rowGap + groupBottomInset,
+    );
+    // The group's own title bar is the file name (file.fileName) - every resource in this
+    // stack is enclosed inside it, so which template file a resource came from is always
+    // visible at a glance without reading logical IDs.
+    cells.push(groupCell(groupId, file.fileName, cursorX, cursorY, groupWidth, groupHeight, '1', '#f8fafc'));
     file.resouces.forEach((logicalId, index) => {
       const id = `stack_${fileIndex}_${logicalId}`;
       nodeIds.set(`${fileIndex}:${logicalId}`, id);
       const resource = file.cfnTemplate.Resources[logicalId];
-      cells.push(nodeCell(id, `${logicalId}<br/><font color="#64748b">${resource.Type}</font>`, 15 + (index % columns) * 110, 45 + Math.floor(index / columns) * 85, 100, 65, groupId, '#ffffff', file.templateSource ? pageLink(`template_${fileIndex}`) : ''));
+      const col = index % columns;
+      const row = Math.floor(index / columns);
+      cells.push(nodeCell(
+        id,
+        `${logicalId}<br/><font color="#64748b">${resource.Type}</font>`,
+        groupInset + col * (nodeWidth + columnGap),
+        groupTopInset + row * (nodeHeight + rowGap),
+        nodeWidth,
+        nodeHeight,
+        groupId,
+        '#ffffff',
+        link,
+      ));
     });
-    maxHeight = Math.max(maxHeight, 40 + Math.floor(fileIndex / 3) * 330 + height);
+    rowMaxHeight = Math.max(rowMaxHeight, groupHeight);
+    maxHeight = Math.max(maxHeight, cursorY + groupHeight);
+    cursorX += groupWidth + stackGap;
+    columnsInRow += 1;
   });
   files.forEach((file, fileIndex) => {
     file.dependencies.forEach((dependency, dependencyIndex) => {

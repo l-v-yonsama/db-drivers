@@ -94,8 +94,38 @@ export const generateDiagramApplicationDiagram = (
   );
   const visibleLayers = new Set(visibleNodes.map((node) => node.layer));
 
+  // A DBInstance's DBClusterIdentifier proves membership in a DBCluster. Rather than a
+  // separate "member of" edge, that containment is drawn directly by nesting the member's
+  // node inside its parent's subgraph, matching the Multi-AZ diagram's representation. The
+  // relation is still fully absorbed - no top-level node and no edge remain for it - so the
+  // legend below only lists kinds that are actually drawn.
+  const containedMemberIds = new Set(
+    visibleRelations
+      .filter((relation) => relation.kind === 'resource-membership')
+      .map((relation) => relation.from),
+  );
+  const memberParentId = new Map(
+    visibleRelations
+      .filter((relation) => relation.kind === 'resource-membership')
+      .map((relation) => [relation.from, relation.to] as const),
+  );
+  const membersByParent = new Map<string, typeof visibleNodes>();
+  visibleNodes.forEach((node) => {
+    const parentId = memberParentId.get(node.id);
+    if (!parentId) return;
+    const list = membersByParent.get(parentId) ?? [];
+    list.push(node);
+    membersByParent.set(parentId, list);
+  });
+  const renderableRelations = visibleRelations.filter(
+    (relation) =>
+      !(relation.kind === 'resource-membership' && containedMemberIds.has(relation.from)),
+  );
+
   (['ingress', 'compute', 'messaging', 'data'] as const).forEach((layer) => {
-    const layerNodes = visibleNodes.filter((node) => node.layer === layer);
+    const layerNodes = visibleNodes.filter(
+      (node) => node.layer === layer && !containedMemberIds.has(node.id),
+    );
     if (layerNodes.length === 0) return;
     contents.push(`  subgraph ${layer}["${layerTitle[layer]}"]`);
     layerNodes.forEach((node) => {
@@ -104,14 +134,30 @@ export const generateDiagramApplicationDiagram = (
       const routeList = ingressRoutes.get(node.id) ?? [];
       const routeSuffix =
         routeList.length > 0 ? ` [${routeList.join(', ')}]` : '';
-      contents.push(
-        `    ${node.id}["${escape(node.label + stackSuffix + routeSuffix)}"]`,
-      );
+      const members = membersByParent.get(node.id);
+      if (members && members.length > 0) {
+        contents.push(
+          `    subgraph ${node.id}["${escape(node.label + stackSuffix + routeSuffix)}"]`,
+        );
+        members.forEach((member) => {
+          const memberStackSuffix =
+            (labelCounts.get(member.label) ?? 0) > 1 ? ` (${member.fileName})` : '';
+          contents.push(
+            `      ${member.id}["${escape(member.label + memberStackSuffix)}"]`,
+          );
+        });
+        contents.push('    end');
+        contents.push(`    style ${node.id} fill:#ffffff,stroke:#64748b,stroke-width:1px`);
+      } else {
+        contents.push(
+          `    ${node.id}["${escape(node.label + stackSuffix + routeSuffix)}"]`,
+        );
+      }
     });
     contents.push('  end');
   });
 
-  visibleRelations.forEach((relation, index) => {
+  renderableRelations.forEach((relation, index) => {
     const style = relationStyle[relation.kind];
     contents.push(
       `  ${relation.from} ${style.edge}|${relation.label}| ${relation.to}`,
@@ -147,17 +193,24 @@ export const generateDiagramApplicationDiagram = (
     });
     contents.push('  end');
   }
-  if (params.options?.includeLegend !== false && visibleRelations.length > 0) {
+  const legendCandidates: Array<{ label: string; kinds: ApplicationRelationKind[] }> = [
+    { label: 'Blue solid: runtime', kinds: ['runtime-call'] },
+    { label: 'Orange dashed: event', kinds: ['event-delivery'] },
+    { label: 'Green/purple solid: data', kinds: ['data-access', 'data-read', 'data-write'] },
+    { label: 'Cyan dashed: network', kinds: ['network-route'] },
+    { label: 'Gray dashed: membership', kinds: ['resource-membership'] },
+    { label: 'Red solid: security', kinds: ['security-protection'] },
+  ];
+  const usedRelationKinds = new Set(renderableRelations.map((relation) => relation.kind));
+  const visibleLegendLabels = legendCandidates
+    .filter((candidate) => candidate.kinds.some((kind) => usedRelationKinds.has(kind)))
+    .map((candidate) => candidate.label);
+  const showLegend =
+    params.options?.includeLegend !== false && visibleLegendLabels.length > 0;
+  if (showLegend) {
     contents.push('  subgraph legend["Relationship types"]');
     contents.push(
-      `    relationship_legend["${mermaidCompactLegendLabel('Edge styles', [
-        'Blue solid: runtime',
-        'Orange dashed: event',
-        'Green/purple solid: data',
-        'Cyan dashed: network',
-        'Gray dashed: membership',
-        'Red solid: security',
-      ])}"]`,
+      `    relationship_legend["${mermaidCompactLegendLabel('Edge styles', visibleLegendLabels)}"]`,
     );
     contents.push('  end');
   }
@@ -185,7 +238,7 @@ export const generateDiagramApplicationDiagram = (
   contents.push(
     '  classDef legendNode fill:#ffffff,stroke:#94a3b8,color:#334155,font-size:11px',
   );
-  if (params.options?.includeLegend !== false && visibleRelations.length > 0) {
+  if (showLegend) {
     contents.push(
       '  style legend fill:#f8fafc,stroke:#94a3b8,stroke-dasharray:4 3',
     );

@@ -1,5 +1,5 @@
 import { DiagramFile, RefValue, TemplateResource } from '../../types';
-import { parseRefValue, resolveCfnString } from './intrinsics';
+import { CfnStringResolutionContext, parseRefValue, resolveCfnString } from './intrinsics';
 import { getCidrBlock, sanitizeLogicalId } from './naming';
 
 type SubnetConnectivity = 'public' | 'private' | 'isolated';
@@ -193,16 +193,21 @@ const listenerRuleConditions = (conditions: any): string[] => {
   });
 };
 
+/** The Parameters/parameterValues/pseudoParameters context resolveCfnString() needs to resolve
+ * a `Ref`/`Fn::Sub`/etc. against this file's own template - shared by any topology field that
+ * needs to resolve a template string (Availability Zone names, VPC/Subnet CidrBlock). */
+const resolutionContextFor = (file: DiagramFile): CfnStringResolutionContext => ({
+  parameters: file.cfnTemplate.Parameters,
+  parameterValues: file.parameterValues,
+  pseudoParameters: {
+    'AWS::StackName': file.groupName,
+    ...file.pseudoParameterValues,
+  },
+});
+
 const availabilityZoneName = (value: any, file: DiagramFile): string => {
   if (typeof value === 'string') return value;
-  const resolutionContext = {
-    parameters: file.cfnTemplate.Parameters,
-    parameterValues: file.parameterValues,
-    pseudoParameters: {
-      'AWS::StackName': file.groupName,
-      ...file.pseudoParameterValues,
-    },
-  };
+  const resolutionContext = resolutionContextFor(file);
   const resolved = resolveCfnString(value, resolutionContext);
   if (resolved) return resolved;
 
@@ -270,7 +275,7 @@ export class CfnDeploymentTopologyStructure {
         this.vpcs.push({
           fileIndex: file.fileIndex,
           logicalId,
-          cidrBlock: getCidrBlock(resource.Properties),
+          cidrBlock: getCidrBlock(resource.Properties, resolutionContextFor(file)),
           availabilityZones: [],
           resources: [],
           loadBalancers: [],
@@ -300,7 +305,7 @@ export class CfnDeploymentTopologyStructure {
           fileIndex: file.fileIndex,
           logicalId,
           connectivity: 'isolated',
-          cidrBlock: getCidrBlock(resource.Properties),
+          cidrBlock: getCidrBlock(resource.Properties, resolutionContextFor(file)),
           resources: [],
         });
       });

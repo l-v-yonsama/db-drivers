@@ -30,7 +30,8 @@ const pathStyle: Record<
   }
 > = {
   'client-request-response': { color: '#2563eb', width: 3, dashed: false },
-  'egress-return': { color: '#0891b2', width: 2, dashed: true },
+  // Teal solid, matching both the specification and the draw.io renderer's `egress` style.
+  'egress-return': { color: '#0d9488', width: 2, dashed: false },
   'event-delivery': { color: '#d97706', width: 2, dashed: true },
   'data-access': { color: '#059669', width: 2, dashed: false },
   'resource-membership': { color: '#64748b', width: 2, dashed: true },
@@ -92,14 +93,23 @@ export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
     contents.push('  internet(["Internet"])');
   }
 
-  structure.vpcs.forEach((vpc) => renderVpc(contents, vpc));
+  // Endpoint ids absorbed into a parent's containment subgraph (see resource-membership
+  // handling inside renderVpc), across all VPCs - their "member of" edge is dropped from the
+  // drawn path list below since containment already shows the relationship.
+  const containedMemberIds = new Set<string>();
+  structure.vpcs.forEach((vpc) => renderVpc(contents, vpc, trafficPathsAndProtection, containedMemberIds));
   if (structure.standaloneResources.length > 0) {
     renderStandaloneResources(contents, structure.standaloneResources);
   }
   renderRegionalServices(contents, trafficPathsAndProtection.regionalNodes);
 
+  // A "member of" path already absorbed into containment would otherwise draw a redundant
+  // dashed edge pointing into the subgraph that already visually contains it.
+  const renderedPaths = trafficPathsAndProtection.paths.filter((path) =>
+    !(path.kind === 'resource-membership' && containedMemberIds.has(path.from.id)));
+
   const edgeStyles: string[] = [];
-  trafficPathsAndProtection.paths.forEach((path) => {
+  renderedPaths.forEach((path) => {
     const source = nodeIdForEndpoint(
       structure,
       trafficPathsAndProtection.regionalNodes,
@@ -128,18 +138,29 @@ export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
   });
   contents.push(...edgeStyles);
 
-  if (params.options?.includeLegend !== false && trafficPathsAndProtection.paths.length > 0) {
+  // Only list a legend row for a relationship kind that actually occurs among the generated
+  // paths for this specific diagram - a row with zero matching edges (for example "Asynchronous
+  // event" when the supplied templates never prove an event-delivery relationship) sends a
+  // reader unfamiliar with the notation hunting for an arrow that was never drawn.
+  const legendEntries: [TrafficProtectionPathKind, string][] = [
+    ['client-request-response', 'Blue: client request / response'],
+    ['egress-return', 'Teal: egress / return'],
+    ['event-delivery', 'Orange dashed: event delivery'],
+    ['data-access', 'Green: data access'],
+    ['resource-membership', 'Gray dashed: membership'],
+    ['security-permission', 'Purple dashed: security-group permission'],
+    ['security-protection', 'Red: security protection'],
+  ];
+  const usedPathKinds = new Set(renderedPaths.map((path) => path.kind));
+  const visibleLegendLabels = legendEntries
+    .filter(([kind]) => usedPathKinds.has(kind))
+    .map(([, label]) => label);
+  const showLegend = params.options?.includeLegend !== false && visibleLegendLabels.length > 0;
+
+  if (showLegend) {
     contents.push('  subgraph path_legend["Traffic and protection types"]');
     contents.push(
-      `    path_legend_card["${mermaidCompactLegendLabel('Edge styles', [
-        'Blue: client request / response',
-        'Cyan dashed: egress / return',
-        'Orange dashed: event delivery',
-        'Green: data access',
-        'Gray dashed: membership',
-        'Purple dashed: security-group permission',
-        'Red: security protection',
-      ])}"]`,
+      `    path_legend_card["${mermaidCompactLegendLabel('Edge styles', visibleLegendLabels)}"]`,
     );
     contents.push('  end');
   }
@@ -154,7 +175,7 @@ export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
     '  classDef legendNode fill:#ffffff,stroke:#94a3b8,color:#334155,font-size:11px',
   );
   if (hasInternet) contents.push('  class internet internetNode');
-  if (params.options?.includeLegend !== false && trafficPathsAndProtection.paths.length > 0) {
+  if (showLegend) {
     contents.push('  class path_legend_card legendNode');
     contents.push(
       '  style path_legend fill:#f8fafc,stroke:#94a3b8,stroke-dasharray:4 3',
@@ -164,7 +185,12 @@ export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
   return contents.join('\n');
 };
 
-const renderVpc = (contents: string[], vpc: Vpc): void => {
+const renderVpc = (
+  contents: string[],
+  vpc: Vpc,
+  trafficPathsAndProtection: TrafficPathsAndProtection,
+  containedMemberIds: Set<string>,
+): void => {
   const groupId = vpcId(vpc);
   contents.push(
     `  subgraph ${groupId}["VPC ${escapeMermaidLabel(
@@ -178,25 +204,73 @@ const renderVpc = (contents: string[], vpc: Vpc): void => {
   );
 
   if (vpc.resources.length > 0) {
+    // A resource-membership relation proven between two resources both placed at VPC level (for
+    // example an Aurora DB Instance's DBClusterIdentifier pointing at its DB Cluster) is rendered
+    // as a nested subgraph rather than as a separate dashed edge: the member becomes a child node
+    // inside its parent's own subgraph instead of an independent card. This is a rendering choice
+    // about an already-proven relationship, not a new inference - the underlying path still comes
+    // from buildMultiAzDeploymentTrafficPathsAndProtection() and is filtered out of the edge list
+    // once it has been absorbed into the subgraph (see containedMemberIds above).
+    const vpcResourceEndpointIds = new Set(vpc.resources.map((resource) =>
+      `f${resource.fileIndex}_${resource.logicalId}`));
+    const memberParentId = new Map<string, string>();
+    trafficPathsAndProtection.paths
+      .filter((path) => path.kind === 'resource-membership')
+      .forEach((path) => {
+        if (vpcResourceEndpointIds.has(path.from.id) && vpcResourceEndpointIds.has(path.to.id)) {
+          memberParentId.set(path.from.id, path.to.id);
+        }
+      });
+    const parentMembers = new Map<string, typeof vpc.resources>();
+    vpc.resources.forEach((resource) => {
+      const endpointId = `f${resource.fileIndex}_${resource.logicalId}`;
+      const parentId = memberParentId.get(endpointId);
+      if (!parentId) return;
+      parentMembers.set(parentId, [...parentMembers.get(parentId) ?? [], resource]);
+      containedMemberIds.add(endpointId);
+    });
+    const topLevelResources = vpc.resources.filter((resource) =>
+      !memberParentId.has(`f${resource.fileIndex}_${resource.logicalId}`));
+
     const multiAzGroupId = `${groupId}_multi_az`;
     contents.push(`    subgraph ${multiAzGroupId}["Multi-AZ / VPC resources"]`);
-    vpc.resources.forEach((resource) => {
+    topLevelResources.forEach((resource) => {
+      const endpointId = `f${resource.fileIndex}_${resource.logicalId}`;
       const placement = [
         resource.placement,
         ...(resource.multiAz ? ['Multi-AZ'] : []),
         ...(resource.traits ?? []),
       ].join('; ');
+      const parentCellId = resourceId(vpc, resource.fileIndex, resource.logicalId);
+      const members = parentMembers.get(endpointId) ?? [];
+      if (members.length === 0) {
+        contents.push(
+          `      ${parentCellId}["${resourceLabel(
+            resource.logicalId,
+            resource.detail.Type,
+            placement,
+          )}"]`,
+        );
+        return;
+      }
       contents.push(
-        `      ${resourceId(
-          vpc,
-          resource.fileIndex,
-          resource.logicalId,
-        )}["${resourceLabel(
+        `      subgraph ${parentCellId}["${resourceLabel(
           resource.logicalId,
           resource.detail.Type,
           placement,
         )}"]`,
       );
+      members.forEach((member) => {
+        contents.push(
+          `        ${resourceId(
+            vpc,
+            member.fileIndex,
+            member.logicalId,
+          )}["${resourceLabel(member.logicalId, member.detail.Type)}"]`,
+        );
+      });
+      contents.push('      end');
+      contents.push(`      style ${parentCellId} fill:#ffffff,stroke:#64748b,stroke-width:1px`);
     });
     contents.push('    end');
     contents.push(

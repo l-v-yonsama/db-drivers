@@ -547,8 +547,12 @@ const addEgressPaths = (
     );
   };
 
+  // Every VPC-level resource (ECS Service, RDS DBInstance/DBCluster, ElastiCache
+  // ReplicationGroup, Auto Scaling Group, ...) is considered here rather than hand-maintaining a
+  // resource-type allowlist; connectResourceToNat() already only emits a path when a candidate
+  // subnet's own default route is a NAT Gateway, so RDS/ElastiCache candidates (which resolve to
+  // isolated subnets with no NAT default route) are naturally excluded without listing types.
   vpc.resources
-    .filter((resource) => ['AWS::ECS::Service', 'AWS::EC2::Instance'].includes(resource.detail.Type))
     .forEach((resource) => resource.candidateSubnets
       .forEach((subnet) => connectResourceToNat(resource, subnet)));
   vpc.availabilityZones.forEach((az) => az.subnets.forEach((subnet) =>

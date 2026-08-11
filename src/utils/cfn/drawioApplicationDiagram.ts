@@ -63,12 +63,18 @@ const layerWidth = 230;
 // horizontal routing corridor inside each 50px row gap.
 const layerStairStep = 10;
 const layerBottomPadding = 35;
-const layerHeight = (nodeCount: number, layerIndex: number): number => Math.max(
+// itemHeight is a single card's fixed height for most nodes, but a DBCluster-style container
+// that nests member cards inside itself needs its own taller contribution to the layer's height.
+const layerHeight = (
+  items: ApplicationNode[],
+  layerIndex: number,
+  itemHeight: (node: ApplicationNode) => number,
+): number => Math.max(
   150,
   nodeTop
     + layerIndex * layerStairStep
-    + nodeCount * nodeHeight
-    + Math.max(0, nodeCount - 1) * nodeVerticalGap
+    + items.reduce((sum, node) => sum + itemHeight(node), 0)
+    + Math.max(0, items.length - 1) * nodeVerticalGap
     + layerBottomPadding,
 );
 
@@ -210,6 +216,44 @@ export const generateDrawioApplicationDiagram = (
   const labelCounts = new Map<string, number>();
   nodes.forEach((node) => labelCounts.set(node.label, (labelCounts.get(node.label) ?? 0) + 1));
 
+  // A DBInstance's DBClusterIdentifier proves membership in a DBCluster. Rather than a
+  // separate "member of" edge, that containment is drawn directly by nesting the member's
+  // card inside its parent's own box, matching the Multi-AZ diagram's representation. The
+  // relation is still fully absorbed - no top-level card and no edge remain for it.
+  const containedMemberIds = new Set(
+    relations
+      .filter((relation) => relation.kind === 'resource-membership')
+      .map((relation) => relation.from),
+  );
+  const memberParentId = new Map(
+    relations
+      .filter((relation) => relation.kind === 'resource-membership')
+      .map((relation) => [relation.from, relation.to] as const),
+  );
+  const membersByParent = new Map<string, ApplicationNode[]>();
+  nodes.forEach((node) => {
+    const parentId = memberParentId.get(node.id);
+    if (!parentId) return;
+    const list = membersByParent.get(parentId) ?? [];
+    list.push(node);
+    membersByParent.set(parentId, list);
+  });
+  const renderableRelations = relations.filter(
+    (relation) =>
+      !(relation.kind === 'resource-membership' && containedMemberIds.has(relation.from)),
+  );
+  // Mirrors drawioInfrastructureDiagrams.ts's containment geometry: a header-height reserved
+  // for the parent's own label, then members stacked with a consistent row gap.
+  const memberRowGap = 15;
+  const memberBottomInset = 15;
+  const individualHeight = (node: ApplicationNode): number => {
+    const members = membersByParent.get(node.id);
+    if (!members || members.length === 0) return nodeHeight;
+    return nodeHeight + memberRowGap +
+      members.length * nodeHeight + Math.max(0, members.length - 1) * memberRowGap +
+      memberBottomInset;
+  };
+
   const cells: string[] = [];
   const nodeCellIds = new Map<string, string>();
   const nodeLayouts = new Map<string, NodeLayout>();
@@ -226,7 +270,7 @@ export const generateDrawioApplicationDiagram = (
     layerNodes.set(
       title,
       orderLayerNodes(
-        nodes.filter((node) => node.layer === layer),
+        nodes.filter((node) => node.layer === layer && !containedMemberIds.has(node.id)),
         relations,
       ),
     );
@@ -236,14 +280,17 @@ export const generateDrawioApplicationDiagram = (
     const items = layerNodes.get(title) ?? [];
     if (items.length === 0) return;
     const groupId = `layer_${title.toLowerCase()}`;
-    const groupHeight = layerHeight(items.length, layerIndex);
+    const groupHeight = layerHeight(items, layerIndex, individualHeight);
     cells.push(
       `<mxCell id="${groupId}" value="${title}" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=${layerColors[title]};strokeColor=#94a3b8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="${layerX[title]}" y="${layerTop}" width="${layerWidth}" height="${groupHeight}" as="geometry"/></mxCell>`,
     );
+    let cumulativeOffset = 0;
     items.forEach((node, index) => {
       const cellId = `node_${node.id}`;
       nodeCellIds.set(node.id, cellId);
-      const y = nodeTop + layerIndex * layerStairStep + index * nodePitch;
+      const height = individualHeight(node);
+      const y = nodeTop + layerIndex * layerStairStep + cumulativeOffset;
+      cumulativeOffset += height + nodeVerticalGap;
       nodeLayouts.set(node.id, {
         layerIndex,
         rowIndex: index,
@@ -253,18 +300,36 @@ export const generateDrawioApplicationDiagram = (
       const stackSuffix = (labelCounts.get(node.label) ?? 0) > 1 ? ` (${node.fileName})` : '';
       const routes = ingressRoutes.get(node.id)?.map((route) => `<br/>${route}`).join('') ?? '';
       const label = `${node.label}${stackSuffix}${routes}<br/><font color="#64748b">${node.type}</font>`;
+      const members = membersByParent.get(node.id) ?? [];
       cells.push(
-        `<mxCell id="${cellId}" value="${xmlEscape(label)}"${files[node.fileIndex].templateSource ? pageLink(`template_${node.fileIndex}`) : ''} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;spacing=8;" vertex="1" parent="${groupId}"><mxGeometry x="${nodeLeft}" y="${y}" width="${nodeWidth}" height="${nodeHeight}" as="geometry"/></mxCell>`,
+        `<mxCell id="${cellId}" value="${xmlEscape(label)}"${files[node.fileIndex].templateSource ? pageLink(`template_${node.fileIndex}`) : ''} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;spacing=8;${members.length > 0 ? 'verticalAlign=top;align=left;' : ''}" vertex="1" parent="${groupId}"><mxGeometry x="${nodeLeft}" y="${y}" width="${nodeWidth}" height="${height}" as="geometry"/></mxCell>`,
       );
+      members.forEach((member, memberIndex) => {
+        const memberCellId = `node_${member.id}`;
+        nodeCellIds.set(member.id, memberCellId);
+        const memberLocalY = nodeHeight + memberRowGap + memberIndex * (nodeHeight + memberRowGap);
+        const memberStackSuffix = (labelCounts.get(member.label) ?? 0) > 1 ? ` (${member.fileName})` : '';
+        const memberLabel = `${member.label}${memberStackSuffix}<br/><font color="#64748b">${member.type}</font>`;
+        cells.push(
+          `<mxCell id="${memberCellId}" value="${xmlEscape(memberLabel)}"${files[member.fileIndex].templateSource ? pageLink(`template_${member.fileIndex}`) : ''} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;spacing=8;" vertex="1" parent="${cellId}"><mxGeometry x="10" y="${memberLocalY}" width="${nodeWidth - 20}" height="${nodeHeight}" as="geometry"/></mxCell>`,
+        );
+        nodeLayouts.set(member.id, {
+          layerIndex,
+          rowIndex: index,
+          left: layerX[title] + nodeLeft + 10,
+          top: layerTop + y + memberLocalY,
+        });
+      });
     });
   });
 
   const legendY = 80 + Math.max(...layerTitles.map((title, layerIndex) => {
-    const count = layerNodes.get(title)?.length ?? 0;
-    return layerHeight(count, layerIndex);
+    const items = layerNodes.get(title) ?? [];
+    return layerHeight(items, layerIndex, individualHeight);
   }));
   if (params.options?.includeLegend !== false) {
-    const legendItems: [string, string, ApplicationRelationKind][] = [
+    const usedKinds = new Set(renderableRelations.map((relation) => relation.kind));
+    const legendCandidates: [string, string, ApplicationRelationKind][] = [
       ['Runtime', 'Runtime call', 'runtime-call'],
       ['Event', 'Event delivery', 'event-delivery'],
       ['Access', 'Data access', 'data-access'],
@@ -272,21 +337,24 @@ export const generateDrawioApplicationDiagram = (
       ['Membership', 'Resource membership', 'resource-membership'],
       ['Security', 'Security protection', 'security-protection'],
     ];
-    cells.push(...drawioLineLegendCells({
-      title: 'Relationship types',
-      x: 40,
-      y: legendY,
-      width: 1100,
-      jumpSize: 8,
-      items: legendItems.map(([id, label, kind]) => ({
-        id,
-        label,
-        ...relationStyles[kind],
-      })),
-    }));
+    const legendItems = legendCandidates.filter(([, , kind]) => usedKinds.has(kind));
+    if (legendItems.length > 0) {
+      cells.push(...drawioLineLegendCells({
+        title: 'Relationship types',
+        x: 40,
+        y: legendY,
+        width: 1100,
+        jumpSize: 8,
+        items: legendItems.map(([id, label, kind]) => ({
+          id,
+          label,
+          ...relationStyles[kind],
+        })),
+      }));
+    }
   }
 
-  relations.forEach((relation, index) => {
+  renderableRelations.forEach((relation, index) => {
     const source = nodeCellIds.get(relation.from);
     const target = nodeCellIds.get(relation.to);
     if (!source || !target) return;
