@@ -1,13 +1,13 @@
 import { GenerateDiagramParams } from '../../types';
 import { parseDiagramFiles } from './diagramFileModel';
+import { drawioTemplatePage } from './drawioXml';
 import {
   drawioLineLegendCells,
   drawioPage,
-  drawioTemplatePage,
   pageLink,
   wrapDrawioPages,
   xmlEscape,
-} from './drawioXml';
+} from '../drawio';
 import {
   ApplicationNode,
   ApplicationRelation,
@@ -16,6 +16,7 @@ import {
   getApplicationIngressRoutes,
   getApplicationNodes,
 } from './applicationRelations';
+import { computeAutoLayout, estimateLabelSize, LayoutEdge, LayoutNode } from '../diagramLayout';
 
 type DrawioStyle = {
   color: string;
@@ -63,6 +64,11 @@ const layerWidth = 230;
 // horizontal routing corridor inside each 50px row gap.
 const layerStairStep = 10;
 const layerBottomPadding = 35;
+// Mirrors drawioInfrastructureDiagrams.ts's containment geometry: a header-height reserved
+// for the parent's own label, then members stacked with a consistent row gap. Shared by the
+// model's individualHeight() and both renderers' member placement.
+const memberRowGap = 15;
+const memberBottomInset = 15;
 // itemHeight is a single card's fixed height for most nodes, but a DBCluster-style container
 // that nests member cards inside itself needs its own taller contribution to the layer's height.
 const layerHeight = (
@@ -77,6 +83,40 @@ const layerHeight = (
     + Math.max(0, items.length - 1) * nodeVerticalGap
     + layerBottomPadding,
 );
+
+type NodeCardBox = { x: number; y: number; width: number; height: number };
+
+/** A layer's own swimlane cell - identical between the legacy staircase renderer and the
+ * ELK-backed one (previously duplicated identically in both; only the resulting `box` differs). */
+const renderLayerGroupCell = (
+  groupId: string,
+  title: (typeof layerTitles)[number],
+  box: NodeCardBox,
+): string =>
+  `<mxCell id="${groupId}" value="${title}" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=${layerColors[title]};strokeColor=#94a3b8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" as="geometry"/></mxCell>`;
+
+/** An application node's own card - identical between renderers (previously duplicated
+ * identically in both; only `box` and `templateLink` come from a different layout source). */
+const renderApplicationNodeCell = (
+  cellId: string,
+  label: string,
+  templateLink: string,
+  box: NodeCardBox,
+  groupId: string,
+  hasMembers: boolean,
+): string =>
+  `<mxCell id="${cellId}" value="${xmlEscape(label)}"${templateLink} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;spacing=8;${hasMembers ? 'verticalAlign=top;align=left;' : ''}" vertex="1" parent="${groupId}"><mxGeometry x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" as="geometry"/></mxCell>`;
+
+/** A DBCluster-style member card nested inside its parent's own card - identical between
+ * renderers (previously duplicated identically in both). */
+const renderApplicationMemberCell = (
+  memberCellId: string,
+  label: string,
+  templateLink: string,
+  localY: number,
+  parentCellId: string,
+): string =>
+  `<mxCell id="${memberCellId}" value="${xmlEscape(label)}"${templateLink} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;spacing=8;" vertex="1" parent="${parentCellId}"><mxGeometry x="10" y="${localY}" width="${nodeWidth - 20}" height="${nodeHeight}" as="geometry"/></mxCell>`;
 
 const nodeCenterY = (layout: NodeLayout): number => layout.top + nodeHeight / 2;
 
@@ -181,12 +221,27 @@ const orderLayerNodes = (
   return [...ordered, ...nodes.filter((node) => !orderedIds.has(node.id))];
 };
 
-/** Generates an editable, uncompressed diagrams.net XML document for the simplified
- * application view. This intentionally targets ApplicationDiagram only; network topology
- * and raw CloudFormation dependency graphs remain Mermaid outputs for now. */
-export const generateDrawioApplicationDiagram = (
+type ApplicationDiagramModel = {
+  files: ReturnType<typeof parseDiagramFiles>;
+  nodes: ApplicationNode[];
+  relations: ApplicationRelation[];
+  renderableRelations: ApplicationRelation[];
+  ingressRoutes: Map<string, string[]>;
+  labelCounts: Map<string, number>;
+  containedMemberIds: Set<string>;
+  membersByParent: Map<string, ApplicationNode[]>;
+  individualHeight: (node: ApplicationNode) => number;
+  layerNodes: Map<(typeof layerTitles)[number], ApplicationNode[]>;
+};
+
+/** Shared node/relation/containment preparation for both the legacy and auto-layout
+ * Application Diagram renderers - dedup by alias, membership absorption, and per-layer
+ * ordering are placement-independent, so both renderers must see identical results before
+ * plugging in their own layout strategy (fixed grid vs. ELK; plan 4.2's compat rule: the
+ * placement is what changes, not the dependency/containment extraction). */
+const buildApplicationDiagramModel = (
   params: GenerateDiagramParams,
-): string => {
+): ApplicationDiagramModel => {
   const files = parseDiagramFiles({
     ...params,
     options: { ...params.options, includeOutputs: true, includeParameters: true },
@@ -242,10 +297,6 @@ export const generateDrawioApplicationDiagram = (
     (relation) =>
       !(relation.kind === 'resource-membership' && containedMemberIds.has(relation.from)),
   );
-  // Mirrors drawioInfrastructureDiagrams.ts's containment geometry: a header-height reserved
-  // for the parent's own label, then members stacked with a consistent row gap.
-  const memberRowGap = 15;
-  const memberBottomInset = 15;
   const individualHeight = (node: ApplicationNode): number => {
     const members = membersByParent.get(node.id);
     if (!members || members.length === 0) return nodeHeight;
@@ -253,6 +304,48 @@ export const generateDrawioApplicationDiagram = (
       members.length * nodeHeight + Math.max(0, members.length - 1) * memberRowGap +
       memberBottomInset;
   };
+
+  const layerNodes = new Map<(typeof layerTitles)[number], ApplicationNode[]>();
+  layerTitles.forEach((title) => {
+    const layer = title.toLowerCase() as ApplicationNode['layer'];
+    layerNodes.set(
+      title,
+      orderLayerNodes(
+        nodes.filter((node) => node.layer === layer && !containedMemberIds.has(node.id)),
+        relations,
+      ),
+    );
+  });
+
+  return {
+    files,
+    nodes,
+    relations,
+    renderableRelations,
+    ingressRoutes,
+    labelCounts,
+    containedMemberIds,
+    membersByParent,
+    individualHeight,
+    layerNodes,
+  };
+};
+
+/** Generates an editable, uncompressed diagrams.net XML document for the simplified
+ * application view. This intentionally targets ApplicationDiagram only; network topology
+ * and raw CloudFormation dependency graphs remain Mermaid outputs for now. */
+export const generateDrawioApplicationDiagram = (
+  params: GenerateDiagramParams,
+): string => {
+  const {
+    files,
+    renderableRelations,
+    ingressRoutes,
+    labelCounts,
+    membersByParent,
+    individualHeight,
+    layerNodes,
+  } = buildApplicationDiagramModel(params);
 
   const cells: string[] = [];
   const nodeCellIds = new Map<string, string>();
@@ -263,27 +356,13 @@ export const generateDrawioApplicationDiagram = (
     Messaging: 620,
     Data: 910,
   };
-  const layerNodes = new Map<(typeof layerTitles)[number], typeof nodes[number][]>();
-
-  layerTitles.forEach((title) => {
-    const layer = title.toLowerCase() as typeof nodes[number]['layer'];
-    layerNodes.set(
-      title,
-      orderLayerNodes(
-        nodes.filter((node) => node.layer === layer && !containedMemberIds.has(node.id)),
-        relations,
-      ),
-    );
-  });
 
   layerTitles.forEach((title, layerIndex) => {
     const items = layerNodes.get(title) ?? [];
     if (items.length === 0) return;
     const groupId = `layer_${title.toLowerCase()}`;
     const groupHeight = layerHeight(items, layerIndex, individualHeight);
-    cells.push(
-      `<mxCell id="${groupId}" value="${title}" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=${layerColors[title]};strokeColor=#94a3b8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="${layerX[title]}" y="${layerTop}" width="${layerWidth}" height="${groupHeight}" as="geometry"/></mxCell>`,
-    );
+    cells.push(renderLayerGroupCell(groupId, title, { x: layerX[title], y: layerTop, width: layerWidth, height: groupHeight }));
     let cumulativeOffset = 0;
     items.forEach((node, index) => {
       const cellId = `node_${node.id}`;
@@ -301,18 +380,27 @@ export const generateDrawioApplicationDiagram = (
       const routes = ingressRoutes.get(node.id)?.map((route) => `<br/>${route}`).join('') ?? '';
       const label = `${node.label}${stackSuffix}${routes}<br/><font color="#64748b">${node.type}</font>`;
       const members = membersByParent.get(node.id) ?? [];
-      cells.push(
-        `<mxCell id="${cellId}" value="${xmlEscape(label)}"${files[node.fileIndex].templateSource ? pageLink(`template_${node.fileIndex}`) : ''} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;spacing=8;${members.length > 0 ? 'verticalAlign=top;align=left;' : ''}" vertex="1" parent="${groupId}"><mxGeometry x="${nodeLeft}" y="${y}" width="${nodeWidth}" height="${height}" as="geometry"/></mxCell>`,
-      );
+      cells.push(renderApplicationNodeCell(
+        cellId,
+        label,
+        files[node.fileIndex].templateSource ? pageLink(`template_${node.fileIndex}`) : '',
+        { x: nodeLeft, y, width: nodeWidth, height },
+        groupId,
+        members.length > 0,
+      ));
       members.forEach((member, memberIndex) => {
         const memberCellId = `node_${member.id}`;
         nodeCellIds.set(member.id, memberCellId);
         const memberLocalY = nodeHeight + memberRowGap + memberIndex * (nodeHeight + memberRowGap);
         const memberStackSuffix = (labelCounts.get(member.label) ?? 0) > 1 ? ` (${member.fileName})` : '';
         const memberLabel = `${member.label}${memberStackSuffix}<br/><font color="#64748b">${member.type}</font>`;
-        cells.push(
-          `<mxCell id="${memberCellId}" value="${xmlEscape(memberLabel)}"${files[member.fileIndex].templateSource ? pageLink(`template_${member.fileIndex}`) : ''} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;spacing=8;" vertex="1" parent="${cellId}"><mxGeometry x="10" y="${memberLocalY}" width="${nodeWidth - 20}" height="${nodeHeight}" as="geometry"/></mxCell>`,
-        );
+        cells.push(renderApplicationMemberCell(
+          memberCellId,
+          memberLabel,
+          files[member.fileIndex].templateSource ? pageLink(`template_${member.fileIndex}`) : '',
+          memberLocalY,
+          cellId,
+        ));
         nodeLayouts.set(member.id, {
           layerIndex,
           rowIndex: index,
@@ -366,6 +454,193 @@ export const generateDrawioApplicationDiagram = (
       : [];
     const geometry = waypoints.length > 0
       ? `<mxGeometry relative="1" as="geometry"><Array as="points">${waypoints.map((point) => `<mxPoint x="${point.x}" y="${point.y}"/>`).join('')}</Array></mxGeometry>`
+      : '<mxGeometry relative="1" as="geometry"/>';
+    cells.push(
+      `<mxCell id="edge_${index}" value="${xmlEscape(relation.label)}" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;jumpStyle=arc;jumpSize=8;html=1;strokeColor=${style.color};strokeWidth=${style.width};${style.dashed ? 'dashed=1;dashPattern=8 8;' : ''}endArrow=block;" edge="1" parent="1" source="${source}" target="${target}">${geometry}</mxCell>`,
+    );
+  });
+
+  const pages = [drawioPage('cfn-application', 'ApplicationDiagram', cells)];
+  files.forEach((file) => {
+    if (file.templateSource) pages.push(drawioTemplatePage(`template_${file.fileIndex}`, file.fileName, file.templateSource));
+  });
+  return wrapDrawioPages(pages);
+};
+
+const layerPartitionIndex: Record<(typeof layerTitles)[number], number> = {
+  Ingress: 0,
+  Compute: 1,
+  Messaging: 2,
+  Data: 3,
+};
+const layerSwimlanePadding = 20;
+const layerSwimlaneHeaderHeight = 30;
+
+/** Automatic-layout counterpart of {@link generateDrawioApplicationDiagram} (plan Phase 4,
+ * section 5.2). Keeps the same node/relation/containment model - see
+ * {@link buildApplicationDiagramModel} - and keeps the `Ingress → Compute → Messaging → Data`
+ * ordering as a hard constraint (ELK `elk.partitioning`, not just a hope that edge direction
+ * happens to agree), but hands node placement within and around that constraint to ELK instead
+ * of the legacy renderer's hand-rolled staircase/waypoint math. A DBCluster-style member card is
+ * still nested by hand exactly as in the legacy renderer (see plan 5.2 "グループ内部のノード配置
+ * とグループ間隔はELKへ任せる" - membership containment is a fixed 1-level nesting the caller
+ * already knows the size of, not something that benefits from being laid out). */
+export const generateDrawioApplicationDiagramAsync = async (
+  params: GenerateDiagramParams,
+): Promise<string> => {
+  const {
+    files,
+    renderableRelations,
+    ingressRoutes,
+    labelCounts,
+    membersByParent,
+    individualHeight,
+    layerNodes,
+  } = buildApplicationDiagramModel(params);
+
+  const layoutNodes: LayoutNode[] = [];
+  const nodeCellIds = new Map<string, string>();
+  const nodeToTitle = new Map<string, (typeof layerTitles)[number]>();
+
+  layerTitles.forEach((title) => {
+    (layerNodes.get(title) ?? []).forEach((node) => {
+      nodeCellIds.set(node.id, `node_${node.id}`);
+      nodeToTitle.set(node.id, title);
+      layoutNodes.push({
+        id: node.id,
+        width: nodeWidth,
+        height: individualHeight(node),
+        layoutOptions: { 'elk.partitioning.partition': String(layerPartitionIndex[title]) },
+      });
+    });
+  });
+
+  const layoutEdges: LayoutEdge[] = renderableRelations
+    .filter((relation) => nodeCellIds.has(relation.from) && nodeCellIds.has(relation.to))
+    .map((relation, index) => ({
+      id: `edge_${index}`,
+      source: { nodeId: relation.from },
+      target: { nodeId: relation.to },
+      label: relation.label,
+      // Without this ELK reserves zero room for the label - see estimateLabelSize's doc comment
+      // (found via a real overlap bug in the ER diagram's longer labels; applied here too since
+      // the same shared mechanism underlies both).
+      labelSize: estimateLabelSize(relation.label),
+    }));
+
+  const layout = await computeAutoLayout({
+    id: 'cfn-application',
+    direction: 'RIGHT',
+    nodes: layoutNodes,
+    edges: layoutEdges,
+    layoutOptions: {
+      'elk.partitioning.activate': 'true',
+      'elk.spacing.nodeNode': String(nodeVerticalGap),
+      'elk.layered.spacing.nodeNodeBetweenLayers': '90',
+    },
+  });
+
+  const cells: string[] = [];
+  const swimlaneBoxByTitle = new Map<
+    (typeof layerTitles)[number],
+    { x: number; y: number; width: number; height: number }
+  >();
+  layerTitles.forEach((title) => {
+    const items = layerNodes.get(title) ?? [];
+    const boxes = items.map((node) => layout.nodes.get(node.id)).filter((box): box is NonNullable<typeof box> => Boolean(box));
+    if (boxes.length === 0) return;
+    const minX = Math.min(...boxes.map((box) => box.x));
+    const minY = Math.min(...boxes.map((box) => box.y));
+    const maxX = Math.max(...boxes.map((box) => box.x + box.width));
+    const maxY = Math.max(...boxes.map((box) => box.y + box.height));
+    swimlaneBoxByTitle.set(title, {
+      x: minX - layerSwimlanePadding,
+      y: minY - layerSwimlaneHeaderHeight,
+      width: maxX - minX + layerSwimlanePadding * 2,
+      height: maxY - minY + layerSwimlaneHeaderHeight + layerSwimlanePadding,
+    });
+  });
+
+  layerTitles.forEach((title) => {
+    const items = layerNodes.get(title) ?? [];
+    const swimlaneBox = swimlaneBoxByTitle.get(title);
+    if (items.length === 0 || !swimlaneBox) return;
+    const groupId = `layer_${title.toLowerCase()}`;
+    cells.push(renderLayerGroupCell(groupId, title, swimlaneBox));
+    items.forEach((node) => {
+      const box = layout.nodes.get(node.id);
+      if (!box) return;
+      const cellId = nodeCellIds.get(node.id) as string;
+      const localX = box.x - swimlaneBox.x;
+      const localY = box.y - swimlaneBox.y;
+      const stackSuffix = (labelCounts.get(node.label) ?? 0) > 1 ? ` (${node.fileName})` : '';
+      const routes = ingressRoutes.get(node.id)?.map((route) => `<br/>${route}`).join('') ?? '';
+      const label = `${node.label}${stackSuffix}${routes}<br/><font color="#64748b">${node.type}</font>`;
+      const members = membersByParent.get(node.id) ?? [];
+      cells.push(renderApplicationNodeCell(
+        cellId,
+        label,
+        files[node.fileIndex].templateSource ? pageLink(`template_${node.fileIndex}`) : '',
+        { x: localX, y: localY, width: box.width, height: box.height },
+        groupId,
+        members.length > 0,
+      ));
+      members.forEach((member, memberIndex) => {
+        const memberCellId = `node_${member.id}`;
+        nodeCellIds.set(member.id, memberCellId);
+        const memberLocalY = nodeHeight + memberRowGap + memberIndex * (nodeHeight + memberRowGap);
+        const memberStackSuffix = (labelCounts.get(member.label) ?? 0) > 1 ? ` (${member.fileName})` : '';
+        const memberLabel = `${member.label}${memberStackSuffix}<br/><font color="#64748b">${member.type}</font>`;
+        cells.push(renderApplicationMemberCell(
+          memberCellId,
+          memberLabel,
+          files[member.fileIndex].templateSource ? pageLink(`template_${member.fileIndex}`) : '',
+          memberLocalY,
+          cellId,
+        ));
+      });
+    });
+  });
+
+  const legendY = 40 + Math.max(...[...swimlaneBoxByTitle.values()].map((box) => box.y + box.height), 150);
+  if (params.options?.includeLegend !== false) {
+    const usedKinds = new Set(renderableRelations.map((relation) => relation.kind));
+    const legendCandidates: [string, string, ApplicationRelationKind][] = [
+      ['Runtime', 'Runtime call', 'runtime-call'],
+      ['Event', 'Event delivery', 'event-delivery'],
+      ['Access', 'Data access', 'data-access'],
+      ['Network', 'Network route', 'network-route'],
+      ['Membership', 'Resource membership', 'resource-membership'],
+      ['Security', 'Security protection', 'security-protection'],
+    ];
+    const legendItems = legendCandidates.filter(([, , kind]) => usedKinds.has(kind));
+    if (legendItems.length > 0) {
+      cells.push(...drawioLineLegendCells({
+        title: 'Relationship types',
+        x: 40,
+        y: legendY,
+        width: 1100,
+        jumpSize: 8,
+        items: legendItems.map(([id, label, kind]) => ({
+          id,
+          label,
+          ...relationStyles[kind],
+        })),
+      }));
+    }
+  }
+
+  renderableRelations.forEach((relation, index) => {
+    const source = nodeCellIds.get(relation.from);
+    const target = nodeCellIds.get(relation.to);
+    const edge = layout.edges.get(`edge_${index}`);
+    if (!source || !target || !edge) return;
+    const style = relationStyles[relation.kind];
+    // A fallback (`layout.usedAutoLayout === false`) only has node centers to offer, not real
+    // routing (see gridFallbackLayout's doc comment) - draw.io's own connector routing between
+    // the two shapes reads better than a straight line drawn through both shapes' interiors.
+    const geometry = layout.usedAutoLayout && edge.bendPoints.length > 0
+      ? `<mxGeometry relative="1" as="geometry"><Array as="points">${edge.bendPoints.map((point) => `<mxPoint x="${point.x}" y="${point.y}"/>`).join('')}</Array></mxGeometry>`
       : '<mxGeometry relative="1" as="geometry"/>';
     cells.push(
       `<mxCell id="edge_${index}" value="${xmlEscape(relation.label)}" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;jumpStyle=arc;jumpSize=8;html=1;strokeColor=${style.color};strokeWidth=${style.width};${style.dashed ? 'dashed=1;dashPattern=8 8;' : ''}endArrow=block;" edge="1" parent="1" source="${source}" target="${target}">${geometry}</mxCell>`,

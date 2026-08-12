@@ -2,13 +2,20 @@ import { GenerateDiagramParams } from '../../types';
 import { CfnDeploymentTopologyStructure } from './deploymentTopology';
 import { parseDiagramFiles } from './diagramFileModel';
 import {
+  anchorFraction,
+  computeAutoLayout,
+  estimateLabelSize,
+  LayoutEdge,
+  LayoutNode,
+} from '../diagramLayout';
+import { drawioTemplatePage } from './drawioXml';
+import {
   drawioLineLegendCells,
   drawioPage,
-  drawioTemplatePage,
   pageLink,
   wrapDrawioPages,
   xmlEscape,
-} from './drawioXml';
+} from '../drawio';
 import {
   buildMultiAzDeploymentTrafficPathsAndProtection,
   TrafficProtectionPathKind,
@@ -720,6 +727,540 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
   return wrapDrawioPages(pages);
 };
 
+const subnetResourceCardWidth = 135;
+const subnetResourceCardHeight = 55;
+
+/** Packs `resources` (plain EC2/RDS/ElastiCache instances that live directly inside one subnet -
+ * not the VPC-level candidate-subnet-spanning stack handled separately by `topLevelResources`
+ * above) into the fixed `availableWidth`x`availableHeight` content area of that subnet's box,
+ * using ELK's `box` packing algorithm instead of the legacy renderer's fixed 2-column formula.
+ * Plan 5.3: "同一Subnet内のEC2、RDS、ElastiCacheなどの配置と間隔をELKで計算する" - the *subnet's own*
+ * boundary stays exactly the fixed size/position the caller already computed (see
+ * `defaultVpcHeight`/`tierHeight`/`azHeight` above); only what happens *inside* that fixed box is
+ * delegated to ELK, each subnet laid out independently of every other subnet and of the VPC/AZ
+ * containment itself - the "per-Subnetごとに独立したレイアウト問題として個別に呼び出す" decision
+ * recorded in the plan's Multi-AZ section, so a subnet in one AZ can never end up nudging a
+ * sibling AZ's boundary. Falls back to the legacy 2-column formula for a subnet whose resources
+ * do not fit ELK's packed size within the available box - a real fallback, not just a formality,
+ * since `box` packing has no hard size constraint to enforce. */
+const placeSubnetResources = async (
+  resources: { fileIndex: number; logicalId: string }[],
+  availableWidth: number,
+  availableHeight: number,
+): Promise<Map<string, NodePosition>> => {
+  const positions = new Map<string, NodePosition>();
+  if (resources.length === 0) return positions;
+
+  const legacyFallback = (): void => {
+    resources.forEach((resource, index) => {
+      const endpointId = `f${resource.fileIndex}_${resource.logicalId}`;
+      positions.set(endpointId, {
+        x: index % 2 === 0 ? 0 : subnetResourceCardWidth + 20,
+        y: Math.floor(index / 2) * (subnetResourceCardHeight + 13),
+        width: subnetResourceCardWidth,
+        height: subnetResourceCardHeight,
+      });
+    });
+  };
+
+  const layout = await computeAutoLayout({
+    id: 'subnet-resources',
+    direction: 'RIGHT',
+    nodes: resources.map((_resource, index) => ({
+      id: `r${index}`,
+      width: subnetResourceCardWidth,
+      height: subnetResourceCardHeight,
+    })),
+    edges: [],
+    layoutOptions: {
+      'elk.algorithm': 'box',
+      'elk.box.packingMode': 'GROW',
+      'elk.spacing.nodeNode': '13',
+      'elk.aspectRatio': String(Math.max(0.1, availableWidth / Math.max(1, availableHeight))),
+    },
+  });
+
+  if (!layout.usedAutoLayout) {
+    legacyFallback();
+    return positions;
+  }
+  const boxes = resources.map((_, index) => layout.nodes.get(`r${index}`));
+  if (boxes.some((box) => !box)) {
+    legacyFallback();
+    return positions;
+  }
+  const maxX = Math.max(...boxes.map((box) => (box as NodePosition).x + (box as NodePosition).width));
+  const maxY = Math.max(...boxes.map((box) => (box as NodePosition).y + (box as NodePosition).height));
+  if (maxX > availableWidth + 0.5 || maxY > availableHeight + 0.5) {
+    legacyFallback();
+    return positions;
+  }
+  resources.forEach((resource, index) => {
+    const endpointId = `f${resource.fileIndex}_${resource.logicalId}`;
+    const box = boxes[index] as NodePosition;
+    positions.set(endpointId, {
+      x: box.x,
+      y: box.y,
+      width: subnetResourceCardWidth,
+      height: subnetResourceCardHeight,
+    });
+  });
+  return positions;
+};
+
+/** Automatic-layout counterpart of
+ * {@link generateDrawioMultiAzDeploymentTrafficPathsAndProtection} (plan Phase 5, section 5.3).
+ * Region/VPC/AZ/Subnet containment, sizing, and the VPC-level candidate-subnet-spanning stack
+ * (DB Cluster, ElastiCache Replication Group, ...) are all identical to the legacy renderer and
+ * kept fully synchronous below - the plan is explicit that the AWS-meaningful boundaries must
+ * not move. Only the placement of a subnet's own directly-nested resources (`subnet.resources`)
+ * is delegated to ELK, via {@link placeSubnetResources}; that is the one `await` this renderer
+ * needs, which is why only the VPC/AZ/Subnet loops (not the rest of the function) had to become
+ * `for`/`of` instead of `.forEach`. This function is intentionally near-identical to the legacy
+ * one otherwise - see plan 4.2's compat rule for why both are kept side by side during the
+ * migration window instead of collapsing into one. */
+export const generateDrawioMultiAzDeploymentTrafficPathsAndProtectionAsync = async (
+  params: GenerateDiagramParams,
+): Promise<string> => {
+  const files = parseDiagramFiles({ ...params, options: { ...params.options, includeOutputs: true, includeParameters: true } });
+  const structure = new CfnDeploymentTopologyStructure(files);
+  const trafficPathsAndProtection = buildMultiAzDeploymentTrafficPathsAndProtection(files, structure);
+  const cells: string[] = [];
+  const nodeIds = new Map<string, string>();
+  const nodePositions = new Map<string, NodePosition>();
+  const subnetPositions = new Map<string, NodePosition>();
+  const templatePageByLogicalId = new Map<string, string>();
+  const containedMemberIds = new Set<string>();
+  files.forEach((file) => file.resouces.forEach((logicalId) => {
+    const identity = `${file.fileIndex}:${logicalId}`;
+    if (!templatePageByLogicalId.has(identity) && file.templateSource) {
+      templatePageByLogicalId.set(identity, pageLink(`template_${file.fileIndex}`));
+    }
+  }));
+  const registerNode = (
+    endpointId: string,
+    cellId: string,
+    position: NodePosition,
+  ): void => {
+    nodeIds.set(endpointId, cellId);
+    nodePositions.set(endpointId, position);
+  };
+  const vpcTop = 100;
+  const defaultVpcHeight = 1420;
+  const azTop = 720;
+  const azWidth = 340;
+  const azGap = 20;
+  const vpcWidths = structure.vpcs.map((vpc) =>
+    Math.max(900, 50 + Math.max(1, vpc.availabilityZones.length) * (azWidth + azGap)));
+  const totalVpcWidth = vpcWidths.reduce((sum, width) => sum + width, 0) +
+    Math.max(0, structure.vpcs.length - 1) * 40;
+  const regionalWidth = trafficPathsAndProtection.regionalNodes.length > 0 ? 360 : 0;
+  const canvasWidth = 80 + totalVpcWidth + regionalWidth;
+  let maxHeight = vpcTop + defaultVpcHeight;
+  let vpcX = 40;
+
+  if (trafficPathsAndProtection.paths.some((path) =>
+    path.from.id === 'internet' || path.to.id === 'internet')) {
+    const internetPosition = {
+      x: 40 + totalVpcWidth / 2 - 75,
+      y: 20,
+      width: 150,
+      height: 55,
+    };
+    cells.push(nodeCell(
+      'internet',
+      'Internet',
+      internetPosition.x,
+      internetPosition.y,
+      internetPosition.width,
+      internetPosition.height,
+      '1',
+      '#ecfeff',
+    ));
+    registerNode('internet', 'internet', internetPosition);
+  }
+
+  for (const [vpcIndex, vpc] of structure.vpcs.entries()) {
+    const vpcId = `vpc_${vpc.fileIndex}_${vpc.logicalId}`;
+    const vpcWidth = vpcWidths[vpcIndex];
+
+    const vpcResourceEndpointIds = new Set(vpc.resources.map((resource) =>
+      `f${resource.fileIndex}_${resource.logicalId}`));
+    const memberParentId = new Map<string, string>();
+    trafficPathsAndProtection.paths
+      .filter((path) => path.kind === 'resource-membership')
+      .forEach((path) => {
+        if (vpcResourceEndpointIds.has(path.from.id) && vpcResourceEndpointIds.has(path.to.id)) {
+          memberParentId.set(path.from.id, path.to.id);
+        }
+      });
+    const parentMembers = new Map<string, typeof vpc.resources>();
+    vpc.resources.forEach((resource) => {
+      const parentId = memberParentId.get(`f${resource.fileIndex}_${resource.logicalId}`);
+      if (!parentId) return;
+      parentMembers.set(parentId, [...parentMembers.get(parentId) ?? [], resource]);
+      containedMemberIds.add(`f${resource.fileIndex}_${resource.logicalId}`);
+    });
+    const topLevelResources = vpc.resources.filter((resource) =>
+      !memberParentId.has(`f${resource.fileIndex}_${resource.logicalId}`));
+
+    const resourceLayoutGroups = new Map<string, typeof vpc.resources>();
+    topLevelResources.forEach((resource) => {
+      const candidateKey = resource.candidateSubnets
+        .map((subnet) => `${subnet.fileIndex}:${subnet.logicalId}`)
+        .sort()
+        .join('|');
+      const key = candidateKey || `connectivity:${resource.candidateSubnets[0]?.connectivity ?? 'private'}`;
+      resourceLayoutGroups.set(key, [...resourceLayoutGroups.get(key) ?? [], resource]);
+    });
+    const resourceHeight = 65;
+    const horizontalInset = 15;
+    const verticalTopInset = 50;
+    const verticalBottomInset = 15;
+    const rowGap = 15;
+    const individualHeight = (resource: typeof vpc.resources[number]): number => {
+      const members = parentMembers.get(`f${resource.fileIndex}_${resource.logicalId}`);
+      if (!members || members.length === 0) return resourceHeight;
+      return resourceHeight + rowGap +
+        members.length * resourceHeight + Math.max(0, members.length - 1) * rowGap +
+        verticalBottomInset;
+    };
+    const stackedGroupHeight = (group: typeof vpc.resources): number =>
+      verticalTopInset +
+      group.reduce((sum, resource) => sum + individualHeight(resource), 0) +
+      Math.max(0, group.length - 1) * rowGap +
+      verticalBottomInset;
+    const maxGroupHeightByConnectivity: Record<'public' | 'private' | 'isolated', number> = {
+      public: 0,
+      private: 0,
+      isolated: 0,
+    };
+    resourceLayoutGroups.forEach((group) => {
+      const connectivity = group[0]?.candidateSubnets[0]?.connectivity;
+      if (!connectivity) return;
+      maxGroupHeightByConnectivity[connectivity] =
+        Math.max(maxGroupHeightByConnectivity[connectivity], stackedGroupHeight(group));
+    });
+    const tierHeight = {
+      public: 140,
+      private: Math.max(195, maxGroupHeightByConnectivity.private),
+      isolated: Math.max(195, maxGroupHeightByConnectivity.isolated),
+    };
+    const baseRowY = {
+      public: 45,
+      private: 245,
+      isolated: 245 + tierHeight.private + 5,
+    };
+    const azHeight = baseRowY.isolated + tierHeight.isolated + 10;
+    const vpcHeight = Math.max(defaultVpcHeight, azTop + azHeight + 50);
+
+    cells.push(groupCell(vpcId, `VPC ${displayCidr(vpc.cidrBlock)}`, vpcX, vpcTop, vpcWidth, vpcHeight, '1', '#dbeafe', 'left'));
+    if (vpc.igw) {
+      const endpointId = `f${vpc.igw.fileIndex}_${vpc.igw.logicalId}`;
+      const igwId = `node_${endpointId}`;
+      const localPosition = { x: vpcWidth / 2 - 85, y: 20, width: 170, height: 55 };
+      cells.push(nodeCell(igwId, `${vpc.igw.logicalId}<br/><font color="#64748b">Internet Gateway</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, vpcId, '#ecfeff', templatePageByLogicalId.get(`${vpc.igw.fileIndex}:${vpc.igw.logicalId}`) ?? ''));
+      registerNode(endpointId, igwId, { ...localPosition, x: vpcX + localPosition.x, y: vpcTop + localPosition.y });
+    }
+
+    for (const [azIndex, az] of vpc.availabilityZones.entries()) {
+      const azId = `${vpcId}_az_${azIndex}`;
+      const azGridWidth = Math.max(1, vpc.availabilityZones.length) * azWidth +
+        Math.max(0, vpc.availabilityZones.length - 1) * azGap;
+      const azStartX = (vpcWidth - azGridWidth) / 2;
+      const azX = azStartX + azIndex * (azWidth + azGap);
+      cells.push(groupCell(azId, `Availability Zone ${az.name}`, azX, azTop, azWidth, azHeight, vpcId, '#eff6ff'));
+      const rowCounts: Record<string, number> = { public: 0, private: 0, isolated: 0 };
+      for (const subnet of az.subnets) {
+        const subnetId = `${azId}_f${subnet.fileIndex}_${subnet.logicalId}`;
+        const subnetIndex = rowCounts[subnet.connectivity]++;
+        const subnetY = baseRowY[subnet.connectivity] + subnetIndex * 18;
+        const subnetHeight = tierHeight[subnet.connectivity];
+        const subnetTitle = `${subnet.connectivity[0].toUpperCase()}${subnet.connectivity.slice(1)} Subnet ${displayCidr(subnet.cidrBlock)}`;
+        const fill = subnet.connectivity === 'public'
+          ? '#f0fdf4'
+          : subnet.connectivity === 'private'
+            ? '#eff6ff'
+            : '#fffbeb';
+        cells.push(groupCell(subnetId, subnetTitle, 10, subnetY, 320, subnetHeight, azId, fill));
+        subnetPositions.set(`${subnet.fileIndex}:${subnet.logicalId}`, {
+          x: azX + 10,
+          y: azTop + subnetY,
+          width: 320,
+          height: subnetHeight,
+        });
+        // Content area below the subnet's own title bar (matches the legacy renderer's
+        // nodeY starting at 50) with a small bottom margin.
+        const resourcePositions = await placeSubnetResources(
+          subnet.resources,
+          320 - horizontalInset * 2,
+          subnetHeight - 60,
+        );
+        subnet.resources.forEach((resource) => {
+          const endpointId = `f${resource.fileIndex}_${resource.logicalId}`;
+          const resourceId = `node_${endpointId}`;
+          const local = resourcePositions.get(endpointId);
+          const nodeX = (local?.x ?? 0) + horizontalInset;
+          const nodeY = (local?.y ?? 0) + 50;
+          cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, nodeX, nodeY, subnetResourceCardWidth, subnetResourceCardHeight, subnetId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? ''));
+          registerNode(endpointId, resourceId, {
+            x: vpcX + azX + 10 + nodeX,
+            y: vpcTop + azTop + subnetY + nodeY,
+            width: subnetResourceCardWidth,
+            height: subnetResourceCardHeight,
+          });
+        });
+      }
+    }
+
+    topLevelResources.forEach((resource) => {
+      const endpointId = `f${resource.fileIndex}_${resource.logicalId}`;
+      const resourceId = `node_${endpointId}`;
+      const connectivity = resource.candidateSubnets[0]?.connectivity ?? 'private';
+      const localY = connectivity === 'isolated' ? 1250 : connectivity === 'public' ? 810 : 1050;
+      const candidateKey = resource.candidateSubnets
+        .map((subnet) => `${subnet.fileIndex}:${subnet.logicalId}`)
+        .sort()
+        .join('|');
+      const layoutGroupKey = candidateKey || `connectivity:${connectivity}`;
+      const layoutGroup = resourceLayoutGroups.get(layoutGroupKey) ?? [resource];
+      const resourceIndex = layoutGroup.indexOf(resource);
+      const ownHeight = individualHeight(resource);
+      const cumulativeOffset = layoutGroup
+        .slice(0, resourceIndex)
+        .reduce((offset, prior) => offset + individualHeight(prior) + rowGap, 0);
+      const candidatePositions = resource.candidateSubnets
+        .map((subnet) => subnetPositions.get(`${subnet.fileIndex}:${subnet.logicalId}`))
+        .filter((position): position is NodePosition => Boolean(position));
+      const candidateLeft = candidatePositions.length > 0
+        ? Math.min(...candidatePositions.map((position) => position.x))
+        : undefined;
+      const candidateRight = candidatePositions.length > 0
+        ? Math.max(...candidatePositions.map((position) => position.x + position.width))
+        : undefined;
+      const candidateTop = candidatePositions.length > 0
+        ? Math.max(...candidatePositions.map((position) => position.y))
+        : undefined;
+      const candidateBottom = candidatePositions.length > 0
+        ? Math.min(...candidatePositions.map((position) => position.y + position.height))
+        : undefined;
+      const stackedHeight = stackedGroupHeight(layoutGroup);
+      const fitsCandidateRow = candidateTop !== undefined && candidateBottom !== undefined &&
+        candidateBottom - candidateTop >= stackedHeight;
+      const localPosition = candidateLeft !== undefined && candidateRight !== undefined &&
+          fitsCandidateRow
+        ? {
+            x: candidateLeft + horizontalInset,
+            y: candidateTop + verticalTopInset + cumulativeOffset,
+            width: candidateRight - candidateLeft - horizontalInset * 2,
+            height: ownHeight,
+          }
+        : {
+            x: vpcWidth / 2 - 145,
+            y: localY,
+            width: 290,
+            height: ownHeight,
+          };
+      const details = [
+        ...(resource.multiAz ? ['Multi-AZ'] : []),
+        ...(resource.traits ?? []),
+      ].map((entry) => `; ${entry}`).join('');
+      const members = parentMembers.get(endpointId) ?? [];
+      cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.placement}${details}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, vpcId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? '', members.length > 0));
+      registerNode(endpointId, resourceId, { ...localPosition, x: vpcX + localPosition.x, y: vpcTop + localPosition.y });
+
+      members.forEach((member, memberIndex) => {
+        const memberEndpointId = `f${member.fileIndex}_${member.logicalId}`;
+        const memberCellId = `node_${memberEndpointId}`;
+        const memberLocalPosition = {
+          x: horizontalInset,
+          y: resourceHeight + rowGap + memberIndex * (resourceHeight + rowGap),
+          width: localPosition.width - horizontalInset * 2,
+          height: resourceHeight,
+        };
+        cells.push(nodeCell(memberCellId, `${member.logicalId}<br/><font color="#64748b">${member.detail.Type}</font>`, memberLocalPosition.x, memberLocalPosition.y, memberLocalPosition.width, memberLocalPosition.height, resourceId, '#f8fafc', templatePageByLogicalId.get(`${member.fileIndex}:${member.logicalId}`) ?? ''));
+        registerNode(memberEndpointId, memberCellId, {
+          x: vpcX + localPosition.x + memberLocalPosition.x,
+          y: vpcTop + localPosition.y + memberLocalPosition.y,
+          width: memberLocalPosition.width,
+          height: memberLocalPosition.height,
+        });
+      });
+    });
+
+    const renderedIngressNodes = new Set<string>();
+    const addIngressNode = (
+      fileIndex: number,
+      logicalId: string,
+      typeLabel: string,
+      row: number,
+      column: number,
+    ): void => {
+      const endpointId = `f${fileIndex}_${logicalId}`;
+      if (renderedIngressNodes.has(endpointId)) return;
+      renderedIngressNodes.add(endpointId);
+      const cellId = `node_${endpointId}`;
+      const localPosition = {
+        x: vpcWidth / 2 - 150 + column * 320,
+        y: 120 + row * 150,
+        width: 300,
+        height: 78,
+      };
+      cells.push(nodeCell(cellId, `${logicalId}<br/><font color="#64748b">${typeLabel}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, vpcId, '#f5f3ff', templatePageByLogicalId.get(`${fileIndex}:${logicalId}`) ?? ''));
+      registerNode(endpointId, cellId, { ...localPosition, x: vpcX + localPosition.x, y: vpcTop + localPosition.y });
+    };
+
+    vpc.loadBalancers.forEach((loadBalancer, loadBalancerIndex) => {
+      addIngressNode(
+        loadBalancer.fileIndex,
+        loadBalancer.logicalId,
+        `Application Load Balancer<br/>${loadBalancer.internetFacing ? 'internet-facing' : 'internal'}`,
+        0,
+        loadBalancerIndex,
+      );
+      loadBalancer.listeners.forEach((listener, listenerIndex) => {
+        const listenerDetails = [listener.protocol, listener.port ? `:${listener.port}` : undefined]
+          .filter(Boolean).join(' ');
+        addIngressNode(
+          listener.fileIndex,
+          listener.logicalId,
+          `Listener${listenerDetails ? `<br/>${listenerDetails}` : ''}`,
+          1,
+          listenerIndex,
+        );
+        listener.rules.forEach((rule, ruleIndex) => {
+          const ruleDetails = [
+            ...rule.conditions,
+            rule.priority ? `priority: ${rule.priority}` : undefined,
+          ].filter((value): value is string => Boolean(value));
+          addIngressNode(
+            rule.fileIndex,
+            rule.logicalId,
+            `Listener Rule${ruleDetails.length > 0 ? `<br/>${ruleDetails.join('<br/>')}` : ''}`,
+            2,
+            ruleIndex,
+          );
+        });
+      });
+      loadBalancer.targetGroups.forEach((targetGroup, targetGroupIndex) => {
+        const targetGroupDetails = [
+          targetGroup.protocol,
+          targetGroup.port ? `:${targetGroup.port}` : undefined,
+          targetGroup.targetType ? `target type: ${targetGroup.targetType}` : undefined,
+        ].filter(Boolean).join(' ');
+        addIngressNode(
+          targetGroup.fileIndex,
+          targetGroup.logicalId,
+          `Target Group${targetGroupDetails ? `<br/>${targetGroupDetails}` : ''}`,
+          3,
+          targetGroupIndex,
+        );
+      });
+    });
+    maxHeight = Math.max(maxHeight, vpcTop + vpcHeight);
+    vpcX += vpcWidth + 40;
+  }
+
+  const regionalX = 60 + totalVpcWidth;
+  if (trafficPathsAndProtection.regionalNodes.length > 0) {
+    const regionalHeight = 65 + trafficPathsAndProtection.regionalNodes.length * 150;
+    cells.push(groupCell('regional', 'Regional managed services (outside VPC)', regionalX, 140, 320, regionalHeight, '1', '#fff7ed'));
+    trafficPathsAndProtection.regionalNodes.forEach((node, index) => {
+      const cellId = `node_${node.endpoint.id}`;
+      const localPosition = { x: 20, y: 45 + index * 150, width: 280, height: 65 };
+      cells.push(nodeCell(cellId, `${node.label}<br/><font color="#64748b">${node.type}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, 'regional', '#fff7ed', templatePageByLogicalId.get(`${node.endpoint.fileIndex}:${node.endpoint.logicalId}`) ?? ''));
+      registerNode(node.endpoint.id, cellId, { ...localPosition, x: regionalX + localPosition.x, y: 140 + localPosition.y });
+    });
+    maxHeight = Math.max(maxHeight, 140 + regionalHeight);
+  }
+
+  if (structure.standaloneResources.length > 0) {
+    const groupId = 'standalone';
+    cells.push(groupCell(groupId, 'Standalone resources', 40, maxHeight + 30, Math.max(1100, canvasWidth - 80), 120, '1', '#f8fafc'));
+    structure.standaloneResources.forEach((resource, index) => {
+      const endpointId = `f${resource.fileIndex}_${resource.logicalId}`;
+      const cellId = `node_${endpointId}`;
+      const localPosition = { x: 15 + index * 220, y: 45, width: 200, height: 50 };
+      cells.push(nodeCell(cellId, `${resource.logicalId}<br/><font color="#64748b">${resource.detail.Type}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, groupId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? ''));
+      registerNode(endpointId, cellId, { ...localPosition, x: 40 + localPosition.x, y: maxHeight + 30 + localPosition.y });
+    });
+    maxHeight += 180;
+  }
+
+  const drawablePaths = trafficPathsAndProtection.paths.flatMap((path) => {
+    if (path.kind === 'resource-membership' && containedMemberIds.has(path.from.id)) return [];
+    const source = nodeIds.get(path.from.id);
+    const target = nodeIds.get(path.to.id);
+    const sourcePosition = nodePositions.get(path.from.id);
+    const targetPosition = nodePositions.get(path.to.id);
+    if (!source || !target || !sourcePosition || !targetPosition) return [];
+    return [{ path, source, target, sourcePosition, targetPosition }];
+  });
+  const sideCounts = new Map<string, number>();
+  drawablePaths.forEach(({ path, sourcePosition, targetPosition }) => {
+    const layout = connectionLayout(sourcePosition, targetPosition, path.kind, path.label);
+    const sourceKey = `${path.from.id}:${layout.sourceSide}`;
+    const targetKey = `${path.to.id}:${layout.targetSide}`;
+    sideCounts.set(sourceKey, (sideCounts.get(sourceKey) ?? 0) + 1);
+    sideCounts.set(targetKey, (sideCounts.get(targetKey) ?? 0) + 1);
+  });
+  const sideUsage = new Map<string, number>();
+  const nextFraction = (endpointId: string, side: ConnectionSide): number => {
+    const key = `${endpointId}:${side}`;
+    const used = sideUsage.get(key) ?? 0;
+    sideUsage.set(key, used + 1);
+    return (used + 1) / ((sideCounts.get(key) ?? 1) + 1);
+  };
+
+  drawablePaths.forEach(({
+    path,
+    source,
+    target,
+    sourcePosition,
+    targetPosition,
+  }, index) => {
+    const layout = connectionLayout(sourcePosition, targetPosition, path.kind, path.label);
+    const sourceFraction = nextFraction(path.from.id, layout.sourceSide);
+    const targetFraction = nextFraction(path.to.id, layout.targetSide);
+    const sourceAnchor = anchorCoordinates(layout.sourceSide, sourceFraction);
+    const targetAnchor = anchorCoordinates(layout.targetSide, targetFraction);
+    const sourcePoint = absoluteAnchorPoint(sourcePosition, layout.sourceSide, sourceFraction);
+    const targetPoint = absoluteAnchorPoint(targetPosition, layout.targetSide, targetFraction);
+    cells.push(edgeCell(
+      `path_${index}_${path.kind}`,
+      source,
+      target,
+      path.label,
+      edgeKindForPath(path.kind),
+      path.bidirectional,
+      routePoints(
+        sourcePosition,
+        targetPosition,
+        sourcePoint,
+        targetPoint,
+        path.kind,
+        path.label,
+      ),
+      {
+        exitX: sourceAnchor.x,
+        exitY: sourceAnchor.y,
+        entryX: targetAnchor.x,
+        entryY: targetAnchor.y,
+      },
+    ));
+  });
+
+  if (params.options?.includeLegend !== false) {
+    const usedKinds = new Set(drawablePaths.map(({ path }) => path.kind));
+    addTrafficProtectionLegend(cells, maxHeight + 30, usedKinds);
+  }
+  const pages = [drawioPage('multi-az-traffic-paths-protection', 'Multi-AZ Deployment, Traffic Paths & Protection', cells)];
+  files.forEach((file) => {
+    if (file.templateSource) pages.push(drawioTemplatePage(`template_${file.fileIndex}`, file.fileName, file.templateSource));
+  });
+  return wrapDrawioPages(pages);
+};
+
 /** Generates an editable draw.io dependency graph. Unlike MultiAzDeploymentTrafficPathsAndProtection, this keeps all
  * resources and preserves the dependency kind used to color each connector. Resources are laid
  * out mechanically in template declaration order, one flat 3-column grid per template file - a
@@ -800,6 +1341,143 @@ export const generateDrawioCfnDependencyGraph = (params: GenerateDiagramParams):
       }
     });
   });
+  if (params.options?.includeLegend !== false) {
+    addDependencyLegend(cells, maxHeight + 30);
+  }
+  const pages = [drawioPage('cfn-dependency-graph', 'CfnDependencyGraph', cells)];
+  files.forEach((file) => {
+    if (file.templateSource) pages.push(drawioTemplatePage(`template_${file.fileIndex}`, file.fileName, file.templateSource));
+  });
+  return wrapDrawioPages(pages);
+};
+
+/** Automatic-layout counterpart of {@link generateDrawioCfnDependencyGraph} (plan Phase 3,
+ * section 5.1). Keeps the exact same dependency extraction, node/edge identity, and per-file
+ * grouping as the legacy renderer - only the placement (previously a fixed 3-column grid, one
+ * declaration-order row per file) is replaced, by feeding a compound graph (one group per
+ * template file, one node per resource) through the common ELK-backed layout layer. Declared
+ * `async` because {@link computeAutoLayout} is - see plan 4.2 "APIの非同期化". */
+export const generateDrawioCfnDependencyGraphAsync = async (
+  params: GenerateDiagramParams,
+): Promise<string> => {
+  const files = parseDiagramFiles({ ...params, mode: 'CfnDependencyGraph', viewpoint: 'CloudFormationView', options: { ...params.options, includeOutputs: true, includeParameters: true } });
+  const nodeWidth = 160;
+  const nodeHeight = 80;
+
+  const layoutNodes: LayoutNode[] = [];
+  const layoutEdges: LayoutEdge[] = [];
+  const nodeIds = new Map<string, string>();
+
+  files.forEach((file, fileIndex) => {
+    const groupId = `stack_${fileIndex}`;
+    // Width/height are placeholders: any LayoutNode with at least one child is sized by ELK from
+    // its children, not from these values (see diagramLayout/types.ts).
+    layoutNodes.push({
+      id: groupId,
+      width: 0,
+      height: 0,
+      // Padding leaves room for the swimlane title bar (groupTopInset=45 in the legacy layout)
+      // plus a routing margin that matches the legacy grid's columnGap/rowGap=40.
+      layoutOptions: { 'elk.padding': '[top=45,left=20,bottom=20,right=20]' },
+    });
+    file.resouces.forEach((logicalId) => {
+      const id = `${groupId}_${logicalId}`;
+      nodeIds.set(`${fileIndex}:${logicalId}`, id);
+      layoutNodes.push({ id, width: nodeWidth, height: nodeHeight, parentId: groupId });
+    });
+  });
+
+  files.forEach((file, fileIndex) => {
+    file.dependencies.forEach((dependency, dependencyIndex) => {
+      const source = nodeIds.get(`${fileIndex}:${dependency.from}`);
+      const target = nodeIds.get(`${dependency.to.fileIndex ?? fileIndex}:${dependency.to.logicalId}`);
+      if (source && target) {
+        const label = dependency.to.via ?? 'Ref';
+        layoutEdges.push({
+          id: `dependency_${fileIndex}_${dependencyIndex}`,
+          source: { nodeId: source },
+          target: { nodeId: target },
+          label,
+          // See estimateLabelSize's doc comment (drawioApplicationDiagram.ts / erDiagramDrawioGeneratorAuto.ts
+          // apply the same fix) - without this ELK reserves zero room for the label.
+          labelSize: estimateLabelSize(label),
+        });
+      }
+    });
+  });
+
+  const layout = await computeAutoLayout({
+    id: 'cfn-dependency-graph',
+    direction: 'DOWN',
+    nodes: layoutNodes,
+    edges: layoutEdges,
+  });
+
+  const cells: string[] = [];
+  let maxHeight = 200;
+  files.forEach((file, fileIndex) => {
+    const groupId = `stack_${fileIndex}`;
+    const groupBox = layout.nodes.get(groupId);
+    if (!groupBox) return;
+    const link = file.templateSource ? pageLink(`template_${fileIndex}`) : '';
+    cells.push(groupCell(groupId, file.fileName, groupBox.x, groupBox.y, groupBox.width, groupBox.height, '1', '#f8fafc'));
+    file.resouces.forEach((logicalId) => {
+      const id = `${groupId}_${logicalId}`;
+      const box = layout.nodes.get(id);
+      if (!box) return;
+      const resource = file.cfnTemplate.Resources[logicalId];
+      // draw.io node geometry is parent-relative once the cell's `parent` is the group, unlike
+      // the edges below (whose `parent` stays "1", the root layer, so their points are absolute).
+      cells.push(nodeCell(
+        id,
+        `${logicalId}<br/><font color="#64748b">${resource.Type}</font>`,
+        box.x - groupBox.x,
+        box.y - groupBox.y,
+        box.width,
+        box.height,
+        groupId,
+        '#ffffff',
+        link,
+      ));
+    });
+    maxHeight = Math.max(maxHeight, groupBox.y + groupBox.height);
+  });
+
+  files.forEach((file, fileIndex) => {
+    file.dependencies.forEach((dependency, dependencyIndex) => {
+      const edgeId = `dependency_${fileIndex}_${dependencyIndex}`;
+      const source = nodeIds.get(`${fileIndex}:${dependency.from}`);
+      const target = nodeIds.get(`${dependency.to.fileIndex ?? fileIndex}:${dependency.to.logicalId}`);
+      const edge = layout.edges.get(edgeId);
+      if (!source || !target || !edge) return;
+      const sourceBox = layout.nodes.get(source);
+      const targetBox = layout.nodes.get(target);
+      const kind = dependency.to.via ?? 'Ref';
+      // A fallback (`layout.usedAutoLayout === false`) only has node centers to offer, not real
+      // routing (see gridFallbackLayout's doc comment) - anchoring at a fraction derived from a
+      // center point would force the connector into the middle of the shape instead of its
+      // perimeter, so this leaves anchors/bend points unset and lets draw.io's own connector
+      // routing pick the perimeter point instead.
+      cells.push(edgeCell(
+        edgeId,
+        source,
+        target,
+        kind,
+        kind,
+        false,
+        layout.usedAutoLayout ? edge.bendPoints : [],
+        layout.usedAutoLayout && sourceBox && targetBox
+          ? {
+              exitX: anchorFraction(edge.sourcePoint, sourceBox).x,
+              exitY: anchorFraction(edge.sourcePoint, sourceBox).y,
+              entryX: anchorFraction(edge.targetPoint, targetBox).x,
+              entryY: anchorFraction(edge.targetPoint, targetBox).y,
+            }
+          : undefined,
+      ));
+    });
+  });
+
   if (params.options?.includeLegend !== false) {
     addDependencyLegend(cells, maxHeight + 30);
   }

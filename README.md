@@ -153,6 +153,11 @@ src/
 │   └── prompts/    # per-dbType "schema definitions for LLM prompt" builders
 ├── types/        # types/interfaces/enums only, mirrors drivers/resource/helpers/utils
 ├── utils/        # standalone utilities + the SQL/application log-parsing pipeline (utils/log/)
+│   ├── cfn/        # CloudFormation diagram generation (Mermaid + draw.io)
+│   ├── er/         # ER diagram generation (Mermaid + draw.io)
+│   ├── diagramLayout/ # shared ELK-backed automatic-layout engine used by cfn/ and er/'s
+│   │               #   `...Async` draw.io generators
+│   └── drawio/     # shared generic draw.io XML building blocks used by cfn/ and er/
 └── examples/     # per-driver usage scripts (gitignored, not published to npm)
 ```
 
@@ -164,6 +169,41 @@ Other top-level folders:
 
 - `docker/` — Docker Compose config for the local test databases used by `__tests__/setup/*.ts` (see "Prepare" above)
 - `schema/` — JSON Schema generated from the `LogParseConfig` type (`npm run build:schema`, via `typescript-json-schema`); consumed by the db-notebook VS Code extension as the JSON Validator schema for `*.log-parser.config.json` files
+
+### Diagram generation
+
+Beyond the database drivers above, this package also generates two kinds of diagram (Mermaid and
+editable draw.io) from data it already models: CloudFormation architecture/dependency diagrams
+from a parsed template, and entity-relationship diagrams from `DbTable`/`DbColumn`/`DbSchema`
+metadata. Both draw.io generator families come in a synchronous (fixed-layout) function and an
+`Async` (ELK automatic-layout) counterpart with the identical parameter shape - the sync functions
+are unaffected and remain the default for any existing caller.
+
+```ts
+import {
+  generateDiagram,                                // Mermaid, any of the three CFN modes
+  generateDrawioApplicationDiagramAsync,           // CFN, ELK automatic layout
+  createERDiagramParams, createErDiagram,          // ER, Mermaid
+  createDrawioErDiagramAsync,                      // ER, ELK automatic layout
+} from '@l-v-yonsama/multi-platform-database-drivers';
+```
+
+When ELK layout does not finish within its internal timeout, the `Async` functions fall back to a
+simpler grid placement automatically; every node/edge is still included either way.
+
+### Third-party dependencies and licenses
+
+This package itself is MIT-licensed. The automatic-layout diagram generation (`...Async` draw.io
+functions, see "Diagram generation" above) additionally depends on:
+
+- [`elkjs`](https://www.npmjs.com/package/elkjs) — `EPL-2.0 OR GPL-3.0-or-later`
+- [`web-worker`](https://www.npmjs.com/package/web-worker) — optional; used so ELK layout runs on
+  a real `worker_threads` Worker in Node instead of blocking the caller's event loop
+
+Neither is bundled into this package's own published npm tarball (`package.json`'s `files` field
+lists only `built/src`/`built/schema`); a consumer installing
+`@l-v-yonsama/multi-platform-database-drivers` receives both as ordinary transitive
+`dependencies`, each carrying its own license file. This is not legal advice.
 
 ### Release
 

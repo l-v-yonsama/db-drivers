@@ -6,10 +6,15 @@
 export { CfnDeploymentTopologyStructure } from './deploymentTopology';
 export { extractResourceDependencies } from './resourceDependencies';
 export { generateDiagram } from './generateDiagram';
-export { generateDrawioApplicationDiagram } from './drawioApplicationDiagram';
+export {
+  generateDrawioApplicationDiagram,
+  generateDrawioApplicationDiagramAsync,
+} from './drawioApplicationDiagram';
 export {
   generateDrawioMultiAzDeploymentTrafficPathsAndProtection,
+  generateDrawioMultiAzDeploymentTrafficPathsAndProtectionAsync,
   generateDrawioCfnDependencyGraph,
+  generateDrawioCfnDependencyGraphAsync,
 } from './drawioInfrastructureDiagrams';
 export {
   generateDiagramMultiAzDeploymentTrafficPathsAndProtection,

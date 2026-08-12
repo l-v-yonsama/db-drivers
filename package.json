@@ -1,6 +1,6 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
     "node": ">= 18"
@@ -54,6 +54,7 @@
     "examples:cw": "npm run build && node built/src/examples/cw.js",
     "examples:cfn": "npm run build && node built/src/examples/cfn.js",
     "examples:cfn-diagrams": "npm run build && node built/src/examples/cfn/generateDiagrams.js",
+    "examples:cfn-diagrams-auto": "npm run build && node built/src/examples/cfn/generateDiagramsAuto.js",
     "examples:dynamo": "npm run build && node built/src/examples/dynamo.js",
     "examples:memcached": "npm run build && node built/src/examples/memcached.js --detectOpenHandles",
     "examples:mysql": "npm run build && node built/src/examples/mysql.js",
@@ -111,6 +112,7 @@
     "csv-parse": "^5.5.3",
     "dayjs": "^1.11.7",
     "dotenv": "^16.3.1",
+    "elkjs": "^0.12.0",
     "enum-values": "^1.2.1",
     "humanize-duration": "^3.30.0",
     "ioredis": "^5.3.1",
@@ -131,6 +133,7 @@
     "short-unique-id": "^4.4.4",
     "sql-formatter": "^15.7.2",
     "sql.js": "^1.10.3",
+    "web-worker": "^1.5.0",
     "xregexp": "^5.1.2"
   },
   "volta": {

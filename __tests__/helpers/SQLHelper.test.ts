@@ -1180,7 +1180,6 @@ WHERE OrderID IN [1, 2, 3] ORDER BY OrderID DESC`;
     // 114/3802), so those need JSON.stringify(value). Drivers/paths that
     // instead hand back already-serialized JSON text (e.g. legacy pre-21c
     // Oracle VARCHAR2/CLOB+"IS JSON" storage) must NOT be stringified again.
-    // See misc/sqlhelper-json-double-encoding-todo-2026-07-26.md.
     it('JSON column: object value is encoded correctly', () => {
       const { schemaName, tableName, columns } =
         createToInsertStatementParams(db);
