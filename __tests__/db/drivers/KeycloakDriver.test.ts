@@ -190,6 +190,48 @@ describe('KeycloakDriver', () => {
     });
   });
 
+  describe('getAxiosClient', () => {
+    // Characterization tests for the client returned by getAxiosClient(),
+    // pinned down before switching its construction from `new Axios(...)`
+    // (with defaults.transformRequest/transformResponse patched on by hand)
+    // to `axios.create(...)` for NodeNext/Axios-type compatibility. Every
+    // behavior asserted here must be unaffected by that change.
+    it('authenticates requests and (de)serializes JSON like axios defaults', async () => {
+      const client = await driver.getAxiosClient();
+
+      // Auth header: an unauthenticated request would 401, so a successful
+      // read proves the Bearer token was attached.
+      const getRes = await client.get('/admin/realms', {
+        params: { briefRepresentation: true },
+      });
+      expect(getRes.status).toBe(200);
+      // transformResponse: the JSON response body must be parsed into a JS
+      // value, not returned as a raw string.
+      expect(Array.isArray(getRes.data)).toBe(true);
+      expect(getRes.data.some((r: { realm?: string }) => r.realm === 'master')).toBe(
+        true,
+      );
+
+      // transformRequest: a plain JS object body must be JSON-serialized
+      // (with a matching Content-Type) for the server to accept it. Use a
+      // unique realm name so reruns don't 409 against a leftover realm.
+      const realmName = `axios-client-characterization-realm-${Date.now()}`;
+      try {
+        const postRes = await client.post('/admin/realms', {
+          realm: realmName,
+          enabled: true,
+        });
+        expect(postRes.status).toBe(201);
+
+        const confirmRes = await client.get(`/admin/realms/${realmName}`);
+        expect(confirmRes.status).toBe(200);
+        expect(confirmRes.data.realm).toBe(realmName);
+      } finally {
+        await client.delete(`/admin/realms/${realmName}`).catch(() => undefined);
+      }
+    });
+  });
+
   describe('asyncGetResouces', () => {
     let testDbRes: KeycloakDatabase;
 
