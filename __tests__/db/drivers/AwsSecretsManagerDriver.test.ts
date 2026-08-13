@@ -34,6 +34,15 @@ const connectOption = {
 // avoids depending on a system `zip` binary being present just to satisfy
 // CreateFunctionCommand's Code.ZipFile, since this fixture Lambda is never
 // actually invoked (RotateSecretCommand only needs the function to exist).
+// TypeScript 5.7+ made the built-in Uint8Array generic over its backing
+// ArrayBuffer type, but the pinned @types/node@18 line predates the
+// corresponding Buffer typings update, so `Buffer.concat(Buffer[])` no
+// longer type-checks even though it's fine at runtime. Route through this
+// helper instead of casting at every call site.
+function concatBuffers(list: readonly Buffer[]): Buffer {
+  return Buffer.concat(list as unknown as Uint8Array[]);
+}
+
 function crc32(buf: Buffer): number {
   let crc = ~0;
   for (const byte of buf) {
@@ -62,7 +71,7 @@ function buildMinimalZip(fileName: string, content: string): Buffer {
   localHeader.writeUInt32LE(contentBuf.length, 22);
   localHeader.writeUInt16LE(nameBuf.length, 26);
   localHeader.writeUInt16LE(0, 28);
-  const localSection = Buffer.concat([localHeader, nameBuf, contentBuf]);
+  const localSection = concatBuffers([localHeader, nameBuf, contentBuf]);
 
   const centralHeader = Buffer.alloc(46);
   centralHeader.writeUInt32LE(0x02014b50, 0);
@@ -82,7 +91,7 @@ function buildMinimalZip(fileName: string, content: string): Buffer {
   centralHeader.writeUInt16LE(0, 36);
   centralHeader.writeUInt32LE(0, 38);
   centralHeader.writeUInt32LE(0, 42);
-  const centralSection = Buffer.concat([centralHeader, nameBuf]);
+  const centralSection = concatBuffers([centralHeader, nameBuf]);
 
   const eocd = Buffer.alloc(22);
   eocd.writeUInt32LE(0x06054b50, 0);
@@ -94,7 +103,7 @@ function buildMinimalZip(fileName: string, content: string): Buffer {
   eocd.writeUInt32LE(localSection.length, 16);
   eocd.writeUInt16LE(0, 20);
 
-  return Buffer.concat([localSection, centralSection, eocd]);
+  return concatBuffers([localSection, centralSection, eocd]);
 }
 
 describe('AwsSecretsManagerDriver', () => {
@@ -174,10 +183,12 @@ describe('AwsSecretsManagerDriver', () => {
           Role: 'arn:aws:iam::000000000000:role/lambda-role',
           Handler: 'index.handler',
           Code: {
+            // Same Buffer/Uint8Array<ArrayBufferLike> typing gap as
+            // concatBuffers() above.
             ZipFile: buildMinimalZip(
               'index.js',
               'exports.handler = async () => ({ statusCode: 200 });',
-            ),
+            ) as unknown as Uint8Array,
           },
         }),
       );

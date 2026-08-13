@@ -1,5 +1,15 @@
 {
   "compilerOptions": {
+    // Explicit master switch, not a strengthening: the individual strict
+    // sub-flags below (noImplicitAny/noImplicitThis/strictNullChecks/
+    // useUnknownInCatchVariables) were always meant to keep this project
+    // loosely typed, but leaving "strict" unset let some sub-flags
+    // (e.g. strictFunctionTypes, used by test.each()'s callback typing)
+    // resolve to true depending on which tool/entrypoint parsed the
+    // config (tsc -p vs. ts-jest's per-file Program construction).
+    // Pinning it to false makes that pre-existing intent explicit and
+    // tool-independent.
+    "strict": false,
     "target": "es6",
     "module": "commonjs",
     "lib": ["es7"],
@@ -22,7 +32,9 @@
     "noImplicitAny": false,
     "noImplicitThis": false,
     "strictNullChecks": false,
+    "useUnknownInCatchVariables": false,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "types": ["node", "jest"]
   }
 }

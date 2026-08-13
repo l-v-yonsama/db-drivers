@@ -25,6 +25,14 @@
     "no-async-promise-executor": "warn",
     "@typescript-eslint/no-namespace": "off",
     "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/ban-types": "off"
+    "@typescript-eslint/ban-types": "off",
+    // @typescript-eslint/eslint-plugin v6+ raised no-unused-vars from warn to
+    // error in the recommended preset. Keep it at warn (matching this
+    // project's pre-v8 behavior) and honor the leading-underscore convention
+    // already used in a few places for intentionally-unused bindings.
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }
+    ]
   }
 }

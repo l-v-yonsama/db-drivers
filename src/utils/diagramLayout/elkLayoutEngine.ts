@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const ELKConstructor = require('elkjs/lib/elk.bundled.js');
 import type {
   ComputedEdgeLayout,
@@ -231,7 +231,7 @@ const getElkInstance = (useWorker: boolean): { layout: (g: unknown) => Promise<u
     return cachedPlainElk;
   }
   if (!cachedWorkerElk) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const ELK = require('elkjs');
     cachedWorkerElk = new ELK({ workerUrl });
   }

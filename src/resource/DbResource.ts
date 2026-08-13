@@ -1310,7 +1310,7 @@ export class DbLogStream extends AwsDbResource<{
   }
 }
 
-export class DbS3Owner extends AwsDbResource<{}> {
+export class DbS3Owner extends AwsDbResource<Record<string, never>> {
   constructor(public readonly ownerId: string, name: string) {
     super(ResourceType.Owner, name === undefined ? '' : name, {});
   }
