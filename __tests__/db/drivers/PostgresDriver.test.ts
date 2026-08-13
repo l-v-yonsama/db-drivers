@@ -1,4 +1,4 @@
-import { GeneralColumnType, sleep, toNum } from '@l-v-yonsama/rdh';
+import { diff, GeneralColumnType, sleep, toNum } from '@l-v-yonsama/rdh';
 import {
   ConnectionSetting,
   DbColumn,
@@ -524,6 +524,20 @@ describe('PostgresDriver', () => {
     it('should return number of rows', async () => {
       const count = await driver.count({ table: 'customer' });
       expect(count).toEqual(5);
+    });
+  });
+
+  describe('INTERVAL column', () => {
+    it('should return a plain string value, not a PostgresInterval instance', async () => {
+      const rdh = await driver.requestSql({
+        sql: 'SELECT d5 FROM testtable ORDER BY id LIMIT 1',
+      });
+      const value = rdh.rows[0].values.d5;
+      expect(value === null || typeof value === 'string').toBe(true);
+      // A plain string must survive rdh's cloneRdhValue()-based diff/clone
+      // path unmodified; a raw driver class instance (PostgresInterval)
+      // would throw there.
+      expect(() => diff(rdh, rdh)).not.toThrow();
     });
   });
 
