@@ -2,12 +2,13 @@ import {
   createRdhKey,
   GeneralColumnType,
   getUniqObjectKeys,
+  isRecord,
   ResultSetData,
   ResultSetDataBuilder,
   toDate,
   toNum,
 } from '@l-v-yonsama/rdh';
-import axios, { Axios, AxiosResponse, HttpStatusCode } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, HttpStatusCode } from 'axios';
 import { BaseClient, Issuer, TokenSet } from 'openid-client';
 import pluralize from 'pluralize';
 import { IamClient, IamGroup, IamRealm, KeycloakDatabase } from '../resource';
@@ -41,11 +42,9 @@ interface UserRowData
   [key: string]: any;
 }
 
-function isKeycloakErrorResponse(o: any): o is KeycloakErrorResponse {
+function isKeycloakErrorResponse(o: unknown): o is KeycloakErrorResponse {
   if (
-    o === null ||
-    o === undefined ||
-    typeof o !== 'object' ||
+    !isRecord(o) ||
     ((o.errorMessage === undefined || typeof o.errorMessage !== 'string') &&
       (o.error === undefined || typeof o.error !== 'string'))
   ) {
@@ -56,15 +55,9 @@ function isKeycloakErrorResponse(o: any): o is KeycloakErrorResponse {
 }
 
 function isKeycloakIntermalServerErrorResponse(
-  o: any,
+  o: unknown,
 ): o is KeycloakInternalServerErrorResponse {
-  if (
-    o === null ||
-    o === undefined ||
-    typeof o !== 'object' ||
-    o.error === undefined ||
-    typeof o.error !== 'string'
-  ) {
+  if (!isRecord(o) || o.error === undefined || typeof o.error !== 'string') {
     return false;
   }
 
@@ -99,21 +92,19 @@ export class KeycloakDriver
     return '';
   }
 
-  async getAxiosClient(): Promise<Axios> {
+  async getAxiosClient(): Promise<AxiosInstance> {
     const { url } = this.conRes;
     const tokenSet = await this.getTokenSet();
-    const client = new Axios({
+    // axios.create() (unlike `new Axios(...)`) already inherits axios's
+    // default transformRequest/transformResponse, so JSON (de)serialization
+    // works out of the box without patching client.defaults by hand.
+    return axios.create({
       baseURL: url,
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + tokenSet.access_token,
       },
     });
-
-    client.defaults.transformRequest = axios.defaults.transformRequest;
-    client.defaults.transformResponse = axios.defaults.transformResponse;
-
-    return client;
   }
 
   private async getTokenSet(): Promise<TokenSet> {

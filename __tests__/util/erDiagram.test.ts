@@ -2,6 +2,7 @@ import {
   createDrawioErDiagram,
   createErDiagram,
   createERDiagramParams,
+  createFullSchemaERDiagramParams,
   createSimpleERDiagramParams,
   DbColumn,
   DbSchema,
@@ -163,6 +164,22 @@ describe('createERDiagramParams / createErDiagram (Mermaid)', () => {
     const params = createSimpleERDiagramParams(undefined, table);
     const mermaid = createErDiagram(params);
     expect(mermaid).toContain('VARCHAR sku  "NN"');
+  });
+
+  it('createFullSchemaERDiagramParams includes every table in the schema with all of its columns', () => {
+    const { schema } = buildOrdersCustomersSchema();
+    const params = createFullSchemaERDiagramParams(schema);
+
+    expect(params.title).toBe('public');
+    expect(params.tableItems.map((item) => item.tableRes.name).sort()).toEqual([
+      'customers',
+      'orders',
+    ]);
+    expect(params.tableItems.find((item) => item.tableRes.name === 'orders')?.columnNames).toEqual([
+      'id',
+      'customer_id',
+    ]);
+    expect(params.relations).toHaveLength(1);
   });
 });
 

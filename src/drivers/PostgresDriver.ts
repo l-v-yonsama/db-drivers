@@ -22,6 +22,41 @@ import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar } from '../helpers';
 
+/**
+ * Convert driver-specific class instances (e.g. `PostgresInterval`, which
+ * `pg` returns for INTERVAL columns) into plain, rdh-safe values.
+ *
+ * rdh's `cloneRdhValue()` only supports a fixed set of types (Date, Buffer,
+ * ArrayBuffer, TypedArray/DataView, Map, Set, Array, plain objects) and
+ * throws for unrecognized class instances, so raw `pg` values must be
+ * normalized before they enter a row.
+ */
+function normalizePostgresValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizePostgresValue(item));
+  }
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    !(value instanceof Date) &&
+    !Buffer.isBuffer(value) &&
+    typeof (value as { toPostgres?: unknown }).toPostgres === 'function'
+  ) {
+    return (value as { toPostgres(): string }).toPostgres();
+  }
+  return value;
+}
+
+function normalizePostgresRow(
+  row: Record<string, unknown>,
+): Record<string, unknown> {
+  const normalized: Record<string, unknown> = {};
+  Object.entries(row).forEach(([key, value]) => {
+    normalized[key] = normalizePostgresValue(value);
+  });
+  return normalized;
+}
+
 export class PostgresDriver extends RDSBaseDriver {
   private pool: pg.Pool;
   private client: pg.PoolClient;
@@ -232,7 +267,7 @@ export class PostgresDriver extends RDSBaseDriver {
         );
         if (results.rows) {
           results.rows.forEach((result: any) => {
-            rdb.addRow(result);
+            rdb.addRow(normalizePostgresRow(result));
           });
         }
 

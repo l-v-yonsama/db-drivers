@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
+    // See tsconfig.json for why this is pinned explicitly.
+    "strict": false,
     "target": "es6",
-    "module": "commonjs",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "lib": ["es7"],
     "removeComments": true,
     "esModuleInterop": true,
     "declaration": true,
-    "moduleResolution": "node",
     "rootDir": ".",
     "outDir": "built",
     "allowSyntheticDefaultImports": true,
@@ -21,7 +23,9 @@
     "noImplicitAny": false,
     "noImplicitThis": false,
     "strictNullChecks": false,
-    "skipLibCheck": true
+    "useUnknownInCatchVariables": false,
+    "skipLibCheck": true,
+    "types": ["node"]
   },
   "exclude": ["src/**/*.spec.ts", "__tests__/**/*"]
 }

@@ -1,3 +1,4 @@
+import { isRecord } from '@l-v-yonsama/rdh';
 import {
   ExtractorConfig,
   isBuiltInPattern,
@@ -68,13 +69,16 @@ export function validateConfig(
   };
 }
 
-function isLogParseConfig(obj: any): obj is LogParseConfig {
+function isLogParseConfig(obj: unknown): obj is LogParseConfig {
   return (
-    obj &&
-    typeof obj === 'object' &&
-    obj.split &&
+    isRecord(obj) &&
+    'split' in obj &&
+    isRecord(obj.split) &&
+    'fields' in obj.split &&
     Array.isArray(obj.split.fields) &&
+    'classify' in obj &&
     Array.isArray(obj.classify) &&
+    'extractors' in obj &&
     Array.isArray(obj.extractors)
   );
 }
