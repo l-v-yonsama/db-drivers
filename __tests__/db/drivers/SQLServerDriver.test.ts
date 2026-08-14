@@ -1,7 +1,6 @@
-import { GeneralColumnType, sleep, toNum } from '@l-v-yonsama/rdh';
+import { GeneralColumnType, sleep } from '@l-v-yonsama/rdh';
 import {
   ConnectionSetting,
-  DbColumn,
   DbSchema,
   DbTable,
   DBType,
@@ -12,7 +11,6 @@ import {
   TransactionIsolationLevel,
 } from '../../../src';
 import { init } from '../../setup/mssql';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 const baseConnectOption = {
   host: '127.0.0.1',
@@ -102,23 +100,6 @@ describe('SQLServerDriver', () => {
       expect(s71Res.colType).toBe(GeneralColumnType.BINARY);
       expect(s71Res.nullable).toBe(true);
     });
-
-    // it.skip('should have Index on Column resource', async () => {
-    //   const tableRes = testSchema1Res.getChildByName('diff');
-    //   expect(tableRes.getPrimaryColumnNames()).toEqual(
-    //     expect.arrayContaining(['last_name', 'first_name']),
-    //   );
-    //   expect(tableRes.getUniqColumnNames()).toEqual(['full_name']);
-
-    //   const lastName = tableRes.getChildByName('last_name');
-    //   expect(lastName.primaryKey).toBe(true);
-    //   const firstName = tableRes.getChildByName('first_name');
-    //   expect(firstName.primaryKey).toBe(true);
-    //   const fullName = tableRes.children.find(
-    //     (it) => it.name == 'full_name',
-    //   ) as DbColumn;
-    //   expect(fullName.uniqKey).toBe(true);
-    // });
 
   });
 
@@ -512,15 +493,6 @@ describe('SQLServerDriver', () => {
       return r.rows[0].values as LockTestRecord;
     };
 
-    const getLockTestSummaryValue = async (
-      driver: RDSBaseDriver,
-    ): Promise<number> => {
-      const r = await driver.requestSql({
-        sql: 'SELECT SUM(n) as n FROM lock_test',
-      });
-      return toNum(r.rows[0].values.n);
-    };
-
     afterEach(async () => {
       await driver1.disconnect();
       await driver2.disconnect();
@@ -588,52 +560,6 @@ describe('SQLServerDriver', () => {
 
         await driver2.rollback();
       });
-    });
-  });
-
-  describe.skip('sessions', () => {
-    let driver1: RDSBaseDriver;
-    let driver2: RDSBaseDriver;
-    let driver3: RDSBaseDriver;
-
-    beforeEach(async () => {
-      driver1 = createRDSDriver();
-      driver2 = createRDSDriver();
-      driver3 = createRDSDriver();
-      await driver1.connect();
-      await driver2.connect();
-      await driver3.connect();
-    });
-
-    afterEach(async () => {
-      await driver1.disconnect();
-      await driver2.disconnect();
-      await driver3.disconnect();
-    }, 10000);
-
-    it('should have status', async () => {
-      const sql1 = 'UPDATE EMP SET SAL=SAL WHERE EMPNO = 7839';
-      const sql2 = 'UPDATE EMP SET SAL=SAL+1 WHERE EMPNO = 7839';
-      await driver1.begin();
-      await driver2.begin();
-      await driver1.requestSql({ sql: sql1 });
-      setTimeout(async () => {
-        const result3Before = await driver3.getSessions('testDb');
-
-        const sessionIdsBefore = result3Before.rows
-          .filter(
-            (it) =>
-              (it.values['query'] + '').indexOf(
-                'UPDATE [EMP] set [SAL] = [SAL]+@1',
-              ) >= 0,
-          )
-          .map((it) => it.values['session_id']);
-        expect(sessionIdsBefore).toHaveLength(1);
-        await driver1.rollback();
-      }, 200);
-
-      await driver2.requestSql({ sql: sql2 });
-      await driver2.rollback();
     });
   });
 

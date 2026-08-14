@@ -42,7 +42,7 @@ describe('AwsS3Driver', () => {
 
     try {
       await driver.s3Client.removeBucket({ bucket });
-    } catch (e) {
+    } catch {
       // The specified bucket does not exist
       // console.error('error:' + e.message);
     }

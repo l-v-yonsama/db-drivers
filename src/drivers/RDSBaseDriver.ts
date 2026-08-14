@@ -316,8 +316,8 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
    * `SHOW CREATE TABLE`) must qualify it themselves before returning.
    */
   getTableDDL({
-    tableName,
-    schemaName,
+    tableName: _tableName,
+    schemaName: _schemaName,
   }: {
     tableName: string;
     schemaName?: string;

@@ -51,7 +51,9 @@ export const parseCfnYamlTemplate = (
       (kind) =>
         new yaml.Type(tag, {
           kind,
-          construct: (data) => ({ [tag]: data }),
+          construct: (data: unknown): Record<string, unknown> => ({
+            [tag]: data,
+          }),
         }),
     ),
   );
@@ -70,7 +72,7 @@ export const parseCfnJsonTemplate = (
   let jsonObj: unknown;
   try {
     jsonObj = JSON.parse(templateJSONString);
-  } catch (error) {
+  } catch {
     throw new Error('TemplateBody is not a valid JSON string.');
   }
   if (typeof jsonObj !== 'object' || jsonObj === null) {

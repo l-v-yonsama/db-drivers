@@ -464,7 +464,6 @@ export class SQLiteDriver extends RDSBaseDriver {
    */
   async getTableDDL({
     tableName,
-    schemaName,
   }: {
     tableName: string;
     schemaName?: string;

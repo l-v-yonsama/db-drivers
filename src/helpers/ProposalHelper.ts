@@ -239,7 +239,7 @@ const getProposalsByKeywordWithParent = (
   ast: Statement | undefined,
   keyword: string,
   parentWord: string,
-  lastChar: string,
+  _lastChar: string,
 ): Proposal[] => {
   const retList: Proposal[] = [];
 

@@ -1,7 +1,6 @@
 import {
   GeneralColumnType,
   RdhKey,
-  ResultSetDataBuilder,
   RowHelper,
   RuleAnnotation,
   TableRule,

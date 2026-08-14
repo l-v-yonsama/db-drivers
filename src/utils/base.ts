@@ -12,7 +12,7 @@ export const isJson = (value: string): boolean => {
   try {
     JSON.parse(value);
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 };

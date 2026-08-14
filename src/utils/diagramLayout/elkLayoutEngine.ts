@@ -269,7 +269,7 @@ export const runElkLayout = async (
     const elkGraph = buildElkTree(sorted);
     const laidOut = await Promise.race([elk.layout(elkGraph), timeout]);
     return collectResult(laidOut as ElkNode);
-  } catch (err) {
+  } catch {
     // A hard cancel of a real worker's in-flight computation is only possible by terminating the
     // worker itself (see plan 4.1 "タイムアウト実装上の注意"); the fake synchronous worker has
     // already finished computing (or thrown) by the time we get here regardless. The cached

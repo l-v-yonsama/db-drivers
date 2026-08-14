@@ -8,7 +8,7 @@ import {
 } from '../../../src';
 import { setAsync } from '../../../src/drivers/memcache/helper';
 import { randomUUID } from 'crypto';
-import { ResultSetData, ResultSetDataBuilder } from '@l-v-yonsama/rdh';
+import { ResultSetData } from '@l-v-yonsama/rdh';
 
 describe('MemcacheDriver', () => {
   let driverResolver: DBDriverResolver;
@@ -71,7 +71,7 @@ describe('MemcacheDriver', () => {
 
   describe('scan', () => {
     it('should return values',async () => {
-      const { ok, message, result } = await driver.flow(
+      const { ok, message } = await driver.flow(
         async (): Promise<ResultSetData> => {
           return driver.scan({
             kind: 'memcache',
@@ -88,7 +88,7 @@ describe('MemcacheDriver', () => {
     });
 
     it('should return exact match value',async () => {
-      const { ok, message, result } = await driver.flow(
+      const { ok, message } = await driver.flow(
         async (): Promise<ResultSetData> => {
           return driver.scan({
             kind: 'memcache',

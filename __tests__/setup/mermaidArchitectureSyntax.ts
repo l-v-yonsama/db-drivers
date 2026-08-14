@@ -72,7 +72,7 @@ export const verifyMermaidArchitectureSyntax = (
       }
       try {
         resolve(JSON.parse(stdout));
-      } catch (e) {
+      } catch {
         reject(
           new Error(
             `Failed to parse mermaid syntax check output: ${stdout}\n${stderr}`,

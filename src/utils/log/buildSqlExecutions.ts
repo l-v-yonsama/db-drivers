@@ -193,7 +193,7 @@ function buildExecutionMeta(
       table: names?.tableName ?? names?.indexName,
       type: ast?.type ?? 'UNKNOWN',
     };
-  } catch (e) {
+  } catch {
     return {
       type: 'UNKNOWN',
     };

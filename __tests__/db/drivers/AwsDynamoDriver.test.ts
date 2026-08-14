@@ -14,7 +14,6 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import {
   GeneralColumnType,
-  ResultSetDataBuilder,
   setOf,
 } from '@l-v-yonsama/rdh';
 import {
