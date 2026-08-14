@@ -1,17 +1,8 @@
-import {
-  createRdhKey,
-  GeneralColumnType,
-  getUniqObjectKeys,
-  isRecord,
-  ResultSetData,
-  ResultSetDataBuilder,
-  toDate,
-  toNum,
-} from '@l-v-yonsama/rdh';
+import { isRecord, ResultSetData, toNum } from '@l-v-yonsama/rdh';
 import axios, { AxiosInstance, AxiosResponse, HttpStatusCode } from 'axios';
 import { BaseClient, Issuer, TokenSet } from 'openid-client';
 import pluralize from 'pluralize';
-import { IamClient, IamGroup, IamRealm, KeycloakDatabase } from '../resource';
+import { IamClient, IamRealm, KeycloakDatabase } from '../resource';
 import {
   ClientQuery,
   ClientRepresentation,
@@ -34,13 +25,19 @@ import {
   UserSessionRepresentation,
 } from '../types';
 import { BaseDriver, Scannable } from './BaseDriver';
-
-interface UserRowData
-  extends Omit<UserRepresentation, 'createdTimestamp' | 'attributes'> {
-  createdTimestamp: Date;
-  attributes?: string;
-  [key: string]: any;
-}
+import {
+  buildIamClientResource,
+  buildIamGroupResource,
+  buildIamRealmResource,
+} from './keycloak/resourceTreeBuilder';
+import {
+  buildIamGroupResultSet,
+  buildIamRealmResultSet,
+  buildIamRoleResultSet,
+  buildIamSessionResultSet,
+  buildIamUserResultSet,
+  normalizeAttribute,
+} from './keycloak/scanResultBuilder';
 
 function isKeycloakErrorResponse(o: unknown): o is KeycloakErrorResponse {
   if (
@@ -463,7 +460,7 @@ export class KeycloakDriver
 
     const res = await client.put(`/admin/realms/${realmId}/groups/${id}`, {
       ...data,
-      attributes: this.normalizeAttribute(data.attributes),
+      attributes: normalizeAttribute(data.attributes),
     });
 
     const errorMessage = this.getErrorMessage(res);
@@ -791,224 +788,29 @@ export class KeycloakDriver
 
     const realm = realmName;
     switch (resourceType) {
-      case 'IamRealm': {
-        const realms = await this.getRealms();
-        const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
-          createRdhKey({ name: 'displayName', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'realm', type: GeneralColumnType.TEXT }),
-          createRdhKey({
-            name: 'notBefore',
-            type: GeneralColumnType.INTEGER,
+      case 'IamRealm':
+        return buildIamRealmResultSet(await this.getRealms());
+      case 'IamUser':
+        return buildIamUserResultSet(
+          await this.getUsers({ realm, search: searchQuery, max: limit }),
+          jsonExpansion,
+        );
+      case 'IamRole':
+        return buildIamRoleResultSet(
+          await this.getRoles({ realm, search: searchQuery, max: limit }),
+        );
+      case 'IamGroup':
+        return buildIamGroupResultSet(
+          await this.getGroups({ realm, search: searchQuery, max: limit }),
+        );
+      case 'IamSession':
+        return buildIamSessionResultSet(
+          await this.getSessions({
+            realm,
+            clientUUID: parentId,
+            max: limit,
           }),
-          createRdhKey({
-            name: 'duplicateEmailsAllowed',
-            type: GeneralColumnType.BOOLEAN,
-          }),
-          createRdhKey({
-            name: 'editUsernameAllowed',
-            type: GeneralColumnType.BOOLEAN,
-          }),
-          createRdhKey({ name: 'enabled', type: GeneralColumnType.BOOLEAN }),
-          createRdhKey({
-            name: 'keycloakVersion',
-            type: GeneralColumnType.TEXT,
-          }),
-          createRdhKey({
-            name: 'rememberMe',
-            type: GeneralColumnType.BOOLEAN,
-          }),
-          createRdhKey({
-            name: 'verifyEmail',
-            type: GeneralColumnType.BOOLEAN,
-          }),
-        ]);
-        realms.forEach((realm) => {
-          rdb.addRow({
-            id: realm.id,
-            displayName: realm.displayName,
-            realm: realm.realm,
-            notBefore: realm.notBefore,
-            duplicateEmailsAllowed: realm.duplicateEmailsAllowed,
-            editUsernameAllowed: realm.editUsernameAllowed,
-            enabled: realm.enabled,
-            keycloakVersion: realm.keycloakVersion,
-            rememberMe: realm.rememberMe,
-            verifyEmail: realm.verifyEmail,
-          });
-        });
-        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
-
-        return rdb.build();
-      }
-      case 'IamUser': {
-        const users = await this.getUsers({
-          realm,
-          search: searchQuery,
-          max: limit,
-        });
-
-        let innerAttrNames: string[] = [];
-        const keys = [
-          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
-          createRdhKey({
-            name: 'createdTimestamp',
-            type: GeneralColumnType.TIMESTAMP,
-          }),
-          createRdhKey({ name: 'username', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'firstName', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'lastName', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'email', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'enabled', type: GeneralColumnType.BOOLEAN }),
-          createRdhKey({
-            name: 'emailVerified',
-            type: GeneralColumnType.BOOLEAN,
-          }),
-          createRdhKey({
-            name: 'notBefore',
-            type: GeneralColumnType.INTEGER,
-          }),
-          createRdhKey({
-            name: 'requiredActions',
-            type: GeneralColumnType.ARRAY,
-          }),
-        ];
-
-        if (jsonExpansion) {
-          innerAttrNames = getUniqObjectKeys(users.map((it) => it.attributes));
-          innerAttrNames.forEach((it) => {
-            keys.push(
-              createRdhKey({
-                name: `attributes::${it}`,
-                type: GeneralColumnType.JSON,
-              }),
-            );
-          });
-        } else {
-          keys.push(
-            createRdhKey({
-              name: 'attributes',
-              type: GeneralColumnType.JSON,
-            }),
-          );
-        }
-
-        const rdb = new ResultSetDataBuilder(keys);
-
-        users.forEach((user) => {
-          const rowData: UserRowData = {
-            id: user.id,
-            createdTimestamp: toDate(user.createdTimestamp),
-            username: user.username,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            enabled: user.enabled,
-            emailVerified: user.emailVerified,
-            notBefore: user.notBefore,
-            requiredActions: user.requiredActions,
-          };
-          if (jsonExpansion) {
-            innerAttrNames.forEach((it) => {
-              rowData[`attributes::${it}`] = JSON.stringify(
-                user.attributes?.[it],
-              );
-            });
-          } else {
-            rowData['attributes'] = JSON.stringify(user.attributes);
-          }
-          rdb.addRow(rowData);
-        });
-        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
-
-        return rdb.build();
-      }
-      case 'IamRole': {
-        const roles = await this.getRoles({
-          realm,
-          search: searchQuery,
-          max: limit,
-        });
-        const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
-          createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'description', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'composite', type: GeneralColumnType.BOOLEAN }),
-          createRdhKey({ name: 'clientRole', type: GeneralColumnType.BOOLEAN }),
-          createRdhKey({ name: 'containerId', type: GeneralColumnType.TEXT }),
-        ]);
-        roles.forEach((role) => {
-          rdb.addRow({
-            id: role.id,
-            name: role.name,
-            description: role.description,
-            composite: role.composite,
-            clientRole: role.clientRole,
-            containerId: role.containerId,
-          });
-        });
-        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
-
-        return rdb.build();
-      }
-      case 'IamGroup': {
-        const groups = await this.getGroups({
-          realm,
-          search: searchQuery,
-          max: limit,
-        });
-        const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
-          createRdhKey({ name: 'name', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'path', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'subGroupNames', type: GeneralColumnType.TEXT }),
-        ]);
-        groups.forEach((group) => {
-          rdb.addRow({
-            id: group.id,
-            name: group.name,
-            path: group.path,
-            subGroupNames:
-              group.subGroups?.map((it) => it.name ?? '')?.join(',') ?? '',
-          });
-        });
-        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
-
-        return rdb.build();
-      }
-      case 'IamSession': {
-        const sessions = await this.getSessions({
-          realm,
-          clientUUID: parentId,
-          max: limit,
-        });
-        const rdb = new ResultSetDataBuilder([
-          createRdhKey({ name: 'id', type: GeneralColumnType.UUID }),
-          createRdhKey({ name: 'userId', type: GeneralColumnType.UUID }),
-          createRdhKey({ name: 'username', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'start', type: GeneralColumnType.TIMESTAMP }),
-          createRdhKey({
-            name: 'lastAccess',
-            type: GeneralColumnType.TIMESTAMP,
-          }),
-          createRdhKey({ name: 'ipAddress', type: GeneralColumnType.TEXT }),
-          createRdhKey({ name: 'clients', type: GeneralColumnType.JSON }),
-        ]);
-        sessions.forEach((session) => {
-          rdb.addRow({
-            id: session.id,
-            userId: session.userId,
-            username: session.username,
-            start: toDate(session.start),
-            lastAccess: toDate(session.lastAccess),
-            ipAddress: session.ipAddress,
-            clients: session.clients,
-          });
-        });
-        rdb.updateMeta({ compareKeys: [{ kind: 'primary', names: ['id'] }] });
-
-        return rdb.build();
-      }
+        );
       default:
         throw new Error(`Not supported resource type ${resourceType}`);
     }
@@ -1027,13 +829,10 @@ export class KeycloakDriver
     let promises: Promise<void>[] = [];
 
     realms.forEach((realm) => {
-      const realmRes = new IamRealm(realm.realm);
-      if (realm.id) {
-        (realmRes as any)['id'] = realm.id;
-      }
-      if (realm.realm === this.conRes.database) {
-        realmRes.isDefault = true;
-      }
+      const realmRes = buildIamRealmResource(
+        realm,
+        realm.realm === this.conRes.database,
+      );
       db.addChild(realmRes);
 
       const setUserCount = async (res: IamRealm): Promise<void> => {
@@ -1053,10 +852,7 @@ export class KeycloakDriver
           realm: res.name,
         });
         for (const group of groups) {
-          const groupRes = new IamGroup(group.name);
-          (groupRes as any)['id'] = group.id;
-          groupRes.comment = group.path;
-          res.addChild(groupRes);
+          res.addChild(buildIamGroupResource(group));
         }
       };
 
@@ -1065,28 +861,7 @@ export class KeycloakDriver
           realm: res.name,
         });
         for (const client of clients) {
-          const {
-            name,
-            id,
-            clientId,
-            protocol,
-            baseUrl,
-            standardFlowEnabled,
-            implicitFlowEnabled,
-            directAccessGrantsEnabled,
-            ...params
-          } = client;
-          const clientRes = new IamClient(name);
-          clientRes.clientId = clientId;
-          clientRes.protocol = protocol;
-          clientRes.baseUrl = baseUrl;
-          clientRes.standardFlowEnabled = standardFlowEnabled;
-          clientRes.implicitFlowEnabled = implicitFlowEnabled;
-          clientRes.directAccessGrantsEnabled = directAccessGrantsEnabled;
-          (clientRes as any)['id'] = id;
-          clientRes.comment = clientId;
-          clientRes.meta = params;
-          res.addChild(clientRes);
+          res.addChild(buildIamClientResource(client));
         }
       };
 
@@ -1147,25 +922,6 @@ export class KeycloakDriver
   async closeSub(): Promise<string> {
     this.cachedTokenSet = undefined;
     return '';
-  }
-
-  private normalizeAttribute(
-    attr: Record<string, any> | undefined,
-  ): Record<string, any[]> | undefined {
-    if (attr === undefined) {
-      return undefined;
-    }
-    const record: Record<string, any[]> = {};
-    Object.keys(attr).forEach((key) => {
-      const v = attr[key];
-      if (Array.isArray(v)) {
-        record[key] = v;
-      } else {
-        record[key] = [v];
-      }
-    });
-
-    return record;
   }
 
   private getErrorMessage(res: AxiosResponse): string | undefined {
