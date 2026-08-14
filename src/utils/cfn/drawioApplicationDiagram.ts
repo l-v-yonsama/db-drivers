@@ -515,9 +515,12 @@ export const generateDrawioApplicationDiagramAsync = async (
     });
   });
 
+  // Keep the renderableRelations index as the stable edge id. Assigning ids after this filter
+  // shifts every later id when an endpoint is a nested member that ELK does not lay out itself.
   const layoutEdges: LayoutEdge[] = renderableRelations
-    .filter((relation) => nodeCellIds.has(relation.from) && nodeCellIds.has(relation.to))
-    .map((relation, index) => ({
+    .map((relation, index) => ({ relation, index }))
+    .filter(({ relation }) => nodeCellIds.has(relation.from) && nodeCellIds.has(relation.to))
+    .map(({ relation, index }) => ({
       id: `edge_${index}`,
       source: { nodeId: relation.from },
       target: { nodeId: relation.to },
@@ -634,12 +637,13 @@ export const generateDrawioApplicationDiagramAsync = async (
     const source = nodeCellIds.get(relation.from);
     const target = nodeCellIds.get(relation.to);
     const edge = layout.edges.get(`edge_${index}`);
-    if (!source || !target || !edge) return;
+    if (!source || !target) return;
     const style = relationStyles[relation.kind];
     // A fallback (`layout.usedAutoLayout === false`) only has node centers to offer, not real
-    // routing (see gridFallbackLayout's doc comment) - draw.io's own connector routing between
-    // the two shapes reads better than a straight line drawn through both shapes' interiors.
-    const geometry = layout.usedAutoLayout && edge.bendPoints.length > 0
+    // routing (see gridFallbackLayout's doc comment). A relation to a nested member also has no
+    // ELK edge because that member is placed inside its parent by this renderer. In both cases,
+    // draw.io's own connector routing between the two shapes is the appropriate fallback.
+    const geometry = layout.usedAutoLayout && edge && edge.bendPoints.length > 0
       ? `<mxGeometry relative="1" as="geometry"><Array as="points">${edge.bendPoints.map((point) => `<mxPoint x="${point.x}" y="${point.y}"/>`).join('')}</Array></mxGeometry>`
       : '<mxGeometry relative="1" as="geometry"/>';
     cells.push(

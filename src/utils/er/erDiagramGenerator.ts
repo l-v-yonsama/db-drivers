@@ -110,12 +110,12 @@ function createERDiagramParams(
           if (seenRelationKeys.has(key)) {
             continue;
           }
-          const fromColumn = tableRes.getChildByName(v.columnName);
-          if (!fromColumn) {
-            continue;
-          }
           const fromTable = allTables.find((it) => it.name === v.tableName);
           if (!fromTable) {
+            continue;
+          }
+          const fromColumn = fromTable.getChildByName(v.columnName);
+          if (!fromColumn) {
             continue;
           }
           if (params.items.some((it) => it.tableName === v.tableName)) {
@@ -223,12 +223,12 @@ function createSimpleERDiagramParams(
         if (seenRelationKeys.has(key)) {
           continue;
         }
-        const fromColumn = tableRes.getChildByName(v.columnName);
-        if (!fromColumn) {
-          continue;
-        }
         const fromTable = schema.getChildByName(v.tableName);
         if (!fromTable) {
+          continue;
+        }
+        const fromColumn = fromTable.getChildByName(v.columnName);
+        if (!fromColumn) {
           continue;
         }
         if (tableItems.every((it) => it.tableRes.name !== fromTable.name)) {
@@ -290,7 +290,7 @@ function createFullSchemaERDiagramParams(schema: DbSchema): ERDiagramParams {
 
 function createErDiagram(params: ERDiagramParams): string {
   const { title, tableItems, relations } = params;
-  let text = '```mermaid\n---\ntitle: "' + title + '"\n---\n\nerDiagram\n\n';
+  let text = `\`\`\`mermaid\n---\ntitle: ${JSON.stringify(title)}\n---\n\nerDiagram\n\n`;
 
   // users ||--o{ articles: ""
   tableItems.forEach((tableItem) => {
@@ -331,7 +331,7 @@ function createErDiagram(params: ERDiagramParams): string {
 
   relations.forEach((relation) => {
     const { name, dotted, referencedFrom, referenceTo } = relation;
-    text += `${referencedFrom.tableName} `;
+    text += `${escapeQuot(referencedFrom.tableName)} `;
     switch (referencedFrom.cardinality) {
       case '0':
         text += '|o';

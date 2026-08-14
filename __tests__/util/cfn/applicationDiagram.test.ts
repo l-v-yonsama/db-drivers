@@ -523,5 +523,26 @@ describe('cfn', () => {
         'f0_vpc_Vpc_f0_WebService -->|"accesses"| f0_vpc_Vpc_f0_Database',
       );
     });
+
+    it('keeps TaskDefinition data access when no ECS Service references it', () => {
+      const template = parseCfnYamlTemplate(
+        readYamlFixture('validation/explicit-db-access.yaml'),
+      );
+      delete template.Resources.WebService;
+
+      const diagram = generateDiagram({
+        mode: 'MultiAzDeploymentTrafficPathsAndProtection',
+        list: [
+          {
+            fileName: 'standalone-task-definition.yaml',
+            templateJSONString: JSON.stringify(template),
+          },
+        ],
+      });
+
+      expect(diagram).toContain(
+        'regional_f0_TaskDefinition -->|"accesses"| f0_vpc_Vpc_f0_Database',
+      );
+    });
   });
 });

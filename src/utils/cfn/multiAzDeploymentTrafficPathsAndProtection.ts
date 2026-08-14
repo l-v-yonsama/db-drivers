@@ -260,9 +260,12 @@ export const buildMultiAzDeploymentTrafficPathsAndProtection = (
     const originalFrom = applicationNodeById.get(relation.from);
     const to = applicationNodeById.get(relation.to);
     if (!originalFrom || !to) return;
-    const sources = originalFrom.type === 'AWS::ECS::TaskDefinition'
-      ? servicesByTaskDefinition.get(`${originalFrom.fileIndex}:${originalFrom.logicalId}`) ?? []
-      : [originalFrom];
+    const services = originalFrom.type === 'AWS::ECS::TaskDefinition'
+      ? servicesByTaskDefinition.get(`${originalFrom.fileIndex}:${originalFrom.logicalId}`)
+      : undefined;
+    // A TaskDefinition used by a Service is rendered through that runtime Service. Standalone
+    // TaskDefinitions (for example Step Functions RunTask) must retain their own data path.
+    const sources = services && services.length > 0 ? services : [originalFrom];
     sources.forEach((from) => addPath(
       applicationEndpoint(from),
       applicationEndpoint(to),

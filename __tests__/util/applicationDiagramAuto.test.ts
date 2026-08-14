@@ -132,4 +132,52 @@ describe('generateDrawioApplicationDiagramAsync', () => {
     const drawio = await generateDrawioApplicationDiagramAsync(clusterParams);
     expect(drawio).toMatch(/id="node_f0_AppDbInstance"[^>]*parent="node_f0_AppDbCluster"/);
   });
+
+  it('keeps a relation to a nested DB Cluster member without shifting later edge ids', async () => {
+    const clusterParams: GenerateDiagramParams = {
+      mode: 'ApplicationDiagram',
+      list: [
+        {
+          fileName: 'db-cluster-access.json',
+          templateJSONString: JSON.stringify({
+            Resources: {
+              AppDbCluster: { Type: 'AWS::RDS::DBCluster', Properties: {} },
+              AppDbInstance: {
+                Type: 'AWS::RDS::DBInstance',
+                Properties: { DBClusterIdentifier: { Ref: 'AppDbCluster' } },
+              },
+              ReaderFunction: {
+                Type: 'AWS::Lambda::Function',
+                Properties: {
+                  Environment: {
+                    Variables: {
+                      DB_HOST: { 'Fn::GetAtt': ['AppDbInstance', 'Endpoint.Address'] },
+                    },
+                  },
+                },
+              },
+              WorkQueue: { Type: 'AWS::SQS::Queue', Properties: {} },
+              QueueMapping: {
+                Type: 'AWS::Lambda::EventSourceMapping',
+                Properties: {
+                  EventSourceArn: { 'Fn::GetAtt': ['WorkQueue', 'Arn'] },
+                  FunctionName: { Ref: 'ReaderFunction' },
+                },
+              },
+            },
+          }),
+        },
+      ],
+    };
+
+    const legacy = generateDrawioApplicationDiagram(clusterParams);
+    const auto = await generateDrawioApplicationDiagramAsync(clusterParams);
+
+    expect(extractEdgeLabelsByKindColor(auto)).toEqual(
+      extractEdgeLabelsByKindColor(legacy),
+    );
+    expect(auto).toMatch(
+      /value="accesses"[^>]*source="node_f0_ReaderFunction" target="node_f0_AppDbInstance"/,
+    );
+  });
 });

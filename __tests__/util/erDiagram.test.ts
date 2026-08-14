@@ -157,6 +157,71 @@ describe('createERDiagramParams / createErDiagram (Mermaid)', () => {
     expect(params.relations).toHaveLength(1);
   });
 
+  it('createSimpleERDiagramParams finds the child relation when opened from the referenced parent table', () => {
+    const { schema, customers } = buildOrdersCustomersSchema();
+    const params = createSimpleERDiagramParams(schema, customers);
+
+    expect(params.tableItems.map((item) => item.tableRes.name).sort()).toEqual([
+      'customers',
+      'orders',
+    ]);
+    expect(params.relations).toHaveLength(1);
+    expect(params.relations[0].referencedFrom).toMatchObject({
+      tableName: 'orders',
+      columnName: 'customer_id',
+    });
+  });
+
+  it('createERDiagramParams resolves a relation available only through referencedFrom metadata', () => {
+    const { orders, customers } = buildOrdersCustomersSchema();
+    orders.foreignKeys = undefined;
+
+    const params = createERDiagramParams([orders, customers], {
+      title: 'Customers',
+      items: [
+        { tableName: 'customers', columnNames: ['id'] },
+        { tableName: 'orders', columnNames: ['id', 'customer_id'] },
+      ],
+    });
+
+    expect(params.relations).toHaveLength(1);
+    expect(params.relations[0].referencedFrom).toMatchObject({
+      tableName: 'orders',
+      columnName: 'customer_id',
+    });
+  });
+
+  it('escapes quotes in the YAML title and on both sides of a Mermaid relation', () => {
+    const fromTable = new DbTable('order"items', 'TABLE');
+    fromTable.addChild(new DbColumn('customer_id', 'integer', { nullable: false }));
+    const toTable = new DbTable('customer"records', 'TABLE');
+    toTable.addChild(new DbColumn('id', 'integer', { key: 'PRI', nullable: false }));
+    fromTable.foreignKeys = {
+      referenceTo: {
+        customer_id: {
+          tableName: toTable.name,
+          columnName: 'id',
+          constraintName: 'orders_customer_fk',
+        },
+      },
+    };
+
+    const mermaid = createErDiagram(
+      createERDiagramParams([fromTable, toTable], {
+        title: 'Table for "legacy" orders',
+        items: [
+          { tableName: fromTable.name, columnNames: ['customer_id'] },
+          { tableName: toTable.name, columnNames: ['id'] },
+        ],
+      }),
+    );
+
+    expect(mermaid).toContain('title: "Table for \\"legacy\\" orders"');
+    expect(mermaid).toContain(
+      'order#quot;items }|..|| customer#quot;records: "orders_customer_fk"',
+    );
+  });
+
   it('keeps a NOT NULL, non-PK column annotated as "NN" instead of emitting invalid ER syntax', () => {
     const table = new DbTable('widgets', 'TABLE');
     table.addChild(new DbColumn('id', 'integer', { key: 'PRI', nullable: false }));
