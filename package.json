@@ -83,7 +83,7 @@
     "test:driver:sqs": "npm run clean && jest __tests__/db/drivers/AwsSQSDriver.test.ts",
     "test:driver:cw": "npm run clean && jest __tests__/db/drivers/AwsCloudwatchDriver.test.ts",
     "test:driver:minio": "npm run clean && jest __tests__/db/drivers/AwsS3Driver.test.ts",
-    "test:helper:sql": "npm run clean && jest __tests__/helpers/SQLHelper.test.ts",
+    "test:helper:sql": "npm run clean && jest __tests__/helpers/sql/",
     "test:helper:res:mysql": "npm run clean && jest __tests__/helpers/ResourceHelper.mysql.test.ts",
     "test:helper:res:postgres": "npm run clean && jest __tests__/helpers/ResourceHelper.postgres.test.ts",
     "test:helper:engine": "npm run clean && jest __tests__/helpers/RuleEngine.test.ts",
