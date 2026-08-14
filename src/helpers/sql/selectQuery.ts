@@ -12,12 +12,12 @@ import {
 } from '@l-v-yonsama/rdh';
 import { TopLevelCondition } from 'json-rules-engine';
 import * as os from 'os';
-import { DbSchema } from '../../resource';
 import {
   DbColumn,
   DbDynamoTableColumn,
+  DbSchema,
   DbTable,
-} from '../../resource/DbResource';
+} from '../../resource';
 import {
   parseDynamoAttrType,
   QueryWithBindsResult,

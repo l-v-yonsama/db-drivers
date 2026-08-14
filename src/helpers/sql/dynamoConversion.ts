@@ -1,10 +1,10 @@
-import { DbSchema } from '../../resource';
 import {
   AwsDatabase,
   DbColumn,
+  DbSchema,
   DbTable,
   RdsDatabase,
-} from '../../resource/DbResource';
+} from '../../resource';
 import { parseDynamoAttrType } from '../../types';
 
 export const toRdsDatabase = (awsDb?: AwsDatabase): RdsDatabase | undefined => {
