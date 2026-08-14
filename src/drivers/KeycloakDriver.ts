@@ -2,6 +2,7 @@ import {
   createRdhKey,
   GeneralColumnType,
   getUniqObjectKeys,
+  isRecord,
   ResultSetData,
   ResultSetDataBuilder,
   toDate,
@@ -41,11 +42,9 @@ interface UserRowData
   [key: string]: any;
 }
 
-function isKeycloakErrorResponse(o: any): o is KeycloakErrorResponse {
+function isKeycloakErrorResponse(o: unknown): o is KeycloakErrorResponse {
   if (
-    o === null ||
-    o === undefined ||
-    typeof o !== 'object' ||
+    !isRecord(o) ||
     ((o.errorMessage === undefined || typeof o.errorMessage !== 'string') &&
       (o.error === undefined || typeof o.error !== 'string'))
   ) {
@@ -56,15 +55,9 @@ function isKeycloakErrorResponse(o: any): o is KeycloakErrorResponse {
 }
 
 function isKeycloakIntermalServerErrorResponse(
-  o: any,
+  o: unknown,
 ): o is KeycloakInternalServerErrorResponse {
-  if (
-    o === null ||
-    o === undefined ||
-    typeof o !== 'object' ||
-    o.error === undefined ||
-    typeof o.error !== 'string'
-  ) {
+  if (!isRecord(o) || o.error === undefined || typeof o.error !== 'string') {
     return false;
   }
 

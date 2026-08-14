@@ -7,6 +7,7 @@ import {
   isBooleanLike,
   isDateTimeOrDate,
   isNumericLike,
+  isRecord,
   toBoolean,
   toDate,
   toNum,
@@ -20,20 +21,22 @@ import {
   TopLevelCondition,
 } from 'json-rules-engine';
 
-export function isAllConditions(item: any): item is AllConditions {
-  return item.all && item.all.length !== undefined;
+export function isAllConditions(item: unknown): item is AllConditions {
+  return isRecord(item) && Array.isArray(item.all);
 }
 
-export function isAnyConditions(item: any): item is AnyConditions {
-  return item.any && item.any.length !== undefined;
+export function isAnyConditions(item: unknown): item is AnyConditions {
+  return isRecord(item) && Array.isArray(item.any);
 }
-export function isNotConditions(item: any): item is NotConditions {
-  return !!item.not;
+export function isNotConditions(item: unknown): item is NotConditions {
+  return isRecord(item) && !!item.not;
 }
-export function isConditionReference(item: any): item is ConditionReference {
-  return item.condition && typeof item.condition === 'string';
+export function isConditionReference(
+  item: unknown,
+): item is ConditionReference {
+  return isRecord(item) && typeof item.condition === 'string';
 }
-export function isTopLevelCondition(item: any): item is TopLevelCondition {
+export function isTopLevelCondition(item: unknown): item is TopLevelCondition {
   return (
     isAllConditions(item) ||
     isAnyConditions(item) ||

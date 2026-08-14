@@ -1,4 +1,4 @@
-import { ResultSetData } from '@l-v-yonsama/rdh';
+import { isRecord, ResultSetData } from '@l-v-yonsama/rdh';
 import { DbDatabase, SchemaAndTableHints } from '../resource';
 import { ConnectionSetting, GeneralResult, ScanParams } from '../types';
 import { DBError } from './DBError';
@@ -11,11 +11,8 @@ export interface Commandable {
   executeCommand(command: string): Promise<ResultSetData>;
 }
 
-export function isScannable(arg: any): arg is Scannable {
-  if (!arg) {
-    return false;
-  }
-  return typeof arg === 'object' && typeof arg.scan === 'function';
+export function isScannable(arg: unknown): arg is Scannable {
+  return isRecord(arg) && 'scan' in arg && typeof arg.scan === 'function';
 }
 
 export class SharedDbRes {

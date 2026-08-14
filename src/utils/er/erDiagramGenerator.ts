@@ -14,7 +14,12 @@ import {
   TableRelation,
 } from './types';
 
-export { createErDiagram, createERDiagramParams, createSimpleERDiagramParams };
+export {
+  createErDiagram,
+  createERDiagramParams,
+  createFullSchemaERDiagramParams,
+  createSimpleERDiagramParams,
+};
 
 /** Identity of one column-pair direction of a relation: same constraint name *and* the same
  * table/column on both ends. A composite FK's constraint name repeats once per column it covers
@@ -267,6 +272,20 @@ function createSimpleERDiagramParams(
     tableItems,
     relations,
   };
+}
+
+/** Whole-schema counterpart to createSimpleERDiagramParams(): every table in the schema, every
+ * column, every relation - the one-click diagram entry point from a schema node, where there's
+ * no single "center" table to seed a relation walk from. */
+function createFullSchemaERDiagramParams(schema: DbSchema): ERDiagramParams {
+  const tables = schema.children;
+  return createERDiagramParams(tables, {
+    title: schema.comment ?? schema.name,
+    items: tables.map((table) => ({
+      tableName: table.name,
+      columnNames: table.children.map((column) => column.name),
+    })),
+  });
 }
 
 function createErDiagram(params: ERDiagramParams): string {

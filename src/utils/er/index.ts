@@ -14,6 +14,7 @@ export type {
 export {
   createErDiagram,
   createERDiagramParams,
+  createFullSchemaERDiagramParams,
   createSimpleERDiagramParams,
 } from './erDiagramGenerator';
 export { createDrawioErDiagram } from './erDiagramDrawioGenerator';
