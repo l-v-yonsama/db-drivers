@@ -22,6 +22,7 @@ Test accounts (provisioned by `__tests__/setup/*.ts` on each test run):
 | Oracle | 127.0.0.1:6012/FREEPDB1 | (all) | testadmin | testpass | DBA role, for session kill |
 | SQL Server | 127.0.0.1:6433 | testdb | testuser | Pass123zxcv! | db_owner on testdb |
 | SQL Server | 127.0.0.1:6433 | (all) | testadmin | Pass123zxcv! | sysadmin role, for session kill |
+| MQTT | 127.0.0.1:61883 | - | - | - | anonymous access for unit tests |
 
 ```sh
 yarn add @l-v-yonsama/multi-platform-database-drivers

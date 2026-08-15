@@ -78,6 +78,7 @@
     "test:driver:sqlite": "npm run clean && jest __tests__/db/drivers/SQLiteDriver.test.ts",
     "test:driver:oracle": "npm run clean && jest __tests__/db/drivers/OracleDriver.test.ts",
     "test:driver:redis": "npm run clean && jest __tests__/db/drivers/RedisDriver.test.ts",
+    "test:driver:mqtt": "npm run clean && jest __tests__/db/drivers/MqttDriver.test.ts",
     "test:driver:auth0": "npm run clean && jest __tests__/db/drivers/Auth0Driver.test.ts",
     "test:driver:keycloak": "npm run clean && jest __tests__/db/drivers/KeycloakDriver.test.ts",
     "test:driver:s3": "npm run clean && jest __tests__/db/drivers/AwsS3Driver.test.ts",

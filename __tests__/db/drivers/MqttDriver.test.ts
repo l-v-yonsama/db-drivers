@@ -12,12 +12,12 @@ describe('MqttDriver', () => {
 
   const setting1: ConnectionSetting = {
     name: 'mosquittoMqtt',
-    host: 'test.mosquitto.org',
-    port: 1883,
+    host: '127.0.0.1',
+    port: 61883,
     dbType: DBType.Mqtt,
     mqttSetting: {
       protocol: 'mqtt',
-      subscriptionList:[{name:'device/piyo/#', qos:0}],
+      subscriptionList: [{ name: 'device/piyo/#', qos: 0 }],
       // topicList: ['device/temperature', 'device/cycle_time'],
     },
   };
@@ -26,8 +26,11 @@ describe('MqttDriver', () => {
     jest.useRealTimers();
     driverResolver = DBDriverResolver.getInstance();
     driver = driverResolver.createDriver<MqttDriver>(setting1);
-    await driver.connect();
-  }, 25_000);
+    const connectionError = await driver.connect();
+    if (connectionError) {
+      throw new Error(connectionError);
+    }
+  });
 
   afterAll(async () => {
     await driver.disconnect();

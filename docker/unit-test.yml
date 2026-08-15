@@ -136,6 +136,19 @@ services:
         "-v"               # verbose logging
       ]
 
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: mqtt_container
+    ports:
+      - '61883:1883'
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      test: ['CMD', 'mosquitto_pub', '-h', '127.0.0.1', '-p', '1883', '-t', 'healthcheck', '-m', 'ready']
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
 volumes:
   redis_data:
   mysql_data:
