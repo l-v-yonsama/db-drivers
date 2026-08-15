@@ -442,7 +442,9 @@ describe('AwsDynamoDBDriver', () => {
       password: 'xxxx',
     };
     const testDriver = DBDriverResolver.getInstance().createDriver(setting);
-    expect(await testDriver.connect()).toContain('ECONNREFUSED');
+    expect(await testDriver.connect()).toMatch(
+      /ECONNREFUSED|AWS SDK error wrapper for AggregateError/,
+    );
   });
 
   describe('getName', () => {

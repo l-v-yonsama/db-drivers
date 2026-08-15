@@ -1,9 +1,10 @@
 {
   "name": "@l-v-yonsama/multi-platform-database-drivers",
   "version": "2.0.1",
+  "packageManager": "npm@10.9.4",
   "description": "multi-platform database drivers in TypeScript.",
   "engines": {
-    "node": ">= 18"
+    "node": ">= 20"
   },
   "devDependencies": {
     "@aws-sdk/client-lambda": "^3.1103.0",
@@ -18,7 +19,7 @@
     "@types/lodash.isequal": "^4.5.6",
     "@types/memcached": "^2.2.10",
     "@types/mssql": "^9.1.5",
-    "@types/node": "~18",
+    "@types/node": "22.18.10",
     "@types/oracledb": "^7.0.1",
     "@types/pg": "^8.6.6",
     "@types/pluralize": "^0.0.29",
@@ -68,7 +69,7 @@
     "examples:auth0": "npm run build && node built/src/examples/auth0.js",
     "examples:keycloak": "npm run build && node built/src/examples/keycloak.js",
     "test0": "jest --coverage",
-    "test": "npm run clean && AWS_SDK_JS_NODE_VERSION_SUPPORT_WARNING_DISABLED=true jest --runInBand",
+    "test": "npm run clean && jest --runInBand",
     "test:util": "npm run clean && jest __tests__/util/util.test.ts",
     "test:logParserUtil": "npm run clean && jest __tests__/util/logParseUtil.test.ts",
     "test:driver:mysql": "npm run clean && jest __tests__/db/drivers/MySQLDriver.test.ts",
@@ -137,7 +138,8 @@
     "xregexp": "^5.1.2"
   },
   "volta": {
-    "node": "18.12.1"
+    "node": "22.21.1",
+    "npm": "10.9.4"
   },
   "main": "built/src/index.js",
   "types": "built/src/index.d.ts",
