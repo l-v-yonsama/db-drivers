@@ -44,6 +44,9 @@ test.sh
 .env
 docker/data
 
+# Local Claude Code settings
+.claude/
+
 sqlite.db
 sqlite.db-shm
 sqlite.db-wal
