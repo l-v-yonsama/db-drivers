@@ -1,5 +1,6 @@
 import { PlanTableMapping } from '../../../types/drivers/performance/PerformanceTuningContext';
 import { PlanNode } from '../../../types/drivers/performance/PlanNode';
+import { computeRowEstimateRatio } from './planNodeMath';
 import { asNumber, asRecord, asString } from './vendorRowCoercion';
 
 // Parses the object PostgreSQL's `EXPLAIN (FORMAT JSON)` returns (already
@@ -60,25 +61,6 @@ export function extractPlanningTimeMs(explainRoot: unknown): number | undefined 
 
 export function extractExecutionTimeMs(explainRoot: unknown): number | undefined {
   return asNumber(asRecord(explainRoot)?.['Execution Time']);
-}
-
-// Only meaningful once both figures exist - `actualRows` currently never
-// does (it only comes from `EXPLAIN ANALYZE`, and `mode: 'analyze'` isn't
-// implemented for any vendor yet), but the computation itself is vendor-
-// and mode-independent, so it's written and tested now rather than left as
-// a TODO for whichever step adds Analyze (§10 Phase 2: "estimated / actual
-// rows が両方ある場合だけ row estimate ratio を計算する"). `estimatedRows <= 0`
-// is excluded too - a zero-row estimate makes the ratio either undefined
-// (0/0) or meaningless (n/0 -> Infinity), neither of which is a fact worth
-// handing to an AI.
-export function computeRowEstimateRatio(
-  estimatedRows: number | undefined,
-  actualRows: number | undefined,
-): number | undefined {
-  if (estimatedRows === undefined || actualRows === undefined || estimatedRows <= 0) {
-    return undefined;
-  }
-  return actualRows / estimatedRows;
 }
 
 const hasAnyKey = (node: Record<string, unknown>, keys: readonly string[]): boolean =>

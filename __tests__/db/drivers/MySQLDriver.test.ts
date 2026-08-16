@@ -68,7 +68,7 @@ describe('MySQLDriver', () => {
       });
 
       it('should have Schema resource', async () => {
-        expect(testDbRes.children).toHaveLength(9);
+        expect(testDbRes.children).toHaveLength(10);
         testSchemaRes = testDbRes.getSchema({ isDefault: true });
         expect(testSchemaRes.name).toBe('test-db');
       });

@@ -203,7 +203,6 @@ describe('performance tuning context params', () => {
 describe('performance tuning context - unsupported drivers (Phase 0)', () => {
   it('reports unsupported for every RDS driver without a Provider yet', () => {
     for (const [dbType, Driver] of [
-      [DBType.MySQL, MySQLDriver],
       [DBType.SQLServer, SQLServerDriver],
       [DBType.Oracle, OracleDriver],
       [DBType.SQLite, SQLiteDriver],
@@ -213,9 +212,13 @@ describe('performance tuning context - unsupported drivers (Phase 0)', () => {
     }
   });
 
-  it('reports PostgreSQL as supported now that a Provider is wired in (Phase 1 step 4)', () => {
-    const driver = new PostgresDriver(connectionSetting(DBType.Postgres));
-    expect(driver.supportsGetPerformanceTuningContext()).toBe(true);
+  it('reports PostgreSQL/MySQL as supported now that a Provider is wired in (推奨着手順 step 4/8)', () => {
+    expect(
+      new PostgresDriver(connectionSetting(DBType.Postgres)).supportsGetPerformanceTuningContext(),
+    ).toBe(true);
+    expect(
+      new MySQLDriver(connectionSetting(DBType.MySQL)).supportsGetPerformanceTuningContext(),
+    ).toBe(true);
   });
 
   it('returns a GeneralResult instead of throwing for an unsupported driver', async () => {

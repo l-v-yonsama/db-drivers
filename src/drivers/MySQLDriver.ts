@@ -21,6 +21,7 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
+import { MySQLPerformanceTuningProvider, PerformanceTuningContextProvider } from './providers';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar } from '../helpers';
 import {
@@ -342,6 +343,19 @@ export class MySQLDriver extends RDSBaseDriver {
     const sql = 'SELECT VERSION() as version';
     const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
     return rdb.rs.rows[0].values.version;
+  }
+
+  private performanceTuningContextProvider?: PerformanceTuningContextProvider;
+
+  // Typed to the interface (not the concrete MySQLPerformanceTuningProvider),
+  // same rationale as PostgresDriver's override of this hook: stays
+  // override-compatible with RDSBaseDriver's declared return type, and test
+  // doubles overriding this hook with a fake Provider remain valid overrides.
+  protected getPerformanceTuningContextProvider(): PerformanceTuningContextProvider {
+    if (!this.performanceTuningContextProvider) {
+      this.performanceTuningContextProvider = new MySQLPerformanceTuningProvider(this);
+    }
+    return this.performanceTuningContextProvider;
   }
 
   supportsGetStatementStatistics(): boolean {

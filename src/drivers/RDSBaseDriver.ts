@@ -470,6 +470,20 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           resolvedTables.set(key, { schemaName: mapping.schemaName, tableName: mapping.tableName });
         }
       }
+      // Union in any explicit caller-supplied targets (§4.1: "targetTables
+      // は plan / parser から対象を完全に解決できない場合の明示的な補助入力
+      // とする") - additive, never a replacement for what the plan itself
+      // resolved. This is the sanctioned workaround for a real, vendor-
+      // specific gap: MySQL's EXPLAIN FORMAT=JSON reports an aliased
+      // table's *alias* as `table_name`, with no field carrying the real
+      // table name, so an aliased FROM/JOIN table cannot always be resolved
+      // from the plan alone (see mysqlPlanParser.ts's module doc comment).
+      for (const target of normalized.targetTables ?? []) {
+        const key = tableKeyOf(target);
+        if (!resolvedTables.has(key)) {
+          resolvedTables.set(key, { schemaName: target.schemaName, tableName: target.tableName });
+        }
+      }
 
       const unavailableSections: PerformanceTuningContext['collection']['unavailableSections'] = [];
       const collectionWarnings: string[] = [...(vendorPlan?.warnings ?? [])];
