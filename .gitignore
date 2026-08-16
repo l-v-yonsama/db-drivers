@@ -40,6 +40,7 @@ __tests__/data/logs/parse/*.json
 .DS_Store
 misc/
 src/examples/
+/scripts/
 test.sh
 .env
 docker/data
