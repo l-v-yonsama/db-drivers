@@ -144,6 +144,28 @@ export async function init(): Promise<void> {
       );
     }
     await con.commit();
+
+    // performance-tuning-context fixture (composite/unique/function-based
+    // indexes, a CHECK constraint, 50 rows + DBMS_STATS.GATHER_TABLE_STATS)
+    // - kept independent of the tables above, same rationale as the other
+    // three vendors' own perf_orders fixtures.
+    await dropIfExists(con, 'TABLE', 'perf_orders');
+    await con.execute(CREATE_PERF_ORDERS_TABLE_STATEMENT);
+    await con.execute(`CREATE INDEX idx_perf_orders_status ON perf_orders(status)`);
+    await con.execute(
+      `CREATE INDEX idx_perf_orders_customer_status ON perf_orders(customer_id, status)`,
+    );
+    await con.execute(`CREATE UNIQUE INDEX uq_perf_orders_id_status ON perf_orders(id, status)`);
+    await con.execute(`CREATE INDEX idx_perf_orders_lower_status ON perf_orders(LOWER(status))`);
+    for (let i = 0; i < 50; i++) {
+      await con.execute(
+        `INSERT INTO perf_orders (customer_id, status, amount) VALUES (:1, :2, :3)`,
+        [(i % 10) + 1, i % 5 === 0 ? 'shipped' : 'new', i * 1.5],
+        { autoCommit: false },
+      );
+    }
+    await con.commit();
+    await con.execute(`BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'PERF_ORDERS'); END;`);
   } finally {
     if (con) {
       await con.close();
@@ -211,4 +233,11 @@ const CREATE_LOCK_TEST_TABLE_STATEMENT = `CREATE TABLE lock_test (
     id NUMBER NOT NULL PRIMARY KEY,
     title VARCHAR2(255) DEFAULT '' NOT NULL,
     n NUMBER NOT NULL
+  )`;
+
+const CREATE_PERF_ORDERS_TABLE_STATEMENT = `CREATE TABLE perf_orders (
+    id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_id NUMBER NOT NULL,
+    status VARCHAR2(20) DEFAULT 'new' NOT NULL,
+    amount NUMBER(10,2) CHECK (amount >= 0)
   )`;

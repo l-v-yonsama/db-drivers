@@ -21,6 +21,7 @@ import {
 import { OracleColumnType } from '../types/resource/OracleColumnType';
 import { QuoteChar } from '../helpers';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { OraclePerformanceTuningProvider, PerformanceTuningContextProvider } from './providers';
 import {
   getStatementStatisticsOrderByColumn,
   normalizeStatementStatisticsParams,
@@ -293,6 +294,76 @@ export class OracleDriver extends RDSBaseDriver {
 
   async getVersion(): Promise<string> {
     return this.con?.oracleServerVersionString ?? '';
+  }
+
+  private performanceTuningContextProvider?: PerformanceTuningContextProvider;
+
+  // Typed to the interface (not the concrete OraclePerformanceTuningProvider),
+  // same rationale as the other three vendor drivers' override of this hook:
+  // stays override-compatible with RDSBaseDriver's declared return type, and
+  // test doubles overriding this hook with a fake Provider remain valid
+  // overrides.
+  protected getPerformanceTuningContextProvider(): PerformanceTuningContextProvider {
+    if (!this.performanceTuningContextProvider) {
+      this.performanceTuningContextProvider = new OraclePerformanceTuningProvider(this);
+    }
+    return this.performanceTuningContextProvider;
+  }
+
+  // Used only by OraclePerformanceTuningProvider (§13 step 8) - kept
+  // separate from explainSqlSub() above (the general "Explain" feature,
+  // which returns DBMS_XPLAN.DISPLAY's curated *text* output) rather than
+  // adding a flag to it, per [[avoid-boolean-opt-in-flags]]: a wider-
+  // capability caller gets its own function instead of a flag on the shared
+  // one. PLAN_TABLE's ID/PARENT_ID/OBJECT_OWNER/OBJECT_NAME/OBJECT_ALIAS/
+  // ACCESS_PREDICATES/FILTER_PREDICATES columns are exactly what
+  // oraclePlanParser.ts needs to reconstruct the plan's tree and resolve
+  // tables - DBMS_XPLAN.DISPLAY's rendering discards that structure into a
+  // single formatted text column.
+  async collectPerformanceTuningPlanRows(
+    params: QueryParams,
+  ): Promise<ResultSetData> {
+    if (!this.con) {
+      throw new Error('No connection');
+    }
+    const binds = params.conditions?.binds ?? [];
+    // Unique per call so concurrent/repeated calls never collide on the
+    // same (session-private) PLAN_TABLE rows - same scheme explainSqlSub()
+    // already uses, distinct prefix so a stray row is identifiable as
+    // coming from this method rather than the general Explain feature.
+    const statementId = `dbnpt_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+
+    await this.con.execute(
+      `EXPLAIN PLAN SET STATEMENT_ID = '${statementId}' FOR ${params.sql}`,
+      binds,
+      { autoCommit: false },
+    );
+
+    try {
+      const rdb = await this.requestSqlSub({
+        sql: `SELECT ID, PARENT_ID, DEPTH, OPERATION, OPTIONS, OBJECT_OWNER, OBJECT_NAME, OBJECT_ALIAS, OBJECT_TYPE, COST, CARDINALITY, BYTES, ACCESS_PREDICATES, FILTER_PREDICATES
+FROM PLAN_TABLE WHERE STATEMENT_ID = :1 ORDER BY ID`,
+        dbTable: undefined,
+        conditions: { binds: [statementId] },
+        meta: { type: 'performanceTuningContext' },
+      });
+      return rdb.rs;
+    } finally {
+      // PLAN_TABLE is session-private but not auto-cleared between calls -
+      // best-effort delete so repeated performance-tuning-context calls
+      // within one long-lived connection don't accumulate stale rows.
+      // Never lets a cleanup failure fail the caller, who already has (or
+      // has failed to get) their actual result by this point.
+      try {
+        await this.con.execute(
+          `DELETE FROM PLAN_TABLE WHERE STATEMENT_ID = :1`,
+          [statementId],
+          { autoCommit: true },
+        );
+      } catch {
+        // best-effort only
+      }
+    }
   }
 
   supportsGetStatementStatistics(): boolean {
