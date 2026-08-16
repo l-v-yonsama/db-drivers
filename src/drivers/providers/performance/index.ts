@@ -6,4 +6,7 @@ export * from './planNodeMath';
 export * from './postgresCatalogMapper';
 export * from './PostgresPerformanceTuningProvider';
 export * from './postgresPlanParser';
+export * from './sqlServerCatalogMapper';
+export * from './SQLServerPerformanceTuningProvider';
+export * from './sqlServerPlanParser';
 export * from './vendorRowCoercion';

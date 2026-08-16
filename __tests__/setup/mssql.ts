@@ -217,6 +217,33 @@ export async function init(): Promise<void> {
         RETURN @a + @b;
       END
     `);
+
+    // performance-tuning-context fixture (composite/unique/filtered indexes,
+    // a CHECK constraint, 50 rows + UPDATE STATISTICS WITH FULLSCAN) - kept
+    // independent of the tables above, same rationale as Postgres/MySQL's
+    // own perf_orders fixtures in __tests__/setup/postgres.ts / mysql.ts.
+    // Placed in the `testdb` schema (already used by lock_test/diff/DEPT/
+    // EMP/city above), not `schema1` (reserved for testtable's data-type
+    // coverage) or one of the extra schemas ensureUserAndSchemas() creates.
+    await q(`DROP TABLE IF EXISTS testdb.perf_orders`);
+    await q(CREATE_PERF_ORDERS_TABLE_STATEMENT);
+    await q(`CREATE INDEX idx_perf_orders_status ON testdb.perf_orders(status)`);
+    await q(
+      `CREATE INDEX idx_perf_orders_customer_status ON testdb.perf_orders(customer_id, status)`,
+    );
+    await q(
+      `CREATE UNIQUE INDEX uq_perf_orders_id_status ON testdb.perf_orders(id, status)`,
+    );
+    await q(
+      `CREATE INDEX idx_perf_orders_status_filtered ON testdb.perf_orders(status) WHERE status = 'shipped'`,
+    );
+    for (let i = 0; i < 50; i++) {
+      const status = i % 5 === 0 ? 'shipped' : 'new';
+      await q(
+        `INSERT INTO testdb.perf_orders(customer_id, status, amount) VALUES (${(i % 10) + 1}, '${status}', ${i * 1.5})`,
+      );
+    }
+    await q(`UPDATE STATISTICS testdb.perf_orders WITH FULLSCAN`);
   });
 }
 
@@ -281,5 +308,14 @@ CREATE TABLE testdb.city (
   country_code char(3),
   district char(20),
   population int
+)
+`;
+
+const CREATE_PERF_ORDERS_TABLE_STATEMENT = `
+CREATE TABLE testdb.perf_orders (
+  id INT IDENTITY PRIMARY KEY,
+  customer_id INT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'new',
+  amount DECIMAL(10,2) CHECK (amount >= 0)
 )
 `;

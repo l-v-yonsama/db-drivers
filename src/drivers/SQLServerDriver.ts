@@ -30,6 +30,7 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { PerformanceTuningContextProvider, SQLServerPerformanceTuningProvider } from './providers';
 import { QuoteChar, wrapSingleQuote } from '../helpers';
 import {
   getStatementStatisticsOrderByColumn,
@@ -440,6 +441,68 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     const sql = `SELECT SERVERPROPERTY('productversion') as version`;
     const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
     return rdb.rs.rows[0].values.version;
+  }
+
+  private performanceTuningContextProvider?: PerformanceTuningContextProvider;
+
+  // Typed to the interface (not the concrete SQLServerPerformanceTuningProvider),
+  // same rationale as Postgres/MySQLDriver's override of this hook: stays
+  // override-compatible with RDSBaseDriver's declared return type, and test
+  // doubles overriding this hook with a fake Provider remain valid overrides.
+  protected getPerformanceTuningContextProvider(): PerformanceTuningContextProvider {
+    if (!this.performanceTuningContextProvider) {
+      this.performanceTuningContextProvider = new SQLServerPerformanceTuningProvider(this);
+    }
+    return this.performanceTuningContextProvider;
+  }
+
+  // Used only by SQLServerPerformanceTuningProvider (§13 step 8) - kept
+  // separate from explainSqlSub()/EXPLAIN_COLUMNS above (the general
+  // "Explain" feature's own tabular view) rather than adding a flag to it,
+  // per [[avoid-boolean-opt-in-flags]]: a wider-capability caller gets its
+  // own function instead of a flag on the shared one. explainSqlSub()'s
+  // fixed EXPLAIN_COLUMNS intentionally drops NodeId/Parent/StmtId; those
+  // two columns are exactly what sqlServerPlanParser.ts needs to
+  // reconstruct SHOWPLAN_ALL's flat rowset back into a parent/child tree,
+  // so this returns every column SHOWPLAN_ALL produces instead of a
+  // curated subset - built dynamically from whatever the first row's own
+  // keys are, since that set isn't fixed/known ahead of time the way
+  // EXPLAIN_COLUMNS is.
+  async collectPerformanceTuningShowplan(
+    params: QueryParams,
+  ): Promise<ResultSetData> {
+    const req = this.con.request();
+    await req.batch(`SET SHOWPLAN_ALL ON`);
+    try {
+      // Same bind-substitution technique as explainSqlSub() and for the
+      // same reason: "SET SHOWPLAN statements must be the only statements
+      // in the batch", which rules out req.query()'s sp_executesql-based
+      // parameter binding.
+      const binds = params.conditions?.binds ?? [];
+      const sql = binds.reduce<string>((acc, bind, idx) => {
+        const placeholder = new RegExp(`@${idx + 1}(?!\\d)`, 'g');
+        return acc.replace(placeholder, wrapSingleQuote(bind));
+      }, params.sql);
+
+      const result = await req.batch(sql);
+      const firstRow = result.recordset[0];
+      const keys: RdhKey[] = firstRow
+        ? Object.keys(firstRow).map((name) =>
+            createRdhKey({
+              name,
+              type:
+                typeof firstRow[name] === 'number'
+                  ? GeneralColumnType.REAL
+                  : GeneralColumnType.TEXT,
+            }),
+          )
+        : [];
+      const rdb = new ResultSetDataBuilder(keys);
+      result.recordset.forEach((row) => rdb.addRow(row));
+      return rdb.rs;
+    } finally {
+      await req.batch(`SET SHOWPLAN_ALL OFF`);
+    }
   }
 
   supportsGetStatementStatistics(): boolean {
