@@ -1,0 +1,728 @@
+import {
+  ConnectionSetting,
+  computeRowEstimateRatio,
+  DBType,
+  extractExecutionTimeMs,
+  extractPlanningTimeMs,
+  extractPredicateColumns,
+  parsePostgresPlan,
+  PostgresDriver,
+  PostgresPerformanceTuningProvider,
+  resolvePlanTableMappings,
+} from '../../../src';
+import { init } from '../../setup/postgres';
+
+// A realistic-shaped `EXPLAIN (FORMAT JSON) ...` root (i.e. the single
+// element of the array Postgres returns): orders joined to customers via an
+// index scan, with a Hash node in between that carries no Relation Name.
+const explainRoot = {
+  Plan: {
+    'Node Type': 'Hash Join',
+    'Join Type': 'Inner',
+    'Hash Cond': '(orders.customer_id = customers.id)',
+    'Plan Rows': 41,
+    Plans: [
+      {
+        'Node Type': 'Seq Scan',
+        'Relation Name': 'orders',
+        Alias: 'orders',
+        Filter: "(status = 'shipped'::text)",
+        'Plan Rows': 41,
+      },
+      {
+        'Node Type': 'Hash',
+        Plans: [
+          {
+            'Node Type': 'Index Scan',
+            'Relation Name': 'customers',
+            Alias: 'c',
+            'Index Name': 'customers_pkey',
+            'Index Cond': '(id = orders.customer_id)',
+            'Plan Rows': 1,
+          },
+        ],
+      },
+    ],
+  },
+  'Planning Time': 0.234,
+  'Execution Time': 1.2,
+};
+
+describe('postgresPlanParser', () => {
+  describe('extractPredicateColumns', () => {
+    it('pulls column-like identifiers out before comparison operators', () => {
+      expect(extractPredicateColumns("(status = 'shipped'::text)")).toEqual(['status']);
+      expect(extractPredicateColumns('(id = orders.customer_id)')).toEqual(['id']);
+    });
+
+    it('strips a table/alias qualifier', () => {
+      expect(extractPredicateColumns('orders.customer_id = 42')).toEqual(['customer_id']);
+    });
+
+    it('returns an empty array for missing/empty predicates', () => {
+      expect(extractPredicateColumns(undefined)).toEqual([]);
+      expect(extractPredicateColumns('')).toEqual([]);
+    });
+  });
+
+  describe('resolvePlanTableMappings', () => {
+    it('resolves scan nodes into table mappings, skipping nodes without a Relation Name', () => {
+      const mappings = resolvePlanTableMappings(explainRoot);
+
+      expect(mappings).toHaveLength(2);
+
+      const orders = mappings.find((m) => m.tableName === 'orders');
+      expect(orders).toMatchObject({
+        tableName: 'orders',
+        alias: undefined, // Alias === Relation Name, so it's redundant and dropped
+        estimatedRows: 41,
+        filterColumns: ['status'],
+      });
+
+      const customers = mappings.find((m) => m.tableName === 'customers');
+      expect(customers).toMatchObject({
+        tableName: 'customers',
+        alias: 'c',
+        indexName: 'customers_pkey',
+        estimatedRows: 1,
+        filterColumns: ['id'],
+      });
+
+      // planNodeId is assigned depth-first and must be unique per node.
+      expect(new Set(mappings.map((m) => m.planNodeId)).size).toBe(2);
+    });
+
+    it('never throws on malformed/unexpected input', () => {
+      expect(resolvePlanTableMappings(undefined)).toEqual([]);
+      expect(resolvePlanTableMappings(null)).toEqual([]);
+      expect(resolvePlanTableMappings('not an object')).toEqual([]);
+      expect(resolvePlanTableMappings({})).toEqual([]);
+      expect(resolvePlanTableMappings({ Plan: { Plans: 'not an array' } })).toEqual([]);
+    });
+  });
+
+  describe('parsePostgresPlan', () => {
+    it('builds a normalized PlanNode tree using the same n0/n1/... ids as the mappings', () => {
+      const { planNode, mappings, warnings } = parsePostgresPlan(explainRoot);
+
+      expect(warnings).toEqual([]);
+      expect(planNode).toMatchObject({
+        id: 'n0',
+        depth: 0,
+        operation: 'Hash Join',
+        joinType: 'Inner',
+        predicates: ['(orders.customer_id = customers.id)'],
+        estimated: { rows: 41 },
+      });
+      expect(planNode.children).toHaveLength(2);
+      const [ordersScan, hash] = planNode.children;
+      expect(ordersScan).toMatchObject({
+        id: 'n1',
+        parentId: 'n0',
+        depth: 1,
+        operation: 'Seq Scan',
+        relation: { tableName: 'orders', alias: 'orders' },
+      });
+      expect(hash).toMatchObject({ id: 'n2', parentId: 'n0', operation: 'Hash' });
+      expect(hash.children[0]).toMatchObject({
+        id: 'n3',
+        parentId: 'n2',
+        operation: 'Index Scan',
+        indexName: 'customers_pkey',
+        relation: { tableName: 'customers', alias: 'c' },
+      });
+
+      // Every mapping's planNodeId must resolve to an actual node in the tree.
+      const nodeIds = new Set<string>();
+      const collect = (n: typeof planNode): void => {
+        nodeIds.add(n.id);
+        n.children.forEach(collect);
+      };
+      collect(planNode);
+      for (const mapping of mappings) {
+        expect(nodeIds.has(mapping.planNodeId)).toBe(true);
+      }
+    });
+
+    it('warns instead of silently dropping a scan node with no relation to map', () => {
+      const { mappings, warnings } = parsePostgresPlan({
+        Plan: {
+          'Node Type': 'Function Scan',
+          'Function Name': 'generate_series',
+          'Plan Rows': 100,
+        },
+      });
+
+      expect(mappings).toEqual([]);
+      expect(warnings).toEqual([
+        expect.stringContaining('Could not resolve a table for plan node n0 (Function Scan)'),
+      ]);
+    });
+
+    it('never throws on malformed/unexpected input, still returning a usable (empty) tree', () => {
+      for (const input of [undefined, null, 'not an object', {}, { Plan: { Plans: 'not an array' } }]) {
+        const { planNode, mappings } = parsePostgresPlan(input);
+        expect(mappings).toEqual([]);
+        expect(planNode.children).toEqual([]);
+      }
+    });
+  });
+
+  describe('computeRowEstimateRatio', () => {
+    it('only computes a ratio when both estimated and actual rows are known', () => {
+      expect(computeRowEstimateRatio(41, 82)).toBe(2);
+      expect(computeRowEstimateRatio(41, undefined)).toBeUndefined();
+      expect(computeRowEstimateRatio(undefined, 82)).toBeUndefined();
+      // A zero (or negative) estimate makes the ratio meaningless, not Infinity.
+      expect(computeRowEstimateRatio(0, 82)).toBeUndefined();
+    });
+  });
+
+  describe('extractPlanningTimeMs / extractExecutionTimeMs', () => {
+    it('reads the top-level timing fields when present', () => {
+      expect(extractPlanningTimeMs(explainRoot)).toBe(0.234);
+      expect(extractExecutionTimeMs(explainRoot)).toBe(1.2);
+    });
+
+    it('returns undefined instead of throwing for missing/malformed input', () => {
+      expect(extractPlanningTimeMs(undefined)).toBeUndefined();
+      expect(extractPlanningTimeMs({})).toBeUndefined();
+      expect(extractPlanningTimeMs({ 'Planning Time': 'not a number' })).toBeUndefined();
+      // Non-string/non-number values must not reach toNum() (it would throw
+      // trying to .trim() them) - a boolean or nested object degrades to
+      // "no value", not a crash.
+      expect(extractPlanningTimeMs({ 'Planning Time': true })).toBeUndefined();
+      expect(extractPlanningTimeMs({ 'Planning Time': { nested: true } })).toBeUndefined();
+      expect(extractPlanningTimeMs({ 'Planning Time': NaN })).toBeUndefined();
+    });
+
+    it('coerces a numeric string the same way toNum() does elsewhere in this driver', () => {
+      expect(extractPlanningTimeMs({ 'Planning Time': '0.5' })).toBe(0.5);
+    });
+  });
+});
+
+describe('PostgresPerformanceTuningProvider', () => {
+  const makeDriver = (requestSql: jest.Mock) => ({ requestSql });
+
+  it('builds EXPLAIN (FORMAT JSON) and resolves the plan + table mappings', async () => {
+    const requestSql = jest.fn().mockResolvedValue({
+      rows: [{ values: { 'QUERY PLAN': [explainRoot] } }],
+    });
+    const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'testdb',
+        statement: { sql: 'SELECT * FROM orders JOIN customers ON ...', source: 'editor' },
+        plan: {},
+      },
+      { timeoutMs: 5000 },
+    );
+
+    expect(requestSql).toHaveBeenCalledWith({
+      sql: 'EXPLAIN (FORMAT JSON) SELECT * FROM orders JOIN customers ON ...',
+      conditions: { rawQueries: true, binds: undefined },
+      meta: { type: 'performanceTuningContext' },
+    });
+    expect(result.ok).toBe(true);
+    expect(result.result!.raw).toEqual([explainRoot]);
+    expect(result.result!.planningTimeMs).toBe(0.234);
+    expect(result.result!.planTableMappings).toHaveLength(2);
+    // The normalized PlanNode tree lines up with planTableMappings: same
+    // node count, same "n0, n1, ..." IDs, built from the same walk.
+    expect(result.result!.normalizedPlan).toMatchObject({
+      id: 'n0',
+      operation: 'Hash Join',
+      joinType: 'Inner',
+      children: [
+        expect.objectContaining({
+          id: 'n1',
+          operation: 'Seq Scan',
+          relation: expect.objectContaining({ tableName: 'orders' }),
+        }),
+        expect.objectContaining({
+          id: 'n2',
+          operation: 'Hash',
+          children: [expect.objectContaining({ id: 'n3', operation: 'Index Scan' })],
+        }),
+      ],
+    });
+  });
+
+  it('parses a JSON-string QUERY PLAN value the same way as an already-parsed one', async () => {
+    const requestSql = jest.fn().mockResolvedValue({
+      rows: [{ values: { 'QUERY PLAN': JSON.stringify([explainRoot]) } }],
+    });
+    const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'testdb',
+        statement: { sql: 'SELECT 1', source: 'editor' },
+        plan: {},
+      },
+      { timeoutMs: 5000 },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.result!.planTableMappings).toHaveLength(2);
+  });
+
+  it('rejects analyze mode without querying the database at all', async () => {
+    const requestSql = jest.fn();
+    const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'testdb',
+        statement: { sql: 'SELECT 1', source: 'editor' },
+        plan: { mode: 'analyze', allowExecution: true },
+      },
+      { timeoutMs: 5000 },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('Analyze mode is not implemented yet');
+    expect(requestSql).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a failed EXPLAIN with detail instead of throwing', async () => {
+    const requestSql = jest.fn().mockRejectedValue(new Error('permission denied for table orders'));
+    const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'testdb',
+        statement: { sql: 'SELECT * FROM orders', source: 'editor' },
+        plan: {},
+      },
+      { timeoutMs: 5000 },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('Failed to retrieve the execution plan.');
+    expect(result.message).toContain('permission denied for table orders');
+  });
+
+  const target = { databaseName: 'testdb', tableName: 'perf_orders' };
+  const options = {
+    limits: {
+      maxTables: 8,
+      maxColumnsPerTable: 40,
+      maxIndexesPerTable: 20,
+      maxPayloadBytes: 200_000,
+    },
+    timeoutMs: 5000,
+  };
+
+  // Routes each catalog query to a fixture by inspecting the SQL text -
+  // more robust than relying on collectTableDefinition's Promise.all() call
+  // order, and reads like the actual queries being simulated.
+  const routedRequestSql = (rowsBySection: {
+    columns?: unknown[];
+    constraints?: unknown[];
+    indexes?: unknown[];
+    partitioning?: unknown[];
+    tableStatistics?: unknown[];
+    columnStatistics?: unknown[];
+    physicalHealth?: unknown[];
+  }) =>
+    jest.fn(async (params: { sql: string; conditions?: { binds?: string[] }; meta?: unknown }) => {
+      const { sql } = params;
+      if (sql.includes('information_schema.columns')) {
+        return { rows: (rowsBySection.columns ?? []).map((values) => ({ values })) };
+      }
+      if (sql.includes('FROM pg_constraint')) {
+        return { rows: (rowsBySection.constraints ?? []).map((values) => ({ values })) };
+      }
+      if (sql.includes('FROM pg_index')) {
+        return { rows: (rowsBySection.indexes ?? []).map((values) => ({ values })) };
+      }
+      if (sql.includes('FROM pg_partitioned_table')) {
+        return { rows: (rowsBySection.partitioning ?? []).map((values) => ({ values })) };
+      }
+      if (sql.includes('FROM pg_stats')) {
+        return { rows: (rowsBySection.columnStatistics ?? []).map((values) => ({ values })) };
+      }
+      if (sql.includes('n_live_tup')) {
+        return { rows: (rowsBySection.physicalHealth ?? []).map((values) => ({ values })) };
+      }
+      if (sql.includes('reltuples')) {
+        return { rows: (rowsBySection.tableStatistics ?? []).map((values) => ({ values })) };
+      }
+      throw new Error(`PostgresPerformanceTuningProvider.test.ts: unrouted SQL: ${sql}`);
+    });
+
+  describe('collectTableDefinition', () => {
+    it('assembles columns/constraints/indexes/partitioning and renders a DDL', async () => {
+      const requestSql = routedRequestSql({
+        columns: [
+          {
+            name: 'id',
+            data_type: 'integer',
+            udt_name: 'int4',
+            is_nullable: 'NO',
+            column_default: "nextval('perf_orders_id_seq'::regclass)",
+            ordinal_position: 1,
+            comment: null,
+          },
+        ],
+        constraints: [
+          {
+            constraint_name: 'perf_orders_pkey',
+            contype: 'p',
+            columns: ['id'],
+            referenced_schema: null,
+            referenced_table: null,
+            referenced_columns: null,
+            definition: 'PRIMARY KEY (id)',
+          },
+        ],
+        indexes: [
+          {
+            index_name: 'perf_orders_pkey',
+            is_unique: true,
+            is_primary: true,
+            is_valid: true,
+            index_type: 'btree',
+            predicate: null,
+            n_key_atts: 1,
+            columns: [{ position: 1, name: 'id', expression: null, desc: false }],
+          },
+        ],
+        partitioning: [],
+      });
+      const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectTableDefinition(target, options);
+
+      expect(result.ok).toBe(true);
+      expect(result.result!.columns).toHaveLength(1);
+      expect(result.result!.constraints).toHaveLength(1);
+      expect(result.result!.indexes).toHaveLength(1);
+      expect(result.result!.partitioning).toBeUndefined();
+      expect(result.result!.ddl).toContain('CREATE TABLE perf_orders (');
+
+      // Every query is scoped to exactly this one table (§9.3), not a
+      // schema-wide scan, and is tagged as internal collection so a future
+      // SQL History integration can exclude it without pattern-matching SQL
+      // text (§6.3).
+      for (const call of requestSql.mock.calls) {
+        expect(call[0].conditions.binds[0]).toBe('perf_orders');
+        expect(call[0].meta).toEqual({ type: 'performanceTuningContext' });
+      }
+    });
+
+    it('reports the table as not found when the columns query returns nothing', async () => {
+      const requestSql = routedRequestSql({});
+      const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectTableDefinition(target, options);
+      expect(result.ok).toBe(false);
+      expect(result.message).toContain('was not found');
+    });
+
+    it('still succeeds with a warning when only a secondary section fails', async () => {
+      const requestSql = jest.fn(async ({ sql }: { sql: string }) => {
+        if (sql.includes('information_schema.columns')) {
+          return {
+            rows: [
+              {
+                values: {
+                  name: 'id',
+                  data_type: 'integer',
+                  is_nullable: 'NO',
+                  column_default: null,
+                  ordinal_position: 1,
+                  comment: null,
+                },
+              },
+            ],
+          };
+        }
+        if (sql.includes('FROM pg_index')) {
+          throw new Error('permission denied for pg_index');
+        }
+        return { rows: [] };
+      });
+      const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectTableDefinition(target, options);
+      expect(result.ok).toBe(true);
+      expect(result.result!.columns).toHaveLength(1);
+      expect(result.result!.indexes).toEqual([]);
+      expect(result.message).toContain('indexes');
+      expect(result.message).toContain('permission denied for pg_index');
+    });
+  });
+
+  describe('collectTableStatistics', () => {
+    it('maps a single-row result', async () => {
+      const requestSql = routedRequestSql({
+        tableStatistics: [
+          {
+            estimated_row_count: 50,
+            table_bytes: '8192',
+            index_bytes: 65536,
+            total_bytes: 73728,
+            n_mod_since_analyze: 50,
+            last_analyze: new Date('2026-08-16T06:51:39.276Z'),
+            last_autoanalyze: null,
+          },
+        ],
+      });
+      const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectTableStatistics(target, options);
+      expect(result.ok).toBe(true);
+      expect(result.result!.estimatedRowCount?.value).toBe(50);
+      expect(result.result!.tableBytes?.value).toBe(8192);
+    });
+
+    it('reports not found instead of a fabricated empty statistics object', async () => {
+      const requestSql = routedRequestSql({ tableStatistics: [] });
+      const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectTableStatistics(target, options);
+      expect(result.ok).toBe(false);
+      expect(result.message).toContain('was not found');
+    });
+  });
+
+  describe('collectColumnStatistics', () => {
+    it('builds one placeholder per requested column and maps the rows', async () => {
+      const requestSql = routedRequestSql({
+        columnStatistics: [
+          { attname: 'status', n_distinct: 2, null_frac: 0, avg_width: 5, correlation: 0.5, reltuples: 50 },
+          { attname: 'customer_id', n_distinct: -1, null_frac: 0, avg_width: 4, correlation: 1, reltuples: 50 },
+        ],
+      });
+      const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectColumnStatistics(
+        { ...target, columnNames: ['status', 'customer_id'] },
+        options,
+      );
+
+      expect(result.ok).toBe(true);
+      expect(result.result!.map((c) => c.columnName)).toEqual(['status', 'customer_id']);
+
+      const [call] = requestSql.mock.calls;
+      expect(call[0].sql).toContain('ps.attname IN ($3, $4)');
+      expect(call[0].conditions.binds).toEqual(['perf_orders', '', 'status', 'customer_id']);
+    });
+
+    it('returns an empty result without querying when no columns are requested', async () => {
+      const requestSql = jest.fn();
+      const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectColumnStatistics({ ...target, columnNames: [] }, options);
+      expect(result).toEqual({ ok: true, message: '', result: [] });
+      expect(requestSql).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('collectPhysicalHealth', () => {
+    it('maps dead/live tuple counts', async () => {
+      const requestSql = routedRequestSql({
+        physicalHealth: [
+          {
+            n_live_tup: 90,
+            n_dead_tup: 10,
+            n_mod_since_analyze: 5,
+            last_vacuum: null,
+            last_autovacuum: new Date('2026-08-16T00:00:00.000Z'),
+            last_analyze: null,
+            last_autoanalyze: null,
+          },
+        ],
+      });
+      const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectPhysicalHealth(target, options);
+      expect(result.ok).toBe(true);
+      const byName = Object.fromEntries(result.result!.metrics.map((m) => [m.name, m.value]));
+      expect(byName.liveTuples).toBe(90);
+      expect(byName.deadTuples).toBe(10);
+    });
+
+    it('wraps a rejected query into a GeneralResult instead of throwing', async () => {
+      const requestSql = jest.fn().mockRejectedValue(new Error('connection reset'));
+      const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectPhysicalHealth(target, options);
+      expect(result.ok).toBe(false);
+      expect(result.message).toContain('Failed to collect physical health');
+      expect(result.message).toContain('connection reset');
+    });
+  });
+
+  it('reports capability status: everything true except analyzedExecutionPlan', async () => {
+    const provider = new PostgresPerformanceTuningProvider(makeDriver(jest.fn()));
+    const result = await provider.checkCapabilities({ databaseName: 'testdb' });
+
+    expect(result.ok).toBe(true);
+    expect(result.result).toEqual({
+      executionPlan: { available: true, source: 'EXPLAIN (FORMAT JSON)' },
+      analyzedExecutionPlan: expect.objectContaining({ available: false }),
+      tableDefinition: expect.objectContaining({ available: true }),
+      optimizerStatistics: expect.objectContaining({ available: true }),
+      physicalHealth: expect.objectContaining({ available: true }),
+    });
+  });
+});
+
+// Runs the actual catalog SQL against a live PostgreSQL (the same Docker
+// fixture __tests__/db/drivers/PostgresDriver.test.ts uses), not stubbed
+// rows. The unit tests above lock in row-mapping/orchestration behavior
+// against hand-built fixtures; this is what actually caught real bugs while
+// writing this file (node-postgres returning bigint as a string and
+// timestamptz as a Date, not the "nice" JS number/string shape) - stubbed
+// tests alone would not have.
+describe('PostgresPerformanceTuningProvider (live PostgreSQL)', () => {
+  const connectOption: ConnectionSetting = {
+    host: '127.0.0.1',
+    port: 6002,
+    user: 'testuser',
+    password: 'testpass',
+    database: 'testdb',
+    dbType: DBType.Postgres,
+    name: 'postgres-performance-tuning-test',
+  };
+  const target = { databaseName: 'testdb', tableName: 'perf_orders' };
+  const options = {
+    limits: { maxTables: 8, maxColumnsPerTable: 40, maxIndexesPerTable: 20, maxPayloadBytes: 200_000 },
+    timeoutMs: 5000,
+  };
+
+  let driver: PostgresDriver;
+  let provider: PostgresPerformanceTuningProvider;
+
+  beforeAll(async () => {
+    await init();
+    driver = new PostgresDriver(connectOption);
+    await driver.connect();
+    provider = new PostgresPerformanceTuningProvider(driver);
+  });
+
+  afterAll(async () => {
+    await driver?.disconnect();
+  });
+
+  it('retrieves an estimate plan and resolves perf_orders from it', async () => {
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'testdb',
+        statement: {
+          sql: "SELECT * FROM perf_orders WHERE status = 'shipped'",
+          source: 'editor',
+        },
+        plan: {},
+      },
+      { timeoutMs: 5000 },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.result!.planTableMappings?.[0]).toMatchObject({ tableName: 'perf_orders' });
+    // Postgres' own EXPLAIN JSON shape, not something this driver invented.
+    expect(result.result!.raw).toMatchObject([{ Plan: expect.objectContaining({}) }]);
+  });
+
+  it('collects DDL/columns/constraints/indexes for perf_orders, including the CHECK constraint and partial/expression indexes', async () => {
+    const result = await provider.collectTableDefinition(target, options);
+
+    expect(result.ok).toBe(true);
+    const def = result.result!;
+
+    expect(def.columns.map((c) => c.columnName)).toEqual(
+      expect.arrayContaining(['id', 'customer_id', 'status', 'amount']),
+    );
+    const idColumn = def.columns.find((c) => c.columnName === 'id')!;
+    expect(idColumn.nullable).toBe(false);
+    expect(idColumn.defaultExpression).toContain('nextval');
+
+    expect(def.constraints).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'primaryKey', columns: ['id'] }),
+        expect.objectContaining({ type: 'check', checkExpression: expect.stringContaining('amount') }),
+      ]),
+    );
+
+    const indexNames = def.indexes.map((i) => i.indexName);
+    expect(indexNames).toEqual(
+      expect.arrayContaining([
+        'perf_orders_pkey',
+        'idx_perf_orders_customer_status',
+        'idx_perf_orders_status_partial',
+        'idx_perf_orders_lower_status',
+      ]),
+    );
+    const partial = def.indexes.find((i) => i.indexName === 'idx_perf_orders_status_partial')!;
+    expect(partial.predicate).toContain('shipped');
+    const expressionIndex = def.indexes.find((i) => i.indexName === 'idx_perf_orders_lower_status')!;
+    expect(expressionIndex.columns[0].expression).toContain('lower');
+    const compositeIndex = def.indexes.find(
+      (i) => i.indexName === 'idx_perf_orders_customer_status',
+    )!;
+    expect(compositeIndex.columns.map((c) => c.columnName)).toEqual(['customer_id', 'status']);
+
+    expect(def.ddl).toContain('CREATE TABLE');
+    expect(def.ddl).toContain('perf_orders');
+  });
+
+  it('reports table statistics with real row counts and byte sizes', async () => {
+    const result = await provider.collectTableStatistics(target, options);
+    expect(result.ok).toBe(true);
+    expect(result.result!.estimatedRowCount?.value).toBeGreaterThan(0);
+    expect(result.result!.tableBytes?.value).toBeGreaterThan(0);
+    expect(result.result!.tableBytes?.source).toBe('pg_table_size');
+  });
+
+  it('reports column statistics only for the requested columns', async () => {
+    const result = await provider.collectColumnStatistics(
+      { ...target, columnNames: ['status'] },
+      options,
+    );
+    expect(result.ok).toBe(true);
+    expect(result.result!.map((c) => c.columnName)).toEqual(['status']);
+    // perf_orders has exactly 2 distinct status values ('new'/'shipped').
+    expect(result.result![0].distinctCount?.value).toBe(2);
+  });
+
+  it('reports physical health metrics without a maintenance verdict', async () => {
+    const result = await provider.collectPhysicalHealth(target, options);
+    expect(result.ok).toBe(true);
+    const names = result.result!.metrics.map((m) => m.name);
+    expect(names).toEqual(expect.arrayContaining(['liveTuples', 'deadTuples']));
+  });
+
+  it('reports a table that does not exist as not found, not a thrown error', async () => {
+    const result = await provider.collectTableDefinition(
+      { ...target, tableName: 'no_such_table_xyz' },
+      options,
+    );
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('was not found');
+  });
+
+  it('end-to-end via getPerformanceTuningContext(): a complete, schema-valid partial-or-complete context', async () => {
+    const result = await driver.getPerformanceTuningContext({
+      databaseName: 'testdb',
+      statement: {
+        sql: "SELECT * FROM perf_orders WHERE status = 'shipped'",
+        source: 'editor',
+      },
+      plan: {},
+    });
+
+    expect(result.ok).toBe(true);
+    const context = result.result!;
+    expect(context.tables).toHaveLength(1);
+    expect(context.tables[0].tableName).toBe('perf_orders');
+    expect(context.tables[0].definition?.columns.length).toBeGreaterThan(0);
+    expect(context.tables[0].statistics?.estimatedRowCount?.value).toBeGreaterThan(0);
+    expect(context.tables[0].physicalHealth?.metrics.length).toBeGreaterThan(0);
+    expect(context.database.version).toBeDefined();
+  });
+});

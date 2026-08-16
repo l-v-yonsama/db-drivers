@@ -1,0 +1,280 @@
+import { PlanNode } from './PlanNode';
+
+// See misc/design/performance-tuning-context-implementation-plan.ja.md for
+// the full rationale behind every field below. In short: this is a
+// vendor-neutral snapshot of "why is this one SQL statement slow", built
+// from the execution plan outward to only the tables/columns/indexes that
+// plan touches. Driver implementations report observed facts and their
+// provenance (source, unit, estimated vs. actual); they never return
+// conclusions ("run VACUUM") or AI output - that is strictly an upper-layer
+// responsibility.
+//
+// Text fields here (DDL, DEFAULT/CHECK expressions, index predicates, plan
+// predicates, the SQL text itself) are exactly what the driver read from the
+// database, with no literal-masking step - this matches every other
+// AI-facing path already shipped in db-notebook (schema/DDL prompts, "Annotate
+// SQL with AI", the RunQueryTool's row results), none of which redact
+// literals either. An earlier version of this file added a type-enforced
+// masking boundary (`Unsanitized<T>`) specific to this one feature; it was
+// removed for being inconsistent with that existing, already-shipped
+// posture and for gating on a redactor that didn't exist. If per-field
+// literal redaction is ever wanted, it should be designed once, for all
+// AI-facing paths, not bolted onto this feature alone.
+
+// Second, optional argument accepted by getPerformanceTuningContext() and
+// checkPerformanceTuningContextAvailability(), kept separate from the params
+// object itself (mirroring fetch()'s `{ signal }`) since cancellation is a
+// call-scoped control concern, not request data that belongs in a saved
+// Notebook or an AI payload. Threaded down into
+// PerformanceTuningContextProvider so a caller can actually cancel
+// in-flight collection once Phase 1 wires in real Provider calls.
+export type PerformanceTuningCallOptions = {
+  signal?: AbortSignal;
+};
+
+export type PerformanceTuningContextParams = {
+  databaseName: string;
+  schemaName?: string;
+
+  statement: {
+    sql: string;
+    source: 'statementStatistics' | 'sqlHistory' | 'editor';
+    normalizedSql?: string;
+    statistics?: SelectedStatementStatistics;
+  };
+
+  plan: {
+    mode?: 'estimate' | 'analyze'; // default: 'estimate'
+    binds?: unknown[]; // used only to obtain a parameter-specific plan; never echoed back
+    bindMetadata?: Array<{
+      type?: string;
+      selectivityClass?: string;
+    }>;
+    allowExecution?: boolean; // required to be true when mode === 'analyze'
+    timeoutMs?: number;
+  };
+
+  targetTables?: Array<{
+    schemaName?: string;
+    tableName: string;
+  }>;
+
+  limits?: {
+    maxTables?: number;
+    maxColumnsPerTable?: number;
+    maxIndexesPerTable?: number;
+    maxPayloadBytes?: number;
+  };
+};
+
+export type DatabaseContext = {
+  vendor: string;
+  version?: string;
+  databaseName: string;
+  schemaName?: string;
+  environment?: string;
+};
+
+export type StatementContext = {
+  sql: string;
+  source: 'statementStatistics' | 'sqlHistory' | 'editor';
+  bindMetadata?: Array<{
+    type?: string;
+    selectivityClass?: string;
+  }>;
+};
+
+// Copied verbatim from the caller-selected getStatementStatistics() /
+// SQL History row at selection time. This API never re-queries the source
+// to refresh it, and never substitutes 0 for a metric the source did not
+// have - that would misrepresent SQL History rows as having DB-side stats.
+export type WorkloadContext = {
+  statementId?: string;
+  executionCount?: number;
+  totalElapsedTimeMs?: number;
+  averageElapsedTimeMs?: number;
+  minElapsedTimeMs?: number;
+  maxElapsedTimeMs?: number;
+  rowsProcessed?: number;
+  rowsExamined?: number;
+  logicalReads?: number;
+  physicalReads?: number;
+  statisticsSince?: string;
+  lastExecutedAt?: string;
+  source?: string;
+};
+
+// What the caller passes in via `statement.statistics`; identical shape to
+// what ends up in `PerformanceTuningContext.workload` after the API copies it.
+export type SelectedStatementStatistics = WorkloadContext;
+
+export type ExecutionPlanContext = {
+  mode: 'estimate' | 'analyze';
+  format: 'json';
+  vendorPlan?: unknown; // the vendor's own plan JSON, as returned by EXPLAIN
+  normalizedPlan?: PlanNode;
+  planningTimeMs?: number;
+  executionTimeMs?: number;
+  warnings: string[];
+};
+
+export type ColumnDefinition = {
+  columnName: string;
+  dataType: string;
+  nullable: boolean;
+  defaultExpression?: string;
+  ordinalPosition?: number;
+  comment?: string;
+};
+
+export type ConstraintDefinition = {
+  constraintName?: string;
+  type: 'primaryKey' | 'uniqueKey' | 'foreignKey' | 'check';
+  columns?: string[];
+  referencedSchemaName?: string;
+  referencedTableName?: string;
+  referencedColumns?: string[];
+  checkExpression?: string;
+};
+
+export type IndexColumnDefinition = {
+  columnName?: string;
+  expression?: string; // expression / function-based index
+  direction?: 'asc' | 'desc';
+  prefixLength?: number;
+};
+
+export type IndexDefinition = {
+  indexName: string;
+  unique: boolean;
+  primary?: boolean;
+  columns: IndexColumnDefinition[];
+  includedColumns?: string[];
+  predicate?: string; // partial / filtered index predicate
+  visible?: boolean;
+  enabled?: boolean;
+  indexType?: string; // btree, hash, gin, columnstore, ...; kept as the vendor's own term
+};
+
+export type PartitioningDefinition = {
+  strategy: string; // range, list, hash, ...; kept as the vendor's own term
+  columns?: string[];
+  partitionCount?: number;
+};
+
+export type TableDefinitionContext = {
+  ddl?: string; // as returned by the vendor (e.g. SHOW CREATE TABLE / pg_get_*def)
+  columns: ColumnDefinition[];
+  constraints: ConstraintDefinition[];
+  indexes: IndexDefinition[];
+  partitioning?: PartitioningDefinition;
+};
+
+// Every observed value carries its own provenance instead of one
+// estimated/source pair per section: an estimated row count, an exact size
+// read via a size function, and an updated-at timestamp from yet another
+// catalog view are three different degrees of trust, and collapsing them
+// into a single container-level flag would tell the AI they're all equally
+// reliable when they are not.
+export type MetricValue<T> = {
+  value: T;
+  estimated: boolean;
+  source: string;
+  unit?: string;
+};
+
+export type ColumnStatisticsContext = {
+  columnName: string;
+  distinctCount?: MetricValue<number>;
+  distinctFraction?: MetricValue<number>;
+  nullFraction?: MetricValue<number>;
+  averageWidthBytes?: MetricValue<number>;
+  correlation?: MetricValue<number>;
+  histogramType?: MetricValue<string>;
+  histogramBucketCount?: MetricValue<number>;
+  statisticsUpdatedAt?: MetricValue<string>;
+};
+
+export type TableStatisticsContext = {
+  estimatedRowCount?: MetricValue<number>;
+  tableBytes?: MetricValue<number>;
+  indexBytes?: MetricValue<number>;
+  totalBytes?: MetricValue<number>;
+  statisticsUpdatedAt?: MetricValue<string>;
+  modificationsSinceAnalyze?: MetricValue<number>;
+  sampleRows?: MetricValue<number>;
+  columns: ColumnStatisticsContext[];
+};
+
+// Deliberately not named "garbage"/vacuum-need in any language: Providers
+// report observations only (dead tuples, fragmentation, free space, stale
+// statistics, ...), never a maintenance verdict. Thresholding against table
+// size / workload / vendor quirks is a deterministic upper-layer rule.
+export type PhysicalHealthContext = {
+  provider: string;
+  metrics: Array<{
+    name: string;
+    value: number | string | boolean | null;
+    unit?: string;
+    estimated?: boolean;
+    description?: string;
+  }>;
+};
+
+export type TableTuningContext = {
+  schemaName?: string;
+  tableName: string;
+  definition?: TableDefinitionContext;
+  statistics?: TableStatisticsContext;
+  physicalHealth?: PhysicalHealthContext;
+  warnings: string[];
+};
+
+export type PlanTableMapping = {
+  planNodeId: string;
+  schemaName?: string;
+  tableName: string;
+  alias?: string;
+  indexName?: string;
+  estimatedRows?: number;
+  actualRows?: number;
+  rowEstimateRatio?: number;
+  filterColumns?: string[];
+  joinColumns?: string[];
+  groupColumns?: string[];
+  sortColumns?: string[];
+};
+
+export type UnavailableSectionName =
+  | 'executionPlan'
+  | 'analyzedExecutionPlan'
+  | 'tableDefinition'
+  | 'tableStatistics'
+  | 'columnStatistics'
+  | 'physicalHealth';
+
+export type UnavailableSection = {
+  section: UnavailableSectionName;
+  schemaName?: string;
+  tableName?: string;
+  reason: string;
+  requiredPermissions?: string[];
+};
+
+export type PerformanceTuningContext = {
+  formatVersion: 1;
+
+  database: DatabaseContext;
+  statement: StatementContext;
+  workload?: WorkloadContext;
+  executionPlan: ExecutionPlanContext;
+  tables: TableTuningContext[];
+  planTableMappings: PlanTableMapping[];
+
+  collection: {
+    collectedAt: string;
+    status: 'complete' | 'partial';
+    warnings: string[];
+    unavailableSections: UnavailableSection[];
+  };
+};
