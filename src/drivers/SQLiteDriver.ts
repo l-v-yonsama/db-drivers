@@ -14,8 +14,10 @@ import { parseQuery, QuoteChar } from '../helpers';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  GeneralResult,
   LimitClauseStyle,
   QueryParams,
+  StatementStatisticsParams,
   TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
@@ -214,6 +216,23 @@ export class SQLiteDriver extends RDSBaseDriver {
       meta: { type: 'select' },
     });
     return rdb.rs.rows[0].values.version;
+  }
+
+  supportsGetStatementStatistics(): boolean {
+    return false;
+  }
+
+  async checkStatementStatisticsAvailability(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    databaseName: string,
+  ): Promise<GeneralResult<void>> {
+    return { ok: false, message: '' };
+  }
+
+  async getStatementStatistics(
+    _params: StatementStatisticsParams,
+  ): Promise<ResultSetData> {
+    throw new Error('SQLite does not support statement statistics');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -14,13 +14,19 @@ import { ResultSetHeader } from 'mysql2/promise';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  GeneralResult,
   LimitClauseStyle,
   QueryParams,
+  StatementStatisticsParams,
   TransactionIsolationLevel,
 } from '../types';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar } from '../helpers';
+import {
+  getStatementStatisticsOrderByColumn,
+  normalizeStatementStatisticsParams,
+} from '../utils';
 
 export class MySQLDriver extends RDSBaseDriver {
   private con: mysql.Connection | undefined;
@@ -336,6 +342,100 @@ export class MySQLDriver extends RDSBaseDriver {
     const sql = 'SELECT VERSION() as version';
     const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
     return rdb.rs.rows[0].values.version;
+  }
+
+  supportsGetStatementStatistics(): boolean {
+    return true;
+  }
+
+  async checkStatementStatisticsAvailability(
+    // Performance Schema statement digests are server-wide; databaseName is
+    // applied by getStatementStatistics() through SCHEMA_NAME.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    databaseName: string,
+  ): Promise<GeneralResult<void>> {
+    try {
+      const status = await this.requestSql({
+        sql: 'SELECT @@performance_schema AS performance_schema_enabled',
+      });
+      const values = status.rows[0]?.values;
+      const performanceSchemaEnabled = Number(
+        values?.performance_schema_enabled ?? 0,
+      );
+      if (performanceSchemaEnabled !== 1) {
+        return {
+          ok: false,
+          message:
+            'Statement statistics are unavailable. Enable Performance Schema and the statements_digest consumer, then try again.',
+        };
+      }
+
+      // Probe the exact table used by getStatementStatistics(). Requiring
+      // setup_consumers access as well would reject otherwise-valid users
+      // that can read digest statistics but not Performance Schema settings.
+      await this.requestSql({
+        sql: `SELECT DIGEST
+FROM performance_schema.events_statements_summary_by_digest
+WHERE FALSE`,
+      });
+      return { ok: true, message: '' };
+    } catch (e) {
+      const detail = e instanceof Error ? e.message : String(e);
+      return {
+        ok: false,
+        message:
+          'Statement statistics are unavailable. Enable the statements_digest consumer, grant SELECT access to performance_schema.events_statements_summary_by_digest, and try again.' +
+          (detail ? ` ${detail}` : ''),
+      };
+    }
+  }
+
+  async getStatementStatistics(
+    params: StatementStatisticsParams,
+  ): Promise<ResultSetData> {
+    const availability = await this.checkStatementStatisticsAvailability(
+      params.databaseName,
+    );
+    if (!availability.ok) {
+      throw new Error(availability.message);
+    }
+
+    const normalized = normalizeStatementStatisticsParams(params);
+    const orderBy = getStatementStatisticsOrderByColumn(normalized.sortBy);
+    const sql = `SELECT
+  DIGEST AS statement_id,
+  SCHEMA_NAME AS database_name,
+  DIGEST_TEXT AS query,
+  COUNT_STAR AS execution_count,
+  SUM_TIMER_WAIT / 1000000000 AS total_elapsed_time_ms,
+  AVG_TIMER_WAIT / 1000000000 AS average_elapsed_time_ms,
+  MIN_TIMER_WAIT / 1000000000 AS min_elapsed_time_ms,
+  MAX_TIMER_WAIT / 1000000000 AS max_elapsed_time_ms,
+  SUM_ROWS_SENT AS rows_processed,
+  SUM_ROWS_EXAMINED AS rows_examined,
+  NULL AS logical_reads,
+  NULL AS physical_reads,
+  LAST_SEEN AS last_executed_at,
+  FIRST_SEEN AS statistics_since,
+  'performance_schema.events_statements_summary_by_digest' AS source
+FROM performance_schema.events_statements_summary_by_digest
+WHERE LOWER(SCHEMA_NAME) = LOWER(?)
+  AND DIGEST IS NOT NULL
+  AND COUNT_STAR > 0
+  AND AVG_TIMER_WAIT / 1000000000 >= ?
+  AND DIGEST_TEXT NOT LIKE '%events_statements_summary_by_digest%'
+ORDER BY ${orderBy} DESC
+LIMIT ${normalized.limit}`;
+
+    return await this.requestSql({
+      sql,
+      conditions: {
+        binds: [
+          normalized.databaseName,
+          String(normalized.minimumAverageElapsedTimeMs),
+        ],
+      },
+    });
   }
 
   async getLocks(dbName: string): Promise<ResultSetData> {

@@ -11,14 +11,20 @@ import oracledb from 'oracledb';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  GeneralResult,
   LimitClauseStyle,
   OracleConnectionType,
   QueryParams,
+  StatementStatisticsParams,
   TransactionIsolationLevel,
 } from '../types';
 import { OracleColumnType } from '../types/resource/OracleColumnType';
 import { QuoteChar } from '../helpers';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import {
+  getStatementStatisticsOrderByColumn,
+  normalizeStatementStatisticsParams,
+} from '../utils';
 
 // Recommended once-per-process setup (node-oracledb's own docs suggest this
 // application-startup pattern): rows as plain objects, and CLOB/BLOB values
@@ -287,6 +293,70 @@ export class OracleDriver extends RDSBaseDriver {
 
   async getVersion(): Promise<string> {
     return this.con?.oracleServerVersionString ?? '';
+  }
+
+  supportsGetStatementStatistics(): boolean {
+    return true;
+  }
+
+  async checkStatementStatisticsAvailability(
+    // Oracle connections are already scoped to one database/PDB.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    databaseName: string,
+  ): Promise<GeneralResult<void>> {
+    try {
+      await this.requestSql({
+        sql: 'SELECT SQL_ID FROM V$SQLSTATS WHERE 1 = 0',
+      });
+      return { ok: true, message: '' };
+    } catch (e) {
+      const detail = e instanceof Error ? e.message : String(e);
+      return {
+        ok: false,
+        message:
+          'Statement statistics are unavailable. Grant read access to V$SQLSTATS and try again.' +
+          (detail ? ` ${detail}` : ''),
+      };
+    }
+  }
+
+  async getStatementStatistics(
+    params: StatementStatisticsParams,
+  ): Promise<ResultSetData> {
+    const normalized = normalizeStatementStatisticsParams(params);
+    const orderBy = getStatementStatisticsOrderByColumn(normalized.sortBy);
+    const sql = `SELECT *
+FROM (
+  SELECT
+    SQL_ID AS "statement_id",
+    SYS_CONTEXT('USERENV', 'DB_NAME') AS "database_name",
+    SQL_TEXT AS "query",
+    EXECUTIONS AS "execution_count",
+    ELAPSED_TIME / 1000 AS "total_elapsed_time_ms",
+    CASE WHEN EXECUTIONS > 0 THEN ELAPSED_TIME / EXECUTIONS / 1000 END AS "average_elapsed_time_ms",
+    CAST(NULL AS NUMBER) AS "min_elapsed_time_ms",
+    CAST(NULL AS NUMBER) AS "max_elapsed_time_ms",
+    ROWS_PROCESSED AS "rows_processed",
+    CAST(NULL AS NUMBER) AS "rows_examined",
+    BUFFER_GETS AS "logical_reads",
+    DISK_READS AS "physical_reads",
+    LAST_ACTIVE_TIME AS "last_executed_at",
+    CAST(NULL AS TIMESTAMP) AS "statistics_since",
+    'V$SQLSTATS' AS "source"
+  FROM V$SQLSTATS
+  WHERE EXECUTIONS > 0
+    AND ELAPSED_TIME / EXECUTIONS / 1000 >= :1
+    AND UPPER(SQL_TEXT) NOT LIKE '%V$SQLSTATS%'
+  ORDER BY "${orderBy}" DESC
+)
+WHERE ROWNUM <= ${normalized.limit}`;
+
+    return await this.requestSql({
+      sql,
+      conditions: {
+        binds: [String(normalized.minimumAverageElapsedTimeMs)],
+      },
+    });
   }
 
   async getCurrentSchema(): Promise<string> {

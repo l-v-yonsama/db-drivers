@@ -14,13 +14,19 @@ import { PoolConfig, default as pg } from 'pg';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  GeneralResult,
   LimitClauseStyle,
   QueryParams,
+  StatementStatisticsParams,
   TransactionIsolationLevel,
 } from '../types';
 import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar } from '../helpers';
+import {
+  getStatementStatisticsOrderByColumn,
+  normalizeStatementStatisticsParams,
+} from '../utils';
 
 /**
  * Convert driver-specific class instances (e.g. `PostgresInterval`, which
@@ -325,6 +331,77 @@ export class PostgresDriver extends RDSBaseDriver {
     const sql = 'SHOW server_version as version';
     const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
     return rdb.rs.rows[0].values.version;
+  }
+
+  supportsGetStatementStatistics(): boolean {
+    return true;
+  }
+
+  async checkStatementStatisticsAvailability(
+    // PostgreSQL is already connected to a single database; the probe checks
+    // the extension view in that current database.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    databaseName: string,
+  ): Promise<GeneralResult<void>> {
+    try {
+      await this.requestSql({
+        sql: 'SELECT queryid FROM pg_stat_statements WHERE FALSE',
+      });
+      return { ok: true, message: '' };
+    } catch (e) {
+      const detail = e instanceof Error ? e.message : String(e);
+      return {
+        ok: false,
+        message:
+          'Statement statistics are unavailable. Install and preload pg_stat_statements, grant SELECT access, and try again.' +
+          (detail ? ` ${detail}` : ''),
+      };
+    }
+  }
+
+  async getStatementStatistics(
+    params: StatementStatisticsParams,
+  ): Promise<ResultSetData> {
+    const normalized = normalizeStatementStatisticsParams(params);
+    const orderBy = getStatementStatisticsOrderByColumn(normalized.sortBy);
+    const majorVersion = await this.getMajorVersion();
+    const totalTime = majorVersion >= 13 ? 'total_exec_time' : 'total_time';
+    const meanTime = majorVersion >= 13 ? 'mean_exec_time' : 'mean_time';
+    const minTime = majorVersion >= 13 ? 'min_exec_time' : 'min_time';
+    const maxTime = majorVersion >= 13 ? 'max_exec_time' : 'max_time';
+    const sql = `SELECT
+  queryid::text AS statement_id,
+  current_database() AS database_name,
+  query,
+  calls AS execution_count,
+  ${totalTime} AS total_elapsed_time_ms,
+  ${meanTime} AS average_elapsed_time_ms,
+  ${minTime} AS min_elapsed_time_ms,
+  ${maxTime} AS max_elapsed_time_ms,
+  rows AS rows_processed,
+  NULL::bigint AS rows_examined,
+  (shared_blks_hit + shared_blks_read) AS logical_reads,
+  shared_blks_read AS physical_reads,
+  NULL::timestamptz AS last_executed_at,
+  NULL::timestamptz AS statistics_since,
+  'pg_stat_statements' AS source
+FROM pg_stat_statements
+WHERE dbid = (SELECT oid FROM pg_database WHERE LOWER(datname) = LOWER($1))
+  AND calls > 0
+  AND ${meanTime} >= $2
+  AND query NOT ILIKE '%pg_stat_statements%'
+ORDER BY ${orderBy} DESC
+LIMIT ${normalized.limit}`;
+
+    return await this.requestSql({
+      sql,
+      conditions: {
+        binds: [
+          normalized.databaseName,
+          String(normalized.minimumAverageElapsedTimeMs),
+        ],
+      },
+    });
   }
 
   async getLocks(dbName: string): Promise<ResultSetData> {

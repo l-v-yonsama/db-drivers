@@ -20,15 +20,21 @@ import {
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  GeneralResult,
   LimitClauseStyle,
   QueryParams,
   ResultColumn,
   SQLServerAuthenticationType,
   SQLServerColumnType,
+  StatementStatisticsParams,
   TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar, wrapSingleQuote } from '../helpers';
+import {
+  getStatementStatisticsOrderByColumn,
+  normalizeStatementStatisticsParams,
+} from '../utils';
 
 const EXPLAIN_COLUMNS: RdhKey[] = [
   createRdhKey({
@@ -197,7 +203,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
   }
 
   async useDatabase(database: string): Promise<void> {
-    const sql = `USE ${database}`;
+    const sql = `USE [${database.replace(/\]/g, ']]')}]`;
     await this.requestSqlSub({ sql, dbTable: undefined });
   }
 
@@ -434,6 +440,91 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     const sql = `SELECT SERVERPROPERTY('productversion') as version`;
     const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
     return rdb.rs.rows[0].values.version;
+  }
+
+  supportsGetStatementStatistics(): boolean {
+    return true;
+  }
+
+  async checkStatementStatisticsAvailability(
+    databaseName: string,
+  ): Promise<GeneralResult<void>> {
+    try {
+      await this.useDatabase(databaseName);
+      const rdh = await this.requestSql({
+        sql: `SELECT actual_state_desc
+FROM sys.database_query_store_options`,
+      });
+      const state = String(
+        rdh.rows[0]?.values.actual_state_desc ?? '',
+      ).toUpperCase();
+      if (state === 'READ_WRITE' || state === 'READ_ONLY') {
+        return { ok: true, message: '' };
+      }
+      return {
+        ok: false,
+        message:
+          'Statement statistics are unavailable. Enable Query Store for this database and try again.',
+      };
+    } catch (e) {
+      const detail = e instanceof Error ? e.message : String(e);
+      return {
+        ok: false,
+        message:
+          'Statement statistics are unavailable. Grant Query Store read permissions (VIEW DATABASE STATE, or VIEW DATABASE PERFORMANCE STATE on SQL Server 2022+) and try again.' +
+          (detail ? ` ${detail}` : ''),
+      };
+    }
+  }
+
+  async getStatementStatistics(
+    params: StatementStatisticsParams,
+  ): Promise<ResultSetData> {
+    const availability = await this.checkStatementStatisticsAvailability(
+      params.databaseName,
+    );
+    if (!availability.ok) {
+      throw new Error(availability.message);
+    }
+
+    const normalized = normalizeStatementStatisticsParams(params);
+    const orderBy = getStatementStatisticsOrderByColumn(normalized.sortBy);
+    const sql = `SELECT TOP (${normalized.limit})
+  CONVERT(varchar(64), q.query_id) AS statement_id,
+  DB_NAME() AS database_name,
+  qt.query_sql_text AS [query],
+  SUM(rs.count_executions) AS execution_count,
+  SUM(CONVERT(float, rs.avg_duration) * rs.count_executions) / 1000.0 AS total_elapsed_time_ms,
+  SUM(CONVERT(float, rs.avg_duration) * rs.count_executions)
+    / NULLIF(SUM(rs.count_executions), 0) / 1000.0 AS average_elapsed_time_ms,
+  MIN(rs.min_duration) / 1000.0 AS min_elapsed_time_ms,
+  MAX(rs.max_duration) / 1000.0 AS max_elapsed_time_ms,
+  SUM(CONVERT(float, rs.avg_rowcount) * rs.count_executions) AS rows_processed,
+  NULL AS rows_examined,
+  SUM(CONVERT(float, rs.avg_logical_io_reads) * rs.count_executions) AS logical_reads,
+  SUM(CONVERT(float, rs.avg_physical_io_reads) * rs.count_executions) AS physical_reads,
+  MAX(rs.last_execution_time) AS last_executed_at,
+  MIN(rsi.start_time) AS statistics_since,
+  'query_store' AS source
+FROM sys.query_store_query_text qt
+JOIN sys.query_store_query q ON q.query_text_id = qt.query_text_id
+JOIN sys.query_store_plan p ON p.query_id = q.query_id
+JOIN sys.query_store_runtime_stats rs ON rs.plan_id = p.plan_id
+JOIN sys.query_store_runtime_stats_interval rsi
+  ON rsi.runtime_stats_interval_id = rs.runtime_stats_interval_id
+WHERE rs.execution_type = 0
+  AND qt.query_sql_text NOT LIKE '%sys.query_store_%'
+GROUP BY q.query_id, qt.query_sql_text
+HAVING SUM(CONVERT(float, rs.avg_duration) * rs.count_executions)
+  / NULLIF(SUM(rs.count_executions), 0) / 1000.0 >= @1
+ORDER BY ${orderBy} DESC`;
+
+    return await this.requestSql({
+      sql,
+      conditions: {
+        binds: [String(normalized.minimumAverageElapsedTimeMs)],
+      },
+    });
   }
 
   async getLocks(dbName: string): Promise<ResultSetData> {

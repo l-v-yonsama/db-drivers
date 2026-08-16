@@ -23,6 +23,7 @@ import {
   QStatement,
   QueryParams,
   SQLLang,
+  StatementStatisticsParams,
   TransactionControlType,
   TransactionIsolationLevel,
   ViewRecordsParams,
@@ -190,6 +191,13 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
 
   abstract getLocks(dbName: string): Promise<ResultSetData>;
   abstract getSessions(dbName: string): Promise<ResultSetData>;
+  abstract supportsGetStatementStatistics(): boolean;
+  abstract checkStatementStatisticsAvailability(
+    databaseName: string,
+  ): Promise<GeneralResult<void>>;
+  abstract getStatementStatistics(
+    params: StatementStatisticsParams,
+  ): Promise<ResultSetData>;
 
   async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
     const { sql, prepare } = params;

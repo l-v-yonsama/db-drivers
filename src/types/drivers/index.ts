@@ -4,4 +4,5 @@ export * from './MemcachedParams';
 export * from './QueryParams';
 export * from './ScanParams';
 export * from './SQLServer';
+export * from './StatementStatistics';
 export * from './TransactionControlType';
