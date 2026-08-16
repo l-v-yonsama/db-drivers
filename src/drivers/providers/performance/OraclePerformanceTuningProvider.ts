@@ -498,13 +498,20 @@ WHERE TABLE_OWNER = :1 AND TABLE_NAME = :2`;
 
 // `$COLUMN_PLACEHOLDERS` is substituted with `:3, :4, ...` (one per
 // requested column) before this is sent - see collectColumnStatistics().
+// Joined against ALL_TABLES for NUM_ROWS (aliased TABLE_NUM_ROWS): NUM_NULLS
+// is the whole column's null count, not scaled to whatever sample
+// DBMS_STATS analyzed, so mapOracleColumnStatisticsRow() divides by the
+// table's real row count rather than ALL_TAB_COL_STATISTICS' own
+// SAMPLE_SIZE (which can be smaller and would then overstate the fraction).
 const COLUMN_STATISTICS_SQL = `
 SELECT
-  COLUMN_NAME, NUM_DISTINCT, NUM_NULLS,
-  NUM_BUCKETS, LAST_ANALYZED, HISTOGRAM,
-  AVG_COL_LEN, SAMPLE_SIZE
-FROM ALL_TAB_COL_STATISTICS
-WHERE OWNER = :1 AND TABLE_NAME = :2 AND COLUMN_NAME IN ($COLUMN_PLACEHOLDERS)`;
+  s.COLUMN_NAME, s.NUM_DISTINCT, s.NUM_NULLS,
+  s.NUM_BUCKETS, s.LAST_ANALYZED, s.HISTOGRAM,
+  s.AVG_COL_LEN, s.SAMPLE_SIZE,
+  t.NUM_ROWS AS TABLE_NUM_ROWS
+FROM ALL_TAB_COL_STATISTICS s
+JOIN ALL_TABLES t ON t.OWNER = s.OWNER AND t.TABLE_NAME = s.TABLE_NAME
+WHERE s.OWNER = :1 AND s.TABLE_NAME = :2 AND s.COLUMN_NAME IN ($COLUMN_PLACEHOLDERS)`;
 
 const PHYSICAL_HEALTH_SQL = `
 SELECT CHAIN_CNT, LAST_ANALYZED

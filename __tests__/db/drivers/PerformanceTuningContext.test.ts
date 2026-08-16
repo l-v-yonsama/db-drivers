@@ -488,6 +488,66 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
       getVersion.mockRestore();
     }
   });
+
+  it('keeps successfully-collected column statistics even when table statistics fails', async () => {
+    const getVersion = jest
+      .spyOn(PostgresDriver.prototype, 'getVersion')
+      .mockResolvedValue('16.3');
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider(
+          async () => ({ ok: true, message: '', result: fakeCapabilities }),
+          {
+            collectExecutionPlan: async () => ({
+              ok: true,
+              message: '',
+              result: {
+                raw: {},
+                warnings: [],
+                planTableMappings: [{ planNodeId: 'n0', tableName: 'orders', estimatedRows: 1 }],
+              },
+            }),
+            collectTableDefinition: async () => ({
+              ok: true,
+              message: '',
+              result: { columns: [], constraints: [], indexes: [] },
+            }),
+            // collectTableStatistics()/collectColumnStatistics() are
+            // independent Provider calls - one failing must not discard the
+            // other's already-fetched result.
+            collectTableStatistics: async () => ({
+              ok: false,
+              message: 'permission denied for pg_stat_user_tables',
+            }),
+            collectColumnStatistics: async () => ({
+              ok: true,
+              message: '',
+              result: [{ columnName: 'status', distinctCount: { value: 2, estimated: true, source: 'x' } }],
+            }),
+            collectPhysicalHealth: async () => ({ ok: true, message: '', result: { metrics: [] } }),
+          },
+        ),
+      );
+
+      const result = await driver.getPerformanceTuningContext(baseParams());
+      expect(result.ok).toBe(true);
+      const table = result.result!.tables[0];
+      // The failed table-level statistics leaves no estimatedRowCount/etc.,
+      // but the successful column statistics must still be present, not
+      // silently dropped just because `statistics` had nowhere to attach.
+      expect(table.statistics).toBeDefined();
+      expect(table.statistics!.estimatedRowCount).toBeUndefined();
+      expect(table.statistics!.columns).toEqual([
+        expect.objectContaining({ columnName: 'status', distinctCount: expect.objectContaining({ value: 2 }) }),
+      ]);
+      expect(
+        result.result!.collection.unavailableSections.map((s) => s.section),
+      ).toEqual(['tableStatistics']);
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
 });
 
 describe('performance tuning context - timeout/cancel/payload/provenance (推奨着手順 step 6)', () => {
@@ -649,6 +709,41 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
       ).toBe(true);
       // The truncated result must still be schema-valid, not just smaller.
       expect(validatePerformanceTuningContext(context)).toEqual([]);
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  it('fails outright when even the fully-truncated skeleton still exceeds maxPayloadBytes', async () => {
+    const getVersion = mockVersion();
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider({
+          collectExecutionPlan: async () => planWithOneTable('orders'),
+          collectTableDefinition: async () => ({
+            ok: true,
+            message: '',
+            result: { columns: [], constraints: [], indexes: [] },
+          }),
+          collectTableStatistics: async () => ({ ok: true, message: '', result: {} }),
+          collectColumnStatistics: async () => ({ ok: true, message: '', result: [] }),
+          collectPhysicalHealth: async () => ({ ok: true, message: '', result: { metrics: [] } }),
+        }),
+      );
+
+      // 1 byte (the clamp's own floor) is unsatisfiable by any real
+      // context, even one with every table/plan already dropped - this
+      // must surface as a hard failure, not a "success" carrying an
+      // over-budget payload.
+      const result = await driver.getPerformanceTuningContext({
+        ...baseParams(),
+        limits: { maxPayloadBytes: 1 },
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.message).toContain('maxPayloadBytes');
+      expect(result.result).toBeUndefined();
     } finally {
       getVersion.mockRestore();
     }

@@ -359,15 +359,20 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
   // silently discarded - and only as a last resort (every table already
   // dropped and still over budget) omits the raw/normalized plan, since
   // that is usually the single largest remaining blob. Mutates `context` in
-  // place; returns nothing.
+  // place; returns whether the result is still over budget after every
+  // truncation this function knows how to do (statement text/database
+  // metadata/collection bookkeeping have no further fallback) - the caller
+  // turns that into a hard `ok: false` rather than silently handing back an
+  // oversized "success", so maxPayloadBytes is an actual upper bound a
+  // caller can rely on, not just a best-effort target.
   private enforcePayloadBudget(
     context: PerformanceTuningContext,
     maxPayloadBytes: number,
-  ): void {
+  ): boolean {
     const payloadSize = (): number => Buffer.byteLength(JSON.stringify(context), 'utf8');
 
     if (payloadSize() <= maxPayloadBytes) {
-      return;
+      return false;
     }
 
     let truncated = false;
@@ -412,6 +417,13 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     if (truncated) {
       context.collection.status = 'partial';
     }
+    // Re-measure after the bookkeeping just above: the warning string and
+    // status field are themselves part of the returned JSON, so a decision
+    // made from the pre-bookkeeping size (as this used to do) can go stale
+    // right at the boundary - a result sitting just under maxPayloadBytes
+    // before the warning is appended can end up just over it once the
+    // warning text is actually in the payload the caller receives.
+    return payloadSize() > maxPayloadBytes;
   }
 
   // Orchestration (validate -> capability -> plan -> target resolution ->
@@ -596,25 +608,41 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           let statistics: PerformanceTuningContext['tables'][number]['statistics'];
           if (statisticsResult.ok && statisticsResult.result) {
             statistics = { ...statisticsResult.result, columns: [] };
+            // A Provider can succeed with a caveat (e.g. SQL Server/Oracle's
+            // table statistics combine two queries and downgrade the
+            // secondary one's failure to a message instead of failing the
+            // whole call) - that message must not be silently discarded the
+            // way it was here before, same as definitionResult's own
+            // message just above.
+            if (statisticsResult.message) {
+              tableWarnings.push(statisticsResult.message);
+            }
           } else {
             unavailable('tableStatistics', statisticsResult.message || 'Table statistics unavailable.');
           }
-          if (statistics) {
-            if (columnStatsResult.ok) {
-              statistics.columns = columnStatsResult.result ?? [];
-            } else {
-              unavailable(
-                'columnStatistics',
-                columnStatsResult.message || 'Column statistics unavailable.',
-              );
+          if (columnStatsResult.ok) {
+            // collectColumnStatistics() and collectTableStatistics() are
+            // independent Provider calls - column stats can succeed even
+            // when table-level statistics failed. `statistics` may still be
+            // undefined at this point; TableStatisticsContext has nothing
+            // required besides `columns`, so build a minimal one rather
+            // than silently discarding already-fetched column data (and
+            // its message) just because it had nowhere to attach.
+            statistics ??= { columns: [] };
+            statistics.columns = columnStatsResult.result ?? [];
+            if (columnStatsResult.message) {
+              tableWarnings.push(columnStatsResult.message);
             }
-          } else if (!columnStatsResult.ok) {
+          } else {
             unavailable('columnStatistics', columnStatsResult.message || 'Column statistics unavailable.');
           }
 
           let physicalHealth: PerformanceTuningContext['tables'][number]['physicalHealth'];
           if (physicalHealthResult.ok && physicalHealthResult.result) {
             physicalHealth = { provider: this.conRes.dbType, metrics: physicalHealthResult.result.metrics };
+            if (physicalHealthResult.message) {
+              tableWarnings.push(physicalHealthResult.message);
+            }
           } else {
             unavailable('physicalHealth', physicalHealthResult.message || 'Physical health unavailable.');
           }
@@ -664,14 +692,33 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         planTableMappings,
         collection: {
           collectedAt: new Date().toISOString(),
+          // A per-table warning (e.g. a Provider section that partially
+          // succeeded - see tableWarnings above) means this result is not
+          // fully trustworthy as "complete" either, even though it never
+          // became an unavailableSections entry.
           status:
-            unavailableSections.length > 0 || collectionWarnings.length > 0 ? 'partial' : 'complete',
+            unavailableSections.length > 0 ||
+            collectionWarnings.length > 0 ||
+            tables.some((t) => t.warnings.length > 0)
+              ? 'partial'
+              : 'complete',
           warnings: collectionWarnings,
           unavailableSections,
         },
       };
 
-      this.enforcePayloadBudget(context, normalized.limits.maxPayloadBytes);
+      const stillOverBudget = this.enforcePayloadBudget(context, normalized.limits.maxPayloadBytes);
+      if (stillOverBudget) {
+        // Every table and the execution plan are already gone at this
+        // point (enforcePayloadBudget()'s own last resort) - a caller
+        // relying on maxPayloadBytes as a safety ceiling must see a hard
+        // failure here, not a "success" carrying an oversized payload it
+        // asked this driver not to produce.
+        return {
+          ok: false,
+          message: `Result exceeds maxPayloadBytes (${normalized.limits.maxPayloadBytes} bytes) even after dropping every table and the execution plan.`,
+        };
+      }
 
       return { ok: true, message: '', result: context };
     } catch (e) {

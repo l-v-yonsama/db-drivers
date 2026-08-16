@@ -196,9 +196,17 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
   // success/failure.
   private async collectDdl(target: PerformanceTuningTableTarget): Promise<GeneralResult<string>> {
     try {
+      // targetSchemaOf(target), not the raw (possibly-undefined)
+      // target.schemaName: getTableDDL() with no schemaName qualifies
+      // against the connection's *current* database, which can silently
+      // diverge from target.databaseName (the one every catalog query
+      // above is actually scoped to) if the connection's active database
+      // has changed since - always passing the resolved schema keeps the
+      // DDL and the rest of this table's collected data pointed at the
+      // same database.
       const text = await this.driver.getTableDDL({
         tableName: target.tableName,
-        schemaName: target.schemaName,
+        schemaName: targetSchemaOf(target),
       });
       return { ok: true, message: '', result: text };
     } catch (e) {

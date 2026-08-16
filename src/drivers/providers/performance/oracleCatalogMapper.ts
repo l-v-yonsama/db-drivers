@@ -303,7 +303,14 @@ export function mapOracleColumnStatisticsRow(row: unknown): ColumnStatisticsCont
   if (!r || !columnName) {
     return undefined;
   }
-  const numRows = asNumber(r.SAMPLE_SIZE);
+  // NUM_NULLS is the *whole column's* null count, not scaled to whatever
+  // sample DBMS_STATS actually analyzed - SAMPLE_SIZE is that sample's row
+  // count, which can be smaller than the table's real row count, so
+  // NUM_NULLS / SAMPLE_SIZE can come out above 1 for a sampled (not
+  // FULLSCAN) stats gather. TABLE_NUM_ROWS (ALL_TABLES.NUM_ROWS, joined in
+  // by COLUMN_STATISTICS_SQL) is the correct denominator - the same
+  // population NUM_NULLS was counted against.
+  const numRows = asNumber(r.TABLE_NUM_ROWS);
   const numNulls = asNumber(r.NUM_NULLS);
 
   return {
@@ -311,7 +318,7 @@ export function mapOracleColumnStatisticsRow(row: unknown): ColumnStatisticsCont
     distinctCount: metric(asNumber(r.NUM_DISTINCT), 'ALL_TAB_COL_STATISTICS.NUM_DISTINCT', true, 'values'),
     nullFraction:
       numRows !== undefined && numRows > 0 && numNulls !== undefined
-        ? metric(numNulls / numRows, 'ALL_TAB_COL_STATISTICS.NUM_NULLS / SAMPLE_SIZE', true)
+        ? metric(numNulls / numRows, 'ALL_TAB_COL_STATISTICS.NUM_NULLS / ALL_TABLES.NUM_ROWS', true)
         : undefined,
     averageWidthBytes: metric(asNumber(r.AVG_COL_LEN), 'ALL_TAB_COL_STATISTICS.AVG_COL_LEN', true, 'bytes'),
     // HISTOGRAM is Oracle's own real histogram-kind name (e.g. 'NONE',

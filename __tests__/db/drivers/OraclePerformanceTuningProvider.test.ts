@@ -510,7 +510,7 @@ describe('OraclePerformanceTuningProvider', () => {
     it('maps requested columns from ALL_TAB_COL_STATISTICS, honestly-empty for an unstatted column', async () => {
       const requestSql = routedRequestSql({
         columnStatistics: [
-          { COLUMN_NAME: 'STATUS', NUM_DISTINCT: 2, NUM_NULLS: 0, SAMPLE_SIZE: 50 },
+          { COLUMN_NAME: 'STATUS', NUM_DISTINCT: 2, NUM_NULLS: 0, SAMPLE_SIZE: 50, TABLE_NUM_ROWS: 50 },
         ],
       });
       const provider = new OraclePerformanceTuningProvider(makeDriver(requestSql));
@@ -673,6 +673,9 @@ describe('OraclePerformanceTuningProvider (live Oracle)', () => {
     expect(result.result!.map((c) => c.columnName)).toEqual(['STATUS']);
     // perf_orders has exactly 2 distinct status values ('new'/'shipped').
     expect(result.result![0].distinctCount?.value).toBe(2);
+    // status is NOT NULL - divided by the real table row count (not
+    // SAMPLE_SIZE), this must be exactly 0, never a value above 1.
+    expect(result.result![0].nullFraction?.value).toBe(0);
   });
 
   it('reports physical health metrics without a maintenance verdict', async () => {

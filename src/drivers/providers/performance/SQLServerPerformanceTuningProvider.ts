@@ -514,11 +514,18 @@ WHERE t.name = @2 AND s.name = @1`;
 
 // Aggregated across every statistics object on the table (the PK/clustered
 // index's auto-created stats plus one per nonclustered index/column stat) -
-// MAX(last_updated)/SUM(modification_counter) rather than one arbitrary
-// stat's own values, so a table with several indexes doesn't misreport
-// "unanalyzed" just because one particular stat object happens to be older.
+// MAX(...) for both columns, not one arbitrary stat's own values, so a
+// table with several indexes doesn't misreport "unanalyzed" just because
+// one particular stat object happens to be older. modification_counter is
+// specifically MAX(...), not SUM(...): it's tracked per leading column, so
+// a single multi-column UPDATE bumps more than one stat object's counter
+// at once - summing them would multi-count that one UPDATE once per stat
+// object it happens to touch. MAX still can't perfectly reconstruct "how
+// many rows changed" (no stat is guaranteed to cover every modified
+// column), but unlike SUM it never inflates beyond what any single real
+// stat object observed.
 const STATS_SQL = `
-SELECT MAX(sp.last_updated) AS last_updated, SUM(sp.modification_counter) AS modification_counter
+SELECT MAX(sp.last_updated) AS last_updated, MAX(sp.modification_counter) AS modification_counter
 FROM sys.stats st
 CROSS APPLY sys.dm_db_stats_properties(st.object_id, st.stats_id) sp
 WHERE st.object_id = OBJECT_ID(QUOTENAME(@1) + '.' + QUOTENAME(@2))`;

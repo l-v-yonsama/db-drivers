@@ -296,7 +296,10 @@ describe('MySQLPerformanceTuningProvider', () => {
       expect(result.result!.constraints).toHaveLength(1);
       expect(result.result!.indexes).toHaveLength(1);
       expect(result.result!.ddl).toBe('CREATE TABLE `perf_orders` (...)');
-      expect(getTableDDL).toHaveBeenCalledWith({ tableName: 'perf_orders', schemaName: undefined });
+      // schemaName falls back to databaseName ('test-db') rather than being
+      // left undefined - see collectDdl()'s comment on why this must never
+      // rely on getTableDDL()'s own "current database" default.
+      expect(getTableDDL).toHaveBeenCalledWith({ tableName: 'perf_orders', schemaName: 'test-db' });
 
       // Every catalog query is scoped to exactly this one table (§9.3), and
       // tagged as internal collection (§6.3).

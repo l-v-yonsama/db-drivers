@@ -471,37 +471,56 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
   async collectPerformanceTuningShowplan(
     params: QueryParams,
   ): Promise<ResultSetData> {
-    const req = this.con.request();
-    await req.batch(`SET SHOWPLAN_ALL ON`);
+    // A pool-backed Request (this.con.request()) does not guarantee its
+    // separate batch() calls all run on the same physical connection -
+    // node-mssql may hand each call whichever pooled connection happens to
+    // be free. That would break SET SHOWPLAN_ALL ON/OFF's connection-scoped
+    // session state: the target SQL could run on a connection where
+    // SHOWPLAN was never turned on (executing it for real instead of just
+    // estimating a plan - unacceptable for a read-only diagnostics call),
+    // or SHOWPLAN could be left stuck on for some other pooled connection
+    // afterward. A Transaction pins all three statements to one connection
+    // for the same reason begin()/commit() already does for this driver's
+    // real transactions - used purely as a connection-pinning mechanism
+    // here (nothing to roll back: SET SHOWPLAN_ALL and the target SELECT
+    // never modify data), always committed at the end regardless of outcome.
+    const tran = new Transaction(this.con);
+    await tran.begin();
     try {
-      // Same bind-substitution technique as explainSqlSub() and for the
-      // same reason: "SET SHOWPLAN statements must be the only statements
-      // in the batch", which rules out req.query()'s sp_executesql-based
-      // parameter binding.
-      const binds = params.conditions?.binds ?? [];
-      const sql = binds.reduce<string>((acc, bind, idx) => {
-        const placeholder = new RegExp(`@${idx + 1}(?!\\d)`, 'g');
-        return acc.replace(placeholder, wrapSingleQuote(bind));
-      }, params.sql);
+      const req = tran.request();
+      await req.batch(`SET SHOWPLAN_ALL ON`);
+      try {
+        // Same bind-substitution technique as explainSqlSub() and for the
+        // same reason: "SET SHOWPLAN statements must be the only statements
+        // in the batch", which rules out req.query()'s sp_executesql-based
+        // parameter binding.
+        const binds = params.conditions?.binds ?? [];
+        const sql = binds.reduce<string>((acc, bind, idx) => {
+          const placeholder = new RegExp(`@${idx + 1}(?!\\d)`, 'g');
+          return acc.replace(placeholder, wrapSingleQuote(bind));
+        }, params.sql);
 
-      const result = await req.batch(sql);
-      const firstRow = result.recordset[0];
-      const keys: RdhKey[] = firstRow
-        ? Object.keys(firstRow).map((name) =>
-            createRdhKey({
-              name,
-              type:
-                typeof firstRow[name] === 'number'
-                  ? GeneralColumnType.REAL
-                  : GeneralColumnType.TEXT,
-            }),
-          )
-        : [];
-      const rdb = new ResultSetDataBuilder(keys);
-      result.recordset.forEach((row) => rdb.addRow(row));
-      return rdb.rs;
+        const result = await req.batch(sql);
+        const firstRow = result.recordset[0];
+        const keys: RdhKey[] = firstRow
+          ? Object.keys(firstRow).map((name) =>
+              createRdhKey({
+                name,
+                type:
+                  typeof firstRow[name] === 'number'
+                    ? GeneralColumnType.REAL
+                    : GeneralColumnType.TEXT,
+              }),
+            )
+          : [];
+        const rdb = new ResultSetDataBuilder(keys);
+        result.recordset.forEach((row) => rdb.addRow(row));
+        return rdb.rs;
+      } finally {
+        await req.batch(`SET SHOWPLAN_ALL OFF`);
+      }
     } finally {
-      await req.batch(`SET SHOWPLAN_ALL OFF`);
+      await tran.commit();
     }
   }
 

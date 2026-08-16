@@ -354,11 +354,17 @@ FROM PLAN_TABLE WHERE STATEMENT_ID = :1 ORDER BY ID`,
       // within one long-lived connection don't accumulate stale rows.
       // Never lets a cleanup failure fail the caller, who already has (or
       // has failed to get) their actual result by this point.
+      //
+      // autoCommit follows this.autoCommitEnabled (never hardcoded true):
+      // Oracle's autoCommit commits the *entire session*, not just this
+      // statement, so hardcoding it here would silently commit whatever
+      // DML a caller had pending in an explicit transaction on this same
+      // connection - a read-only diagnostics call must never do that.
       try {
         await this.con.execute(
           `DELETE FROM PLAN_TABLE WHERE STATEMENT_ID = :1`,
           [statementId],
-          { autoCommit: true },
+          { autoCommit: this.autoCommitEnabled },
         );
       } catch {
         // best-effort only

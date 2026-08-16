@@ -225,6 +225,7 @@ describe('mapOracleColumnStatisticsRow', () => {
       HISTOGRAM: 'NONE',
       AVG_COL_LEN: 5,
       SAMPLE_SIZE: 50,
+      TABLE_NUM_ROWS: 50,
     })!;
     expect(stats.distinctCount).toEqual({
       value: 2,
@@ -235,6 +236,30 @@ describe('mapOracleColumnStatisticsRow', () => {
     expect(stats.nullFraction?.value).toBe(0);
     expect(stats.histogramType?.value).toBe('NONE');
     expect(stats.statisticsUpdatedAt?.value).toBe('2026-08-16T11:13:54.000Z');
+  });
+
+  it('divides NUM_NULLS by the table row count, not SAMPLE_SIZE (a sampled gather can have SAMPLE_SIZE < row count)', () => {
+    // A sampled (not FULLSCAN) DBMS_STATS gather can analyze a smaller
+    // SAMPLE_SIZE than the table's real row count - NUM_NULLS/SAMPLE_SIZE
+    // would come out above 1 here (10/4); NUM_NULLS/TABLE_NUM_ROWS is the
+    // correct fraction.
+    const stats = mapOracleColumnStatisticsRow({
+      COLUMN_NAME: 'STATUS',
+      NUM_NULLS: 10,
+      SAMPLE_SIZE: 4,
+      TABLE_NUM_ROWS: 100,
+    })!;
+    expect(stats.nullFraction?.value).toBe(0.1);
+    expect(stats.nullFraction?.source).toBe('ALL_TAB_COL_STATISTICS.NUM_NULLS / ALL_TABLES.NUM_ROWS');
+  });
+
+  it('leaves nullFraction undefined when the table row count is unknown/zero', () => {
+    expect(
+      mapOracleColumnStatisticsRow({ COLUMN_NAME: 'STATUS', NUM_NULLS: 0, TABLE_NUM_ROWS: 0 })!.nullFraction,
+    ).toBeUndefined();
+    expect(
+      mapOracleColumnStatisticsRow({ COLUMN_NAME: 'STATUS', NUM_NULLS: 0 })!.nullFraction,
+    ).toBeUndefined();
   });
 
   it('returns undefined for a row with no column name', () => {
