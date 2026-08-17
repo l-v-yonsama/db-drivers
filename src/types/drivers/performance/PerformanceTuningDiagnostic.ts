@@ -5,9 +5,8 @@ import { UnavailableSectionName } from './PerformanceTuningContext';
 // to be scattered across four different places (ExecutionPlanContext.warnings,
 // TableTuningContext.warnings, PerformanceTuningContext.collection.warnings,
 // PlanNode.warnings). See
-// misc/design/performance-tuning-diagnostics-display-plan.ja.md for the full
-// rationale; this file is the §2 common data model plus the §1.4/§8 Step 1
-// "diagnostic inventory" - every call site in the four plan parsers and
+// misc/design/performance-tuning-context-implementation-plan.ja.md §4.4 for the full
+// rationale and diagnostic inventory - every call site in the four plan parsers and
 // RDSBaseDriver that used to push a warning string now pushes one of the
 // PerformanceTuningDiagnostic shapes documented in the table below instead.
 //
@@ -15,13 +14,13 @@ import { UnavailableSectionName } from './PerformanceTuningContext';
 // technical fields - it never decides what a beginner-facing message should
 // say, never groups same-code diagnostics together, and never decides
 // whether a situation is "actionable" beyond the info/warning split below
-// (§1.4). All of that is db-notebook's (or any other consumer's)
+// (§4.4). All of that is db-notebook's (or any other consumer's)
 // responsibility. `message` exists purely as an English technical fallback
 // so an unrecognized `code` still carries information instead of vanishing
-// from a UI built against an older version of this package (§7).
+// from a UI built against an older version of this package (§4.4).
 //
 // ---------------------------------------------------------------------------
-// Diagnostic inventory (design doc §8 Step 1)
+// Diagnostic inventory (implementation plan §4.4)
 // ---------------------------------------------------------------------------
 // Situation                                          | code                    | severity | affectsCompleteness
 // ----------------------------------------------------|-------------------------|----------|---------------------
@@ -59,7 +58,7 @@ import { UnavailableSectionName } from './PerformanceTuningContext';
 // A genuine "this section/table is unavailable" fact (permission denied,
 // table not found, timed out, cancelled, dropped for payload budget) is
 // recorded in collection.unavailableSections, not duplicated here as a
-// diagnostic with the same reason string (§2.1) - the one documented
+// diagnostic with the same reason string (§4.4) - the one documented
 // exception is the MySQL-alias row above, which adds a suggestedAction that
 // unavailableSections' own shape has no field for, rather than repeating the
 // same reason text.
@@ -116,7 +115,7 @@ export type PerformanceTuningDiagnostic = {
   code: PerformanceTuningDiagnosticCode;
   severity: PerformanceTuningDiagnosticSeverity;
   // Whether this diagnostic alone should turn collection.status 'partial'
-  // (§2.2) - kept independent of `severity` on purpose: an `info` diagnostic
+  // (§4.4) - kept independent of `severity` on purpose: an `info` diagnostic
   // is always false, but not every `warning` necessarily has to be true were
   // this ever reused for a lower-stakes warning in the future. Every
   // warning currently defined in this package does set it true.
@@ -125,7 +124,7 @@ export type PerformanceTuningDiagnostic = {
 
   // Driver-side technical fallback text (English, not localized). Required
   // so a UI encountering an unrecognized `code` still has something to show
-  // instead of silently dropping the diagnostic (§7).
+  // instead of silently dropping the diagnostic (§4.4).
   message: string;
 
   node?: PerformanceTuningDiagnosticNode;

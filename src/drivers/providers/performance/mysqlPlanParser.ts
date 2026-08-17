@@ -95,7 +95,7 @@ type NodeContext = {
 // vendor-reported plan characteristics, not performance verdicts (a
 // temp table or filesort is not automatically a problem) - reported as
 // PLAN_OBSERVATION information, attributed to the node that carried the
-// flag (§3.1/§4.2 of the diagnostics-display design doc).
+// flag (implementation plan §4.4).
 const planObservationsFromFlags = (
   node: Record<string, unknown>,
   id: string,
@@ -169,7 +169,7 @@ function visitTable(tableValue: unknown, parentId: string | undefined, depth: nu
     // DDL/statistics to, only its own contents
     // (materialized_from_subquery.query_block below), which are still
     // walked and may themselves resolve real tables. Reported as
-    // information, not a warning (§4.2) - `objectKind: 'subquery'` covers
+    // information, not a warning (§4.4) - `objectKind: 'subquery'` covers
     // every one of MySQL's synthetic placeholder kinds (derived table,
     // materialized subquery, UNION result), none of which map cleanly onto
     // the other, more specific objectKind values.
@@ -295,7 +295,7 @@ function visitContainer(
   // A container with none of the recognized keys - e.g. `{ "message":
   // "Impossible WHERE" }` for a query the optimizer proved returns no rows.
   // Not a failure: a factual, vendor-reported plan-level observation
-  // (§3.1), represented as both a leaf node and a PLAN_OBSERVATION
+  // (§4.4), represented as both a leaf node and a PLAN_OBSERVATION
   // diagnostic rather than silently vanishing or only living on the node.
   const message = asString(container.message);
   if (message) {

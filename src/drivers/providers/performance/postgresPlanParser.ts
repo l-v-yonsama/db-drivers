@@ -26,8 +26,8 @@ import { asNumber, asRecord, asString } from './vendorRowCoercion';
 // case table DDL/statistics genuinely do not apply and this is reported as
 // `NON_TABLE_PLAN_SOURCE` information, or (b) a real table-mapping gap this
 // driver doesn't understand yet, reported as a `TABLE_MAPPING_FAILED`
-// warning. See misc/design/performance-tuning-diagnostics-display-plan.ja.md
-// §4.1 for the rationale (this replaced an earlier blanket
+// warning. See misc/design/performance-tuning-context-implementation-plan.ja.md
+// §4.4 for the rationale (this replaced an earlier blanket
 // `operation.endsWith('Scan')` => warning rule that misclassified case (a)
 // as a failure).
 
@@ -82,7 +82,7 @@ const hasAnyKey = (node: Record<string, unknown>, keys: readonly string[]): bool
 // Every `...Scan` node type Postgres can produce with no `Relation Name`
 // that is still a fully-understood, non-table plan source - not an
 // exhaustive list of every Postgres node type, only the ones this driver has
-// confirmed never carry a `Relation Name` (§4.1). `nameKeys` are tried in
+// confirmed never carry a `Relation Name` (§4.4). `nameKeys` are tried in
 // order; the first key present on the raw node becomes `node.objectName`.
 const NON_TABLE_SCAN_OPERATIONS: Record<
   string,
@@ -98,8 +98,8 @@ const NON_TABLE_SCAN_OPERATIONS: Record<
 export type ParsedPostgresPlan = {
   planNode: PlanNode;
   mappings: PlanTableMapping[];
-  // Structured diagnostics produced while walking the plan (§10 Phase 2 /
-  // diagnostics-display design doc §4.1) - a non-table scan source
+  // Structured diagnostics produced while walking the plan (implementation
+  // plan §4.4 / §10 Phase 2) - a non-table scan source
   // (information) or a genuine table-mapping gap (warning). Surfaced
   // explicitly instead of the node silently vanishing from
   // planTableMappings with no trace.
@@ -161,7 +161,7 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
         // A known non-table scan source (Function/Values/CTE/WorkTable/
         // Subquery Scan) - fully understood, not a mapping failure: table
         // DDL/statistics were never going to apply to this node. Reported
-        // as information, not a warning (§4.1).
+        // as information, not a warning (§4.4).
         const objectName = nonTableScan.nameKeys.map((key) => asString(node[key])).find((v) => v !== undefined);
         diagnostics.push({
           code: 'NON_TABLE_PLAN_SOURCE',

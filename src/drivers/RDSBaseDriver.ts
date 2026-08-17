@@ -741,8 +741,8 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         collection: {
           collectedAt: new Date().toISOString(),
           // status is derived only from unavailableSections and
-          // diagnostics[].affectsCompleteness (diagnostics-display design
-          // doc §2.2) - an `info` diagnostic (e.g. a non-table plan source)
+          // diagnostics[].affectsCompleteness (implementation plan §4.4) -
+          // an `info` diagnostic (e.g. a non-table plan source)
           // never flips this to 'partial' on its own; only a genuine
           // section/table failure or a `warning` diagnostic that was
           // explicitly marked as affecting completeness does.

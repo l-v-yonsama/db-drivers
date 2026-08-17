@@ -28,7 +28,7 @@ export type VendorExecutionPlan = {
   planningTimeMs?: number;
   executionTimeMs?: number;
   // Structured diagnostics the plan parser produced while walking the plan
-  // (§2 of the diagnostics-display design doc) - a node that reads from a
+  // (implementation plan §4.4) - a node that reads from a
   // non-table source, an unresolved table mapping, a vendor-reported plan
   // observation, ... RDSBaseDriver folds these into
   // PerformanceTuningContext.collection.diagnostics rather than this type

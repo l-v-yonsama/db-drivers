@@ -146,9 +146,9 @@ describe('postgresPlanParser', () => {
 
     it('reports a Function Scan as non-table-source information, not a mapping-failure warning', () => {
       // The exact pg_stat_statements/pg_stat_statements_info scenario the
-      // diagnostics-display design doc opens with: a set-returning function
+      // The implementation plan §4.4 uses this example: a set-returning function
       // exposed as a view expands, at plan time, into a Function Scan with
-      // no Relation Name - fully understood, not a failure (§4.1).
+      // no Relation Name - fully understood, not a failure (§4.4).
       const { mappings, diagnostics } = parsePostgresPlan({
         Plan: {
           'Node Type': 'Function Scan',
@@ -236,7 +236,7 @@ describe('postgresPlanParser', () => {
     it('warns instead of silently dropping an unrecognized scan node with no relation to map', () => {
       // Not one of the known non-table scan sources above - a genuine
       // table-mapping gap (e.g. a future Postgres node type this driver
-      // doesn't recognize yet), so this stays a warning (§4.1).
+      // doesn't recognize yet), so this stays a warning (§4.4).
       const { mappings, diagnostics } = parsePostgresPlan({
         Plan: { 'Node Type': 'Some Future Scan', 'Plan Rows': 1 },
       });
@@ -344,7 +344,7 @@ describe('PostgresPerformanceTuningProvider', () => {
     });
   });
 
-  it('reports the pg_stat_statements/pg_stat_statements_info Function Scan case as information, not warnings (diagnostics-display design doc §0)', async () => {
+  it('reports the pg_stat_statements/pg_stat_statements_info Function Scan case as information, not warnings (implementation plan §4.4)', async () => {
     // pg_stat_statements/pg_stat_statements_info are views backed by a
     // set-returning function - EXPLAIN shows them as Function Scan nodes
     // with no Relation Name once the view is expanded.
