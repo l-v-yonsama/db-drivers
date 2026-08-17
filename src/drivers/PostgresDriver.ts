@@ -21,6 +21,10 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { PostgresColumnType } from '../types/resource/PostgresColumnType';
+import {
+  PerformanceTuningContextProvider,
+  PostgresPerformanceTuningProvider,
+} from './providers';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar } from '../helpers';
 import {
@@ -328,9 +332,28 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   async getVersion(): Promise<string> {
-    const sql = 'SHOW server_version as version';
+    // `SHOW` is a command, not a SELECT - it doesn't accept `AS alias`
+    // (`SHOW server_version AS version` is a syntax error). The result
+    // column is named after the setting itself.
+    const sql = 'SHOW server_version';
     const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
-    return rdb.rs.rows[0].values.version;
+    return rdb.rs.rows[0].values.server_version;
+  }
+
+  private performanceTuningContextProvider?: PerformanceTuningContextProvider;
+
+  // Typed to the interface (not the concrete PostgresPerformanceTuningProvider)
+  // so it stays override-compatible with RDSBaseDriver's declared return
+  // type - test doubles that subclass a driver and override this hook with
+  // a fake PerformanceTuningContextProvider stay valid overrides too.
+  protected getPerformanceTuningContextProvider(): PerformanceTuningContextProvider {
+    // Lazily constructed and cached on the driver instance (not a module
+    // singleton) so it always closes over this connection's `requestSql`,
+    // and a second call doesn't re-allocate for no reason.
+    if (!this.performanceTuningContextProvider) {
+      this.performanceTuningContextProvider = new PostgresPerformanceTuningProvider(this);
+    }
+    return this.performanceTuningContextProvider;
   }
 
   supportsGetStatementStatistics(): boolean {

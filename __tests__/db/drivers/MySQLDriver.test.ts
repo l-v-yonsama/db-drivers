@@ -68,7 +68,7 @@ describe('MySQLDriver', () => {
       });
 
       it('should have Schema resource', async () => {
-        expect(testDbRes.children).toHaveLength(9);
+        expect(testDbRes.children).toHaveLength(10);
         testSchemaRes = testDbRes.getSchema({ isDefault: true });
         expect(testSchemaRes.name).toBe('test-db');
       });
@@ -1150,6 +1150,118 @@ describe('MySQLDriver', () => {
         await driver1.rollback();
         await driver2.rollback();
       });
+    });
+  });
+
+  describe('getStatementStatistics', () => {
+    // A dedicated driver, not the shared `driver` above: describe('kill')
+    // deliberately kills `driver`'s own session earlier in this file, and
+    // every describe block after it already avoids reusing `driver` for
+    // exactly that reason (see locks/transaction isolation above, each
+    // with their own createRDSDriver() instance).
+    let statsDriver: RDSBaseDriver;
+
+    beforeAll(async () => {
+      statsDriver = createRDSDriver();
+      await statsDriver.connect();
+    });
+
+    afterAll(async () => {
+      await statsDriver.disconnect();
+    });
+
+    const REQUIRED_COLUMNS = [
+      'statement_id',
+      'database_name',
+      'query',
+      'execution_count',
+      'total_elapsed_time_ms',
+      'average_elapsed_time_ms',
+      'min_elapsed_time_ms',
+      'max_elapsed_time_ms',
+      'rows_processed',
+      'rows_examined',
+      'logical_reads',
+      'physical_reads',
+      'last_executed_at',
+      'statistics_since',
+      'source',
+    ];
+
+    it('returns the 15 required columns plus MySQL 8.0 sample columns appended after them', async () => {
+      // Guarantees at least one digest entry exists for this database,
+      // independent of whatever earlier tests in this file already left
+      // behind in performance_schema.
+      await statsDriver.requestSql({ sql: 'SELECT 1' });
+
+      const rdh = await statsDriver.getStatementStatistics({
+        databaseName: baseConnectOption.database,
+        minimumAverageElapsedTimeMs: 0,
+        limit: 5,
+      });
+      const columnNames = rdh.keys.map((k) => k.name);
+
+      expect(columnNames.slice(0, REQUIRED_COLUMNS.length)).toEqual(REQUIRED_COLUMNS);
+      // Optional MySQL 8.0 sample columns (§3.1/§6.4) are appended after
+      // the 15 required ones, never interleaved (§11 completion criteria).
+      expect(columnNames.slice(REQUIRED_COLUMNS.length)).toEqual([
+        'query_sample_text',
+        'query_sample_seen_at',
+        'query_sample_text_may_be_truncated',
+      ]);
+    });
+
+    it('falls back to the 15-column query when sample columns are unsupported (e.g. MySQL 5.7)', async () => {
+      const originalRequestSql = statsDriver.requestSql.bind(statsDriver);
+      const spy = jest
+        .spyOn(statsDriver, 'requestSql')
+        .mockImplementation(async (params: { sql: string; [key: string]: unknown }) => {
+          if (params.sql.includes('QUERY_SAMPLE_TEXT') && params.sql.includes('WHERE FALSE')) {
+            const err = new Error("Unknown column 'QUERY_SAMPLE_TEXT' in 'field list'") as Error & {
+              code: string;
+            };
+            err.code = 'ER_BAD_FIELD_ERROR';
+            throw err;
+          }
+          return originalRequestSql(params as never);
+        });
+
+      try {
+        const rdh = await statsDriver.getStatementStatistics({
+          databaseName: baseConnectOption.database,
+          minimumAverageElapsedTimeMs: 0,
+          limit: 5,
+        });
+        expect(rdh.keys.map((k) => k.name)).toEqual(REQUIRED_COLUMNS);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    it('does not mistake a permission error on the sample-column probe for "sample columns unsupported"', async () => {
+      const originalRequestSql = statsDriver.requestSql.bind(statsDriver);
+      const spy = jest
+        .spyOn(statsDriver, 'requestSql')
+        .mockImplementation(async (params: { sql: string; [key: string]: unknown }) => {
+          if (params.sql.includes('QUERY_SAMPLE_TEXT') && params.sql.includes('WHERE FALSE')) {
+            const err = new Error('Access denied for user') as Error & { code: string };
+            err.code = 'ER_TABLEACCESS_DENIED_ERROR';
+            throw err;
+          }
+          return originalRequestSql(params as never);
+        });
+
+      try {
+        await expect(
+          statsDriver.getStatementStatistics({
+            databaseName: baseConnectOption.database,
+            minimumAverageElapsedTimeMs: 0,
+            limit: 5,
+          }),
+        ).rejects.toThrow('Access denied for user');
+      } finally {
+        spy.mockRestore();
+      }
     });
   });
 

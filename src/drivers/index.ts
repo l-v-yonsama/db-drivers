@@ -10,6 +10,7 @@ export * from './MySQLDriver';
 export * from './MqttDriver';
 export * from './OracleDriver';
 export * from './PostgresDriver';
+export * from './providers';
 export * from './RDSBaseDriver';
 export * from './RedisDriver';
 export * from './SQLiteDriver';

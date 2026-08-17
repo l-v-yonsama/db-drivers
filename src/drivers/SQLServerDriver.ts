@@ -30,6 +30,7 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
+import { PerformanceTuningContextProvider, SQLServerPerformanceTuningProvider } from './providers';
 import { QuoteChar, wrapSingleQuote } from '../helpers';
 import {
   getStatementStatisticsOrderByColumn,
@@ -442,6 +443,121 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     return rdb.rs.rows[0].values.version;
   }
 
+  private performanceTuningContextProvider?: PerformanceTuningContextProvider;
+
+  // Typed to the interface (not the concrete SQLServerPerformanceTuningProvider),
+  // same rationale as Postgres/MySQLDriver's override of this hook: stays
+  // override-compatible with RDSBaseDriver's declared return type, and test
+  // doubles overriding this hook with a fake Provider remain valid overrides.
+  protected getPerformanceTuningContextProvider(): PerformanceTuningContextProvider {
+    if (!this.performanceTuningContextProvider) {
+      this.performanceTuningContextProvider = new SQLServerPerformanceTuningProvider(this);
+    }
+    return this.performanceTuningContextProvider;
+  }
+
+  // Used only by SQLServerPerformanceTuningProvider (§13 step 8) - kept
+  // separate from explainSqlSub()/EXPLAIN_COLUMNS above (the general
+  // "Explain" feature's own tabular view) rather than adding a flag to it,
+  // per [[avoid-boolean-opt-in-flags]]: a wider-capability caller gets its
+  // own function instead of a flag on the shared one. explainSqlSub()'s
+  // fixed EXPLAIN_COLUMNS intentionally drops NodeId/Parent/StmtId; those
+  // two columns are exactly what sqlServerPlanParser.ts needs to
+  // reconstruct SHOWPLAN_ALL's flat rowset back into a parent/child tree,
+  // so this returns every column SHOWPLAN_ALL produces instead of a
+  // curated subset - built dynamically from whatever the first row's own
+  // keys are, since that set isn't fixed/known ahead of time the way
+  // EXPLAIN_COLUMNS is.
+  // Builds the SHOWPLAN batch text with each bind value substituted in
+  // place of its marker. Extended (misc/design/performance-tuning-query-
+  // statistics-parameter-input-plan.ja.md §3.4/§6.4/§7.4, db-notebook repo)
+  // to accept SQL Server's named parameters (`@name`) alongside the legacy
+  // positional-only `@1`, `@2`, ... substitution. `SET SHOWPLAN_ALL ON`
+  // rejects a parameterized batch (see collectPerformanceTuningShowplan()'s
+  // own comment on why req.input()/sp_executesql can't be used here), so
+  // every bind value is substituted directly into the SQL text as an
+  // escaped string literal.
+  //
+  // `bindMarkers`, when given, must be the same length as `binds` and
+  // pairs each value with the exact marker text the Scanner (or the user,
+  // via the Bind Parameters editor's Add/Del rows) associated with it -
+  // e.g. `@1` or `@customerId`. Without it (or on a length mismatch), this
+  // falls back to the legacy positional-only `@${index + 1}` substitution -
+  // this method's only caller (collectPerformanceTuningShowplan() below)
+  // still works when a caller has binds but no markers yet to pair with
+  // them. explainSqlSub() (the general "Explain" feature) is untouched by
+  // this design and keeps its own separate positional-only substitution.
+  private substituteShowplanBinds(sql: string, binds: string[], bindMarkers?: string[]): string {
+    const markers =
+      bindMarkers && bindMarkers.length === binds.length
+        ? bindMarkers
+        : binds.map((_, idx) => `@${idx + 1}`);
+
+    return binds.reduce<string>((acc, bind, idx) => {
+      const marker = markers[idx];
+      const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // `(?<!@)` keeps `@@ROWCOUNT`-style system variables untouched even
+      // if one happened to share a name with a bind marker; `(?![\w$#])`
+      // stops `@1` from matching inside `@10`/`@name2`.
+      const placeholder = new RegExp(`(?<!@)${escapedMarker}(?![\\w$#])`, 'g');
+      return acc.replace(placeholder, wrapSingleQuote(bind));
+    }, sql);
+  }
+
+  async collectPerformanceTuningShowplan(
+    params: QueryParams,
+    bindMarkers?: string[],
+  ): Promise<ResultSetData> {
+    // A pool-backed Request (this.con.request()) does not guarantee its
+    // separate batch() calls all run on the same physical connection -
+    // node-mssql may hand each call whichever pooled connection happens to
+    // be free. That would break SET SHOWPLAN_ALL ON/OFF's connection-scoped
+    // session state: the target SQL could run on a connection where
+    // SHOWPLAN was never turned on (executing it for real instead of just
+    // estimating a plan - unacceptable for a read-only diagnostics call),
+    // or SHOWPLAN could be left stuck on for some other pooled connection
+    // afterward. A Transaction pins all three statements to one connection
+    // for the same reason begin()/commit() already does for this driver's
+    // real transactions - used purely as a connection-pinning mechanism
+    // here (nothing to roll back: SET SHOWPLAN_ALL and the target SELECT
+    // never modify data), always committed at the end regardless of outcome.
+    const tran = new Transaction(this.con);
+    await tran.begin();
+    try {
+      const req = tran.request();
+      await req.batch(`SET SHOWPLAN_ALL ON`);
+      try {
+        // Same bind-substitution technique as explainSqlSub() and for the
+        // same reason: "SET SHOWPLAN statements must be the only statements
+        // in the batch", which rules out req.query()'s sp_executesql-based
+        // parameter binding.
+        const binds = params.conditions?.binds ?? [];
+        const sql = this.substituteShowplanBinds(params.sql, binds, bindMarkers);
+
+        const result = await req.batch(sql);
+        const firstRow = result.recordset[0];
+        const keys: RdhKey[] = firstRow
+          ? Object.keys(firstRow).map((name) =>
+              createRdhKey({
+                name,
+                type:
+                  typeof firstRow[name] === 'number'
+                    ? GeneralColumnType.REAL
+                    : GeneralColumnType.TEXT,
+              }),
+            )
+          : [];
+        const rdb = new ResultSetDataBuilder(keys);
+        result.recordset.forEach((row) => rdb.addRow(row));
+        return rdb.rs;
+      } finally {
+        await req.batch(`SET SHOWPLAN_ALL OFF`);
+      }
+    } finally {
+      await tran.commit();
+    }
+  }
+
   supportsGetStatementStatistics(): boolean {
     return true;
   }
@@ -505,7 +621,8 @@ FROM sys.database_query_store_options`,
   SUM(CONVERT(float, rs.avg_physical_io_reads) * rs.count_executions) AS physical_reads,
   MAX(rs.last_execution_time) AS last_executed_at,
   MIN(rsi.start_time) AS statistics_since,
-  'query_store' AS source
+  'query_store' AS source,
+  q.query_parameterization_type_desc AS query_parameterization_type
 FROM sys.query_store_query_text qt
 JOIN sys.query_store_query q ON q.query_text_id = qt.query_text_id
 JOIN sys.query_store_plan p ON p.query_id = q.query_id
@@ -514,7 +631,7 @@ JOIN sys.query_store_runtime_stats_interval rsi
   ON rsi.runtime_stats_interval_id = rs.runtime_stats_interval_id
 WHERE rs.execution_type = 0
   AND qt.query_sql_text NOT LIKE '%sys.query_store_%'
-GROUP BY q.query_id, qt.query_sql_text
+GROUP BY q.query_id, qt.query_sql_text, q.query_parameterization_type_desc
 HAVING SUM(CONVERT(float, rs.avg_duration) * rs.count_executions)
   / NULLIF(SUM(rs.count_executions), 0) / 1000.0 >= @1
 ORDER BY ${orderBy} DESC`;

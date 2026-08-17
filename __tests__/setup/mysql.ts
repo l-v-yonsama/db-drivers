@@ -250,11 +250,30 @@ export async function init(): Promise<void> {
 
       const binds3 = [i, i, i * 10, i * 100];
       await con.execute(
-        `INSERT INTO \`test-db\`.order_detail (order_no, detail_no, item_no, amount) 
+        `INSERT INTO \`test-db\`.order_detail (order_no, detail_no, item_no, amount)
           VALUES (?, ?, ?, ?)`,
         binds3,
       );
     }
+
+    // performance-tuning-context fixture (composite/unique/functional
+    // indexes, CHECK constraint, 50 rows + ANALYZE + a histogram on
+    // `status`) - kept independent of the tables above, same rationale as
+    // Postgres's own perf_orders fixture in __tests__/setup/postgres.ts.
+    await con.execute('DROP TABLE IF EXISTS `test-db`.perf_orders');
+    await con.execute(CREATE_PERF_ORDERS_TABLE_STATEMENT);
+    await con.execute(`
+      INSERT INTO \`test-db\`.perf_orders (customer_id, status, amount)
+      SELECT (n % 10) + 1, CASE WHEN n % 5 = 0 THEN 'shipped' ELSE 'new' END, n * 1.5
+      FROM (
+        SELECT a.N + b.N * 10 AS n FROM
+        (SELECT 0 N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4
+         UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
+        (SELECT 0 N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4) b
+      ) t
+    `);
+    await con.execute('ANALYZE TABLE `test-db`.perf_orders');
+    await con.execute('ANALYZE TABLE `test-db`.perf_orders UPDATE HISTOGRAM ON status');
   } finally {
     if (con) {
       await con.destroy();
@@ -401,4 +420,23 @@ const CREATE_LOCK_TEST_TABLE_STATEMENT = `CREATE TABLE lock_test (
   title varchar(255) NOT NULL DEFAULT '',
   n int NOT NULL
 ) COMMENT='ロックテスト'
+`;
+
+// MySQL has no partial/filtered index concept (unlike Postgres's
+// idx_perf_orders_status_partial), so this fixture only covers composite,
+// unique and functional (expression) indexes plus a CHECK constraint.
+const CREATE_PERF_ORDERS_TABLE_STATEMENT = `CREATE TABLE \`test-db\`.perf_orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  customer_id INT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'new',
+  amount DECIMAL(10,2) CHECK (amount >= 0),
+  -- status has its own leading-column index (in addition to appearing at a
+  -- non-leading position in the composite/unique keys below), so
+  -- information_schema.STATISTICS.CARDINALITY has a real leading-key-part
+  -- entry to source ColumnStatisticsContext.distinctCount from.
+  INDEX idx_perf_orders_status (status),
+  INDEX idx_perf_orders_customer_status (customer_id, status),
+  INDEX idx_perf_orders_lower_status ((LOWER(status))),
+  UNIQUE KEY uq_perf_orders_id_status (id, status)
+) COMMENT='perf tuning context fixture'
 `;

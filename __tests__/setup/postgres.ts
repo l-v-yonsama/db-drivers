@@ -203,6 +203,32 @@ export async function init(): Promise<void> {
     );
     await pool.query("COMMENT ON TABLE test2.DEPT IS '部門マスタ'");
     await pool.query("COMMENT ON COLUMN test2.DEPT.LOC IS 'ロケーション'");
+
+    // Dedicated fixture for performance-tuning-context integration tests
+    // (composite/expression/partial indexes, a CHECK constraint, and real
+    // rows + ANALYZE so pg_stats/pg_stat_user_tables aren't empty). Kept
+    // separate from customer/order1/order_detail above so this doesn't
+    // change what any other test observes about those tables.
+    await pool.query('DROP TABLE IF EXISTS perf_orders');
+    await pool.query(`CREATE TABLE perf_orders (
+      id SERIAL PRIMARY KEY,
+      customer_id INTEGER NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'new',
+      amount NUMERIC(10,2) CHECK (amount >= 0)
+    )`);
+    await pool.query(
+      'CREATE INDEX idx_perf_orders_customer_status ON perf_orders (customer_id, status)',
+    );
+    await pool.query(
+      "CREATE INDEX idx_perf_orders_status_partial ON perf_orders (status) WHERE status = 'shipped'",
+    );
+    await pool.query(
+      'CREATE INDEX idx_perf_orders_lower_status ON perf_orders (lower(status))',
+    );
+    await pool.query(`INSERT INTO perf_orders (customer_id, status, amount)
+      SELECT i, CASE WHEN i % 3 = 0 THEN 'shipped' ELSE 'new' END, i * 1.5
+      FROM generate_series(1, 50) AS i`);
+    await pool.query('ANALYZE perf_orders');
   } finally {
     if (pool) {
       await pool.end();

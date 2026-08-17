@@ -82,6 +82,16 @@ describe('PostgresDriver', () => {
     });
   });
 
+  describe('getVersion', () => {
+    it('should return the server version string', async () => {
+      // `SHOW server_version AS version` is a Postgres syntax error (SHOW
+      // is a command, not a SELECT) - this only ever gets exercised
+      // against a real connection, never a mocked requestSql().
+      const version = await driver.getVersion();
+      expect(version).toEqual(expect.stringMatching(/^\d+/));
+    });
+  });
+
   describe('asyncGetResouces', () => {
     let testDbRes: RdsDatabase;
     let testSchemaRes: DbSchema;
