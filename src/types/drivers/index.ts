@@ -1,3 +1,4 @@
+export * from './EstimatedBindParameter';
 export * from './GeneralResult';
 export * from './Keycloak';
 export * from './MemcachedParams';

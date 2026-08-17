@@ -49,6 +49,7 @@ export type NormalizedPerformanceTuningContextParams = {
   plan: {
     mode: 'estimate' | 'analyze';
     binds?: unknown[];
+    bindMarkers?: PerformanceTuningContextParams['plan']['bindMarkers'];
     bindMetadata?: PerformanceTuningContextParams['plan']['bindMetadata'];
     allowExecution: boolean;
     timeoutMs: number;
@@ -97,6 +98,7 @@ export function normalizePerformanceTuningContextParams(
         ? (plan.mode as 'estimate' | 'analyze')
         : 'estimate',
       binds: plan.binds,
+      bindMarkers: plan.bindMarkers,
       bindMetadata: plan.bindMetadata,
       allowExecution: plan.allowExecution ?? false,
       timeoutMs: clamp(plan.timeoutMs, DEFAULT_PLAN_TIMEOUT_MS, MAX_PLAN_TIMEOUT_MS),

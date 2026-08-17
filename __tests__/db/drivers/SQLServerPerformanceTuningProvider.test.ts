@@ -252,11 +252,14 @@ describe('SQLServerPerformanceTuningProvider', () => {
       { timeoutMs: 5000 },
     );
 
-    expect(collectPerformanceTuningShowplan).toHaveBeenCalledWith({
-      sql: "SELECT * FROM perf.perf_orders WHERE status = 'shipped'",
-      conditions: { rawQueries: true, binds: undefined },
-      meta: { type: 'performanceTuningContext' },
-    });
+    expect(collectPerformanceTuningShowplan).toHaveBeenCalledWith(
+      {
+        sql: "SELECT * FROM perf.perf_orders WHERE status = 'shipped'",
+        conditions: { rawQueries: true, binds: undefined },
+        meta: { type: 'performanceTuningContext' },
+      },
+      undefined,
+    );
     expect(result.ok).toBe(true);
     expect(result.result!.raw).toEqual(showplanRows);
     expect(result.result!.planTableMappings).toHaveLength(1);

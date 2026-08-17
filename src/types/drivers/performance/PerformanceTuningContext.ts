@@ -47,6 +47,13 @@ export type PerformanceTuningContextParams = {
   plan: {
     mode?: 'estimate' | 'analyze'; // default: 'estimate'
     binds?: unknown[]; // used only to obtain a parameter-specific plan; never echoed back
+    // Call-scoped only, same rule as `binds`: never copied into
+    // PerformanceTuningContext, Full Context JSON, StateStorage, SQL
+    // History, telemetry, or logs (misc/design/performance-tuning-query-
+    // statistics-parameter-input-plan.ja.md §7.4/§8.1, db-notebook repo).
+    // Parallel array to `binds`, same order/length; only SQL Server's
+    // named-parameter SHOWPLAN substitution consumes it today.
+    bindMarkers?: string[];
     bindMetadata?: Array<{
       type?: string;
       selectivityClass?: string;

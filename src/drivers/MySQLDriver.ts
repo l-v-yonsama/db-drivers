@@ -404,6 +404,34 @@ WHERE FALSE`,
     }
   }
 
+  // Probes whether this server's performance_schema.
+  // events_statements_summary_by_digest exposes the sample-text columns
+  // added in MySQL 8.0 (misc/design/performance-tuning-query-statistics-
+  // parameter-input-plan.ja.md §3.1/§6.4, db-notebook repo). A "WHERE
+  // FALSE" probe never touches a row, matching the existing
+  // checkStatementStatisticsAvailability() precedent just above. Only an
+  // unknown-column error (this server version predates the columns, e.g.
+  // MySQL 5.7) is treated as "not supported" and swallowed; any other
+  // error (permission, connectivity, ...) propagates so a real problem is
+  // never misread as "sample columns unavailable" (§6.4: "権限エラーを
+  // sample列非対応と誤認しない").
+  private async supportsStatementStatisticsSampleColumns(): Promise<boolean> {
+    try {
+      await this.requestSql({
+        sql: `SELECT QUERY_SAMPLE_TEXT, QUERY_SAMPLE_SEEN
+FROM performance_schema.events_statements_summary_by_digest
+WHERE FALSE`,
+      });
+      return true;
+    } catch (e) {
+      const code = (e as { code?: string } | undefined)?.code;
+      if (code === 'ER_BAD_FIELD_ERROR') {
+        return false;
+      }
+      throw e;
+    }
+  }
+
   async getStatementStatistics(
     params: StatementStatisticsParams,
   ): Promise<ResultSetData> {
@@ -416,6 +444,22 @@ WHERE FALSE`,
 
     const normalized = normalizeStatementStatisticsParams(params);
     const orderBy = getStatementStatisticsOrderByColumn(normalized.sortBy);
+    const supportsSampleColumns = await this.supportsStatementStatisticsSampleColumns();
+    // Optional columns appended after the 15 required ones (never
+    // interleaved) so existing name/order-based consumers are unaffected
+    // (§11 completion criteria). QUERY_SAMPLE_TEXT is a representative
+    // sample for this digest, not necessarily the latest execution - see
+    // §3.1 for why the UI must label it "Representative query"/"Sampled
+    // at", not "Latest query". The truncation-suspect flag is a heuristic
+    // (length reaching the server's configured cap), not a guarantee.
+    const sampleColumnsSql = supportsSampleColumns
+      ? `,
+  QUERY_SAMPLE_TEXT AS query_sample_text,
+  QUERY_SAMPLE_SEEN AS query_sample_seen_at,
+  (QUERY_SAMPLE_TEXT IS NOT NULL
+    AND LENGTH(QUERY_SAMPLE_TEXT) >= @@GLOBAL.performance_schema_max_sql_text_length
+  ) AS query_sample_text_may_be_truncated`
+      : '';
     const sql = `SELECT
   DIGEST AS statement_id,
   SCHEMA_NAME AS database_name,
@@ -431,7 +475,7 @@ WHERE FALSE`,
   NULL AS physical_reads,
   LAST_SEEN AS last_executed_at,
   FIRST_SEEN AS statistics_since,
-  'performance_schema.events_statements_summary_by_digest' AS source
+  'performance_schema.events_statements_summary_by_digest' AS source${sampleColumnsSql}
 FROM performance_schema.events_statements_summary_by_digest
 WHERE LOWER(SCHEMA_NAME) = LOWER(?)
   AND DIGEST IS NOT NULL

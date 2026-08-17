@@ -44,7 +44,10 @@ import {
 // to reconstruct the plan tree) - see SQLServerDriver.ts's doc comment on it.
 export interface SQLServerPerformanceTuningDriverAccess {
   requestSql(params: QueryParams): Promise<ResultSetData>;
-  collectPerformanceTuningShowplan(params: QueryParams): Promise<ResultSetData>;
+  collectPerformanceTuningShowplan(
+    params: QueryParams,
+    bindMarkers?: string[],
+  ): Promise<ResultSetData>;
 }
 
 // SQL Server always has a real schema (unlike MySQL, where "schema" and
@@ -98,16 +101,24 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
     }
 
     // binds are used only to obtain a parameter-specific plan (§4.1); they
-    // are never placed anywhere in the returned VendorExecutionPlan.
+    // are never placed anywhere in the returned VendorExecutionPlan. Same
+    // for bindMarkers (call-scoped only, per performance-tuning-query-
+    // statistics-parameter-input-plan.ja.md §7.4/§8.1, db-notebook repo) -
+    // needed so a named parameter (`@customerId`) substitutes correctly
+    // instead of falling back to positional `@1`, `@2`, ... substitution.
     const binds = params.plan?.binds?.map((v) => String(v));
+    const bindMarkers = params.plan?.bindMarkers;
 
     let rdh: ResultSetData;
     try {
-      rdh = await this.driver.collectPerformanceTuningShowplan({
-        sql: params.statement.sql,
-        conditions: { rawQueries: true, binds },
-        meta: { type: 'performanceTuningContext' },
-      });
+      rdh = await this.driver.collectPerformanceTuningShowplan(
+        {
+          sql: params.statement.sql,
+          conditions: { rawQueries: true, binds },
+          meta: { type: 'performanceTuningContext' },
+        },
+        bindMarkers,
+      );
     } catch (e) {
       // Same precedent as the other two vendors: a failed SHOWPLAN is an
       // expected, actionable failure, surfaced with detail.

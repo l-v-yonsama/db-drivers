@@ -9,6 +9,7 @@ import {
   RDSBaseDriver,
   RdsDatabase,
   resolveLastOrderByColumn,
+  StatementStatisticsSortKey,
 } from '../../../src';
 import { init } from '../../setup/oracle';
 
@@ -461,6 +462,68 @@ describe('OracleDriver', () => {
       );
       expect(lockRow).not.toBeUndefined();
     });
+  });
+
+  describe('getStatementStatistics', () => {
+    const REQUIRED_COLUMNS = [
+      'statement_id',
+      'database_name',
+      'query',
+      'execution_count',
+      'total_elapsed_time_ms',
+      'average_elapsed_time_ms',
+      'min_elapsed_time_ms',
+      'max_elapsed_time_ms',
+      'rows_processed',
+      'rows_examined',
+      'logical_reads',
+      'physical_reads',
+      'last_executed_at',
+      'statistics_since',
+      'source',
+    ];
+
+    it('keeps the 15 required columns (name and order unchanged)', async () => {
+      await driver.requestSql({ sql: 'SELECT 1 FROM DUAL' });
+
+      const rdh = await driver.getStatementStatistics({
+        databaseName: connectOption.database,
+        minimumAverageElapsedTimeMs: 0,
+        limit: 5,
+      });
+      expect(rdh.keys.map((k) => k.name)).toEqual(REQUIRED_COLUMNS);
+    });
+
+    it('returns SQL_FULLTEXT (not truncated at 1000 chars like SQL_TEXT) as the query column (§3.3)', async () => {
+      // This Oracle container accumulates thousands of unrelated
+      // V$SQLSTATS entries over its lifetime (background/maintenance
+      // statements), so a fast trivial query has no reliable way to rank
+      // into a small ORDER-BY-elapsed-time/LIMIT slice. Instead, this pads
+      // the query past SQL_TEXT's 1000-char truncation point *and* makes
+      // it slow enough (~2.5s, via a cross join - a plain CONNECT BY that
+      // size hits this container's ORA-30009 memory cap) that filtering
+      // on minimumAverageElapsedTimeMs reliably isolates it from the noise.
+      const marker = `ORACLE_FULLTEXT_TEST_${Date.now()}`;
+      const padding = 'x'.repeat(1100);
+      const sql = `SELECT /*+ NO_MERGE(a) NO_MERGE(b) USE_NL(b) */ COUNT(*) AS CNT
+FROM (SELECT LEVEL AS N FROM DUAL CONNECT BY LEVEL <= 6000) a,
+     (SELECT LEVEL AS N FROM DUAL CONNECT BY LEVEL <= 6000) b
+-- ${marker} ${padding}`;
+      await driver.requestSql({ sql });
+      await sleep(500);
+
+      const rdh = await driver.getStatementStatistics({
+        databaseName: connectOption.database,
+        minimumAverageElapsedTimeMs: 1000,
+        sortBy: StatementStatisticsSortKey.AverageElapsedTime,
+        limit: 50,
+      });
+      const row = rdh.rows.find(
+        (r) => typeof r.values.query === 'string' && r.values.query.includes(marker),
+      );
+      expect(row).not.toBeUndefined();
+      expect(String(row!.values.query).length).toBeGreaterThan(1000);
+    }, 30000);
   });
 
   describe('sessions', () => {

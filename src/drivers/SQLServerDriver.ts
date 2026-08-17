@@ -468,8 +468,45 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
   // curated subset - built dynamically from whatever the first row's own
   // keys are, since that set isn't fixed/known ahead of time the way
   // EXPLAIN_COLUMNS is.
+  // Builds the SHOWPLAN batch text with each bind value substituted in
+  // place of its marker. Extended (misc/design/performance-tuning-query-
+  // statistics-parameter-input-plan.ja.md §3.4/§6.4/§7.4, db-notebook repo)
+  // to accept SQL Server's named parameters (`@name`) alongside the legacy
+  // positional-only `@1`, `@2`, ... substitution. `SET SHOWPLAN_ALL ON`
+  // rejects a parameterized batch (see collectPerformanceTuningShowplan()'s
+  // own comment on why req.input()/sp_executesql can't be used here), so
+  // every bind value is substituted directly into the SQL text as an
+  // escaped string literal.
+  //
+  // `bindMarkers`, when given, must be the same length as `binds` and
+  // pairs each value with the exact marker text the Scanner (or the user,
+  // via the Bind Parameters editor's Add/Del rows) associated with it -
+  // e.g. `@1` or `@customerId`. Without it (or on a length mismatch), this
+  // falls back to the legacy positional-only `@${index + 1}` substitution -
+  // this method's only caller (collectPerformanceTuningShowplan() below)
+  // still works when a caller has binds but no markers yet to pair with
+  // them. explainSqlSub() (the general "Explain" feature) is untouched by
+  // this design and keeps its own separate positional-only substitution.
+  private substituteShowplanBinds(sql: string, binds: string[], bindMarkers?: string[]): string {
+    const markers =
+      bindMarkers && bindMarkers.length === binds.length
+        ? bindMarkers
+        : binds.map((_, idx) => `@${idx + 1}`);
+
+    return binds.reduce<string>((acc, bind, idx) => {
+      const marker = markers[idx];
+      const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // `(?<!@)` keeps `@@ROWCOUNT`-style system variables untouched even
+      // if one happened to share a name with a bind marker; `(?![\w$#])`
+      // stops `@1` from matching inside `@10`/`@name2`.
+      const placeholder = new RegExp(`(?<!@)${escapedMarker}(?![\\w$#])`, 'g');
+      return acc.replace(placeholder, wrapSingleQuote(bind));
+    }, sql);
+  }
+
   async collectPerformanceTuningShowplan(
     params: QueryParams,
+    bindMarkers?: string[],
   ): Promise<ResultSetData> {
     // A pool-backed Request (this.con.request()) does not guarantee its
     // separate batch() calls all run on the same physical connection -
@@ -495,10 +532,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
         // in the batch", which rules out req.query()'s sp_executesql-based
         // parameter binding.
         const binds = params.conditions?.binds ?? [];
-        const sql = binds.reduce<string>((acc, bind, idx) => {
-          const placeholder = new RegExp(`@${idx + 1}(?!\\d)`, 'g');
-          return acc.replace(placeholder, wrapSingleQuote(bind));
-        }, params.sql);
+        const sql = this.substituteShowplanBinds(params.sql, binds, bindMarkers);
 
         const result = await req.batch(sql);
         const firstRow = result.recordset[0];
@@ -587,7 +621,8 @@ FROM sys.database_query_store_options`,
   SUM(CONVERT(float, rs.avg_physical_io_reads) * rs.count_executions) AS physical_reads,
   MAX(rs.last_execution_time) AS last_executed_at,
   MIN(rsi.start_time) AS statistics_since,
-  'query_store' AS source
+  'query_store' AS source,
+  q.query_parameterization_type_desc AS query_parameterization_type
 FROM sys.query_store_query_text qt
 JOIN sys.query_store_query q ON q.query_text_id = qt.query_text_id
 JOIN sys.query_store_plan p ON p.query_id = q.query_id
@@ -596,7 +631,7 @@ JOIN sys.query_store_runtime_stats_interval rsi
   ON rsi.runtime_stats_interval_id = rs.runtime_stats_interval_id
 WHERE rs.execution_type = 0
   AND qt.query_sql_text NOT LIKE '%sys.query_store_%'
-GROUP BY q.query_id, qt.query_sql_text
+GROUP BY q.query_id, qt.query_sql_text, q.query_parameterization_type_desc
 HAVING SUM(CONVERT(float, rs.avg_duration) * rs.count_executions)
   / NULLIF(SUM(rs.count_executions), 0) / 1000.0 >= @1
 ORDER BY ${orderBy} DESC`;

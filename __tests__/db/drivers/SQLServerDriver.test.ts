@@ -589,6 +589,105 @@ describe('SQLServerDriver', () => {
     });
   });
 
+  describe('getStatementStatistics', () => {
+    // A dedicated, freshly-connected driver rather than the shared `driver`
+    // above - several sibling describe blocks in this file (locks,
+    // readOnly, kill) already avoid reusing the shared connection this late
+    // in the file for the same reason, each with their own
+    // createRDSDriver() instance.
+    let statsDriver: SQLServerDriver;
+
+    beforeAll(async () => {
+      statsDriver = createRDSDriver() as SQLServerDriver;
+      await statsDriver.connect();
+    });
+
+    afterAll(async () => {
+      await statsDriver.disconnect();
+    });
+
+    const REQUIRED_COLUMNS = [
+      'statement_id',
+      'database_name',
+      'query',
+      'execution_count',
+      'total_elapsed_time_ms',
+      'average_elapsed_time_ms',
+      'min_elapsed_time_ms',
+      'max_elapsed_time_ms',
+      'rows_processed',
+      'rows_examined',
+      'logical_reads',
+      'physical_reads',
+      'last_executed_at',
+      'statistics_since',
+      'source',
+    ];
+
+    it('includes the 15 required columns plus query_parameterization_type appended after them', async () => {
+      await statsDriver.requestSql({ sql: 'SELECT TOP 1 * FROM testdb.perf_orders' });
+      // Query Store's runtime stats are interval-buffered; force them to
+      // disk so this test doesn't race the flush interval.
+      await statsDriver.requestSql({ sql: 'EXEC sys.sp_query_store_flush_db' });
+
+      const rdh = await statsDriver.getStatementStatistics({
+        databaseName: baseConnectOption.database,
+        minimumAverageElapsedTimeMs: 0,
+        limit: 5,
+      });
+      const columnNames = rdh.keys.map((k) => k.name);
+
+      expect(columnNames.slice(0, REQUIRED_COLUMNS.length)).toEqual(REQUIRED_COLUMNS);
+      // §3.4/§6.4: appended after the 15 required columns, never interleaved.
+      expect(columnNames.slice(REQUIRED_COLUMNS.length)).toEqual(['query_parameterization_type']);
+    });
+  });
+
+  describe('collectPerformanceTuningShowplan (bind markers)', () => {
+    let sqlDriver: SQLServerDriver;
+
+    beforeAll(async () => {
+      sqlDriver = createRDSDriver() as SQLServerDriver;
+      await sqlDriver.connect();
+    });
+
+    afterAll(async () => {
+      await sqlDriver.disconnect();
+    });
+
+    it('substitutes a named parameter (@name) when bindMarkers is given, leaving @@ system variables untouched', async () => {
+      const sql =
+        "SELECT @@ROWCOUNT AS rc, o.status FROM testdb.perf_orders o WHERE o.status = @status";
+
+      const rdh = await sqlDriver.collectPerformanceTuningShowplan(
+        { sql, conditions: { rawQueries: true, binds: ['shipped'] } },
+        ['@status'],
+      );
+      expect(rdh.rows.length).toBeGreaterThan(0);
+    });
+
+    it('cannot substitute a named parameter without bindMarkers (documents why bindMarkers is needed)', async () => {
+      const sql = "SELECT o.status FROM testdb.perf_orders o WHERE o.status = @status";
+
+      await expect(
+        sqlDriver.collectPerformanceTuningShowplan({
+          sql,
+          conditions: { rawQueries: true, binds: ['shipped'] },
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('still substitutes legacy positional markers (@1, @2, ...) when bindMarkers is omitted', async () => {
+      const sql = 'SELECT o.status FROM testdb.perf_orders o WHERE o.status = @1';
+
+      const rdh = await sqlDriver.collectPerformanceTuningShowplan({
+        sql,
+        conditions: { rawQueries: true, binds: ['shipped'] },
+      });
+      expect(rdh.rows.length).toBeGreaterThan(0);
+    });
+  });
+
   function createRDSDriver(
     params?: Partial<ConnectionSetting> & { asRoot?: boolean },
   ): RDSBaseDriver {

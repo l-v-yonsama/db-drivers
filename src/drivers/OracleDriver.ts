@@ -407,7 +407,11 @@ FROM (
   SELECT
     SQL_ID AS "statement_id",
     SYS_CONTEXT('USERENV', 'DB_NAME') AS "database_name",
-    SQL_TEXT AS "query",
+    -- SQL_TEXT truncates at 1000 chars; SQL_FULLTEXT (CLOB) returns the
+    -- whole statement (§3.3). The self-referential exclusion filter below
+    -- intentionally keeps using SQL_TEXT - it only needs to detect the
+    -- string's presence, and comparing a CLOB there gains nothing.
+    SQL_FULLTEXT AS "query",
     EXECUTIONS AS "execution_count",
     ELAPSED_TIME / 1000 AS "total_elapsed_time_ms",
     CASE WHEN EXECUTIONS > 0 THEN ELAPSED_TIME / EXECUTIONS / 1000 END AS "average_elapsed_time_ms",

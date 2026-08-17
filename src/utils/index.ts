@@ -1,4 +1,5 @@
 export * from './base';
+export * from './bindParameterEstimator';
 export * from './cfn';
 export * from './csv';
 export * from './dbType';
