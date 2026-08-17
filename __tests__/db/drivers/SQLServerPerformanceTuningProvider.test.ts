@@ -69,8 +69,8 @@ describe('parseSqlServerPlan', () => {
       }),
     ];
 
-    const { planNode, mappings, warnings } = parseSqlServerPlan(rows);
-    expect(warnings).toEqual([]);
+    const { planNode, mappings, diagnostics } = parseSqlServerPlan(rows);
+    expect(diagnostics).toEqual([]);
     expect(planNode.operation).toBe('SELECT');
     expect(planNode.children).toHaveLength(1);
     const scan = planNode.children[0];
@@ -139,7 +139,12 @@ describe('parseSqlServerPlan', () => {
     expect(planNode.children[0].joinType).toBeUndefined();
   });
 
-  it('surfaces the Warnings column as a per-node warning', () => {
+  it('surfaces the native Warnings column as PLAN_OBSERVATION information, not a warning', () => {
+    // SQL Server's own "NO STATS" text is a fact the optimizer reported
+    // about this node, not a driver-side collection gap (§8 Step 1
+    // inventory) - it must not silently disappear (it used to only live on
+    // PlanNode.warnings, invisible to collection.status) nor turn the
+    // result 'partial' on its own.
     const rows = [
       row({ NodeId: 1, Parent: 0, Type: 'SELECT' }),
       row({
@@ -149,8 +154,46 @@ describe('parseSqlServerPlan', () => {
         Warnings: 'NO STATS: ([testdb].[perf].[heap_table].[a])',
       }),
     ];
-    const { planNode } = parseSqlServerPlan(rows);
-    expect(planNode.children[0].warnings).toEqual(['NO STATS: ([testdb].[perf].[heap_table].[a])']);
+    const { planNode, diagnostics } = parseSqlServerPlan(rows);
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'PLAN_OBSERVATION',
+        severity: 'info',
+        affectsCompleteness: false,
+        message: 'NO STATS: ([testdb].[perf].[heap_table].[a])',
+        node: { id: planNode.children[0].id, operation: 'Table Scan' },
+      }),
+    ]);
+  });
+
+  it('warns instead of silently dropping a node whose OBJECT:(...) clause could not be parsed', () => {
+    // An OBJECT:(...) clause is present (so this is clearly meant to be a
+    // table access) but has fewer than the 3 segments this parser expects
+    // ([database].[schema].[table], optionally + [index]) - an honest
+    // degrade to a warning, never a guessed table (§4.3).
+    const rows = [
+      row({ NodeId: 1, Parent: 0, Type: 'SELECT' }),
+      row({
+        NodeId: 2,
+        Parent: 1,
+        PhysicalOp: 'Table Scan',
+        Argument: 'OBJECT:([testdb].[perf])',
+      }),
+    ];
+    const { planNode, mappings, diagnostics } = parseSqlServerPlan(rows);
+    expect(mappings).toEqual([]);
+    // §4.3: a short excerpt of the Argument that failed to parse is kept as
+    // technical detail, not just the fact that resolution failed.
+    expect(diagnostics[0].message).toContain('OBJECT:([testdb].[perf])');
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'TABLE_MAPPING_FAILED',
+        severity: 'warning',
+        affectsCompleteness: true,
+        message: expect.stringContaining(`Could not resolve a table for plan node ${planNode.children[0].id}`),
+        node: { id: planNode.children[0].id, operation: 'Table Scan' },
+      }),
+    ]);
   });
 
   it('reconstructs the tree from NodeId/Parent even when NodeId values are non-contiguous', () => {

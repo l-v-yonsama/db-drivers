@@ -22,6 +22,7 @@ import {
   mapOracleTableStatisticsRow,
 } from './oracleCatalogMapper';
 import { findUnresolvedIndexOnlyAccessKeys, OracleIndexTableKey, parseOraclePlan } from './oraclePlanParser';
+import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import {
   PerformanceTuningCollectionOptions,
   PerformanceTuningContextProvider,
@@ -164,7 +165,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
     }
 
     const rawRows = rdh.rows.map((r) => r.values);
-    const warnings: string[] = [];
+    const diagnostics: NonNullable<VendorExecutionPlan['diagnostics']> = [];
     let planNode: VendorExecutionPlan['normalizedPlan'];
     let planTableMappings: VendorExecutionPlan['planTableMappings'] = [];
     try {
@@ -174,9 +175,9 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
       const parsedPlan = parseOraclePlan(rawRows, resolutions);
       planNode = parsedPlan.planNode;
       planTableMappings = parsedPlan.mappings;
-      warnings.push(...parsedPlan.warnings);
+      diagnostics.push(...parsedPlan.diagnostics);
     } catch {
-      warnings.push('Failed to resolve tables from the execution plan.');
+      diagnostics.push(planUnresolvedDiagnostic());
     }
 
     return {
@@ -192,7 +193,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
         // (estimate mode only, same as the other three vendors).
         planningTimeMs: undefined,
         executionTimeMs: undefined,
-        warnings,
+        diagnostics,
         planTableMappings,
       },
     };

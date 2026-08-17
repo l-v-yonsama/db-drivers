@@ -25,6 +25,7 @@ import {
   PerformanceTuningCapabilities,
   PerformanceTuningContext,
   PerformanceTuningContextParams,
+  PerformanceTuningDiagnostic,
   QStatement,
   QueryParams,
   SQLLang,
@@ -408,11 +409,21 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     }
 
     if (payloadSize() > maxPayloadBytes) {
-      context.collection.warnings.push(
-        `Result still exceeds maxPayloadBytes (${maxPayloadBytes} bytes) after truncation.`,
-      );
+      context.collection.diagnostics.push({
+        code: 'COLLECTION_TRUNCATED',
+        severity: 'warning',
+        affectsCompleteness: true,
+        scope: 'collection',
+        message: `Result still exceeds maxPayloadBytes (${maxPayloadBytes} bytes) after truncation.`,
+      });
     } else if (truncated) {
-      context.collection.warnings.push('Result was truncated to satisfy maxPayloadBytes.');
+      context.collection.diagnostics.push({
+        code: 'COLLECTION_TRUNCATED',
+        severity: 'warning',
+        affectsCompleteness: true,
+        scope: 'collection',
+        message: 'Result was truncated to satisfy maxPayloadBytes.',
+      });
     }
     if (truncated) {
       context.collection.status = 'partial';
@@ -498,7 +509,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       }
 
       const unavailableSections: PerformanceTuningContext['collection']['unavailableSections'] = [];
-      const collectionWarnings: string[] = [...(vendorPlan?.warnings ?? [])];
+      const diagnostics: PerformanceTuningDiagnostic[] = [...(vendorPlan?.diagnostics ?? [])];
 
       // Clamp to the safe maximum (§4.1: "上限値は Driver 側の安全な最大値で
       // clamp し、切り詰めた場合は warning を返す") - a plan touching more
@@ -508,9 +519,13 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       const allResolvedTables = [...resolvedTables.values()];
       const tablesToCollect = allResolvedTables.slice(0, normalized.limits.maxTables);
       if (allResolvedTables.length > tablesToCollect.length) {
-        collectionWarnings.push(
-          `Table collection truncated to ${normalized.limits.maxTables} of ${allResolvedTables.length} resolved tables.`,
-        );
+        diagnostics.push({
+          code: 'COLLECTION_TRUNCATED',
+          severity: 'warning',
+          affectsCompleteness: true,
+          scope: 'collection',
+          message: `Table collection truncated to ${normalized.limits.maxTables} of ${allResolvedTables.length} resolved tables.`,
+        });
       }
 
       // Columns to fetch statistics for: whatever the plan actually showed
@@ -543,7 +558,31 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         tablesToCollect.map(async ({ schemaName, tableName }) => {
           const tableTarget = { databaseName: normalized.databaseName, schemaName, tableName };
           const columnNames = [...(relevantColumnsByTable.get(tableKeyOf(tableTarget)) ?? [])];
-          const tableWarnings: string[] = [];
+
+          // Pushes into the same shared `diagnostics` array every table's
+          // callback writes into (safe: Promise.all here means concurrent
+          // async callbacks interleaved on one JS thread, not true
+          // parallelism - the same pattern `unavailableSections.push()`
+          // below already relies on). `code` is always one of the two this
+          // per-table loop ever produces: a section that returned data with
+          // a caveat (SECTION_COLLECTION_FAILED) or a column/index list cut
+          // down to the configured limit (COLLECTION_TRUNCATED).
+          const pushTableDiagnostic = (
+            code: 'SECTION_COLLECTION_FAILED' | 'COLLECTION_TRUNCATED',
+            section: 'tableDefinition' | 'tableStatistics' | 'columnStatistics' | 'physicalHealth',
+            message: string,
+          ): void => {
+            diagnostics.push({
+              code,
+              severity: 'warning',
+              affectsCompleteness: true,
+              scope: section,
+              message,
+              schemaName,
+              tableName,
+              section,
+            });
+          };
 
           // Each call is bounded and caught individually (not just the outer
           // try/catch) so a Provider bug, timeout, or mid-flight cancellation
@@ -586,18 +625,22 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           if (definitionResult.ok && definitionResult.result) {
             definition = definitionResult.result;
             if (definitionResult.message) {
-              tableWarnings.push(definitionResult.message);
+              pushTableDiagnostic('SECTION_COLLECTION_FAILED', 'tableDefinition', definitionResult.message);
             }
             const { columns, indexes } = definition;
             if (columns.length > normalized.limits.maxColumnsPerTable) {
               definition.columns = columns.slice(0, normalized.limits.maxColumnsPerTable);
-              tableWarnings.push(
+              pushTableDiagnostic(
+                'COLLECTION_TRUNCATED',
+                'tableDefinition',
                 `Columns truncated to ${normalized.limits.maxColumnsPerTable} of ${columns.length}.`,
               );
             }
             if (indexes.length > normalized.limits.maxIndexesPerTable) {
               definition.indexes = indexes.slice(0, normalized.limits.maxIndexesPerTable);
-              tableWarnings.push(
+              pushTableDiagnostic(
+                'COLLECTION_TRUNCATED',
+                'tableDefinition',
                 `Indexes truncated to ${normalized.limits.maxIndexesPerTable} of ${indexes.length}.`,
               );
             }
@@ -615,7 +658,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
             // way it was here before, same as definitionResult's own
             // message just above.
             if (statisticsResult.message) {
-              tableWarnings.push(statisticsResult.message);
+              pushTableDiagnostic('SECTION_COLLECTION_FAILED', 'tableStatistics', statisticsResult.message);
             }
           } else {
             unavailable('tableStatistics', statisticsResult.message || 'Table statistics unavailable.');
@@ -631,7 +674,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
             statistics ??= { columns: [] };
             statistics.columns = columnStatsResult.result ?? [];
             if (columnStatsResult.message) {
-              tableWarnings.push(columnStatsResult.message);
+              pushTableDiagnostic('SECTION_COLLECTION_FAILED', 'columnStatistics', columnStatsResult.message);
             }
           } else {
             unavailable('columnStatistics', columnStatsResult.message || 'Column statistics unavailable.');
@@ -641,13 +684,13 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           if (physicalHealthResult.ok && physicalHealthResult.result) {
             physicalHealth = { provider: this.conRes.dbType, metrics: physicalHealthResult.result.metrics };
             if (physicalHealthResult.message) {
-              tableWarnings.push(physicalHealthResult.message);
+              pushTableDiagnostic('SECTION_COLLECTION_FAILED', 'physicalHealth', physicalHealthResult.message);
             }
           } else {
             unavailable('physicalHealth', physicalHealthResult.message || 'Physical health unavailable.');
           }
 
-          return { schemaName, tableName, definition, statistics, physicalHealth, warnings: tableWarnings };
+          return { schemaName, tableName, definition, statistics, physicalHealth };
         }),
       );
 
@@ -657,7 +700,13 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       try {
         version = await this.getVersion();
       } catch {
-        collectionWarnings.push('Failed to retrieve the database version.');
+        diagnostics.push({
+          code: 'DATABASE_VERSION_UNAVAILABLE',
+          severity: 'warning',
+          affectsCompleteness: true,
+          scope: 'collection',
+          message: 'Failed to retrieve the database version.',
+        });
       }
 
       const context: PerformanceTuningContext = {
@@ -686,23 +735,22 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           normalizedPlan: vendorPlan?.normalizedPlan,
           planningTimeMs: vendorPlan?.planningTimeMs,
           executionTimeMs: vendorPlan?.executionTimeMs,
-          warnings: vendorPlan?.warnings ?? [],
         },
         tables,
         planTableMappings,
         collection: {
           collectedAt: new Date().toISOString(),
-          // A per-table warning (e.g. a Provider section that partially
-          // succeeded - see tableWarnings above) means this result is not
-          // fully trustworthy as "complete" either, even though it never
-          // became an unavailableSections entry.
+          // status is derived only from unavailableSections and
+          // diagnostics[].affectsCompleteness (diagnostics-display design
+          // doc §2.2) - an `info` diagnostic (e.g. a non-table plan source)
+          // never flips this to 'partial' on its own; only a genuine
+          // section/table failure or a `warning` diagnostic that was
+          // explicitly marked as affecting completeness does.
           status:
-            unavailableSections.length > 0 ||
-            collectionWarnings.length > 0 ||
-            tables.some((t) => t.warnings.length > 0)
+            unavailableSections.length > 0 || diagnostics.some((d) => d.affectsCompleteness)
               ? 'partial'
               : 'complete',
-          warnings: collectionWarnings,
+          diagnostics,
           unavailableSections,
         },
       };

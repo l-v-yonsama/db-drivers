@@ -10,6 +10,7 @@ import {
   PlanTableMapping,
   TableStatisticsContext,
 } from '../../../types/drivers/performance/PerformanceTuningContext';
+import { PerformanceTuningDiagnostic } from '../../../types/drivers/performance/PerformanceTuningDiagnostic';
 import {
   PerformanceTuningAvailabilityParams,
   PerformanceTuningCapabilities,
@@ -26,7 +27,13 @@ export type VendorExecutionPlan = {
   raw: unknown;
   planningTimeMs?: number;
   executionTimeMs?: number;
-  warnings?: string[];
+  // Structured diagnostics the plan parser produced while walking the plan
+  // (§2 of the diagnostics-display design doc) - a node that reads from a
+  // non-table source, an unresolved table mapping, a vendor-reported plan
+  // observation, ... RDSBaseDriver folds these into
+  // PerformanceTuningContext.collection.diagnostics rather than this type
+  // carrying its own separate warnings array.
+  diagnostics?: PerformanceTuningDiagnostic[];
   // Table/alias/index/predicate-column resolution, computed by the Provider
   // directly from its own vendor-specific plan JSON (§10 Phase 1). Already
   // in the common `PlanTableMapping` shape - no vendor-specific mapping type

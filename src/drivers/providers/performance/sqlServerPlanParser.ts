@@ -1,5 +1,7 @@
 import { PlanTableMapping } from '../../../types/drivers/performance/PerformanceTuningContext';
+import { PerformanceTuningDiagnostic } from '../../../types/drivers/performance/PerformanceTuningDiagnostic';
 import { PlanNode } from '../../../types/drivers/performance/PlanNode';
+import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import { computeRowEstimateRatio } from './planNodeMath';
 import { asNumber, asRecord, asString } from './vendorRowCoercion';
 
@@ -42,6 +44,18 @@ import { asNumber, asRecord, asString } from './vendorRowCoercion';
 // bracketed segment is SQL Server's own escaping for a literal `]`.
 const BRACKET_SEGMENT = /\[((?:[^\]]|\]\])*)\]/g;
 const unescapeBracket = (s: string): string => s.replace(/\]\]/g, ']');
+
+// A short excerpt of the Argument text for a TABLE_MAPPING_FAILED
+// diagnostic's technical detail (§4.3: "解析対象のArgument概要をtechnical
+// detailへ保持する") - bounded rather than the full clause, since Argument
+// can itself embed WHERE:/SEEK: predicate literals and this driver's
+// no-masking posture (see PerformanceTuningContext.ts's module doc) already
+// covers the full, untruncated text elsewhere in the context (executionPlan.vendorPlan).
+const ARGUMENT_EXCERPT_MAX_LENGTH = 160;
+const argumentExcerpt = (argument: string): string =>
+  argument.length > ARGUMENT_EXCERPT_MAX_LENGTH
+    ? `${argument.slice(0, ARGUMENT_EXCERPT_MAX_LENGTH)}...`
+    : argument;
 
 // Matches the `OBJECT:(...)` clause every table-accessing operator's
 // Argument carries: a dot-joined chain of `[database].[schema].[table]`
@@ -141,14 +155,14 @@ export function extractSqlServerPredicateColumns(clause: string | undefined): st
 export type ParsedSqlServerPlan = {
   planNode: PlanNode;
   mappings: PlanTableMapping[];
-  warnings: string[];
+  diagnostics: PerformanceTuningDiagnostic[];
 };
 
 type ShowplanRow = Record<string, unknown>;
 
 type NodeCtx = {
   mappings: PlanTableMapping[];
-  warnings: string[];
+  diagnostics: PerformanceTuningDiagnostic[];
   counter: number;
 };
 
@@ -185,6 +199,7 @@ function buildNode(
   ctx: NodeCtx,
 ): PlanNode {
   const id = `n${ctx.counter++}`;
+  const operation = asString(row.PhysicalOp) ?? asString(row.Type) ?? 'Unknown';
   const argument = asString(row.Argument);
   const objectRef = extractObjectClause(argument);
   const whereClause = extractLabeledClause(argument, 'WHERE');
@@ -218,11 +233,32 @@ function buildNode(
   } else if (argument && argument.includes('OBJECT:(')) {
     // An OBJECT:(...) clause is present but this parser couldn't make sense
     // of it (unexpected shape) - honest degrade, never guess at a table.
-    ctx.warnings.push(`Could not resolve a table for plan node ${id}.`);
+    ctx.diagnostics.push({
+      code: 'TABLE_MAPPING_FAILED',
+      severity: 'warning',
+      affectsCompleteness: true,
+      scope: 'executionPlan',
+      message: `Could not resolve a table for plan node ${id}. Argument: ${argumentExcerpt(argument)}`,
+      node: { id, operation },
+    });
   }
 
   const logicalOp = asString(row.LogicalOp);
   const warningsText = asString(row.Warnings);
+  if (warningsText) {
+    // SQL Server's own native SHOWPLAN_ALL `Warnings` column (e.g. "NO
+    // STATS: (...)") - a fact the optimizer itself reported about this
+    // node, not a driver-side collection gap, so this is information rather
+    // than a warning, same rationale as MySQL's temp-table/filesort flags.
+    ctx.diagnostics.push({
+      code: 'PLAN_OBSERVATION',
+      severity: 'info',
+      affectsCompleteness: false,
+      scope: 'executionPlan',
+      message: warningsText,
+      node: { id, operation },
+    });
+  }
 
   const childRows = childrenByParent.get(asNumber(row.NodeId) ?? -1) ?? [];
   const children = childRows.map((childRow) =>
@@ -233,7 +269,7 @@ function buildNode(
     id,
     parentId,
     depth,
-    operation: asString(row.PhysicalOp) ?? asString(row.Type) ?? 'Unknown',
+    operation,
     relation: objectRef
       ? { schemaName: objectRef.schemaName, tableName: objectRef.tableName, alias: objectRef.alias }
       : undefined,
@@ -249,7 +285,6 @@ function buildNode(
       rows: estimatedRows,
       width: asNumber(row.AvgRowSize),
     },
-    warnings: warningsText ? [warningsText] : undefined,
     children,
   };
 }
@@ -260,7 +295,7 @@ function buildNode(
 // LogicalOp/Argument/.../EstimateRows/.../Warnings/Type/.../
 // EstimateExecutions).
 export function parseSqlServerPlan(rows: unknown[]): ParsedSqlServerPlan {
-  const ctx: NodeCtx = { mappings: [], warnings: [], counter: 0 };
+  const ctx: NodeCtx = { mappings: [], diagnostics: [], counter: 0 };
   const validRows = Array.isArray(rows)
     ? rows.map((r) => asRecord(r)).filter((r): r is ShowplanRow => r !== undefined)
     : [];
@@ -269,7 +304,7 @@ export function parseSqlServerPlan(rows: unknown[]): ParsedSqlServerPlan {
     return {
       planNode: { id: 'n0', depth: 0, operation: 'Unknown', children: [] },
       mappings: [],
-      warnings: ['Failed to resolve tables from the execution plan.'],
+      diagnostics: [planUnresolvedDiagnostic()],
     };
   }
 
@@ -278,13 +313,13 @@ export function parseSqlServerPlan(rows: unknown[]): ParsedSqlServerPlan {
     return {
       planNode: { id: 'n0', depth: 0, operation: 'Unknown', children: [] },
       mappings: ctx.mappings,
-      warnings: [...ctx.warnings, 'Failed to resolve tables from the execution plan.'],
+      diagnostics: [...ctx.diagnostics, planUnresolvedDiagnostic()],
     };
   }
 
   if (roots.length === 1) {
     const planNode = buildNode(roots[0], undefined, 0, childrenByParent, ctx);
-    return { planNode, mappings: ctx.mappings, warnings: ctx.warnings };
+    return { planNode, mappings: ctx.mappings, diagnostics: ctx.diagnostics };
   }
 
   // A multi-statement batch produces more than one Parent = 0 row - wrap
@@ -296,6 +331,6 @@ export function parseSqlServerPlan(rows: unknown[]): ParsedSqlServerPlan {
   return {
     planNode: { id, depth: 0, operation: 'Batch', children },
     mappings: ctx.mappings,
-    warnings: ctx.warnings,
+    diagnostics: ctx.diagnostics,
   };
 }

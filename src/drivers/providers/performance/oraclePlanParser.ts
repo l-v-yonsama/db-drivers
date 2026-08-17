@@ -1,5 +1,7 @@
 import { PlanTableMapping } from '../../../types/drivers/performance/PerformanceTuningContext';
+import { PerformanceTuningDiagnostic } from '../../../types/drivers/performance/PerformanceTuningDiagnostic';
 import { PlanNode } from '../../../types/drivers/performance/PlanNode';
+import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import { computeRowEstimateRatio } from './planNodeMath';
 import { asNumber, asRecord, asString } from './vendorRowCoercion';
 
@@ -146,12 +148,12 @@ export function findUnresolvedIndexOnlyAccessKeys(rows: unknown[]): OracleIndexT
 export type ParsedOraclePlan = {
   planNode: PlanNode;
   mappings: PlanTableMapping[];
-  warnings: string[];
+  diagnostics: PerformanceTuningDiagnostic[];
 };
 
 type NodeCtx = {
   mappings: PlanTableMapping[];
-  warnings: string[];
+  diagnostics: PerformanceTuningDiagnostic[];
   counter: number;
 };
 
@@ -184,6 +186,12 @@ function buildNode(
   ctx: NodeCtx,
 ): PlanNode {
   const id = `n${ctx.counter++}`;
+  const logicalOp = asString(row.OPERATION);
+  const options = asString(row.OPTIONS);
+  // Oracle's own DBMS_XPLAN.DISPLAY convention: OPERATION and OPTIONS
+  // concatenated with a space (e.g. "TABLE ACCESS" + "FULL" ->
+  // "TABLE ACCESS FULL") - not a guess, this is the documented rendering.
+  const operation = options ? `${logicalOp ?? 'Unknown'} ${options}` : (logicalOp ?? 'Unknown');
   const objectType = asString(row.OBJECT_TYPE);
   const rowIdNum = asNumber(row.ID);
   const childRows = rowIdNum !== undefined ? (childrenOf.get(rowIdNum) ?? []) : [];
@@ -266,7 +274,19 @@ function buildNode(
           filterColumns: filterColumns.size > 0 ? [...filterColumns] : undefined,
         });
       } else {
-        ctx.warnings.push(`Could not resolve a table for plan node ${id} (index ${indexName}).`);
+        // §4.4: keep owner, index name, node ID and operation as technical
+        // detail - `schemaName` doubles as "owner" here (Oracle's ALL_INDEXES.OWNER
+        // is exactly a schema name), matching how every other vendor's
+        // TABLE_MAPPING_FAILED diagnostic reuses the same generic field.
+        ctx.diagnostics.push({
+          code: 'TABLE_MAPPING_FAILED',
+          severity: 'warning',
+          affectsCompleteness: true,
+          scope: 'executionPlan',
+          message: `Could not resolve a table for plan node ${id} (index ${indexName}, owner ${owner}).`,
+          node: { id, operation, objectKind: 'index', objectName: indexName },
+          schemaName: owner,
+        });
       }
     }
   }
@@ -275,17 +295,11 @@ function buildNode(
     buildNode(childRow, id, depth + 1, rowsById, childrenOf, resolutions, ctx),
   );
 
-  const logicalOp = asString(row.OPERATION);
-  const options = asString(row.OPTIONS);
-
   return {
     id,
     parentId,
     depth,
-    // Oracle's own DBMS_XPLAN.DISPLAY convention: OPERATION and OPTIONS
-    // concatenated with a space (e.g. "TABLE ACCESS" + "FULL" ->
-    // "TABLE ACCESS FULL") - not a guess, this is the documented rendering.
-    operation: options ? `${logicalOp ?? 'Unknown'} ${options}` : (logicalOp ?? 'Unknown'),
+    operation,
     relation,
     indexName,
     // OPTIONS on a *JOIN operation itself (HASH JOIN/NESTED LOOPS/MERGE
@@ -315,7 +329,7 @@ export function parseOraclePlan(
   rows: unknown[],
   resolutions?: Map<string, { schemaName: string; tableName: string }>,
 ): ParsedOraclePlan {
-  const ctx: NodeCtx = { mappings: [], warnings: [], counter: 0 };
+  const ctx: NodeCtx = { mappings: [], diagnostics: [], counter: 0 };
   const validRows = Array.isArray(rows)
     ? rows.map((r) => asRecord(r)).filter((r): r is OraclePlanRow => r !== undefined)
     : [];
@@ -324,7 +338,7 @@ export function parseOraclePlan(
     return {
       planNode: { id: 'n0', depth: 0, operation: 'Unknown', children: [] },
       mappings: [],
-      warnings: ['Failed to resolve tables from the execution plan.'],
+      diagnostics: [planUnresolvedDiagnostic()],
     };
   }
 
@@ -335,5 +349,5 @@ export function parseOraclePlan(
   const root = validRows.find((r) => asNumber(r.PARENT_ID) === undefined) ?? validRows[0];
 
   const planNode = buildNode(root, undefined, 0, rowsById, childrenOf, resolutions, ctx);
-  return { planNode, mappings: ctx.mappings, warnings: ctx.warnings };
+  return { planNode, mappings: ctx.mappings, diagnostics: ctx.diagnostics };
 }

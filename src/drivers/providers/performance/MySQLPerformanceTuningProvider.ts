@@ -22,6 +22,7 @@ import {
   mapMysqlTableStatisticsRow,
 } from './mysqlCatalogMapper';
 import { parseMysqlPlan } from './mysqlPlanParser';
+import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import {
   PerformanceTuningCollectionOptions,
   PerformanceTuningContextProvider,
@@ -130,16 +131,16 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
     // result in an array), MySQL's `EXPLAIN FORMAT=JSON` returns the
     // `{ query_block: {...} }` object directly - `parsed` already *is* the
     // explain root, no unwrapping needed.
-    const warnings: string[] = [];
+    const diagnostics: NonNullable<VendorExecutionPlan['diagnostics']> = [];
     let planNode: VendorExecutionPlan['normalizedPlan'];
     let planTableMappings: VendorExecutionPlan['planTableMappings'] = [];
     try {
       const parsedPlan = parseMysqlPlan(parsed);
       planNode = parsedPlan.planNode;
       planTableMappings = parsedPlan.mappings;
-      warnings.push(...parsedPlan.warnings);
+      diagnostics.push(...parsedPlan.diagnostics);
     } catch {
-      warnings.push('Failed to resolve tables from the execution plan.');
+      diagnostics.push(planUnresolvedDiagnostic());
     }
 
     return {
@@ -152,7 +153,7 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
         // it doesn't execute the query.
         planningTimeMs: undefined,
         executionTimeMs: undefined,
-        warnings,
+        diagnostics,
         planTableMappings,
       },
     };

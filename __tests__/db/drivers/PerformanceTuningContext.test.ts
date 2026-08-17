@@ -409,7 +409,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
               result: {
                 raw: { Plan: { 'Node Type': 'Seq Scan', 'Relation Name': 'orders' } },
                 planningTimeMs: 0.4,
-                warnings: [],
+                diagnostics: [],
                 planTableMappings: [
                   {
                     planNodeId: 'n0',
@@ -441,7 +441,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
       });
       expect(context.planTableMappings).toHaveLength(1);
       expect(context.tables).toEqual([
-        { schemaName: undefined, tableName: 'orders', warnings: [] },
+        { schemaName: undefined, tableName: 'orders' },
       ]);
       // DDL/statistics/physical health aren't collected in this step yet -
       // the caller must see that as a partial result, not silently missing data.
@@ -454,6 +454,148 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
 
       // The assembled context must itself pass the output schema validator.
       expect(validatePerformanceTuningContext(context)).toEqual([]);
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  it('does not mark the result partial when the only diagnostics are informational (§2.2)', async () => {
+    const getVersion = jest
+      .spyOn(PostgresDriver.prototype, 'getVersion')
+      .mockResolvedValue('16.3');
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider(
+          async () => ({ ok: true, message: '', result: fakeCapabilities }),
+          {
+            collectExecutionPlan: async () => ({
+              ok: true,
+              message: '',
+              result: {
+                raw: {},
+                // A pg_stat_statements-style Function Scan (diagnostics-
+                // display design doc §0): fully understood, not a
+                // table-mapping gap.
+                diagnostics: [
+                  {
+                    code: 'NON_TABLE_PLAN_SOURCE',
+                    severity: 'info',
+                    affectsCompleteness: false,
+                    scope: 'executionPlan',
+                    message: 'Plan node n0 (Function Scan) reads from a non-table source.',
+                    node: {
+                      id: 'n0',
+                      operation: 'Function Scan',
+                      objectKind: 'function',
+                      objectName: 'pg_stat_statements',
+                    },
+                  },
+                ],
+                // No resolved tables at all - keeps this test isolated to
+                // the diagnostics-only question, not table collection.
+                planTableMappings: [],
+              },
+            }),
+          },
+        ),
+      );
+
+      const result = await driver.getPerformanceTuningContext(baseParams());
+      expect(result.ok).toBe(true);
+      const context = result.result!;
+      expect(context.tables).toEqual([]);
+      expect(context.collection.unavailableSections).toEqual([]);
+      expect(context.collection.diagnostics).toHaveLength(1);
+      expect(context.collection.diagnostics[0].severity).toBe('info');
+      // The whole point of §2.2: an info-only diagnostic set never flips
+      // status to 'partial' on its own.
+      expect(context.collection.status).toBe('complete');
+      expect(validatePerformanceTuningContext(context)).toEqual([]);
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  it('marks the result partial when a diagnostic has affectsCompleteness: true, even with no unavailableSections', async () => {
+    const getVersion = jest
+      .spyOn(PostgresDriver.prototype, 'getVersion')
+      .mockResolvedValue('16.3');
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider(
+          async () => ({ ok: true, message: '', result: fakeCapabilities }),
+          {
+            collectExecutionPlan: async () => ({
+              ok: true,
+              message: '',
+              result: {
+                raw: {},
+                diagnostics: [
+                  {
+                    code: 'TABLE_MAPPING_FAILED',
+                    severity: 'warning',
+                    affectsCompleteness: true,
+                    scope: 'executionPlan',
+                    message: 'Could not resolve a table for plan node n0.',
+                    node: { id: 'n0', operation: 'Some Future Scan' },
+                  },
+                ],
+                planTableMappings: [],
+              },
+            }),
+          },
+        ),
+      );
+
+      const result = await driver.getPerformanceTuningContext(baseParams());
+      expect(result.ok).toBe(true);
+      const context = result.result!;
+      expect(context.collection.unavailableSections).toEqual([]);
+      expect(context.collection.status).toBe('partial');
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  it('does not mark the result partial for a warning diagnostic explicitly marked affectsCompleteness: false', async () => {
+    const getVersion = jest
+      .spyOn(PostgresDriver.prototype, 'getVersion')
+      .mockResolvedValue('16.3');
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider(
+          async () => ({ ok: true, message: '', result: fakeCapabilities }),
+          {
+            collectExecutionPlan: async () => ({
+              ok: true,
+              message: '',
+              result: {
+                raw: {},
+                diagnostics: [
+                  {
+                    code: 'PLAN_OBSERVATION',
+                    severity: 'warning',
+                    affectsCompleteness: false,
+                    scope: 'executionPlan',
+                    message: 'A warning-severity observation that this driver does not treat as incomplete.',
+                    node: { id: 'n0', operation: 'Seq Scan' },
+                  },
+                ],
+                planTableMappings: [],
+              },
+            }),
+          },
+        ),
+      );
+
+      const result = await driver.getPerformanceTuningContext(baseParams());
+      expect(result.ok).toBe(true);
+      const context = result.result!;
+      expect(context.collection.unavailableSections).toEqual([]);
+      expect(context.collection.status).toBe('complete');
     } finally {
       getVersion.mockRestore();
     }
@@ -472,7 +614,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
             collectExecutionPlan: async () => ({
               ok: true,
               message: '',
-              result: { raw: {}, warnings: [], planTableMappings: [] },
+              result: { raw: {}, diagnostics: [], planTableMappings: [] },
             }),
           },
         ),
@@ -481,8 +623,15 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
       const result = await driver.getPerformanceTuningContext(baseParams());
       expect(result.ok).toBe(true);
       expect(result.result!.database.version).toBeUndefined();
-      expect(result.result!.collection.warnings).toContain(
-        'Failed to retrieve the database version.',
+      expect(result.result!.collection.diagnostics).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'DATABASE_VERSION_UNAVAILABLE',
+            severity: 'warning',
+            affectsCompleteness: true,
+            message: 'Failed to retrieve the database version.',
+          }),
+        ]),
       );
     } finally {
       getVersion.mockRestore();
@@ -504,7 +653,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
               message: '',
               result: {
                 raw: {},
-                warnings: [],
+                diagnostics: [],
                 planTableMappings: [{ planNodeId: 'n0', tableName: 'orders', estimatedRows: 1 }],
               },
             }),
@@ -568,7 +717,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
     message: '',
     result: {
       raw: {},
-      warnings: [],
+      diagnostics: [],
       planTableMappings: [{ planNodeId: 'n0', tableName, estimatedRows: 1 }],
     },
   });
@@ -672,7 +821,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
             message: '',
             result: {
               raw: {},
-              warnings: [],
+              diagnostics: [],
               planTableMappings: [
                 { planNodeId: 'n0', tableName: 'orders', estimatedRows: 1 },
                 { planNodeId: 'n1', tableName: 'customers', estimatedRows: 1 },
@@ -701,7 +850,11 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
       // must be dropped.
       expect(context.tables.length).toBeLessThan(2);
       expect(context.collection.status).toBe('partial');
-      expect(context.collection.warnings.join(' ')).toContain('maxPayloadBytes');
+      expect(
+        context.collection.diagnostics.some(
+          (d) => d.code === 'COLLECTION_TRUNCATED' && d.message.includes('maxPayloadBytes'),
+        ),
+      ).toBe(true);
       expect(
         context.collection.unavailableSections.some((s) =>
           s.reason.includes('maxPayloadBytes'),
@@ -765,7 +918,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
           collectExecutionPlan: async () => ({
             ok: true,
             message: '',
-            result: { raw: {}, normalizedPlan, warnings: [], planTableMappings: [] },
+            result: { raw: {}, normalizedPlan, diagnostics: [], planTableMappings: [] },
           }),
         }),
       );
@@ -787,7 +940,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
           collectExecutionPlan: async () => ({
             ok: true,
             message: '',
-            result: { raw: {}, warnings: [], planTableMappings: [] },
+            result: { raw: {}, diagnostics: [], planTableMappings: [] },
           }),
         }),
       );
@@ -809,7 +962,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
           collectExecutionPlan: async () => ({
             ok: true,
             message: '',
-            result: { raw: {}, warnings: [], planTableMappings: [] },
+            result: { raw: {}, diagnostics: [], planTableMappings: [] },
           }),
         }),
       );
@@ -857,7 +1010,10 @@ describe('performance tuning context - output schema', () => {
       collection: {
         collectedAt: 'not-a-date',
         status: 'complete',
-        warnings: [],
+        // A malformed diagnostic (right container type, wrong/missing
+        // fields inside) must be caught the same way a malformed table or
+        // planTableMappings entry already is above.
+        diagnostics: [{}],
         unavailableSections: [],
       },
     };
@@ -875,8 +1031,62 @@ describe('performance tuning context - output schema', () => {
         expect.stringContaining('planTableMappings[0].planNodeId'),
         expect.stringContaining('planTableMappings[0].tableName'),
         expect.stringContaining('collection.collectedAt'),
+        expect.stringContaining('collection.diagnostics[0].code'),
+        expect.stringContaining('collection.diagnostics[0].severity'),
+        expect.stringContaining('collection.diagnostics[0].scope'),
+        expect.stringContaining('collection.diagnostics[0].message'),
       ]),
     );
+  });
+
+  it('rejects an info diagnostic with affectsCompleteness: true (review finding)', () => {
+    // collection.status is derived from diagnostics.some(d =>
+    // d.affectsCompleteness) (§2.2), while a consuming UI splits Information
+    // vs. Collection issues by severity - an info diagnostic that also
+    // claims affectsCompleteness: true would flip status to 'partial' while
+    // landing in the Information section, leaving no visible reason in
+    // Collection issues (exactly what §6.4 forbids).
+    const broken = {
+      ...samplePerformanceTuningContext,
+      collection: {
+        ...samplePerformanceTuningContext.collection,
+        diagnostics: [
+          {
+            code: 'NON_TABLE_PLAN_SOURCE',
+            severity: 'info',
+            affectsCompleteness: true,
+            scope: 'executionPlan',
+            message: 'x',
+          },
+        ],
+      },
+    };
+
+    expect(validatePerformanceTuningContext(broken)).toEqual([
+      expect.stringContaining("collection.diagnostics[0].affectsCompleteness must be false when severity is 'info'"),
+    ]);
+  });
+
+  it("rejects a diagnostic whose severity does not match its code's fixed severity", () => {
+    const broken = {
+      ...samplePerformanceTuningContext,
+      collection: {
+        ...samplePerformanceTuningContext.collection,
+        diagnostics: [
+          {
+            code: 'NON_TABLE_PLAN_SOURCE', // always 'info' (§8 Step 1 inventory)
+            severity: 'warning',
+            affectsCompleteness: true,
+            scope: 'executionPlan',
+            message: 'x',
+          },
+        ],
+      },
+    };
+
+    expect(validatePerformanceTuningContext(broken)).toEqual([
+      expect.stringContaining("collection.diagnostics[0].severity must be 'info' for code 'NON_TABLE_PLAN_SOURCE'"),
+    ]);
   });
 
   it('never contains a raw bind/secret literal from plan retrieval', () => {

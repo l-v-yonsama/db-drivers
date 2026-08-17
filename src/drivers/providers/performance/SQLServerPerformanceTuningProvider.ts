@@ -12,6 +12,7 @@ import {
   PerformanceTuningCapabilities,
 } from '../../../types/drivers/performance/PerformanceTuningCapabilities';
 import { QueryParams } from '../../../types/drivers/QueryParams';
+import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import {
   mapSqlServerCheckConstraintRows,
   mapSqlServerColumnRows,
@@ -122,16 +123,16 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
     }
 
     const rawRows = rdh.rows.map((r) => r.values);
-    const warnings: string[] = [];
+    const diagnostics: NonNullable<VendorExecutionPlan['diagnostics']> = [];
     let planNode: VendorExecutionPlan['normalizedPlan'];
     let planTableMappings: VendorExecutionPlan['planTableMappings'] = [];
     try {
       const parsedPlan = parseSqlServerPlan(rawRows);
       planNode = parsedPlan.planNode;
       planTableMappings = parsedPlan.mappings;
-      warnings.push(...parsedPlan.warnings);
+      diagnostics.push(...parsedPlan.diagnostics);
     } catch {
-      warnings.push('Failed to resolve tables from the execution plan.');
+      diagnostics.push(planUnresolvedDiagnostic());
     }
 
     return {
@@ -147,7 +148,7 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
         // (estimate mode only, same as the other two vendors).
         planningTimeMs: undefined,
         executionTimeMs: undefined,
-        warnings,
+        diagnostics,
         planTableMappings,
       },
     };

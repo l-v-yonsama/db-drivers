@@ -103,9 +103,9 @@ describe('postgresPlanParser', () => {
 
   describe('parsePostgresPlan', () => {
     it('builds a normalized PlanNode tree using the same n0/n1/... ids as the mappings', () => {
-      const { planNode, mappings, warnings } = parsePostgresPlan(explainRoot);
+      const { planNode, mappings, diagnostics } = parsePostgresPlan(explainRoot);
 
-      expect(warnings).toEqual([]);
+      expect(diagnostics).toEqual([]);
       expect(planNode).toMatchObject({
         id: 'n0',
         depth: 0,
@@ -144,8 +144,12 @@ describe('postgresPlanParser', () => {
       }
     });
 
-    it('warns instead of silently dropping a scan node with no relation to map', () => {
-      const { mappings, warnings } = parsePostgresPlan({
+    it('reports a Function Scan as non-table-source information, not a mapping-failure warning', () => {
+      // The exact pg_stat_statements/pg_stat_statements_info scenario the
+      // diagnostics-display design doc opens with: a set-returning function
+      // exposed as a view expands, at plan time, into a Function Scan with
+      // no Relation Name - fully understood, not a failure (§4.1).
+      const { mappings, diagnostics } = parsePostgresPlan({
         Plan: {
           'Node Type': 'Function Scan',
           'Function Name': 'generate_series',
@@ -154,8 +158,98 @@ describe('postgresPlanParser', () => {
       });
 
       expect(mappings).toEqual([]);
-      expect(warnings).toEqual([
-        expect.stringContaining('Could not resolve a table for plan node n0 (Function Scan)'),
+      expect(diagnostics).toEqual([
+        expect.objectContaining({
+          code: 'NON_TABLE_PLAN_SOURCE',
+          severity: 'info',
+          affectsCompleteness: false,
+          scope: 'executionPlan',
+          node: { id: 'n0', operation: 'Function Scan', objectKind: 'function', objectName: 'generate_series' },
+        }),
+      ]);
+    });
+
+    it('classifies a Values Scan with no relation as non-table-source information', () => {
+      const { mappings, diagnostics } = parsePostgresPlan({
+        Plan: { 'Node Type': 'Values Scan' },
+      });
+
+      expect(mappings).toEqual([]);
+      expect(diagnostics).toEqual([
+        expect.objectContaining({
+          code: 'NON_TABLE_PLAN_SOURCE',
+          severity: 'info',
+          affectsCompleteness: false,
+          node: { id: 'n0', operation: 'Values Scan', objectKind: 'values', objectName: undefined },
+        }),
+      ]);
+    });
+
+    it('classifies a CTE Scan with no relation as non-table-source information, keeping the CTE Name', () => {
+      const { mappings, diagnostics } = parsePostgresPlan({
+        Plan: { 'Node Type': 'CTE Scan', 'CTE Name': 'recent_orders' },
+      });
+
+      expect(mappings).toEqual([]);
+      expect(diagnostics).toEqual([
+        expect.objectContaining({
+          code: 'NON_TABLE_PLAN_SOURCE',
+          severity: 'info',
+          affectsCompleteness: false,
+          node: { id: 'n0', operation: 'CTE Scan', objectKind: 'cte', objectName: 'recent_orders' },
+        }),
+      ]);
+    });
+
+    it('classifies a WorkTable Scan (recursive CTE) with no relation as non-table-source information', () => {
+      const { mappings, diagnostics } = parsePostgresPlan({
+        Plan: { 'Node Type': 'WorkTable Scan', 'CTE Name': 'search_tree' },
+      });
+
+      expect(mappings).toEqual([]);
+      expect(diagnostics).toEqual([
+        expect.objectContaining({
+          code: 'NON_TABLE_PLAN_SOURCE',
+          severity: 'info',
+          affectsCompleteness: false,
+          node: { id: 'n0', operation: 'WorkTable Scan', objectKind: 'workTable', objectName: 'search_tree' },
+        }),
+      ]);
+    });
+
+    it('classifies a Subquery Scan with no relation as non-table-source information, keeping the alias', () => {
+      const { mappings, diagnostics } = parsePostgresPlan({
+        Plan: { 'Node Type': 'Subquery Scan', Alias: 'unnamed_subquery' },
+      });
+
+      expect(mappings).toEqual([]);
+      expect(diagnostics).toEqual([
+        expect.objectContaining({
+          code: 'NON_TABLE_PLAN_SOURCE',
+          severity: 'info',
+          affectsCompleteness: false,
+          node: { id: 'n0', operation: 'Subquery Scan', objectKind: 'subquery', objectName: 'unnamed_subquery' },
+        }),
+      ]);
+    });
+
+    it('warns instead of silently dropping an unrecognized scan node with no relation to map', () => {
+      // Not one of the known non-table scan sources above - a genuine
+      // table-mapping gap (e.g. a future Postgres node type this driver
+      // doesn't recognize yet), so this stays a warning (§4.1).
+      const { mappings, diagnostics } = parsePostgresPlan({
+        Plan: { 'Node Type': 'Some Future Scan', 'Plan Rows': 1 },
+      });
+
+      expect(mappings).toEqual([]);
+      expect(diagnostics).toEqual([
+        expect.objectContaining({
+          code: 'TABLE_MAPPING_FAILED',
+          severity: 'warning',
+          affectsCompleteness: true,
+          message: expect.stringContaining('Could not resolve a table for plan node n0 (Some Future Scan)'),
+          node: { id: 'n0', operation: 'Some Future Scan' },
+        }),
       ]);
     });
 
@@ -248,6 +342,80 @@ describe('PostgresPerformanceTuningProvider', () => {
         }),
       ],
     });
+  });
+
+  it('reports the pg_stat_statements/pg_stat_statements_info Function Scan case as information, not warnings (diagnostics-display design doc §0)', async () => {
+    // pg_stat_statements/pg_stat_statements_info are views backed by a
+    // set-returning function - EXPLAIN shows them as Function Scan nodes
+    // with no Relation Name once the view is expanded.
+    const requestSql = jest.fn().mockResolvedValue({
+      rows: [
+        {
+          values: {
+            'QUERY PLAN': [
+              {
+                Plan: {
+                  'Node Type': 'Hash Join',
+                  'Join Type': 'Inner',
+                  Plans: [
+                    {
+                      'Node Type': 'Function Scan',
+                      'Function Name': 'pg_stat_statements_info',
+                      'Plan Rows': 1,
+                    },
+                    {
+                      'Node Type': 'Function Scan',
+                      'Function Name': 'pg_stat_statements',
+                      'Plan Rows': 100,
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
+
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'testdb',
+        statement: { sql: 'SELECT * FROM pg_stat_statements_info, pg_stat_statements', source: 'editor' },
+        plan: {},
+      },
+      { timeoutMs: 5000 },
+    );
+
+    expect(result.ok).toBe(true);
+    // Neither node resolves to a table mapping - there is no table here.
+    expect(result.result!.planTableMappings).toEqual([]);
+    // Both nodes are still individually present as their own diagnostic -
+    // grouping them into one beginner-facing summary is a UI concern
+    // (§1.1), not something this driver collapses away.
+    expect(result.result!.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'NON_TABLE_PLAN_SOURCE',
+        severity: 'info',
+        affectsCompleteness: false,
+        node: {
+          id: 'n1',
+          operation: 'Function Scan',
+          objectKind: 'function',
+          objectName: 'pg_stat_statements_info',
+        },
+      }),
+      expect.objectContaining({
+        code: 'NON_TABLE_PLAN_SOURCE',
+        severity: 'info',
+        affectsCompleteness: false,
+        node: { id: 'n2', operation: 'Function Scan', objectKind: 'function', objectName: 'pg_stat_statements' },
+      }),
+    ]);
+    // No diagnostic here is a warning - a caller assembling
+    // collection.status from this alone would see 'complete', not 'partial'
+    // (full end-to-end proof of that lives in PerformanceTuningContext.test.ts).
+    expect(result.result!.diagnostics!.every((d) => d.severity === 'info')).toBe(true);
   });
 
   it('parses a JSON-string QUERY PLAN value the same way as an already-parsed one', async () => {

@@ -1,5 +1,7 @@
 import { PlanTableMapping } from '../../../types/drivers/performance/PerformanceTuningContext';
+import { PerformanceTuningDiagnostic } from '../../../types/drivers/performance/PerformanceTuningDiagnostic';
 import { PlanNode } from '../../../types/drivers/performance/PlanNode';
+import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import { computeRowEstimateRatio } from './planNodeMath';
 import { asNumber, asRecord, asString } from './vendorRowCoercion';
 
@@ -80,29 +82,47 @@ const isSyntheticTableName = (name: string): boolean => /^<.*>$/.test(name);
 export type ParsedMysqlPlan = {
   planNode: PlanNode;
   mappings: PlanTableMapping[];
-  warnings: string[];
+  diagnostics: PerformanceTuningDiagnostic[];
 };
 
 type NodeContext = {
   mappings: PlanTableMapping[];
-  warnings: string[];
+  diagnostics: PerformanceTuningDiagnostic[];
   counter: number;
 };
 
-const pushWarningsFromFlags = (
+// using_temporary_table/using_filesort/using_join_buffer are factual,
+// vendor-reported plan characteristics, not performance verdicts (a
+// temp table or filesort is not automatically a problem) - reported as
+// PLAN_OBSERVATION information, attributed to the node that carried the
+// flag (§3.1/§4.2 of the diagnostics-display design doc).
+const planObservationsFromFlags = (
   node: Record<string, unknown>,
-  warnings: string[],
-): void => {
+  id: string,
+  operation: string,
+): PerformanceTuningDiagnostic[] => {
+  const observations: PerformanceTuningDiagnostic[] = [];
+  const push = (message: string): void => {
+    observations.push({
+      code: 'PLAN_OBSERVATION',
+      severity: 'info',
+      affectsCompleteness: false,
+      scope: 'executionPlan',
+      message,
+      node: { id, operation },
+    });
+  };
   if (node.using_temporary_table === true) {
-    warnings.push('Uses a temporary table.');
+    push('Uses a temporary table.');
   }
   if (node.using_filesort === true) {
-    warnings.push('Uses filesort.');
+    push('Uses filesort.');
   }
   const joinBuffer = asString(node.using_join_buffer);
   if (joinBuffer) {
-    warnings.push(`Uses a join buffer (${joinBuffer}).`);
+    push(`Uses a join buffer (${joinBuffer}).`);
   }
+  return observations;
 };
 
 function visitTable(tableValue: unknown, parentId: string | undefined, depth: number, ctx: NodeContext): PlanNode | undefined {
@@ -111,6 +131,7 @@ function visitTable(tableValue: unknown, parentId: string | undefined, depth: nu
     return undefined;
   }
   const id = `n${ctx.counter++}`;
+  const operation = asString(table.access_type) ?? 'table';
   const rawTableName = asString(table.table_name);
   const synthetic = rawTableName ? isSyntheticTableName(rawTableName) : false;
 
@@ -142,15 +163,27 @@ function visitTable(tableValue: unknown, parentId: string | undefined, depth: nu
       filterColumns: filterColumns.size > 0 ? [...filterColumns] : undefined,
     });
   } else if (rawTableName) {
-    // A derived table / materialized subquery / UNION result placeholder -
-    // there is no real table to attach DDL/statistics to, but its own
-    // contents (materialized_from_subquery.query_block below) are still
-    // walked and may themselves resolve real tables.
-    ctx.warnings.push(`Could not resolve a table for plan node ${id} (${rawTableName}).`);
+    // A derived table / materialized subquery / UNION result placeholder
+    // (`<derivedN>`/`<subqueryN>`/`<unionN,M>`) - fully understood, not a
+    // mapping failure: there was never a real table here to attach
+    // DDL/statistics to, only its own contents
+    // (materialized_from_subquery.query_block below), which are still
+    // walked and may themselves resolve real tables. Reported as
+    // information, not a warning (§4.2) - `objectKind: 'subquery'` covers
+    // every one of MySQL's synthetic placeholder kinds (derived table,
+    // materialized subquery, UNION result), none of which map cleanly onto
+    // the other, more specific objectKind values.
+    ctx.diagnostics.push({
+      code: 'NON_TABLE_PLAN_SOURCE',
+      severity: 'info',
+      affectsCompleteness: false,
+      scope: 'executionPlan',
+      message: `Plan node ${id} (${rawTableName}) reads from a synthetic derived/subquery/union result, not a physical table; table definitions and statistics do not apply to it.`,
+      node: { id, operation, objectKind: 'subquery', objectName: rawTableName },
+    });
   }
 
-  const warnings: string[] = [];
-  pushWarningsFromFlags(table, warnings);
+  ctx.diagnostics.push(...planObservationsFromFlags(table, id, operation));
 
   const children: PlanNode[] = [];
   const materialized = asRecord(table.materialized_from_subquery);
@@ -171,7 +204,7 @@ function visitTable(tableValue: unknown, parentId: string | undefined, depth: nu
     id,
     parentId,
     depth,
-    operation: asString(table.access_type) ?? 'table',
+    operation,
     relation:
       rawTableName && !synthetic
         ? { tableName: rawTableName }
@@ -182,7 +215,6 @@ function visitTable(tableValue: unknown, parentId: string | undefined, depth: nu
       totalCost: asNumber(asRecord(table.cost_info)?.prefix_cost),
       rows: estimatedRows,
     },
-    warnings: warnings.length > 0 ? warnings : undefined,
     children,
   };
 }
@@ -227,10 +259,9 @@ function visitContainer(
     const wrapped = container[key];
     if (wrapped !== undefined) {
       const id = `n${ctx.counter++}`;
-      const warnings: string[] = [];
       const wrappedRecord = asRecord(wrapped);
       if (wrappedRecord) {
-        pushWarningsFromFlags(wrappedRecord, warnings);
+        ctx.diagnostics.push(...planObservationsFromFlags(wrappedRecord, id, operation));
       }
       const child = visitContainer(wrapped, id, depth + 1, ctx);
       return {
@@ -238,7 +269,6 @@ function visitContainer(
         parentId,
         depth,
         operation,
-        warnings: warnings.length > 0 ? warnings : undefined,
         children: child ? [child] : [],
       };
     }
@@ -264,12 +294,21 @@ function visitContainer(
 
   // A container with none of the recognized keys - e.g. `{ "message":
   // "Impossible WHERE" }` for a query the optimizer proved returns no rows.
-  // Not a failure: represented as a leaf node carrying that message as an
-  // informational warning rather than silently vanishing.
+  // Not a failure: a factual, vendor-reported plan-level observation
+  // (§3.1), represented as both a leaf node and a PLAN_OBSERVATION
+  // diagnostic rather than silently vanishing or only living on the node.
   const message = asString(container.message);
   if (message) {
     const id = `n${ctx.counter++}`;
-    return { id, parentId, depth, operation: 'Message', warnings: [message], children: [] };
+    ctx.diagnostics.push({
+      code: 'PLAN_OBSERVATION',
+      severity: 'info',
+      affectsCompleteness: false,
+      scope: 'executionPlan',
+      message,
+      node: { id, operation: 'Message' },
+    });
+    return { id, parentId, depth, operation: 'Message', children: [] };
   }
 
   return undefined;
@@ -278,13 +317,13 @@ function visitContainer(
 // `explainRoot` is expected to be the object MySQL's `EXPLAIN FORMAT=JSON
 // ...` returns (already JSON.parse()'d), i.e. `{ query_block: {...} }`.
 export function parseMysqlPlan(explainRoot: unknown): ParsedMysqlPlan {
-  const ctx: NodeContext = { mappings: [], warnings: [], counter: 0 };
+  const ctx: NodeContext = { mappings: [], diagnostics: [], counter: 0 };
   const queryBlock = asRecord(explainRoot)?.query_block;
   const planNode = visitContainer(queryBlock, undefined, 0, ctx);
 
   return {
     planNode: planNode ?? { id: 'n0', depth: 0, operation: 'Unknown', children: [] },
     mappings: ctx.mappings,
-    warnings: planNode ? ctx.warnings : [...ctx.warnings, 'Failed to resolve tables from the execution plan.'],
+    diagnostics: planNode ? ctx.diagnostics : [...ctx.diagnostics, planUnresolvedDiagnostic()],
   };
 }

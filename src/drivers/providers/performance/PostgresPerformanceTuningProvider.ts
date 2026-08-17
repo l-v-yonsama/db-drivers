@@ -12,6 +12,7 @@ import {
   PerformanceTuningCapabilities,
 } from '../../../types/drivers/performance/PerformanceTuningCapabilities';
 import { QueryParams } from '../../../types/drivers/QueryParams';
+import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import {
   mapColumnRows,
   mapColumnStatisticsRows,
@@ -152,14 +153,14 @@ export class PostgresPerformanceTuningProvider implements PerformanceTuningConte
     // to lose the already-retrieved raw plan.
     let planNode: VendorExecutionPlan['normalizedPlan'];
     let planTableMappings: VendorExecutionPlan['planTableMappings'] = [];
-    const warnings: string[] = [];
+    const diagnostics: NonNullable<VendorExecutionPlan['diagnostics']> = [];
     try {
       const parsedPlan = parsePostgresPlan(explainRoot);
       planNode = parsedPlan.planNode;
       planTableMappings = parsedPlan.mappings;
-      warnings.push(...parsedPlan.warnings);
+      diagnostics.push(...parsedPlan.diagnostics);
     } catch {
-      warnings.push('Failed to resolve tables from the execution plan.');
+      diagnostics.push(planUnresolvedDiagnostic());
     }
 
     return {
@@ -169,7 +170,7 @@ export class PostgresPerformanceTuningProvider implements PerformanceTuningConte
         raw: parsed,
         normalizedPlan: planNode,
         planningTimeMs: extractPlanningTimeMs(explainRoot),
-        warnings,
+        diagnostics,
         planTableMappings,
       },
     };

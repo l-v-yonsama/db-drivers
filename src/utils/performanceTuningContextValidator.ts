@@ -11,6 +11,36 @@ const UNAVAILABLE_SECTIONS = [
   'physicalHealth',
 ];
 
+const DIAGNOSTIC_SEVERITIES = ['info', 'warning'];
+// 'collection' is the one DiagnosticScope value with no UnavailableSection
+// equivalent (a diagnostic about the result as a whole, not one section) -
+// kept as its own list rather than reusing UNAVAILABLE_SECTIONS above.
+const DIAGNOSTIC_SCOPES = [
+  'executionPlan',
+  'tableDefinition',
+  'tableStatistics',
+  'columnStatistics',
+  'physicalHealth',
+  'collection',
+];
+const DIAGNOSTIC_CODES = [
+  'NON_TABLE_PLAN_SOURCE',
+  'PLAN_OBSERVATION',
+  'TABLE_MAPPING_FAILED',
+  'SECTION_COLLECTION_FAILED',
+  'COLLECTION_TRUNCATED',
+  'DATABASE_VERSION_UNAVAILABLE',
+];
+const DIAGNOSTIC_NODE_OBJECT_KINDS = [
+  'function',
+  'cte',
+  'subquery',
+  'values',
+  'workTable',
+  'table',
+  'index',
+];
+
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -122,9 +152,6 @@ const validateExecutionPlan = (plan: unknown, errors: string[]): void => {
   if (plan.format !== 'json') {
     errors.push("executionPlan.format must be 'json'.");
   }
-  if (!Array.isArray(plan.warnings)) {
-    errors.push('executionPlan.warnings must be an array.');
-  }
   if (plan.normalizedPlan !== undefined) {
     validatePlanNode(plan.normalizedPlan, 'executionPlan.normalizedPlan', errors);
   }
@@ -138,9 +165,6 @@ const validateTable = (table: unknown, index: number, errors: string[]): void =>
   }
   if (!isNonEmptyString(table.tableName)) {
     errors.push(`${path}.tableName must be a non-empty string.`);
-  }
-  if (!Array.isArray(table.warnings)) {
-    errors.push(`${path}.warnings must be an array.`);
   }
 
   const statistics = table.statistics;
@@ -228,6 +252,106 @@ const validatePlanTableMapping = (
   }
 };
 
+const validateDiagnosticNode = (node: unknown, path: string, errors: string[]): void => {
+  if (node === undefined) {
+    return;
+  }
+  if (!isPlainObject(node)) {
+    errors.push(`${path} must be an object.`);
+    return;
+  }
+  if (!isNonEmptyString(node.id)) {
+    errors.push(`${path}.id must be a non-empty string.`);
+  }
+  if (!isNonEmptyString(node.operation)) {
+    errors.push(`${path}.operation must be a non-empty string.`);
+  }
+  if (node.objectKind !== undefined && !oneOf(node.objectKind, DIAGNOSTIC_NODE_OBJECT_KINDS)) {
+    errors.push(`${path}.objectKind must be one of: ${DIAGNOSTIC_NODE_OBJECT_KINDS.join(', ')}.`);
+  }
+  if (node.objectName !== undefined && typeof node.objectName !== 'string') {
+    errors.push(`${path}.objectName must be a string.`);
+  }
+};
+
+// Every code currently defined always uses exactly one fixed severity
+// (§8 Step 1 inventory) - checked below alongside the info/affectsCompleteness
+// invariant. This table only ever grows alongside DIAGNOSTIC_CODES itself
+// (adding a new code already means touching this file), so it doesn't add
+// the "two-file change forever" cost the comment below warns about for
+// scope/technical-field pairings - it is not attempting that broader check.
+const DIAGNOSTIC_CODE_SEVERITY: Record<string, 'info' | 'warning'> = {
+  NON_TABLE_PLAN_SOURCE: 'info',
+  PLAN_OBSERVATION: 'info',
+  TABLE_MAPPING_FAILED: 'warning',
+  SECTION_COLLECTION_FAILED: 'warning',
+  COLLECTION_TRUNCATED: 'warning',
+  DATABASE_VERSION_UNAVAILABLE: 'warning',
+};
+
+// Checks the structural contract every PerformanceTuningDiagnostic must
+// satisfy (code/severity/scope/message/node - design doc §8 Step 1 item 8),
+// not whether `code` is one this exact validator version happens to
+// recognize as semantically meaningful for its `scope`/technical-field
+// pairing - that broader cross-checking would make adding a new code a
+// two-file change forever. A UI is expected to tolerate an unrecognized
+// `code` (§7); this validator is not that UI - it is a self-consistency
+// check on what this package's own Providers just built, so an unrecognized
+// `code` here is still treated as a real defect. severity IS checked against
+// `code` (via DIAGNOSTIC_CODE_SEVERITY above) since every code currently
+// defined has exactly one valid severity - this is a fixed-cost check, not
+// an open-ended one.
+const validateDiagnostic = (diagnostic: unknown, index: number, errors: string[]): void => {
+  const path = `collection.diagnostics[${index}]`;
+  if (!isPlainObject(diagnostic)) {
+    errors.push(`${path} must be an object.`);
+    return;
+  }
+  if (!oneOf(diagnostic.code, DIAGNOSTIC_CODES)) {
+    errors.push(`${path}.code must be one of: ${DIAGNOSTIC_CODES.join(', ')}.`);
+  }
+  if (!oneOf(diagnostic.severity, DIAGNOSTIC_SEVERITIES)) {
+    errors.push(`${path}.severity must be one of: ${DIAGNOSTIC_SEVERITIES.join(', ')}.`);
+  } else {
+    const expectedSeverity =
+      typeof diagnostic.code === 'string' ? DIAGNOSTIC_CODE_SEVERITY[diagnostic.code] : undefined;
+    if (expectedSeverity !== undefined && diagnostic.severity !== expectedSeverity) {
+      errors.push(`${path}.severity must be '${expectedSeverity}' for code '${String(diagnostic.code)}'.`);
+    }
+  }
+  if (typeof diagnostic.affectsCompleteness !== 'boolean') {
+    errors.push(`${path}.affectsCompleteness must be a boolean.`);
+  } else if (diagnostic.severity === 'info' && diagnostic.affectsCompleteness !== false) {
+    // §2.2: collection.status is derived from
+    // `diagnostics.some(d => d.affectsCompleteness)` - an `info` diagnostic
+    // with affectsCompleteness: true would flip status to 'partial' while
+    // (per db-notebook's formatter) landing in the Information section, not
+    // Collection issues - exactly the "partial with no visible reason"
+    // state §6.4 forbids. Rejected here rather than left to the UI to
+    // work around.
+    errors.push(`${path}.affectsCompleteness must be false when severity is 'info'.`);
+  }
+  if (!oneOf(diagnostic.scope, DIAGNOSTIC_SCOPES)) {
+    errors.push(`${path}.scope must be one of: ${DIAGNOSTIC_SCOPES.join(', ')}.`);
+  }
+  if (!isNonEmptyString(diagnostic.message)) {
+    errors.push(`${path}.message must be a non-empty string.`);
+  }
+  validateDiagnosticNode(diagnostic.node, `${path}.node`, errors);
+  if (diagnostic.schemaName !== undefined && typeof diagnostic.schemaName !== 'string') {
+    errors.push(`${path}.schemaName must be a string.`);
+  }
+  if (diagnostic.tableName !== undefined && typeof diagnostic.tableName !== 'string') {
+    errors.push(`${path}.tableName must be a string.`);
+  }
+  if (diagnostic.section !== undefined && !oneOf(diagnostic.section, UNAVAILABLE_SECTIONS)) {
+    errors.push(`${path}.section must be one of: ${UNAVAILABLE_SECTIONS.join(', ')}.`);
+  }
+  if (diagnostic.suggestedAction !== undefined && typeof diagnostic.suggestedAction !== 'string') {
+    errors.push(`${path}.suggestedAction must be a string.`);
+  }
+};
+
 const validateUnavailableSection = (
   section: unknown,
   index: number,
@@ -261,8 +385,12 @@ const validateCollection = (collection: unknown, errors: string[]): void => {
       `collection.status must be one of: ${COLLECTION_STATUSES.join(', ')}.`,
     );
   }
-  if (!Array.isArray(collection.warnings)) {
-    errors.push('collection.warnings must be an array.');
+  if (!Array.isArray(collection.diagnostics)) {
+    errors.push('collection.diagnostics must be an array.');
+  } else {
+    collection.diagnostics.forEach((diagnostic, index) =>
+      validateDiagnostic(diagnostic, index, errors),
+    );
   }
   if (!Array.isArray(collection.unavailableSections)) {
     errors.push('collection.unavailableSections must be an array.');

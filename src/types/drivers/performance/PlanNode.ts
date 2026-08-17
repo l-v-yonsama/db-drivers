@@ -40,6 +40,5 @@ export type PlanNode = {
     read?: number;
     written?: number;
   };
-  warnings?: string[];
   children: PlanNode[];
 };

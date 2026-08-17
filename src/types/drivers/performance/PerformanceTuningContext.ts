@@ -1,3 +1,4 @@
+import { PerformanceTuningDiagnostic } from './PerformanceTuningDiagnostic';
 import { PlanNode } from './PlanNode';
 
 // See misc/design/performance-tuning-context-implementation-plan.ja.md for
@@ -115,7 +116,6 @@ export type ExecutionPlanContext = {
   normalizedPlan?: PlanNode;
   planningTimeMs?: number;
   executionTimeMs?: number;
-  warnings: string[];
 };
 
 export type ColumnDefinition = {
@@ -227,7 +227,6 @@ export type TableTuningContext = {
   definition?: TableDefinitionContext;
   statistics?: TableStatisticsContext;
   physicalHealth?: PhysicalHealthContext;
-  warnings: string[];
 };
 
 export type PlanTableMapping = {
@@ -274,7 +273,14 @@ export type PerformanceTuningContext = {
   collection: {
     collectedAt: string;
     status: 'complete' | 'partial';
-    warnings: string[];
+    // Every structured diagnostic collection produced, in provenance order
+    // (plan-level diagnostics first, then per-table ones) - the single home
+    // that replaced the four separate warning-string arrays this type used
+    // to have (ExecutionPlanContext.warnings, TableTuningContext.warnings,
+    // this field itself, and PlanNode.warnings). `status` is derived only
+    // from this and unavailableSections below (§2.2) - an `info` diagnostic
+    // never affects it.
+    diagnostics: PerformanceTuningDiagnostic[];
     unavailableSections: UnavailableSection[];
   };
 };

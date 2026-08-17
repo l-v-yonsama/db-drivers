@@ -1,5 +1,7 @@
 import { PlanTableMapping } from '../../../types/drivers/performance/PerformanceTuningContext';
+import { PerformanceTuningDiagnostic } from '../../../types/drivers/performance/PerformanceTuningDiagnostic';
 import { PlanNode } from '../../../types/drivers/performance/PlanNode';
+import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import { computeRowEstimateRatio } from './planNodeMath';
 import { asNumber, asRecord, asString } from './vendorRowCoercion';
 
@@ -17,6 +19,17 @@ import { asNumber, asRecord, asString } from './vendorRowCoercion';
 // PlanTableMapping[] list are built together so their IDs can never drift
 // apart from each other (§10 Phase 2: "plan node と table/index/column
 // statistics の mapping を作る").
+//
+// A scan node with no `Relation Name` is either (a) reading from something
+// that was never going to be a physical table - a set-returning function, a
+// VALUES list, a CTE, a recursive CTE's work table, a subquery - in which
+// case table DDL/statistics genuinely do not apply and this is reported as
+// `NON_TABLE_PLAN_SOURCE` information, or (b) a real table-mapping gap this
+// driver doesn't understand yet, reported as a `TABLE_MAPPING_FAILED`
+// warning. See misc/design/performance-tuning-diagnostics-display-plan.ja.md
+// §4.1 for the rationale (this replaced an earlier blanket
+// `operation.endsWith('Scan')` => warning rule that misclassified case (a)
+// as a failure).
 
 const PREDICATE_KEYS = [
   'Filter',
@@ -66,14 +79,31 @@ export function extractExecutionTimeMs(explainRoot: unknown): number | undefined
 const hasAnyKey = (node: Record<string, unknown>, keys: readonly string[]): boolean =>
   keys.some((key) => node[key] !== undefined);
 
+// Every `...Scan` node type Postgres can produce with no `Relation Name`
+// that is still a fully-understood, non-table plan source - not an
+// exhaustive list of every Postgres node type, only the ones this driver has
+// confirmed never carry a `Relation Name` (§4.1). `nameKeys` are tried in
+// order; the first key present on the raw node becomes `node.objectName`.
+const NON_TABLE_SCAN_OPERATIONS: Record<
+  string,
+  { objectKind: NonNullable<PerformanceTuningDiagnostic['node']>['objectKind']; nameKeys: string[] }
+> = {
+  'Function Scan': { objectKind: 'function', nameKeys: ['Function Name'] },
+  'Values Scan': { objectKind: 'values', nameKeys: ['Alias'] },
+  'CTE Scan': { objectKind: 'cte', nameKeys: ['CTE Name', 'Alias'] },
+  'WorkTable Scan': { objectKind: 'workTable', nameKeys: ['CTE Name', 'Alias'] },
+  'Subquery Scan': { objectKind: 'subquery', nameKeys: ['Alias'] },
+};
+
 export type ParsedPostgresPlan = {
   planNode: PlanNode;
   mappings: PlanTableMapping[];
-  // "mapping 不能" cases (§10 Phase 2) - currently just scan-family nodes
-  // with no relation to point at (Function/Values/CTE/WorkTable/Subquery
-  // Scan, ...). Surfaced explicitly instead of the node silently vanishing
-  // from planTableMappings with no trace.
-  warnings: string[];
+  // Structured diagnostics produced while walking the plan (§10 Phase 2 /
+  // diagnostics-display design doc §4.1) - a non-table scan source
+  // (information) or a genuine table-mapping gap (warning). Surfaced
+  // explicitly instead of the node silently vanishing from
+  // planTableMappings with no trace.
+  diagnostics: PerformanceTuningDiagnostic[];
 };
 
 // `explainRoot` is expected to be the single element of the array
@@ -83,7 +113,7 @@ export type ParsedPostgresPlan = {
 // exact same depth-first "n0, n1, ..." node IDs.
 export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
   const mappings: PlanTableMapping[] = [];
-  const warnings: string[] = [];
+  const diagnostics: PerformanceTuningDiagnostic[] = [];
   let counter = 0;
 
   const visit = (nodeValue: unknown, parentId: string | undefined, depth: number): PlanNode | undefined => {
@@ -125,12 +155,37 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
         rowEstimateRatio: computeRowEstimateRatio(estimatedRows, actualRows),
         filterColumns: filterColumns.size > 0 ? [...filterColumns] : undefined,
       });
-    } else if (operation.endsWith('Scan')) {
-      // A scan-family node with no relation (Function/Values/CTE/WorkTable/
-      // Subquery Scan, ...) reads from something other than a physical
-      // table, so there is no table/index/statistics context to attach to
-      // it - called out explicitly rather than the node just disappearing.
-      warnings.push(`Could not resolve a table for plan node ${id} (${operation}).`);
+    } else {
+      const nonTableScan = NON_TABLE_SCAN_OPERATIONS[operation];
+      if (nonTableScan) {
+        // A known non-table scan source (Function/Values/CTE/WorkTable/
+        // Subquery Scan) - fully understood, not a mapping failure: table
+        // DDL/statistics were never going to apply to this node. Reported
+        // as information, not a warning (§4.1).
+        const objectName = nonTableScan.nameKeys.map((key) => asString(node[key])).find((v) => v !== undefined);
+        diagnostics.push({
+          code: 'NON_TABLE_PLAN_SOURCE',
+          severity: 'info',
+          affectsCompleteness: false,
+          scope: 'executionPlan',
+          message: `Plan node ${id} (${operation}) reads from a non-table source; table definitions and statistics do not apply to it.`,
+          node: { id, operation, objectKind: nonTableScan.objectKind, objectName },
+        });
+      } else if (operation.endsWith('Scan')) {
+        // A scan-family node with no relation that isn't one of the known
+        // non-table sources above - an actual table-mapping gap (a future/
+        // unrecognized Postgres node type, most likely), not a "nothing to
+        // map" situation - called out as a warning rather than the node
+        // just disappearing from planTableMappings.
+        diagnostics.push({
+          code: 'TABLE_MAPPING_FAILED',
+          severity: 'warning',
+          affectsCompleteness: true,
+          scope: 'executionPlan',
+          message: `Could not resolve a table for plan node ${id} (${operation}).`,
+          node: { id, operation },
+        });
+      }
     }
 
     const children: PlanNode[] = [];
@@ -204,7 +259,7 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
     // (empty, warned-about) tree, not a hole in the context shape.
     planNode: planNode ?? { id: 'n0', depth: 0, operation: 'Unknown', children: [] },
     mappings,
-    warnings: planNode ? warnings : [...warnings, 'Failed to resolve tables from the execution plan.'],
+    diagnostics: planNode ? diagnostics : [...diagnostics, planUnresolvedDiagnostic()],
   };
 }
 

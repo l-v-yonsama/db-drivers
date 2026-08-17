@@ -77,8 +77,8 @@ describe('parseOraclePlan', () => {
       }),
     ];
 
-    const { planNode, mappings, warnings } = parseOraclePlan(rows);
-    expect(warnings).toEqual([]);
+    const { planNode, mappings, diagnostics } = parseOraclePlan(rows);
+    expect(diagnostics).toEqual([]);
     expect(mappings).toEqual([
       expect.objectContaining({
         tableName: 'PERF_ORDERS',
@@ -123,17 +123,26 @@ describe('parseOraclePlan', () => {
 
     const withoutResolution = parseOraclePlan(rows);
     expect(withoutResolution.mappings).toEqual([]);
-    expect(withoutResolution.warnings).toEqual([
-      expect.stringContaining('Could not resolve a table for plan node'),
-      // node id may vary by tree position - just assert content:
+    // node id may vary by tree position - just assert content:
+    expect(withoutResolution.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'TABLE_MAPPING_FAILED',
+        severity: 'warning',
+        affectsCompleteness: true,
+        message: expect.stringContaining('Could not resolve a table for plan node'),
+        node: expect.objectContaining({ objectKind: 'index', objectName: 'IDX_PERF_ORDERS_STATUS' }),
+        // owner is kept as technical detail (§4.4) even though it never
+        // resolved to a real table.
+        schemaName: 'TESTUSER',
+      }),
     ]);
-    expect(withoutResolution.warnings[0]).toContain('IDX_PERF_ORDERS_STATUS');
+    expect(withoutResolution.diagnostics[0].message).toContain('IDX_PERF_ORDERS_STATUS');
 
     const resolutions = new Map([
       ['TESTUSER.IDX_PERF_ORDERS_STATUS', { schemaName: 'TESTUSER', tableName: 'PERF_ORDERS' }],
     ]);
     const resolved = parseOraclePlan(rows, resolutions);
-    expect(resolved.warnings).toEqual([]);
+    expect(resolved.diagnostics).toEqual([]);
     expect(resolved.mappings).toEqual([
       expect.objectContaining({
         tableName: 'PERF_ORDERS',

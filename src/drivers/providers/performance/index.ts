@@ -5,6 +5,7 @@ export * from './oracleCatalogMapper';
 export * from './OraclePerformanceTuningProvider';
 export * from './oraclePlanParser';
 export * from './PerformanceTuningContextProvider';
+export * from './performanceTuningDiagnosticHelpers';
 export * from './planNodeMath';
 export * from './postgresCatalogMapper';
 export * from './PostgresPerformanceTuningProvider';

@@ -55,7 +55,6 @@ export const samplePerformanceTuningContext: PerformanceTuningContext = {
       children: [],
     },
     planningTimeMs: 0.4,
-    warnings: [],
   },
 
   tables: [
@@ -129,7 +128,6 @@ export const samplePerformanceTuningContext: PerformanceTuningContext = {
           },
         ],
       },
-      warnings: [],
     },
   ],
 
@@ -147,7 +145,7 @@ export const samplePerformanceTuningContext: PerformanceTuningContext = {
   collection: {
     collectedAt: '2026-08-16T09:15:00.000Z',
     status: 'complete',
-    warnings: [],
+    diagnostics: [],
     unavailableSections: [],
   },
 };

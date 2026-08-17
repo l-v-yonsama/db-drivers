@@ -26,7 +26,7 @@ describe('extractMysqlPredicateColumns', () => {
 
 describe('parseMysqlPlan', () => {
   it('resolves a single table scan with a WHERE-pushed filter', () => {
-    const { planNode, mappings, warnings } = parseMysqlPlan({
+    const { planNode, mappings, diagnostics } = parseMysqlPlan({
       query_block: {
         select_id: 1,
         cost_info: { query_cost: '5.25' },
@@ -41,7 +41,7 @@ describe('parseMysqlPlan', () => {
       },
     });
 
-    expect(warnings).toEqual([]);
+    expect(diagnostics).toEqual([]);
     expect(mappings).toEqual([
       expect.objectContaining({
         planNodeId: 'n0',
@@ -95,8 +95,8 @@ describe('parseMysqlPlan', () => {
     expect(oMapping.filterColumns).toEqual(['customer_id', 'status']);
   });
 
-  it('surfaces GROUP BY/ORDER BY temp-table and filesort as node warnings, not verdicts', () => {
-    const { planNode } = parseMysqlPlan({
+  it('surfaces GROUP BY/ORDER BY temp-table and filesort as PLAN_OBSERVATION information, not warnings/verdicts', () => {
+    const { planNode, diagnostics } = parseMysqlPlan({
       query_block: {
         select_id: 1,
         ordering_operation: {
@@ -113,11 +113,26 @@ describe('parseMysqlPlan', () => {
     expect(planNode.operation).toBe('Order By');
     const groupBy = planNode.children[0];
     expect(groupBy.operation).toBe('Group By');
-    expect(groupBy.warnings).toEqual(['Uses a temporary table.', 'Uses filesort.']);
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'PLAN_OBSERVATION',
+        severity: 'info',
+        affectsCompleteness: false,
+        message: 'Uses a temporary table.',
+        node: { id: groupBy.id, operation: 'Group By' },
+      }),
+      expect.objectContaining({
+        code: 'PLAN_OBSERVATION',
+        severity: 'info',
+        affectsCompleteness: false,
+        message: 'Uses filesort.',
+        node: { id: groupBy.id, operation: 'Group By' },
+      }),
+    ]);
   });
 
-  it('does not resolve a derived table placeholder as a real table, but still walks its subquery', () => {
-    const { planNode, mappings, warnings } = parseMysqlPlan({
+  it('reports a derived table placeholder as non-table-source information, but still walks its subquery', () => {
+    const { planNode, mappings, diagnostics } = parseMysqlPlan({
       query_block: {
         select_id: 1,
         table: {
@@ -135,8 +150,13 @@ describe('parseMysqlPlan', () => {
     });
 
     expect(mappings.map((m) => m.tableName)).toEqual(['perf_orders']);
-    expect(warnings).toEqual([
-      expect.stringContaining('Could not resolve a table for plan node n0 (<derived2>)'),
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'NON_TABLE_PLAN_SOURCE',
+        severity: 'info',
+        affectsCompleteness: false,
+        node: { id: 'n0', operation: 'ALL', objectKind: 'subquery', objectName: '<derived2>' },
+      }),
     ]);
     expect(planNode.relation).toBeUndefined();
     expect(planNode.children[0].operation).toBe('Materialized Subquery');
