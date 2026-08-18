@@ -56,6 +56,7 @@ export type NormalizedPerformanceTuningContextParams = {
   };
 
   targetTables?: PerformanceTuningContextParams['targetTables'];
+  tableAliasMap?: PerformanceTuningContextParams['tableAliasMap'];
 
   limits: PerformanceTuningLimits;
 };
@@ -104,6 +105,7 @@ export function normalizePerformanceTuningContextParams(
       timeoutMs: clamp(plan.timeoutMs, DEFAULT_PLAN_TIMEOUT_MS, MAX_PLAN_TIMEOUT_MS),
     },
     targetTables: safe.targetTables,
+    tableAliasMap: safe.tableAliasMap,
     limits: {
       maxTables: clamp(limits.maxTables, DEFAULT_MAX_TABLES, MAX_MAX_TABLES),
       maxColumnsPerTable: clamp(

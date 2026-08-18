@@ -57,6 +57,80 @@ export function estimateBindParameters(params: {
   }
 }
 
+/**
+ * Resolves the tables/aliases `sql`'s FROM/JOIN clauses reference, for use
+ * as `PerformanceTuningContextParams.targetTables` (§6.5 of the design doc
+ * above). Exists because MySQL's `EXPLAIN FORMAT=JSON` reports an aliased
+ * table's *alias* as `table_name` with no field carrying the real table
+ * name (see mysqlPlanParser.ts's own doc comment) - `planTableMappings`
+ * alone can't resolve `FROM orders o` back to `orders`, so a caller needs
+ * this as the sanctioned `targetTables` workaround
+ * (RDSBaseDriver.getPerformanceTuningContext() already unions those in).
+ *
+ * A separate function rather than a new field on estimateBindParameters()'s
+ * existing return value: unlike that function, this has nothing to do with
+ * bind placeholders and needs to run even for a fully-literal SQL with zero
+ * of them (exactly the case that triggered writing this - see §6.5's
+ * example). Deliberately thin: it's the exact same alias resolution §6.3
+ * already does internally for column resolution (buildAliasMap() +
+ * uniqueTables()), just returned to the caller instead of being consumed
+ * internally. Like estimateBindParameters(), never throws and degrades to
+ * an empty array; does not consult a DB Resource (buildAliasMap() is pure
+ * SQL-text structure parsing, so results aren't checked to actually exist -
+ * getPerformanceTuningContext()'s own catalog lookup is the source of
+ * truth for that, same as it already is for a bogus alias entry today).
+ */
+export function resolveTargetTables(params: {
+  dbType: DBType;
+  sql: string;
+}): Array<{ schemaName?: string; tableName: string }> {
+  const { dbType, sql } = params;
+  if (!sql || sql.trim() === '') {
+    return [];
+  }
+  try {
+    return uniqueTables(buildAliasMap({ sql, dbType }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Resolves `sql`'s FROM/JOIN aliases to their real `{schemaName?, tableName}`,
+ * keyed by the lowercased alias (or bare table name, for an unaliased
+ * reference). For use as `PerformanceTuningContextParams.tableAliasMap`
+ * (§6.6 of the design doc above): unlike resolveTargetTables() (which only
+ * *adds* tables the plan failed to find at all), this lets a caller
+ * *correct* a table name the plan already found but got wrong - exactly
+ * MySQL's `EXPLAIN FORMAT=JSON`, which reports an aliased table's alias
+ * (`"o"`) as `table_name` with no field carrying the real name anywhere in
+ * the JSON.
+ *
+ * A thin public wrapper around the same buildAliasMap() §6.3 already uses
+ * internally for column resolution - no new parsing. Never throws; SQL that
+ * is empty or fails to parse yields an empty object, same as
+ * resolveTargetTables().
+ */
+export function resolveTableAliasMap(params: {
+  dbType: DBType;
+  sql: string;
+}): Record<string, { schemaName?: string; tableName: string }> {
+  const { dbType, sql } = params;
+  if (!sql || sql.trim() === '') {
+    return {};
+  }
+  try {
+    const aliasMap = buildAliasMap({ sql, dbType });
+    const result: Record<string, { schemaName?: string; tableName: string }> = {};
+    for (const [key, entry] of aliasMap) {
+      result[key] = { schemaName: entry.schemaName, tableName: entry.tableName };
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Marker scanning (§6.2)
 // ---------------------------------------------------------------------------

@@ -67,6 +67,18 @@ export type PerformanceTuningContextParams = {
     tableName: string;
   }>;
 
+  // Corrects a plan-reported table name that's actually an alias, keyed by
+  // the lowercased alias (or bare table name for an unaliased reference) -
+  // see resolveTableAliasMap() (§6.6 of performance-tuning-query-
+  // statistics-parameter-input-plan.ja.md, db-notebook repo). Complements
+  // targetTables above rather than replacing it: this corrects a table the
+  // plan *did* resolve but under the wrong name (MySQL's aliased-table
+  // EXPLAIN gap); targetTables adds a table the plan *didn't* resolve at
+  // all. Applied uniformly regardless of dbType - a miss here just means
+  // the plan's own tableName is used unchanged, which is the common case
+  // for every Vendor besides MySQL's aliased queries.
+  tableAliasMap?: Record<string, { schemaName?: string; tableName: string }>;
+
   limits?: {
     maxTables?: number;
     maxColumnsPerTable?: number;

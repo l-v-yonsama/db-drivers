@@ -459,6 +459,144 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
     }
   });
 
+  it('resolves a plan-reported alias tableName via tableAliasMap before using it anywhere (§6.6)', async () => {
+    // Mirrors MySQL's EXPLAIN FORMAT=JSON gap: the plan only ever knows the
+    // aliases "o"/"c", never the real table names.
+    const getVersion = jest
+      .spyOn(PostgresDriver.prototype, 'getVersion')
+      .mockResolvedValue('16.3');
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.MySQL),
+        makeProvider(
+          async () => ({ ok: true, message: '', result: fakeCapabilities }),
+          {
+            collectExecutionPlan: async () => ({
+              ok: true,
+              message: '',
+              result: {
+                raw: {},
+                diagnostics: [],
+                planTableMappings: [
+                  { planNodeId: 'n0', tableName: 'o', estimatedRows: 41, filterColumns: ['status'] },
+                  { planNodeId: 'n1', tableName: 'c', estimatedRows: 41 },
+                ],
+              },
+            }),
+          },
+        ),
+      );
+
+      const params: PerformanceTuningContextParams = {
+        ...baseParams(),
+        tableAliasMap: {
+          o: { schemaName: 'performance_lab', tableName: 'orders' },
+          c: { schemaName: 'performance_lab', tableName: 'customers' },
+        },
+      };
+
+      const result = await driver.getPerformanceTuningContext(params);
+      expect(result.ok).toBe(true);
+      const context = result.result!;
+
+      // Output planTableMappings is resolved too - plan node <-> tables[]
+      // linkage must stay intact under the real names.
+      expect(
+        context.planTableMappings.map((m) => ({ tableName: m.tableName, schemaName: m.schemaName })),
+      ).toEqual([
+        { tableName: 'orders', schemaName: 'performance_lab' },
+        { tableName: 'customers', schemaName: 'performance_lab' },
+      ]);
+
+      // No "o"/"c" ghost entries alongside the resolved ones.
+      expect(context.tables.map((t) => ({ tableName: t.tableName, schemaName: t.schemaName }))).toEqual([
+        { tableName: 'orders', schemaName: 'performance_lab' },
+        { tableName: 'customers', schemaName: 'performance_lab' },
+      ]);
+      expect(
+        context.collection.unavailableSections.some((s) => s.tableName === 'o' || s.tableName === 'c'),
+      ).toBe(false);
+
+      expect(validatePerformanceTuningContext(context)).toEqual([]);
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  it('leaves a plan-reported tableName unchanged when tableAliasMap has no matching entry (default/back-compat)', async () => {
+    const getVersion = jest
+      .spyOn(PostgresDriver.prototype, 'getVersion')
+      .mockResolvedValue('16.3');
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider(
+          async () => ({ ok: true, message: '', result: fakeCapabilities }),
+          {
+            collectExecutionPlan: async () => ({
+              ok: true,
+              message: '',
+              result: {
+                raw: {},
+                diagnostics: [],
+                planTableMappings: [
+                  { planNodeId: 'n0', tableName: 'orders', estimatedRows: 41 },
+                ],
+              },
+            }),
+          },
+        ),
+      );
+
+      // No tableAliasMap at all - exactly today's call shape.
+      const result = await driver.getPerformanceTuningContext(baseParams());
+      expect(result.ok).toBe(true);
+      expect(result.result!.tables.map((t) => t.tableName)).toEqual(['orders']);
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  it('dedupes a tableAliasMap-resolved table against the same table added via targetTables', async () => {
+    const getVersion = jest
+      .spyOn(PostgresDriver.prototype, 'getVersion')
+      .mockResolvedValue('16.3');
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.MySQL),
+        makeProvider(
+          async () => ({ ok: true, message: '', result: fakeCapabilities }),
+          {
+            collectExecutionPlan: async () => ({
+              ok: true,
+              message: '',
+              result: {
+                raw: {},
+                diagnostics: [],
+                planTableMappings: [{ planNodeId: 'n0', tableName: 'o', estimatedRows: 41 }],
+              },
+            }),
+          },
+        ),
+      );
+
+      const params: PerformanceTuningContextParams = {
+        ...baseParams(),
+        tableAliasMap: { o: { schemaName: 'performance_lab', tableName: 'orders' } },
+        targetTables: [{ schemaName: 'performance_lab', tableName: 'orders' }],
+      };
+
+      const result = await driver.getPerformanceTuningContext(params);
+      expect(result.ok).toBe(true);
+      expect(result.result!.tables).toHaveLength(1);
+      expect(result.result!.tables[0]).toEqual(
+        expect.objectContaining({ schemaName: 'performance_lab', tableName: 'orders' }),
+      );
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
   it('does not mark the result partial when the only diagnostics are informational (§2.2)', async () => {
     const getVersion = jest
       .spyOn(PostgresDriver.prototype, 'getVersion')

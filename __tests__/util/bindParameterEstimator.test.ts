@@ -6,6 +6,8 @@ import {
   DbTable,
   estimateBindParameters,
   RdsDatabase,
+  resolveTableAliasMap,
+  resolveTargetTables,
 } from '../../src';
 
 describe('estimateBindParameters', () => {
@@ -370,5 +372,131 @@ FROM performance_lab.orders o`;
       expect(result[0].estimatedColumn).toBeUndefined();
       expect(result[0].estimatedType).toBe(GeneralColumnType.UNKNOWN);
     });
+  });
+});
+
+describe('resolveTargetTables', () => {
+  it('resolves an aliased FROM/JOIN even when the SQL has no placeholders at all', () => {
+    // The exact shape that motivated this function: a fully-literal query
+    // (no bind rows for estimateBindParameters() to ever touch) whose
+    // MySQL EXPLAIN output would only ever report the aliases "o"/"c" as
+    // table_name, never the real table names.
+    const sql = `SELECT c.region, COUNT(*) AS order_count
+FROM performance_lab.orders o
+JOIN performance_lab.customers c ON c.id = o.customer_id
+WHERE o.tenant_id = 42 AND o.status = 'PENDING'
+GROUP BY c.region`;
+
+    const result = resolveTargetTables({ dbType: DBType.MySQL, sql });
+
+    expect(result).toEqual(
+      expect.arrayContaining([
+        { schemaName: 'performance_lab', tableName: 'orders' },
+        { schemaName: 'performance_lab', tableName: 'customers' },
+      ])
+    );
+    expect(result).toHaveLength(2);
+  });
+
+  it.each([DBType.MySQL, DBType.Postgres, DBType.Oracle, DBType.SQLServer])(
+    'resolves a simple unqualified FROM/JOIN for %s',
+    (dbType) => {
+      const result = resolveTargetTables({
+        dbType,
+        sql: 'SELECT o.id FROM orders o JOIN customers c ON c.id = o.customer_id',
+      });
+      expect(result).toEqual(
+        expect.arrayContaining([
+          { schemaName: undefined, tableName: 'orders' },
+          { schemaName: undefined, tableName: 'customers' },
+        ])
+      );
+    }
+  );
+
+  it('dedupes the same table referenced more than once', () => {
+    const result = resolveTargetTables({
+      dbType: DBType.MySQL,
+      sql: 'SELECT * FROM orders o1 JOIN orders o2 ON o2.parent_id = o1.id',
+    });
+    expect(result).toEqual([{ schemaName: undefined, tableName: 'orders' }]);
+  });
+
+  it('returns an empty array for empty SQL', () => {
+    expect(resolveTargetTables({ dbType: DBType.MySQL, sql: '' })).toEqual([]);
+  });
+
+  it('returns an empty array when there is no FROM/JOIN to resolve', () => {
+    expect(resolveTargetTables({ dbType: DBType.MySQL, sql: 'SELECT 1' })).toEqual([]);
+  });
+
+  it('never throws on unparseable SQL', () => {
+    expect(() =>
+      resolveTargetTables({ dbType: DBType.MySQL, sql: 'not really !!! sql ?? ( ? ' })
+    ).not.toThrow();
+  });
+});
+
+describe('resolveTableAliasMap', () => {
+  it('resolves an alias to its real schema/table name', () => {
+    const sql = `SELECT c.region
+FROM performance_lab.orders o
+JOIN performance_lab.customers c ON c.id = o.customer_id`;
+
+    const result = resolveTableAliasMap({ dbType: DBType.MySQL, sql });
+
+    expect(result).toMatchObject({
+      o: { schemaName: 'performance_lab', tableName: 'orders' },
+      c: { schemaName: 'performance_lab', tableName: 'customers' },
+    });
+  });
+
+  it('keys case-insensitively (SQL Server: regex fallback path, so casing is preserved in the value)', () => {
+    const result = resolveTableAliasMap({
+      dbType: DBType.SQLServer,
+      sql: 'SELECT O.id FROM Orders O',
+    });
+    expect(result.o).toEqual({ schemaName: undefined, tableName: 'Orders' });
+  });
+
+  it('lowercases the resolved table name for MySQL/Postgres (helpers/sql/queryParser.ts parses everything lowercase)', () => {
+    const result = resolveTableAliasMap({
+      dbType: DBType.MySQL,
+      sql: 'SELECT O.id FROM Orders O',
+    });
+    expect(result.o).toEqual({ schemaName: undefined, tableName: 'orders' });
+  });
+
+  it('keys an unaliased FROM table by its own bare name', () => {
+    const result = resolveTableAliasMap({ dbType: DBType.MySQL, sql: 'SELECT * FROM orders' });
+    expect(result.orders).toEqual({ schemaName: undefined, tableName: 'orders' });
+  });
+
+  it.each([DBType.MySQL, DBType.Postgres, DBType.Oracle, DBType.SQLServer])(
+    'works for %s',
+    (dbType) => {
+      const result = resolveTableAliasMap({
+        dbType,
+        sql: 'SELECT o.id FROM orders o JOIN customers c ON c.id = o.customer_id',
+      });
+      expect(result).toMatchObject({
+        o: { tableName: 'orders' },
+        c: { tableName: 'customers' },
+      });
+    }
+  );
+
+  it('returns an empty object for empty SQL', () => {
+    expect(resolveTableAliasMap({ dbType: DBType.MySQL, sql: '' })).toEqual({});
+  });
+
+  it('returns an empty object when there is no FROM/JOIN to resolve', () => {
+    expect(resolveTableAliasMap({ dbType: DBType.MySQL, sql: 'SELECT 1' })).toEqual({});
+  });
+
+  it('never throws on unparseable SQL', () => {
+    expect(() =>
+      resolveTableAliasMap({ dbType: DBType.MySQL, sql: 'not really !!! sql ?? ( ? ' })
+    ).not.toThrow();
   });
 });

@@ -480,7 +480,22 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         return { ok: false, message: planResult.message || 'Failed to retrieve the execution plan.' };
       }
       const vendorPlan = planResult.result;
-      const planTableMappings = vendorPlan?.planTableMappings ?? [];
+
+      // Corrects a plan-reported table name that's actually an alias
+      // (§6.6 of performance-tuning-query-statistics-parameter-input-
+      // plan.ja.md, db-notebook repo) before this array is used for
+      // *anything* below - catalog lookup, dedup, relevantColumnsByTable,
+      // and the `planTableMappings` this function ultimately returns all
+      // stay in lockstep referring to the same real table name. A miss
+      // (no alias entry for that tableName) leaves the mapping unchanged -
+      // the common case for every Vendor besides MySQL's aliased queries,
+      // and for MySQL queries that don't alias their tables either.
+      const rawPlanTableMappings = vendorPlan?.planTableMappings ?? [];
+      const tableAliasMap = normalized.tableAliasMap ?? {};
+      const planTableMappings = rawPlanTableMappings.map((mapping) => {
+        const hit = tableAliasMap[mapping.tableName.toLowerCase()];
+        return hit ? { ...mapping, schemaName: hit.schemaName, tableName: hit.tableName } : mapping;
+      });
 
       // Deduplicate resolved tables (a table can appear in more than one
       // plan node, e.g. self-joins or one table with several index scans).
@@ -496,11 +511,11 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       // Union in any explicit caller-supplied targets (§4.1: "targetTables
       // は plan / parser から対象を完全に解決できない場合の明示的な補助入力
       // とする") - additive, never a replacement for what the plan itself
-      // resolved. This is the sanctioned workaround for a real, vendor-
-      // specific gap: MySQL's EXPLAIN FORMAT=JSON reports an aliased
-      // table's *alias* as `table_name`, with no field carrying the real
-      // table name, so an aliased FROM/JOIN table cannot always be resolved
-      // from the plan alone (see mysqlPlanParser.ts's module doc comment).
+      // resolved. Complements tableAliasMap above rather than overlapping
+      // it: tableAliasMap corrects a table the plan *did* resolve but under
+      // the wrong name (MySQL's aliased-table EXPLAIN gap - see
+      // mysqlPlanParser.ts's module doc comment); targetTables adds a table
+      // the plan didn't resolve at all.
       for (const target of normalized.targetTables ?? []) {
         const key = tableKeyOf(target);
         if (!resolvedTables.has(key)) {
