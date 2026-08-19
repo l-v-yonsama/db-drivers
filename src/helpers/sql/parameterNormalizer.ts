@@ -115,7 +115,13 @@ export const normalizePositionedParametersQuery = (
         const word = g2;
         const ok = checkBindParam(word);
 
-        if (ok && Array.isArray(bindParams[word])) {
+        // `bindParams &&` guard: checkBindParam() already treats a missing
+        // `bindParams` argument as "ok" (structural-only conversion, no
+        // caller-supplied values to validate against), but this line used
+        // to read `bindParams[word]` unconditionally regardless of that -
+        // crashing with "Cannot read properties of undefined" on the first
+        // named marker whenever a caller omitted `bindParams` entirely.
+        if (ok && bindParams && Array.isArray(bindParams[word])) {
           return getOrCreateMultiplePosition(word);
         } else {
           return getOrCreateSinglePosition(word);
@@ -212,7 +218,9 @@ export const normalizeSimpleParametersQuery = (
       if (g1) {
         const word = g2;
         const ok = checkBindParam(word);
-        if (ok && Array.isArray(bindParams[word])) {
+        // Same `bindParams &&` guard as normalizePositionedParametersQuery()
+        // above, for the same reason - see its comment.
+        if (ok && bindParams && Array.isArray(bindParams[word])) {
           const numOfBinds = bindParams[word].length;
           binds.push(...bindParams[word]);
           const bindStr = '?,'.repeat(numOfBinds);

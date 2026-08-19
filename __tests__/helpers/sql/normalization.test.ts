@@ -76,6 +76,26 @@ describe('SQLHelper', () => {
         expect(binds).toEqual([]);
       });
 
+      // Regression: bindParams was previously read unconditionally
+      // (`bindParams[word]`) even when the caller omitted it entirely,
+      // throwing "Cannot read properties of undefined" on the first live
+      // marker instead of doing the purely-structural conversion
+      // checkBindParam()'s own short-circuit was clearly designed to allow.
+      it('converts a live (non-comment) marker to positional syntax without throwing when bindParams is omitted entirely', () => {
+        expect(() =>
+          normalizeQuery({
+            query: 'select * from xxx where id = :id',
+            toPositionedParameter: true,
+          }),
+        ).not.toThrow();
+
+        const { query } = normalizeQuery({
+          query: 'select * from xxx where id = :id',
+          toPositionedParameter: true,
+        });
+        expect(query).toBe('select * from xxx where id = $1');
+      });
+
       it('should not be error too, in a comment line', () => {
         const { query, binds } = normalizeQuery({
           query:
@@ -176,6 +196,17 @@ describe('SQLHelper', () => {
         });
 
         expect(query).toBe('select ID, n0,n1,n2 from testtable \n');
+        expect(binds).toEqual([]);
+      });
+
+      // Regression: same bug as the positioned-parameters case above, in
+      // this path's own (separate) unconditional `bindParams[word]` read.
+      it('converts a live (non-comment) marker to `?` without throwing when bindParams is omitted entirely', () => {
+        const { query, binds } = normalizeQuery({
+          query: 'select * from xxx where id = :id',
+        });
+
+        expect(query).toBe('select * from xxx where id = ?');
         expect(binds).toEqual([]);
       });
 
