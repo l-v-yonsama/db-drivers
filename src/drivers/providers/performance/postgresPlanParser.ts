@@ -24,12 +24,11 @@ import { asNumber, asRecord, asString } from './vendorRowCoercion';
 // that was never going to be a physical table - a set-returning function, a
 // VALUES list, a CTE, a recursive CTE's work table, a subquery - in which
 // case table DDL/statistics genuinely do not apply and this is reported as
-// `NON_TABLE_PLAN_SOURCE` information, or (b) a real table-mapping gap this
-// driver doesn't understand yet, reported as a `TABLE_MAPPING_FAILED`
-// warning. See misc/design/performance-tuning-context-implementation-plan.ja.md
-// §4.4 for the rationale (this replaced an earlier blanket
-// `operation.endsWith('Scan')` => warning rule that misclassified case (a)
-// as a failure).
+// `NON_TABLE_PLAN_SOURCE` information, (b) a Bitmap Index Scan whose table
+// identity belongs to its Bitmap Heap Scan ancestor, or (c) a real
+// table-mapping gap this driver doesn't understand yet, reported as a
+// `TABLE_MAPPING_FAILED` warning. See misc/design/performance-tuning-context-
+// implementation-plan.ja.md §4.4 for the rationale.
 
 const PREDICATE_KEYS = [
   'Filter',
@@ -95,6 +94,31 @@ const NON_TABLE_SCAN_OPERATIONS: Record<
   'Subquery Scan': { objectKind: 'subquery', nameKeys: ['Alias'] },
 };
 
+// Bitmap Index Scan nodes carry `Index Name` but no `Relation Name`; the
+// latter lives on their Bitmap Heap Scan ancestor. BitmapAnd/BitmapOr may
+// sit between the two. Only walk through that bitmap-specific subtree so an
+// unrelated descendant scan can never be attributed to the heap table.
+function collectBitmapIndexScans(rawChildren: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(rawChildren)) {
+    return [];
+  }
+
+  const scans: Record<string, unknown>[] = [];
+  for (const childValue of rawChildren) {
+    const child = asRecord(childValue);
+    if (!child) {
+      continue;
+    }
+    const operation = asString(child['Node Type']);
+    if (operation === 'Bitmap Index Scan') {
+      scans.push(child);
+    } else if (operation === 'BitmapAnd' || operation === 'BitmapOr') {
+      scans.push(...collectBitmapIndexScans(child['Plans']));
+    }
+  }
+  return scans;
+}
+
 export type ParsedPostgresPlan = {
   planNode: PlanNode;
   mappings: PlanTableMapping[];
@@ -116,7 +140,12 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
   const diagnostics: PerformanceTuningDiagnostic[] = [];
   let counter = 0;
 
-  const visit = (nodeValue: unknown, parentId: string | undefined, depth: number): PlanNode | undefined => {
+  const visit = (
+    nodeValue: unknown,
+    parentId: string | undefined,
+    depth: number,
+    bitmapRelation?: NonNullable<PlanNode['relation']>,
+  ): PlanNode | undefined => {
     const node = asRecord(nodeValue);
     if (!node) {
       return undefined;
@@ -127,6 +156,19 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
     const schemaName = asString(node['Schema']); // only present under EXPLAIN VERBOSE, which this driver doesn't request yet
     const aliasValue = asString(node['Alias']);
     const indexName = asString(node['Index Name']);
+
+    const ownRelation: PlanNode['relation'] = tableName
+      ? { schemaName, tableName, alias: aliasValue }
+      : undefined;
+    const inheritedBitmapRelation = operation === 'Bitmap Index Scan' ? bitmapRelation : undefined;
+    const relation = ownRelation ?? inheritedBitmapRelation;
+
+    const bitmapIndexScans = operation === 'Bitmap Heap Scan' ? collectBitmapIndexScans(node['Plans']) : [];
+    // PlanTableMapping has a singular indexName. Merge it only when the
+    // bitmap tree selects exactly one index; BitmapAnd/BitmapOr with several
+    // indexes stays faithfully represented by the normalized child nodes.
+    const mergedBitmapIndexName =
+      bitmapIndexScans.length === 1 ? asString(bitmapIndexScans[0]['Index Name']) : undefined;
 
     const predicates: string[] = [];
     const filterColumns = new Set<string>();
@@ -140,6 +182,20 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
       }
     }
 
+    // Include child Index Cond columns in the heap table's flat mapping so
+    // column-statistics collection does not depend on Postgres also
+    // repeating them in Recheck Cond. Keep the normalized predicates on
+    // their original nodes.
+    const mappingFilterColumns = new Set(filterColumns);
+    for (const bitmapIndexScan of bitmapIndexScans) {
+      for (const key of PREDICATE_KEYS) {
+        const predicate = asString(bitmapIndexScan[key]);
+        for (const column of extractPredicateColumns(predicate)) {
+          mappingFilterColumns.add(column);
+        }
+      }
+    }
+
     if (tableName) {
       const alias = aliasValue && aliasValue !== tableName ? aliasValue : undefined;
       const estimatedRows = asNumber(node['Plan Rows']);
@@ -149,11 +205,11 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
         schemaName,
         tableName,
         alias,
-        indexName,
+        indexName: indexName ?? mergedBitmapIndexName,
         estimatedRows,
         actualRows,
         rowEstimateRatio: computeRowEstimateRatio(estimatedRows, actualRows),
-        filterColumns: filterColumns.size > 0 ? [...filterColumns] : undefined,
+        filterColumns: mappingFilterColumns.size > 0 ? [...mappingFilterColumns] : undefined,
       });
     } else {
       const nonTableScan = NON_TABLE_SCAN_OPERATIONS[operation];
@@ -171,6 +227,10 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
           message: `Plan node ${id} (${operation}) reads from a non-table source; table definitions and statistics do not apply to it.`,
           node: { id, operation, objectKind: nonTableScan.objectKind, objectName },
         });
+      } else if (operation === 'Bitmap Index Scan' && inheritedBitmapRelation) {
+        // This is the index half of a resolved Bitmap Heap Scan access. The
+        // heap mapping already represents the physical table access, so do
+        // not add a duplicate mapping or a false completeness warning.
       } else if (operation.endsWith('Scan')) {
         // A scan-family node with no relation that isn't one of the known
         // non-table sources above - an actual table-mapping gap (a future/
@@ -190,9 +250,15 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
 
     const children: PlanNode[] = [];
     const rawChildren = node['Plans'];
+    const childBitmapRelation =
+      operation === 'Bitmap Heap Scan' && ownRelation
+        ? ownRelation
+        : operation === 'BitmapAnd' || operation === 'BitmapOr'
+          ? bitmapRelation
+          : undefined;
     if (Array.isArray(rawChildren)) {
       for (const child of rawChildren) {
-        const childNode = visit(child, id, depth + 1);
+        const childNode = visit(child, id, depth + 1, childBitmapRelation);
         if (childNode) {
           children.push(childNode);
         }
@@ -204,8 +270,8 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
       parentId,
       depth,
       operation,
-      relation: tableName ? { schemaName, tableName, alias: aliasValue } : undefined,
-      indexName,
+      relation,
+      indexName: indexName ?? mergedBitmapIndexName,
       joinType: asString(node['Join Type']),
       predicates: predicates.length > 0 ? predicates : undefined,
       // Startup/Total Cost, Plan Rows and Plan Width are part of every
