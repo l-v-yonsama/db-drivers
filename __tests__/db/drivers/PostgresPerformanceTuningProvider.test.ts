@@ -144,6 +144,126 @@ describe('postgresPlanParser', () => {
       }
     });
 
+    it('merges a Bitmap Index Scan into its Bitmap Heap Scan mapping without a false warning', () => {
+      const { planNode, mappings, diagnostics } = parsePostgresPlan({
+        Plan: {
+          'Node Type': 'Bitmap Heap Scan',
+          'Relation Name': 'orders',
+          Alias: 'o',
+          Filter: "(channel = 'web'::text)",
+          'Plan Rows': 6,
+          Plans: [
+            {
+              'Node Type': 'Bitmap Index Scan',
+              'Index Name': 'idx_orders_created_at',
+              'Index Cond': "(created_at >= '2025-12-30'::timestamp)",
+              'Plan Rows': 1293,
+            },
+          ],
+        },
+      });
+
+      expect(diagnostics).toEqual([]);
+      expect(mappings).toEqual([
+        expect.objectContaining({
+          planNodeId: 'n0',
+          tableName: 'orders',
+          alias: 'o',
+          indexName: 'idx_orders_created_at',
+          estimatedRows: 6,
+          filterColumns: ['channel', 'created_at'],
+        }),
+      ]);
+      expect(planNode).toMatchObject({
+        id: 'n0',
+        operation: 'Bitmap Heap Scan',
+        relation: { tableName: 'orders', alias: 'o' },
+        indexName: 'idx_orders_created_at',
+        estimated: { rows: 6 },
+        children: [
+          {
+            id: 'n1',
+            parentId: 'n0',
+            operation: 'Bitmap Index Scan',
+            relation: { tableName: 'orders', alias: 'o' },
+            indexName: 'idx_orders_created_at',
+            estimated: { rows: 1293 },
+            children: [],
+          },
+        ],
+      });
+    });
+
+    it('resolves every index in a BitmapAnd tree without collapsing several indexes into one name', () => {
+      const { planNode, mappings, diagnostics } = parsePostgresPlan({
+        Plan: {
+          'Node Type': 'Bitmap Heap Scan',
+          'Relation Name': 'orders',
+          'Plan Rows': 4,
+          Plans: [
+            {
+              'Node Type': 'BitmapAnd',
+              Plans: [
+                {
+                  'Node Type': 'Bitmap Index Scan',
+                  'Index Name': 'idx_orders_status',
+                  'Index Cond': "(status = 'open'::text)",
+                },
+                {
+                  'Node Type': 'Bitmap Index Scan',
+                  'Index Name': 'idx_orders_created_at',
+                  'Index Cond': "(created_at >= '2025-12-30'::timestamp)",
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(diagnostics).toEqual([]);
+      expect(mappings).toEqual([
+        expect.objectContaining({
+          planNodeId: 'n0',
+          tableName: 'orders',
+          indexName: undefined,
+          filterColumns: ['status', 'created_at'],
+        }),
+      ]);
+      expect(planNode.indexName).toBeUndefined();
+      expect(planNode.children[0].children).toEqual([
+        expect.objectContaining({
+          operation: 'Bitmap Index Scan',
+          relation: expect.objectContaining({ tableName: 'orders' }),
+          indexName: 'idx_orders_status',
+        }),
+        expect.objectContaining({
+          operation: 'Bitmap Index Scan',
+          relation: expect.objectContaining({ tableName: 'orders' }),
+          indexName: 'idx_orders_created_at',
+        }),
+      ]);
+    });
+
+    it('still warns for an orphaned Bitmap Index Scan with no heap relation to inherit', () => {
+      const { mappings, diagnostics } = parsePostgresPlan({
+        Plan: {
+          'Node Type': 'Bitmap Index Scan',
+          'Index Name': 'idx_orders_created_at',
+          'Plan Rows': 1293,
+        },
+      });
+
+      expect(mappings).toEqual([]);
+      expect(diagnostics).toEqual([
+        expect.objectContaining({
+          code: 'TABLE_MAPPING_FAILED',
+          severity: 'warning',
+          affectsCompleteness: true,
+          node: { id: 'n0', operation: 'Bitmap Index Scan' },
+        }),
+      ]);
+    });
+
     it('reports a Function Scan as non-table-source information, not a mapping-failure warning', () => {
       // The exact pg_stat_statements/pg_stat_statements_info scenario the
       // The implementation plan §4.4 uses this example: a set-returning function
@@ -295,7 +415,6 @@ describe('postgresPlanParser', () => {
     });
   });
 });
-
 describe('PostgresPerformanceTuningProvider', () => {
   const makeDriver = (requestSql: jest.Mock) => ({ requestSql });
 
