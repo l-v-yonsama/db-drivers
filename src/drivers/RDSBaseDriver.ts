@@ -494,7 +494,28 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       const tableAliasMap = normalized.tableAliasMap ?? {};
       const planTableMappings = rawPlanTableMappings.map((mapping) => {
         const hit = tableAliasMap[mapping.tableName.toLowerCase()];
-        return hit ? { ...mapping, schemaName: hit.schemaName, tableName: hit.tableName } : mapping;
+        // 2026-08-20 fix: only apply a hit that's a genuine alias->real-name
+        // substitution (MySQL's EXPLAIN gap: mapping.tableName really is the
+        // alias text there, e.g. "o", so a hit's tableName is always a
+        // *different* string). db-notebook's resolveTableAliasMap() also -
+        // deliberately, see its own tests - keys the map by every bare
+        // (unaliased) FROM/JOIN table name pointing at itself, purely so
+        // resolveTargetTables() (a separate consumer of the same underlying
+        // map) can see unaliased tables too. For a vendor whose plan already
+        // resolves the real name correctly (Oracle, SQL Server, an unaliased
+        // Postgres/MySQL query, ...), mapping.tableName.toLowerCase() can
+        // coincidentally collide with that same bare-name self-reference
+        // key - a hit, but not a genuine correction. Applying it anyway used
+        // to silently replace an already-correct, schema-qualified,
+        // correctly-cased name (e.g. Oracle's {schemaName:"PERFLAB",
+        // tableName:"ORDERS"}) with the hint's unverified as-typed one
+        // ({schemaName:undefined, tableName:"orders"}) - breaking catalog
+        // lookup for a vendor (Oracle) that folds unquoted identifiers to
+        // uppercase, since 'orders' != 'ORDERS' there.
+        if (!hit || hit.tableName.toLowerCase() === mapping.tableName.toLowerCase()) {
+          return mapping;
+        }
+        return { ...mapping, schemaName: hit.schemaName, tableName: hit.tableName };
       });
 
       // Deduplicate resolved tables (a table can appear in more than one
@@ -516,9 +537,38 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       // the wrong name (MySQL's aliased-table EXPLAIN gap - see
       // mysqlPlanParser.ts's module doc comment); targetTables adds a table
       // the plan didn't resolve at all.
+      //
+      // "Already resolved" is checked tolerantly, not by exact tableKeyOf()
+      // string equality, for the same reason as the tableAliasMap guard
+      // above: targetTables comes from resolveTargetTables() parsing the
+      // raw SQL text (§6.5, db-notebook), so its casing/schema-qualification
+      // reflects how the user happened to type the query, not necessarily
+      // how the vendor's own catalog stores the identifier. A target whose
+      // tableName matches an already-resolved table case-insensitively -
+      // and whose schemaName either isn't specified or also matches
+      // case-insensitively - is the same physical table the plan already
+      // found, just possibly under a different case (Oracle folding
+      // unquoted identifiers to uppercase is the case that surfaced this),
+      // not a genuinely new one to add. Without this, an Oracle table the
+      // plan already resolved correctly (e.g. {schemaName:"PERFLAB",
+      // tableName:"ORDERS"}) got a second, bogus entry added alongside it
+      // (e.g. {tableName:"orders"}, no schema) whenever the SQL also
+      // referenced it in an unqualified FROM/JOIN - and that second entry's
+      // own catalog lookup then failed ("table not found"), showing up as a
+      // spurious Collection issue even though the real table collected fine.
+      const isSameTable = (
+        a: { schemaName?: string; tableName: string },
+        b: { schemaName?: string; tableName: string },
+      ): boolean => {
+        if (a.tableName.toLowerCase() !== b.tableName.toLowerCase()) {
+          return false;
+        }
+        return a.schemaName && b.schemaName ? a.schemaName.toLowerCase() === b.schemaName.toLowerCase() : true;
+      };
       for (const target of normalized.targetTables ?? []) {
-        const key = tableKeyOf(target);
-        if (!resolvedTables.has(key)) {
+        const alreadyResolved = [...resolvedTables.values()].some((existing) => isSameTable(existing, target));
+        if (!alreadyResolved) {
+          const key = tableKeyOf(target);
           resolvedTables.set(key, { schemaName: target.schemaName, tableName: target.tableName });
         }
       }

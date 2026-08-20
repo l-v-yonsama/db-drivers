@@ -597,6 +597,129 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
     }
   });
 
+  it('does not add a duplicate, differently-cased entry when targetTables coincidentally matches an already-resolved table (Oracle live repro)', async () => {
+    // Mirrors an Oracle plan that already resolved the table correctly
+    // (uppercase, schema-qualified - Oracle folds unquoted identifiers to
+    // uppercase) plus a caller-supplied targetTables hint derived from the
+    // raw SQL text (lowercase, unqualified - resolveTargetTables() in
+    // db-notebook has no way to know the vendor's actual stored case). Before
+    // this fix, tableKeyOf()'s exact-string dedup treated "PERFLAB.ORDERS"
+    // and ".orders" as two different tables, adding a second, bogus,
+    // schema-less entry alongside the correct one - and that second entry's
+    // own catalog lookup then failed as "table not found", even though the
+    // real table had already been collected successfully.
+    const getVersion = jest
+      .spyOn(PostgresDriver.prototype, 'getVersion')
+      .mockResolvedValue('16.3');
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Oracle),
+        makeProvider(
+          async () => ({ ok: true, message: '', result: fakeCapabilities }),
+          {
+            collectExecutionPlan: async () => ({
+              ok: true,
+              message: '',
+              result: {
+                raw: {},
+                diagnostics: [],
+                planTableMappings: [
+                  { planNodeId: 'n0', schemaName: 'PERFLAB', tableName: 'ORDERS', estimatedRows: 499 },
+                ],
+              },
+            }),
+          },
+        ),
+      );
+
+      const params: PerformanceTuningContextParams = {
+        ...baseParams(),
+        // No tableAliasMap here - this is specifically the targetTables-only
+        // dedup path, distinct from the tableAliasMap guard above.
+        targetTables: [{ schemaName: undefined, tableName: 'orders' }],
+      };
+
+      const result = await driver.getPerformanceTuningContext(params);
+      expect(result.ok).toBe(true);
+      // Exactly one table - not two (the real "PERFLAB.ORDERS" plus a bogus
+      // lowercase, schema-less "orders" ghost entry).
+      expect(result.result!.tables.map((t) => ({ schemaName: t.schemaName, tableName: t.tableName }))).toEqual([
+        { schemaName: 'PERFLAB', tableName: 'ORDERS' },
+      ]);
+      // No unavailableSections for the lowercase ghost specifically - this
+      // fake Provider leaves every collectXxx() unimplemented (throws), so
+      // the real "ORDERS" table's own sections legitimately fail to collect
+      // here too (a test-harness artifact, not what this test is about);
+      // only a ghost "orders" entry would indicate the bug under test.
+      expect(
+        result.result!.collection.unavailableSections.some((s) => s.tableName === 'orders'),
+      ).toBe(false);
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  it('leaves an already-correct plan-resolved tableName/schemaName unchanged when tableAliasMap only has a coincidental bare-name match (Oracle)', async () => {
+    // Oracle's plan already resolves the real, correctly-cased,
+    // schema-qualified name ("ORDERS"/"PERFLAB" - Oracle folds unquoted
+    // identifiers to uppercase). tableAliasMap here mirrors
+    // resolveTableAliasMap()'s real output for `FROM orders o` (db-notebook
+    // repo) - both the genuine alias key ("o") and the bare-table-name
+    // self-reference key ("orders") it deliberately also includes (see that
+    // function's own tests) so resolveTargetTables() can see unaliased
+    // tables too. mapping.tableName.toLowerCase() ("orders") coincidentally
+    // matches the bare-name key, but that's not a genuine alias to correct -
+    // applying it anyway used to silently replace Oracle's correct
+    // {schemaName:"PERFLAB", tableName:"ORDERS"} with the hint's unverified,
+    // unqualified {tableName:"orders"} (no schema), breaking Oracle's
+    // case-sensitive catalog lookup downstream.
+    const getVersion = jest
+      .spyOn(PostgresDriver.prototype, 'getVersion')
+      .mockResolvedValue('16.3');
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Oracle),
+        makeProvider(
+          async () => ({ ok: true, message: '', result: fakeCapabilities }),
+          {
+            collectExecutionPlan: async () => ({
+              ok: true,
+              message: '',
+              result: {
+                raw: {},
+                diagnostics: [],
+                planTableMappings: [
+                  { planNodeId: 'n0', schemaName: 'PERFLAB', tableName: 'ORDERS', estimatedRows: 499 },
+                ],
+              },
+            }),
+          },
+        ),
+      );
+
+      const params: PerformanceTuningContextParams = {
+        ...baseParams(),
+        tableAliasMap: {
+          o: { tableName: 'orders' },
+          orders: { tableName: 'orders' },
+        },
+      };
+
+      const result = await driver.getPerformanceTuningContext(params);
+      expect(result.ok).toBe(true);
+      const context = result.result!;
+
+      expect(
+        context.planTableMappings.map((m) => ({ tableName: m.tableName, schemaName: m.schemaName })),
+      ).toEqual([{ tableName: 'ORDERS', schemaName: 'PERFLAB' }]);
+      expect(context.tables.map((t) => ({ tableName: t.tableName, schemaName: t.schemaName }))).toEqual([
+        { tableName: 'ORDERS', schemaName: 'PERFLAB' },
+      ]);
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
   it('does not mark the result partial when the only diagnostics are informational (§2.2)', async () => {
     const getVersion = jest
       .spyOn(PostgresDriver.prototype, 'getVersion')
