@@ -33,7 +33,7 @@ import {
   VendorTableDefinition,
   VendorTableStatistics,
 } from './PerformanceTuningContextProvider';
-import { extractPlanningTimeMs, parsePostgresPlan } from './postgresPlanParser';
+import { extractExecutionTimeMs, extractPlanningTimeMs, parsePostgresPlan } from './postgresPlanParser';
 
 // Narrow, structural view of PostgresDriver - only what this Provider
 // actually needs (run a read-only SQL statement against the already-open
@@ -78,8 +78,8 @@ export class PostgresPerformanceTuningProvider implements PerformanceTuningConte
     const capabilities: PerformanceTuningCapabilities = {
       executionPlan: { available: true, source: 'EXPLAIN (FORMAT JSON)' },
       analyzedExecutionPlan: {
-        available: false,
-        message: 'Not implemented yet (estimate plans only).',
+        available: true,
+        source: 'EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)',
       },
       tableDefinition: { available: true, source: 'pg_catalog / information_schema' },
       optimizerStatistics: { available: true, source: 'pg_class / pg_stats / pg_stat_user_tables' },
@@ -93,12 +93,16 @@ export class PostgresPerformanceTuningProvider implements PerformanceTuningConte
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: PerformanceTuningCallOptions & { timeoutMs: number },
   ): Promise<GeneralResult<VendorExecutionPlan>> {
-    if (params.plan?.mode === 'analyze') {
-      return {
-        ok: false,
-        message: 'Analyze mode is not implemented yet for PostgreSQL.',
-      };
-    }
+    // ANALYZE actually executes the target statement (server-side, real
+    // I/O); BUFFERS is paired with it rather than requested on its own,
+    // since buffer counts are only meaningful once the statement has really
+    // run. Callers are restricted to a single SELECT with allowExecution
+    // explicitly true before this is ever reached
+    // (validatePerformanceTuningContextParams() in
+    // utils/performanceTuningContext.ts) - this Provider does not need to
+    // re-check either constraint itself.
+    const explainClause =
+      params.plan?.mode === 'analyze' ? 'EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)' : 'EXPLAIN (FORMAT JSON)';
 
     // binds are used only to obtain a parameter-specific plan (§4.1); they
     // are never placed anywhere in the returned VendorExecutionPlan.
@@ -107,7 +111,7 @@ export class PostgresPerformanceTuningProvider implements PerformanceTuningConte
     let rdh: ResultSetData;
     try {
       rdh = await this.driver.requestSql({
-        sql: `EXPLAIN (FORMAT JSON) ${params.statement.sql}`,
+        sql: `${explainClause} ${params.statement.sql}`,
         conditions: { rawQueries: true, binds },
         // Identifies this as internal performance-tuning-context collection
         // rather than a user-issued EXPLAIN, so a caller building SQL
@@ -170,6 +174,9 @@ export class PostgresPerformanceTuningProvider implements PerformanceTuningConte
         raw: parsed,
         normalizedPlan: planNode,
         planningTimeMs: extractPlanningTimeMs(explainRoot),
+        // Only present under ANALYZE - undefined for an estimate-mode plan,
+        // same as postgresPlanParser's own per-node `actual`/`buffers`.
+        executionTimeMs: extractExecutionTimeMs(explainRoot),
         diagnostics,
         planTableMappings,
       },

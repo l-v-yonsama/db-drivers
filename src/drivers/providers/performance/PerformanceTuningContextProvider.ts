@@ -44,6 +44,8 @@ export type VendorExecutionPlan = {
   // line up between the two (a mapping's planNodeId always matches a node
   // somewhere in this tree).
   normalizedPlan?: PlanNode;
+  // See ExecutionPlanContext.actualPlanText - MySQL-only today.
+  actualPlanText?: string;
 };
 
 export type VendorTableDefinition = {

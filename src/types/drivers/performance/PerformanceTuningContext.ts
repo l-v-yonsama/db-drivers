@@ -135,6 +135,15 @@ export type ExecutionPlanContext = {
   normalizedPlan?: PlanNode;
   planningTimeMs?: number;
   executionTimeMs?: number;
+  // MySQL-only (today): EXPLAIN ANALYZE's own tree-text output, verbatim
+  // and unparsed - MySQL has no EXPLAIN ANALYZE FORMAT=JSON (confirmed:
+  // "ERROR 1235 ... doesn't yet support 'EXPLAIN ANALYZE with JSON
+  // format'"), so this carries the real per-node actual time/rows/loops
+  // data an AI can still read directly, without a dedicated tree-text
+  // parser. `normalizedPlan`/`planTableMappings` still come from the
+  // (always-collected) estimate-mode EXPLAIN FORMAT=JSON plan, since MySQL
+  // computes the same plan either way - ANALYZE just executes it.
+  actualPlanText?: string;
 };
 
 export type ColumnDefinition = {

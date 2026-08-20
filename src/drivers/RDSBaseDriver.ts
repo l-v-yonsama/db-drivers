@@ -800,6 +800,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           normalizedPlan: vendorPlan?.normalizedPlan,
           planningTimeMs: vendorPlan?.planningTimeMs,
           executionTimeMs: vendorPlan?.executionTimeMs,
+          actualPlanText: vendorPlan?.actualPlanText,
         },
         tables,
         planTableMappings,

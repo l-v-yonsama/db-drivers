@@ -67,8 +67,12 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
     const capabilities: PerformanceTuningCapabilities = {
       executionPlan: { available: true, source: 'EXPLAIN FORMAT=JSON' },
       analyzedExecutionPlan: {
-        available: false,
-        message: 'Not implemented yet (estimate plans only).',
+        available: true,
+        // MySQL has no EXPLAIN ANALYZE FORMAT=JSON, so this is the real
+        // EXPLAIN ANALYZE tree text, unparsed, alongside the (always
+        // collected) EXPLAIN FORMAT=JSON plan the rest of this Provider
+        // resolves tables/diagnostics from.
+        source: 'EXPLAIN ANALYZE (tree text, unparsed)',
       },
       tableDefinition: { available: true, source: 'information_schema / SHOW CREATE TABLE' },
       optimizerStatistics: {
@@ -87,13 +91,6 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: PerformanceTuningCallOptions & { timeoutMs: number },
   ): Promise<GeneralResult<VendorExecutionPlan>> {
-    if (params.plan?.mode === 'analyze') {
-      return {
-        ok: false,
-        message: 'Analyze mode is not implemented yet for MySQL.',
-      };
-    }
-
     // binds are used only to obtain a parameter-specific plan (§4.1); they
     // are never placed anywhere in the returned VendorExecutionPlan.
     const binds = params.plan?.binds?.map((v) => String(v));
@@ -143,16 +140,46 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
       diagnostics.push(planUnresolvedDiagnostic());
     }
 
+    // Analyze mode: MySQL has no EXPLAIN ANALYZE FORMAT=JSON (confirmed
+    // empirically - it errors with "doesn't yet support 'EXPLAIN ANALYZE
+    // with JSON format'"), so a second, separate query captures the real
+    // EXPLAIN ANALYZE tree text as-is rather than normalizing it into
+    // PlanNode. table/index resolution and diagnostics above already come
+    // from the EXPLAIN FORMAT=JSON plan just parsed - MySQL's optimizer
+    // computes that same plan regardless of ANALYZE, which only executes
+    // it - so none of that needs to be re-derived from the analyze text.
+    let actualPlanText: string | undefined;
+    if (params.plan?.mode === 'analyze') {
+      let analyzeRdh: ResultSetData;
+      try {
+        analyzeRdh = await this.driver.requestSql({
+          sql: `EXPLAIN ANALYZE ${params.statement.sql}`,
+          conditions: { rawQueries: true, binds },
+          meta: { type: 'performanceTuningContext' },
+        });
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        return {
+          ok: false,
+          message: `Failed to retrieve the analyzed execution plan.${detail ? ` ${detail}` : ''}`,
+        };
+      }
+      const analyzeValue = analyzeRdh.rows[0]?.values?.EXPLAIN;
+      actualPlanText = typeof analyzeValue === 'string' ? analyzeValue : undefined;
+    }
+
     return {
       ok: true,
       message: '',
       result: {
         raw: parsed,
         normalizedPlan: planNode,
-        // MySQL's (non-ANALYZE) EXPLAIN FORMAT=JSON never includes timing -
-        // it doesn't execute the query.
+        // MySQL's EXPLAIN FORMAT=JSON never includes timing - it doesn't
+        // execute the query. Real timing for analyze mode lives in
+        // actualPlanText instead (unparsed - see the comment above).
         planningTimeMs: undefined,
         executionTimeMs: undefined,
+        actualPlanText,
         diagnostics,
         planTableMappings,
       },

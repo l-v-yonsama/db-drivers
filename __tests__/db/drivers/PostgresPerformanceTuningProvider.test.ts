@@ -144,6 +144,48 @@ describe('postgresPlanParser', () => {
       }
     });
 
+    it('includes actual timing/rows and buffer counts from EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) output', () => {
+      const { planNode, mappings } = parsePostgresPlan({
+        Plan: {
+          'Node Type': 'Seq Scan',
+          'Relation Name': 'orders',
+          Alias: 'orders',
+          Filter: "(status = 'shipped'::text)",
+          'Plan Rows': 41,
+          'Actual Startup Time': 0.012,
+          'Actual Total Time': 1.234,
+          'Actual Rows': 37,
+          'Actual Loops': 1,
+          'Shared Hit Blocks': 120,
+          'Shared Read Blocks': 4,
+          'Shared Dirtied Blocks': 0,
+          'Shared Written Blocks': 0,
+        },
+        'Planning Time': 0.1,
+        'Execution Time': 1.5,
+      });
+
+      expect(planNode).toMatchObject({
+        actual: { startupMs: 0.012, totalMs: 1.234, rows: 37, loops: 1 },
+        buffers: { hit: 120, read: 4, dirtied: 0, written: 0 },
+      });
+      expect(mappings[0]).toMatchObject({
+        tableName: 'orders',
+        estimatedRows: 41,
+        actualRows: 37,
+        rowEstimateRatio: expect.any(Number),
+      });
+    });
+
+    it('leaves actual/buffers/temp undefined for a plain estimate-mode node (no ANALYZE/BUFFERS keys present)', () => {
+      const { planNode, mappings } = parsePostgresPlan(explainRoot);
+
+      expect(planNode.actual).toBeUndefined();
+      expect(planNode.buffers).toBeUndefined();
+      expect(planNode.temp).toBeUndefined();
+      expect(mappings[0].actualRows).toBeUndefined();
+    });
+
     it('merges a Bitmap Index Scan into its Bitmap Heap Scan mapping without a false warning', () => {
       const { planNode, mappings, diagnostics } = parsePostgresPlan({
         Plan: {
@@ -556,22 +598,45 @@ describe('PostgresPerformanceTuningProvider', () => {
     expect(result.result!.planTableMappings).toHaveLength(2);
   });
 
-  it('rejects analyze mode without querying the database at all', async () => {
-    const requestSql = jest.fn();
+  it('builds EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) in analyze mode and includes actual stats', async () => {
+    const analyzeExplainRoot = {
+      Plan: {
+        'Node Type': 'Seq Scan',
+        'Relation Name': 'orders',
+        Alias: 'orders',
+        Filter: "(status = 'shipped'::text)",
+        'Plan Rows': 41,
+        'Actual Startup Time': 0.012,
+        'Actual Total Time': 1.234,
+        'Actual Rows': 37,
+        'Actual Loops': 1,
+      },
+      'Planning Time': 0.1,
+      'Execution Time': 1.5,
+    };
+    const requestSql = jest.fn().mockResolvedValue({
+      rows: [{ values: { 'QUERY PLAN': [analyzeExplainRoot] } }],
+    });
     const provider = new PostgresPerformanceTuningProvider(makeDriver(requestSql));
 
     const result = await provider.collectExecutionPlan(
       {
         databaseName: 'testdb',
-        statement: { sql: 'SELECT 1', source: 'editor' },
+        statement: { sql: "SELECT * FROM orders WHERE status = 'shipped'", source: 'editor' },
         plan: { mode: 'analyze', allowExecution: true },
       },
       { timeoutMs: 5000 },
     );
 
-    expect(result.ok).toBe(false);
-    expect(result.message).toContain('Analyze mode is not implemented yet');
-    expect(requestSql).not.toHaveBeenCalled();
+    expect(requestSql).toHaveBeenCalledWith({
+      sql: "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) SELECT * FROM orders WHERE status = 'shipped'",
+      conditions: { rawQueries: true, binds: undefined },
+      meta: { type: 'performanceTuningContext' },
+    });
+    expect(result.ok).toBe(true);
+    expect(result.result!.executionTimeMs).toBe(1.5);
+    expect(result.result!.normalizedPlan).toMatchObject({ actual: { rows: 37, loops: 1 } });
+    expect(result.result!.planTableMappings?.[0]).toMatchObject({ actualRows: 37 });
   });
 
   it('surfaces a failed EXPLAIN with detail instead of throwing', async () => {
@@ -845,14 +910,14 @@ describe('PostgresPerformanceTuningProvider', () => {
     });
   });
 
-  it('reports capability status: everything true except analyzedExecutionPlan', async () => {
+  it('reports capability status: everything true, including analyzedExecutionPlan', async () => {
     const provider = new PostgresPerformanceTuningProvider(makeDriver(jest.fn()));
     const result = await provider.checkCapabilities({ databaseName: 'testdb' });
 
     expect(result.ok).toBe(true);
     expect(result.result).toEqual({
       executionPlan: { available: true, source: 'EXPLAIN (FORMAT JSON)' },
-      analyzedExecutionPlan: expect.objectContaining({ available: false }),
+      analyzedExecutionPlan: expect.objectContaining({ available: true }),
       tableDefinition: expect.objectContaining({ available: true }),
       optimizerStatistics: expect.objectContaining({ available: true }),
       physicalHealth: expect.objectContaining({ available: true }),
@@ -914,6 +979,31 @@ describe('PostgresPerformanceTuningProvider (live PostgreSQL)', () => {
     expect(result.result!.planTableMappings?.[0]).toMatchObject({ tableName: 'perf_orders' });
     // Postgres' own EXPLAIN JSON shape, not something this driver invented.
     expect(result.result!.raw).toMatchObject([{ Plan: expect.objectContaining({}) }]);
+  });
+
+  it('retrieves an analyze plan with real actual rows/timing for perf_orders', async () => {
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'testdb',
+        statement: {
+          sql: "SELECT * FROM perf_orders WHERE status = 'shipped'",
+          source: 'editor',
+        },
+        plan: { mode: 'analyze', allowExecution: true },
+      },
+      { timeoutMs: 5000 },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.result!.executionTimeMs).toBeGreaterThan(0);
+    expect(result.result!.planTableMappings?.[0]).toMatchObject({
+      tableName: 'perf_orders',
+      actualRows: expect.any(Number),
+    });
+    // Real ANALYZE/BUFFERS fields, not something this driver invented.
+    expect(result.result!.raw).toMatchObject([
+      { Plan: expect.objectContaining({ 'Actual Rows': expect.any(Number) }) },
+    ]);
   });
 
   it('collects DDL/columns/constraints/indexes for perf_orders, including the CHECK constraint and partial/expression indexes', async () => {
@@ -1011,5 +1101,22 @@ describe('PostgresPerformanceTuningProvider (live PostgreSQL)', () => {
     expect(context.tables[0].statistics?.estimatedRowCount?.value).toBeGreaterThan(0);
     expect(context.tables[0].physicalHealth?.metrics.length).toBeGreaterThan(0);
     expect(context.database.version).toBeDefined();
+  });
+
+  it('end-to-end via getPerformanceTuningContext() in analyze mode: executionTimeMs and actual rows are populated', async () => {
+    const result = await driver.getPerformanceTuningContext({
+      databaseName: 'testdb',
+      statement: {
+        sql: "SELECT * FROM perf_orders WHERE status = 'shipped'",
+        source: 'editor',
+      },
+      plan: { mode: 'analyze', allowExecution: true },
+    });
+
+    expect(result.ok).toBe(true);
+    const context = result.result!;
+    expect(context.executionPlan.mode).toBe('analyze');
+    expect(context.executionPlan.executionTimeMs).toBeGreaterThan(0);
+    expect(context.tables[0].tableName).toBe('perf_orders');
   });
 });

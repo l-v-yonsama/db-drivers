@@ -222,21 +222,80 @@ describe('MySQLPerformanceTuningProvider', () => {
     expect(result.result!.planTableMappings).toHaveLength(1);
   });
 
-  it('rejects analyze mode without querying the database at all', async () => {
-    const requestSql = jest.fn();
+  it('in analyze mode, also issues EXPLAIN ANALYZE and returns its tree text unparsed, alongside the estimate-mode plan/mappings', async () => {
+    const explainRoot = {
+      query_block: {
+        select_id: 1,
+        table: { table_name: 'perf_orders', access_type: 'ALL', rows_produced_per_join: 10 },
+      },
+    };
+    const analyzeText =
+      '-> Filter: (status = \'shipped\')  (actual time=0.05..1.2 rows=5 loops=1)\n' +
+      '    -> Table scan on perf_orders  (actual time=0.02..1.1 rows=50 loops=1)\n';
+    const requestSql = jest.fn((params: { sql: string }) => {
+      if (params.sql.startsWith('EXPLAIN FORMAT=JSON')) {
+        return Promise.resolve({ rows: [{ values: { EXPLAIN: JSON.stringify(explainRoot) } }] });
+      }
+      if (params.sql.startsWith('EXPLAIN ANALYZE')) {
+        return Promise.resolve({ rows: [{ values: { EXPLAIN: analyzeText } }] });
+      }
+      throw new Error(`unexpected sql: ${params.sql}`);
+    });
     const provider = new MySQLPerformanceTuningProvider(makeDriver(requestSql));
 
     const result = await provider.collectExecutionPlan(
       {
         databaseName: 'test-db',
-        statement: { sql: 'SELECT 1', source: 'editor' },
+        statement: { sql: "SELECT * FROM perf_orders WHERE status = 'shipped'", source: 'editor' },
         plan: { mode: 'analyze', allowExecution: true },
       },
       { timeoutMs: 5000 },
     );
+
+    expect(requestSql).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sql: "EXPLAIN FORMAT=JSON SELECT * FROM perf_orders WHERE status = 'shipped'",
+      }),
+    );
+    expect(requestSql).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sql: "EXPLAIN ANALYZE SELECT * FROM perf_orders WHERE status = 'shipped'",
+      }),
+    );
+    expect(result.ok).toBe(true);
+    // Structure still comes from the estimate-mode JSON plan - MySQL
+    // computes the same plan either way, so this is not re-derived from
+    // the analyze text.
+    expect(result.result!.planTableMappings).toHaveLength(1);
+    expect(result.result!.normalizedPlan).toMatchObject({ id: 'n0', operation: 'ALL' });
+    // The analyze text itself is carried through completely unparsed.
+    expect(result.result!.actualPlanText).toBe(analyzeText);
+  });
+
+  it('surfaces a failed EXPLAIN ANALYZE with detail instead of throwing, without discarding the estimate plan work', async () => {
+    const explainRoot = {
+      query_block: { select_id: 1, table: { table_name: 'perf_orders', access_type: 'ALL' } },
+    };
+    const requestSql = jest.fn((params: { sql: string }) => {
+      if (params.sql.startsWith('EXPLAIN FORMAT=JSON')) {
+        return Promise.resolve({ rows: [{ values: { EXPLAIN: JSON.stringify(explainRoot) } }] });
+      }
+      return Promise.reject(new Error('Lock wait timeout exceeded'));
+    });
+    const provider = new MySQLPerformanceTuningProvider(makeDriver(requestSql));
+
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'test-db',
+        statement: { sql: 'SELECT * FROM perf_orders', source: 'editor' },
+        plan: { mode: 'analyze', allowExecution: true },
+      },
+      { timeoutMs: 5000 },
+    );
+
     expect(result.ok).toBe(false);
-    expect(result.message).toContain('Analyze mode is not implemented yet');
-    expect(requestSql).not.toHaveBeenCalled();
+    expect(result.message).toContain('Failed to retrieve the analyzed execution plan.');
+    expect(result.message).toContain('Lock wait timeout exceeded');
   });
 
   it('surfaces a failed EXPLAIN with detail instead of throwing', async () => {
@@ -438,14 +497,14 @@ describe('MySQLPerformanceTuningProvider', () => {
     });
   });
 
-  it('reports capability status: everything true except analyzedExecutionPlan', async () => {
+  it('reports capability status: everything true, including analyzedExecutionPlan', async () => {
     const provider = new MySQLPerformanceTuningProvider(makeDriver(jest.fn()));
     const result = await provider.checkCapabilities({ databaseName: 'test-db' });
 
     expect(result.ok).toBe(true);
     expect(result.result).toEqual({
       executionPlan: { available: true, source: 'EXPLAIN FORMAT=JSON' },
-      analyzedExecutionPlan: expect.objectContaining({ available: false }),
+      analyzedExecutionPlan: expect.objectContaining({ available: true }),
       tableDefinition: expect.objectContaining({ available: true }),
       optimizerStatistics: expect.objectContaining({ available: true }),
       physicalHealth: expect.objectContaining({ available: true }),
@@ -499,6 +558,23 @@ describe('MySQLPerformanceTuningProvider (live MySQL)', () => {
     expect(result.ok).toBe(true);
     expect(result.result!.planTableMappings?.[0]).toMatchObject({ tableName: 'perf_orders' });
     expect(result.result!.raw).toMatchObject({ query_block: expect.objectContaining({}) });
+  });
+
+  it('retrieves an analyze plan for perf_orders, with the real EXPLAIN ANALYZE tree text carried through unparsed', async () => {
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'test-db',
+        statement: { sql: "SELECT * FROM perf_orders WHERE status = 'shipped'", source: 'editor' },
+        plan: { mode: 'analyze', allowExecution: true },
+      },
+      { timeoutMs: 5000 },
+    );
+
+    expect(result.ok).toBe(true);
+    // Structure still comes from the (also-collected) estimate-mode plan.
+    expect(result.result!.planTableMappings?.[0]).toMatchObject({ tableName: 'perf_orders' });
+    // Real MySQL EXPLAIN ANALYZE output, not something this driver invented.
+    expect(result.result!.actualPlanText).toContain('actual time=');
   });
 
   it('collects DDL/columns/constraints/indexes for perf_orders, including the CHECK constraint and functional index', async () => {
@@ -583,6 +659,20 @@ describe('MySQLPerformanceTuningProvider (live MySQL)', () => {
     expect(context.tables[0].definition?.columns.length).toBeGreaterThan(0);
     expect(context.tables[0].statistics?.estimatedRowCount?.value).toBeGreaterThan(0);
     expect(context.database.version).toBeDefined();
+  });
+
+  it('end-to-end via getPerformanceTuningContext() in analyze mode: actualPlanText is populated', async () => {
+    const result = await driver.getPerformanceTuningContext({
+      databaseName: 'test-db',
+      statement: { sql: "SELECT * FROM perf_orders WHERE status = 'shipped'", source: 'editor' },
+      plan: { mode: 'analyze', allowExecution: true },
+    });
+
+    expect(result.ok).toBe(true);
+    const context = result.result!;
+    expect(context.executionPlan.mode).toBe('analyze');
+    expect(context.executionPlan.actualPlanText).toContain('actual time=');
+    expect(context.tables[0].tableName).toBe('perf_orders');
   });
 
   it("resolves an aliased table via targetTables, MySQL's own EXPLAIN JSON not exposing the real name", async () => {
