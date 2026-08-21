@@ -1,6 +1,23 @@
 import { ConnectionSetting, DBType, SQLServerDriver } from '../../../src';
 
 describe('SQLServerDriver2', () => {
+  describe('showplan bind substitution', () => {
+    it('always escapes a bind that is already surrounded by single quotes', () => {
+      const driver = new SQLServerDriver({
+        dbType: DBType.SQLServer,
+        name: 'mssql_bind_escape_test',
+      });
+
+      const sql = (driver as any).substituteShowplanBinds(
+        'SELECT * FROM t WHERE c = @value AND d = @other',
+        ["'a' OR '1'='1'", "O'Reilly"],
+        ['@value', '@other'],
+      );
+
+      expect(sql).toBe("SELECT * FROM t WHERE c = '''a'' OR ''1''=''1''' AND d = 'O''Reilly'");
+    });
+  });
+
   describe('Authorize', () => {
     let driver: SQLServerDriver;
     const connectStringOption: ConnectionSetting = {
