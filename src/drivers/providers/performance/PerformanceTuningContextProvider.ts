@@ -3,6 +3,7 @@ import {
   ColumnDefinition,
   ColumnStatisticsContext,
   ConstraintDefinition,
+  DominantCostPlanNodeRef,
   IndexDefinition,
   PartitioningDefinition,
   PerformanceTuningCallOptions,
@@ -46,6 +47,15 @@ export type VendorExecutionPlan = {
   normalizedPlan?: PlanNode;
   // See ExecutionPlanContext.actualPlanText - MySQL-only today.
   actualPlanText?: string;
+  // See DominantCostPlanNodeRef (PerformanceTuningContext.ts). Optional,
+  // vendor-supplied-if-available, same pattern as actualPlanText above -
+  // only MySQL's Provider sets this today (resolved from actualPlanText via
+  // mysqlActualPlanTextParser.ts, since normalizedPlan never carries real
+  // per-node actual timing for MySQL the way it does for Postgres).
+  // RDSBaseDriver falls back to computing this itself from normalizedPlan
+  // (planNodeMath.ts's findDominantCostPlanNode()) whenever a Provider
+  // leaves it undefined.
+  dominantCostPlanNode?: DominantCostPlanNodeRef;
 };
 
 export type VendorTableDefinition = {

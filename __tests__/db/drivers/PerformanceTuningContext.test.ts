@@ -1128,6 +1128,172 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
     }
   });
 
+  // 2026-08-21 follow-up (summary.md's Full Context improvement item 5):
+  // executionPlan.dominantCostPlanNode.
+  it("passes a Provider-supplied dominantCostPlanNode through untouched, rather than overriding it with the generic normalizedPlan-based fallback", async () => {
+    const getVersion = mockVersion();
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider({
+          collectExecutionPlan: async () => ({
+            ok: true,
+            message: '',
+            result: {
+              raw: {},
+              normalizedPlan: { id: 'n0', depth: 0, operation: 'Seq Scan', estimated: { totalCost: 999 }, children: [] },
+              // A vendor Provider (MySQL) resolving this itself from real
+              // actualPlanText, deliberately different from what the
+              // generic estimated-cost fallback below would compute from
+              // normalizedPlan (totalCost: 999) - proves the Provider's own
+              // answer wins.
+              dominantCostPlanNode: { planNodeId: 'n0', metric: 'actual' as const, exclusiveValue: 12.5 },
+              diagnostics: [],
+              planTableMappings: [{ planNodeId: 'n0', tableName: 'orders', estimatedRows: 1 }],
+            },
+          }),
+          collectTableDefinition: async () => ({ ok: true, message: '', result: { columns: [], constraints: [], indexes: [] } }),
+          collectTableStatistics: async () => ({ ok: true, message: '', result: {} }),
+          collectColumnStatistics: async () => ({ ok: true, message: '', result: [] }),
+          collectPhysicalHealth: async () => ({ ok: true, message: '', result: { metrics: [] } }),
+        }),
+      );
+
+      const result = await driver.getPerformanceTuningContext(baseParams());
+      expect(result.ok).toBe(true);
+      expect(result.result!.executionPlan.dominantCostPlanNode).toEqual({
+        planNodeId: 'n0',
+        metric: 'actual',
+        exclusiveValue: 12.5,
+      });
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  it('falls back to computing dominantCostPlanNode from normalizedPlan when the Provider does not supply one', async () => {
+    const getVersion = mockVersion();
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider({
+          collectExecutionPlan: async () => ({
+            ok: true,
+            message: '',
+            result: {
+              raw: {},
+              normalizedPlan: {
+                id: 'n0',
+                depth: 0,
+                operation: 'Seq Scan',
+                estimated: { totalCost: 42 },
+                children: [],
+              },
+              // No dominantCostPlanNode from this Provider (e.g. Postgres,
+              // whose real actual data - when present - already lives on
+              // normalizedPlan itself, not resolved separately).
+              diagnostics: [],
+              planTableMappings: [{ planNodeId: 'n0', tableName: 'orders', estimatedRows: 1 }],
+            },
+          }),
+          collectTableDefinition: async () => ({ ok: true, message: '', result: { columns: [], constraints: [], indexes: [] } }),
+          collectTableStatistics: async () => ({ ok: true, message: '', result: {} }),
+          collectColumnStatistics: async () => ({ ok: true, message: '', result: [] }),
+          collectPhysicalHealth: async () => ({ ok: true, message: '', result: { metrics: [] } }),
+        }),
+      );
+
+      const result = await driver.getPerformanceTuningContext(baseParams());
+      expect(result.ok).toBe(true);
+      expect(result.result!.executionPlan.dominantCostPlanNode).toEqual({
+        planNodeId: 'n0',
+        metric: 'estimated',
+        exclusiveValue: 42,
+      });
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  it('clears dominantCostPlanNode when the plan itself is dropped to stay within maxPayloadBytes (its planNodeId would otherwise dangle with nothing to resolve against)', async () => {
+    const getVersion = mockVersion();
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider({
+          collectExecutionPlan: async () => ({
+            ok: true,
+            message: '',
+            result: {
+              // Oversized on its own - no tables to drop first (empty
+              // planTableMappings), so this must hit the plan-drop branch
+              // of enforcePayloadBudget() directly.
+              raw: { pad: 'x'.repeat(20_000) },
+              normalizedPlan: { id: 'n0', depth: 0, operation: 'Seq Scan', estimated: { totalCost: 100 }, children: [] },
+              diagnostics: [],
+              planTableMappings: [],
+            },
+          }),
+        }),
+      );
+
+      const result = await driver.getPerformanceTuningContext({
+        ...baseParams(),
+        limits: { maxPayloadBytes: 5_000 },
+      });
+
+      expect(result.ok).toBe(true);
+      const context = result.result!;
+      expect(context.executionPlan.normalizedPlan).toBeUndefined();
+      expect(context.executionPlan.dominantCostPlanNode).toBeUndefined();
+      expect(validatePerformanceTuningContext(context)).toEqual([]);
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
+  // 2026-08-21 follow-up (summary.md's Full Context improvement item 3):
+  // planTableMappings[].filterSelectivity.
+  it('computes filterSelectivity end-to-end from planTableMappings.actualRows and the resolved table\'s estimatedRowCount', async () => {
+    const getVersion = mockVersion();
+    try {
+      const driver = new FakeProviderDriver(
+        connectionSetting(DBType.Postgres),
+        makeProvider({
+          collectExecutionPlan: async () => ({
+            ok: true,
+            message: '',
+            result: {
+              raw: {},
+              diagnostics: [],
+              planTableMappings: [
+                { planNodeId: 'n0', tableName: 'orders', estimatedRows: 32400, actualRows: 150 },
+              ],
+            },
+          }),
+          collectTableDefinition: async () => ({ ok: true, message: '', result: { columns: [], constraints: [], indexes: [] } }),
+          collectTableStatistics: async () => ({
+            ok: true,
+            message: '',
+            result: { estimatedRowCount: { value: 300000, estimated: true, source: 'pg_class.reltuples' } },
+          }),
+          collectColumnStatistics: async () => ({ ok: true, message: '', result: [] }),
+          collectPhysicalHealth: async () => ({ ok: true, message: '', result: { metrics: [] } }),
+        }),
+      );
+
+      const result = await driver.getPerformanceTuningContext(baseParams());
+      expect(result.ok).toBe(true);
+      expect(result.result!.planTableMappings[0].filterSelectivity).toEqual({
+        value: 0.0005,
+        estimated: true,
+        source: 'planTableMapping.actualRows / pg_class.reltuples',
+      });
+    } finally {
+      getVersion.mockRestore();
+    }
+  });
+
   it('fails outright when even the fully-truncated skeleton still exceeds maxPayloadBytes', async () => {
     const getVersion = mockVersion();
     try {

@@ -1,3 +1,4 @@
+export * from './mysqlActualPlanTextParser';
 export * from './mysqlCatalogMapper';
 export * from './MySQLPerformanceTuningProvider';
 export * from './mysqlPlanParser';

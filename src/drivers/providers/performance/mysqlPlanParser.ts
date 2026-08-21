@@ -77,7 +77,10 @@ export function extractMysqlPredicateColumns(predicate: string | undefined): str
 // MySQL names derived tables / materialized subqueries / UNION results with
 // a synthetic placeholder like "<derived2>", "<subquery3>", "<union1,2>" -
 // never a real table, so a catalog lookup against it would always fail.
-const isSyntheticTableName = (name: string): boolean => /^<.*>$/.test(name);
+// Exported: mysqlActualPlanTextParser.ts reuses this same check against the
+// table/alias token in EXPLAIN ANALYZE tree-text lines like "Table scan on
+// <temporary>".
+export const isSyntheticTableName = (name: string): boolean => /^<.*>$/.test(name);
 
 export type ParsedMysqlPlan = {
   planNode: PlanNode;

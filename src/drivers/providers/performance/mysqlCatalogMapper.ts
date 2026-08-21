@@ -235,6 +235,45 @@ export function mapMysqlTableStatisticsRow(row: unknown): VendorTableStatistics 
 
 // --- column statistics ---------------------------------------------------------
 
+// Best-effort, read-only fallback (2026-08-21 follow-up, summary.md's Full
+// Context improvement item 2) for the common case CARDINALITY_SQL can never
+// cover: a column that isn't the leading key part of any index. No new
+// query - HISTOGRAM_SQL is already fetched for every requested column
+// unconditionally (MySQLPerformanceTuningProvider.collectColumnStatistics()),
+// so this is purely a richer read of data already in hand, still strictly
+// read-only (no `ANALYZE TABLE ... UPDATE HISTOGRAM`, matching this
+// feature's existing collection-load policy - implementation plan §9.3).
+// Two of MySQL 8.0's histogram types carry enough information to derive a
+// distinct-value count from:
+//  - 'singleton': one bucket per distinct value (bucket = [value,
+//    cumulative_freq]) - buckets.length *is* the distinct count.
+//  - 'equi-height': each bucket covers a range of values (bucket = [min,
+//    max, cumulative_freq, num_distinct_in_bucket]) - summing the 4th
+//    element across buckets gives the (approximate) total distinct count.
+// Any other/unrecognized shape degrades to undefined rather than guessing.
+export function estimateDistinctCountFromMysqlHistogram(
+  histogram: Record<string, unknown> | undefined,
+): number | undefined {
+  if (!histogram || !Array.isArray(histogram.buckets)) {
+    return undefined;
+  }
+  const type = asString(histogram['histogram-type']);
+  if (type === 'singleton') {
+    return histogram.buckets.length;
+  }
+  if (type === 'equi-height') {
+    let total = 0;
+    for (const bucket of histogram.buckets) {
+      if (!Array.isArray(bucket) || typeof bucket[3] !== 'number') {
+        return undefined;
+      }
+      total += bucket[3];
+    }
+    return total > 0 ? total : undefined;
+  }
+  return undefined;
+}
+
 // Two independent, optional sources, combined per column:
 //  - information_schema.STATISTICS.CARDINALITY: an approximate distinct-
 //    value count, but only meaningful for a column used as the *first* key
@@ -244,9 +283,12 @@ export function mapMysqlTableStatisticsRow(row: unknown): VendorTableStatistics 
 //  - information_schema.COLUMN_STATISTICS.HISTOGRAM: only populated after
 //    an explicit `ANALYZE TABLE ... UPDATE HISTOGRAM ON col` (not run by
 //    default), so this is commonly absent - null_frac/statisticsUpdatedAt/
-//    histogram shape come from here when it exists, distinctCount does not
-//    (a histogram doesn't directly state a distinct-value count for every
-//    histogram type, unlike Postgres's pg_stats.n_distinct).
+//    histogram shape come from here when it exists. `distinctCount` prefers
+//    CARDINALITY_SQL (more precise, index-statistics-based) when available;
+//    when a column isn't index-backed at all, it falls back to deriving a
+//    count from the histogram buckets themselves (see
+//    estimateDistinctCountFromMysqlHistogram() above) - still only when a
+//    histogram happens to already exist, best-effort either way.
 export function mapMysqlColumnStatisticsRow(
   columnName: string,
   cardinalityRow: unknown,
@@ -255,14 +297,20 @@ export function mapMysqlColumnStatisticsRow(
   const cardinality = asRecord(cardinalityRow);
   const histogram = asRecord(asRecord(histogramRow)?.histogram);
 
+  const cardinalityValue = asNumber(cardinality?.cardinality);
+  const distinctCount =
+    cardinalityValue !== undefined
+      ? metric(cardinalityValue, 'information_schema.STATISTICS.CARDINALITY', true, 'values')
+      : metric(
+          estimateDistinctCountFromMysqlHistogram(histogram),
+          'information_schema.COLUMN_STATISTICS (derived from histogram buckets)',
+          true,
+          'values',
+        );
+
   return {
     columnName,
-    distinctCount: metric(
-      asNumber(cardinality?.cardinality),
-      'information_schema.STATISTICS.CARDINALITY',
-      true,
-      'values',
-    ),
+    distinctCount,
     nullFraction: histogram
       ? metric(asNumber(histogram['null-values']), 'information_schema.COLUMN_STATISTICS', true)
       : undefined,

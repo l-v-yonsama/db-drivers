@@ -55,6 +55,9 @@ export const samplePerformanceTuningContext: PerformanceTuningContext = {
       children: [],
     },
     planningTimeMs: 0.4,
+    // 2026-08-21 follow-up (summary.md's Full Context improvement item 5) -
+    // this single-node plan's own Seq Scan is trivially the dominant node.
+    dominantCostPlanNode: { planNodeId: 'n1', metric: 'estimated', exclusiveValue: 48210 },
   },
 
   tables: [
@@ -139,6 +142,13 @@ export const samplePerformanceTuningContext: PerformanceTuningContext = {
       alias: 'orders',
       estimatedRows: 41,
       filterColumns: ['customer_id', 'status'],
+      // 2026-08-21 follow-up (summary.md's Full Context improvement item
+      // 3) - 41 / this table's estimatedRowCount (1,204,800) above.
+      filterSelectivity: {
+        value: 0.00003403054448871182,
+        estimated: true,
+        source: 'planTableMapping.estimatedRows / pg_stat_user_tables.n_live_tup',
+      },
     },
   ],
 

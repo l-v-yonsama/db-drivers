@@ -128,6 +128,25 @@ export type WorkloadContext = {
 // what ends up in `PerformanceTuningContext.workload` after the API copies it.
 export type SelectedStatementStatistics = WorkloadContext;
 
+// A purely factual, computed pointer at the one PlanNode that accounts for
+// the most cost/time in a plan - never a verdict ("this is the problem"),
+// just "this is where the numbers concentrate" (2026-08-21 follow-up, see
+// scripts/performance-lab/aiResults/summary.md's "追加検証(2nd-0821)" /
+// Full Context improvement item 5). Motivated by a concrete regression: an
+// AI given a real EXPLAIN ANALYZE plan anchored on a secondary
+// PLAN_OBSERVATION diagnostic (temp table/filesort - a GROUP BY/ORDER BY
+// symptom) instead of the WHERE-clause filtering step that was actually
+// dominant. `exclusiveValue` is this node's own contribution with its
+// children's contributions subtracted out (see planNodeMath.ts's
+// computeExclusiveCost()) - inclusive/cumulative cost trivially always
+// maximizes at the plan root in every vendor's plan representation, so it
+// would be useless for this purpose.
+export type DominantCostPlanNodeRef = {
+  planNodeId: string; // cross-references PlanNode.id somewhere in executionPlan.normalizedPlan
+  metric: 'actual' | 'estimated'; // which figure decided this
+  exclusiveValue: number; // this node's own contribution (ms for 'actual', vendor cost units for 'estimated')
+};
+
 export type ExecutionPlanContext = {
   mode: 'estimate' | 'analyze';
   format: 'json';
@@ -144,6 +163,15 @@ export type ExecutionPlanContext = {
   // (always-collected) estimate-mode EXPLAIN FORMAT=JSON plan, since MySQL
   // computes the same plan either way - ANALYZE just executes it.
   actualPlanText?: string;
+  // See DominantCostPlanNodeRef above. Computed by RDSBaseDriver for every
+  // vendor from normalizedPlan's estimated/actual costs
+  // (planNodeMath.ts's findDominantCostPlanNode()); MySQL additionally
+  // resolves this from actualPlanText itself when analyze mode is on
+  // (mysqlActualPlanTextParser.ts), since MySQL's normalizedPlan tree never
+  // carries real per-node actual timing the way Postgres's does.
+  // `undefined` only when no node in the plan has any usable cost/time data
+  // at all.
+  dominantCostPlanNode?: DominantCostPlanNodeRef;
 };
 
 export type ColumnDefinition = {
@@ -270,6 +298,16 @@ export type PlanTableMapping = {
   joinColumns?: string[];
   groupColumns?: string[];
   sortColumns?: string[];
+  // What fraction of this table's total rows this plan node's filter
+  // actually/estimated-ly matched (2026-08-21 follow-up, summary.md's Full
+  // Context improvement item 3) - i.e. (actualRows ?? estimatedRows) /
+  // tables[this table].statistics.estimatedRowCount, computed by
+  // RDSBaseDriver (planNodeMath.ts's computeFilterSelectivity()) once both
+  // sides are available. A low-selectivity value here is exactly the signal
+  // that was previously scattered across two nested JSON paths an AI had to
+  // cross-reference itself (and in one documented case, failed to). `value`
+  // is a fraction in [0,1], never a percentage.
+  filterSelectivity?: MetricValue<number>;
 };
 
 export type UnavailableSectionName =

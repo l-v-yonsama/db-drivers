@@ -21,8 +21,10 @@ import {
   mapMysqlPhysicalHealthRow,
   mapMysqlTableStatisticsRow,
 } from './mysqlCatalogMapper';
+import { resolveMysqlActualPlanTableStats } from './mysqlActualPlanTextParser';
 import { parseMysqlPlan } from './mysqlPlanParser';
 import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
+import { computeRowEstimateRatio } from './planNodeMath';
 import {
   PerformanceTuningCollectionOptions,
   PerformanceTuningContextProvider,
@@ -168,6 +170,34 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
       actualPlanText = typeof analyzeValue === 'string' ? analyzeValue : undefined;
     }
 
+    // 2026-08-21 follow-up (summary.md's Full Context improvement item 5,
+    // plus a follow-up gap found while manually verifying it in the
+    // Extension Development Host): resolved once here, not just for
+    // dominantCostPlanNode - the same tableAccess-line resolution also
+    // backfills each resolved table's real actualRows/rowEstimateRatio,
+    // which mysqlPlanParser.ts's visitTable() always leaves undefined (it
+    // has no EXPLAIN ANALYZE-equivalent data of its own to draw from - see
+    // that function's own comment). Without this, "Actual rows"/"Est./
+    // actual ratio" stayed blank in the rendered plan table even after a
+    // fully successful, fully-parsed EXPLAIN ANALYZE. Only resolvable when
+    // actualPlanText exists (analyze mode) and at least one "table access"
+    // line matches a table this same EXPLAIN FORMAT=JSON pass already
+    // resolved into planTableMappings (see mysqlActualPlanTextParser.ts's
+    // own doc comment for why this is done semantically, not by
+    // positionally aligning the two trees).
+    const actualPlanTableStats = actualPlanText
+      ? resolveMysqlActualPlanTableStats(actualPlanText, planTableMappings)
+      : undefined;
+    const planTableMappingsWithActualRows =
+      actualPlanTableStats && actualPlanTableStats.actualRowsByPlanNodeId.size > 0
+        ? planTableMappings.map((m) => {
+            const actualRows = actualPlanTableStats.actualRowsByPlanNodeId.get(m.planNodeId);
+            return actualRows === undefined
+              ? m
+              : { ...m, actualRows, rowEstimateRatio: computeRowEstimateRatio(m.estimatedRows, actualRows) };
+          })
+        : planTableMappings;
+
     return {
       ok: true,
       message: '',
@@ -180,8 +210,11 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
         planningTimeMs: undefined,
         executionTimeMs: undefined,
         actualPlanText,
+        // `undefined` when nothing resolves - RDSBaseDriver falls back to
+        // the generic, estimated-cost-based walk in that case.
+        dominantCostPlanNode: actualPlanTableStats?.dominantCostPlanNode,
         diagnostics,
-        planTableMappings,
+        planTableMappings: planTableMappingsWithActualRows,
       },
     };
   }

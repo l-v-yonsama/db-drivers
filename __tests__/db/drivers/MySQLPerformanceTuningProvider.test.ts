@@ -270,6 +270,44 @@ describe('MySQLPerformanceTuningProvider', () => {
     expect(result.result!.normalizedPlan).toMatchObject({ id: 'n0', operation: 'ALL' });
     // The analyze text itself is carried through completely unparsed.
     expect(result.result!.actualPlanText).toBe(analyzeText);
+    // 2026-08-21 follow-up: resolved from the real actualPlanText (the leaf
+    // table scan is the exclusive-cost winner - the Filter above it has
+    // only 1.2-1.1=0.1ms of its own once the table scan's 1.1ms is
+    // subtracted out), matched against planTableMappings by table name.
+    expect(result.result!.dominantCostPlanNode).toEqual({
+      planNodeId: 'n0',
+      metric: 'actual',
+      exclusiveValue: 1.1,
+    });
+    // 2026-08-21 follow-up (found while manually verifying this feature in
+    // the Extension Development Host): the real actualRows/rowEstimateRatio
+    // measured by EXPLAIN ANALYZE ("Table scan on perf_orders ... rows=50")
+    // must be backfilled into planTableMappings, not just used internally
+    // to resolve dominantCostPlanNode - otherwise the rendered plan table's
+    // "Actual rows"/"Est./actual ratio" columns stay blank even though the
+    // real numbers were successfully parsed.
+    expect(result.result!.planTableMappings[0]).toMatchObject({
+      estimatedRows: 10,
+      actualRows: 50,
+      rowEstimateRatio: 5,
+    });
+  });
+
+  it('leaves dominantCostPlanNode undefined in estimate mode (no actualPlanText to resolve it from)', async () => {
+    const explainRoot = {
+      query_block: { select_id: 1, table: { table_name: 'perf_orders', access_type: 'ALL' } },
+    };
+    const requestSql = jest.fn(() =>
+      Promise.resolve({ rows: [{ values: { EXPLAIN: JSON.stringify(explainRoot) } }] }),
+    );
+    const provider = new MySQLPerformanceTuningProvider(makeDriver(requestSql));
+
+    const result = await provider.collectExecutionPlan(
+      { databaseName: 'test-db', statement: { sql: 'SELECT * FROM perf_orders', source: 'editor' }, plan: {} },
+      { timeoutMs: 5000 },
+    );
+
+    expect(result.result!.dominantCostPlanNode).toBeUndefined();
   });
 
   it('surfaces a failed EXPLAIN ANALYZE with detail instead of throwing, without discarding the estimate plan work', async () => {
@@ -471,6 +509,37 @@ describe('MySQLPerformanceTuningProvider', () => {
       const result = await provider.collectColumnStatistics({ ...target, columnNames: [] }, options);
       expect(result).toEqual({ ok: true, message: '', result: [] });
       expect(requestSql).not.toHaveBeenCalled();
+    });
+
+    // 2026-08-21 follow-up (summary.md's Full Context improvement item 2):
+    // a column with no CARDINALITY row at all (not the leading key part of
+    // any index) still gets a distinctCount when an existing histogram
+    // covers it - HISTOGRAM_SQL is already queried unconditionally for
+    // every requested column, this is not a new query.
+    it('falls back to a histogram-derived distinctCount for a non-index-backed column', async () => {
+      const requestSql = routedRequestSql({
+        cardinality: [],
+        histogram: [
+          {
+            column_name: 'channel',
+            histogram: {
+              'histogram-type': 'singleton',
+              buckets: [['WEB', 0.49], ['MOBILE', 0.8], ['STORE', 1.0]],
+            },
+          },
+        ],
+      });
+      const provider = new MySQLPerformanceTuningProvider(makeDriver(requestSql));
+
+      const result = await provider.collectColumnStatistics({ ...target, columnNames: ['channel'] }, options);
+
+      expect(result.ok).toBe(true);
+      expect(result.result![0].distinctCount).toEqual({
+        value: 3,
+        estimated: true,
+        source: 'information_schema.COLUMN_STATISTICS (derived from histogram buckets)',
+        unit: 'values',
+      });
     });
   });
 

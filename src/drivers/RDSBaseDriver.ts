@@ -30,6 +30,7 @@ import {
   QueryParams,
   SQLLang,
   StatementStatisticsParams,
+  TableStatisticsContext,
   TransactionControlType,
   TransactionIsolationLevel,
   ViewRecordsParams,
@@ -47,6 +48,8 @@ import {
   VendorPhysicalHealth,
   VendorTableDefinition,
   VendorTableStatistics,
+  computeFilterSelectivity,
+  findDominantCostPlanNode,
 } from './providers';
 
 export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
@@ -402,6 +405,9 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       truncated = true;
       context.executionPlan.vendorPlan = undefined;
       context.executionPlan.normalizedPlan = undefined;
+      // dominantCostPlanNode.planNodeId cross-references normalizedPlan -
+      // never leave it dangling with nothing left to resolve it against.
+      context.executionPlan.dominantCostPlanNode = undefined;
       context.collection.unavailableSections.push({
         section: 'executionPlan',
         reason: 'The raw and normalized plan were omitted to keep the result within maxPayloadBytes.',
@@ -759,6 +765,22 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         }),
       );
 
+      // filterSelectivity (2026-08-21 follow-up, summary.md's Full Context
+      // improvement item 3) - the earliest point both tables[].statistics.
+      // estimatedRowCount and planTableMappings are simultaneously in
+      // scope. Computed once here for every vendor rather than per-Provider
+      // (planNodeMath.ts's computeFilterSelectivity() is pure/vendor-
+      // neutral) - do not fold this into relevantColumnsByTable above, an
+      // earlier, independent consumer of the original planTableMappings.
+      const tableStatsByKey = new Map<string, TableStatisticsContext['estimatedRowCount']>();
+      for (const t of tables) {
+        tableStatsByKey.set(tableKeyOf(t), t.statistics?.estimatedRowCount);
+      }
+      const planTableMappingsWithSelectivity = planTableMappings.map((mapping) => ({
+        ...mapping,
+        filterSelectivity: computeFilterSelectivity(mapping, tableStatsByKey.get(tableKeyOf(mapping))),
+      }));
+
       // Best-effort, non-fatal: a version-fetch failure should not turn an
       // otherwise-usable plan+table-resolution result into a hard error.
       let version: string | undefined;
@@ -801,9 +823,14 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           planningTimeMs: vendorPlan?.planningTimeMs,
           executionTimeMs: vendorPlan?.executionTimeMs,
           actualPlanText: vendorPlan?.actualPlanText,
+          // A Provider's own answer (MySQL, from real actualPlanText) wins
+          // when it has one; every vendor otherwise falls back to the
+          // generic, normalizedPlan-based walk (2026-08-21 follow-up,
+          // summary.md's Full Context improvement item 5).
+          dominantCostPlanNode: vendorPlan?.dominantCostPlanNode ?? findDominantCostPlanNode(vendorPlan?.normalizedPlan),
         },
         tables,
-        planTableMappings,
+        planTableMappings: planTableMappingsWithSelectivity,
         collection: {
           collectedAt: new Date().toISOString(),
           // status is derived only from unavailableSections and

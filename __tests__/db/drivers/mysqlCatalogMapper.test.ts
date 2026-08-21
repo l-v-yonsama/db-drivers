@@ -223,6 +223,79 @@ describe('mapMysqlColumnStatisticsRow', () => {
       statisticsUpdatedAt: undefined,
     });
   });
+
+  // 2026-08-21 follow-up (summary.md's Full Context improvement item 2):
+  // non-index-backed column histogram fallback for distinctCount.
+  describe('distinctCount histogram fallback (no CARDINALITY row - column is not the leading key part of any index)', () => {
+    it('derives distinctCount from a singleton histogram (one bucket per distinct value)', () => {
+      const stats = mapMysqlColumnStatisticsRow('channel', undefined, {
+        column_name: 'channel',
+        histogram: {
+          buckets: [
+            ['WEB', 0.49],
+            ['MOBILE', 0.8],
+            ['STORE', 1.0],
+          ],
+          'histogram-type': 'singleton',
+        },
+      });
+      expect(stats.distinctCount).toEqual({
+        value: 3,
+        estimated: true,
+        source: 'information_schema.COLUMN_STATISTICS (derived from histogram buckets)',
+        unit: 'values',
+      });
+    });
+
+    it('derives distinctCount from an equi-height histogram (sums num_distinct_in_bucket across buckets)', () => {
+      const stats = mapMysqlColumnStatisticsRow('tenant_id', undefined, {
+        column_name: 'tenant_id',
+        histogram: {
+          buckets: [
+            [1, 50, 0.3, 10],
+            [51, 100, 0.6, 12],
+            [101, 200, 1.0, 8],
+          ],
+          'histogram-type': 'equi-height',
+        },
+      });
+      expect(stats.distinctCount).toEqual({
+        value: 30,
+        estimated: true,
+        source: 'information_schema.COLUMN_STATISTICS (derived from histogram buckets)',
+        unit: 'values',
+      });
+    });
+
+    it('prefers CARDINALITY over the histogram fallback when both are present (regression guard: never override the more precise source)', () => {
+      const stats = mapMysqlColumnStatisticsRow(
+        'product_id',
+        { cardinality: 500 },
+        {
+          column_name: 'product_id',
+          histogram: { buckets: [['a', 0.5], ['b', 1.0]], 'histogram-type': 'singleton' },
+        },
+      );
+      expect(stats.distinctCount?.value).toBe(500);
+      expect(stats.distinctCount?.source).toBe('information_schema.STATISTICS.CARDINALITY');
+    });
+
+    it('leaves distinctCount undefined for an unrecognized/malformed histogram shape, without throwing', () => {
+      expect(
+        mapMysqlColumnStatisticsRow('x', undefined, {
+          column_name: 'x',
+          histogram: { buckets: [['a', 0.5]], 'histogram-type': 'some-future-type' },
+        }).distinctCount,
+      ).toBeUndefined();
+      expect(
+        mapMysqlColumnStatisticsRow('x', undefined, {
+          column_name: 'x',
+          histogram: { buckets: 'not-an-array', 'histogram-type': 'singleton' },
+        }).distinctCount,
+      ).toBeUndefined();
+      expect(mapMysqlColumnStatisticsRow('x', undefined, undefined).distinctCount).toBeUndefined();
+    });
+  });
 });
 
 describe('mapMysqlPhysicalHealthRow', () => {
