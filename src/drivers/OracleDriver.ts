@@ -11,6 +11,7 @@ import oracledb from 'oracledb';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  ActualPlanArtifact,
   GeneralResult,
   LimitClauseStyle,
   OracleConnectionType,
@@ -24,6 +25,7 @@ import { RDSBaseDriver } from './RDSBaseDriver';
 import { OraclePerformanceTuningProvider, PerformanceTuningContextProvider } from './providers';
 import {
   getStatementStatisticsOrderByColumn,
+  isSingleSelectStatement,
   normalizeStatementStatisticsParams,
 } from '../utils';
 
@@ -283,13 +285,12 @@ export class OracleDriver extends RDSBaseDriver {
   async explainAnalyzeSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
-    // A true EXPLAIN ANALYZE (execution-stats plan) needs the target
-    // statement to actually run with STATISTICS_LEVEL=ALL / a
-    // gather_plan_statistics hint, then DBMS_XPLAN.DISPLAY_CURSOR —
-    // injecting that hint safely into arbitrary already-formed SQL text
-    // isn't reliable without a real SQL parser. Falls back to the same
-    // estimated (not measured) plan as explainSql for v1.
-    return this.explainSqlSub(params);
+    const actualPlan = await this.collectPerformanceTuningActualPlan(params);
+    const rdb = new ResultSetDataBuilder([
+      createRdhKey({ name: 'PLAN_TABLE_OUTPUT', type: GeneralColumnType.TEXT, width: 300 }),
+    ]);
+    actualPlan.content.split('\n').forEach((line) => rdb.addRow({ PLAN_TABLE_OUTPUT: line }));
+    return rdb;
   }
 
   async getVersion(): Promise<string> {
@@ -370,6 +371,107 @@ FROM PLAN_TABLE WHERE STATEMENT_ID = :1 ORDER BY ID`,
         // best-effort only
       }
     }
+  }
+
+  /** Executes a SELECT and retrieves its cursor statistics without relying on
+   * SQL-text hint injection. Session settings are restored before returning. */
+  async collectPerformanceTuningActualPlan(
+    params: QueryParams,
+    options?: { timeoutMs?: number; signal?: AbortSignal },
+  ): Promise<ActualPlanArtifact> {
+    if (!this.con) {
+      throw new Error('No connection');
+    }
+    if (!isSingleSelectStatement(params.sql)) {
+      throw new Error('Oracle actual-plan capture is limited to a single SELECT statement');
+    }
+    if (!this.autoCommitEnabled) {
+      throw new Error('Cannot capture an actual plan while a transaction is active');
+    }
+    if (options?.signal?.aborted) {
+      throw new Error('Actual plan capture was cancelled');
+    }
+
+    const con = this.con;
+    const oldCallTimeout = con.callTimeout;
+    let previousStatisticsLevel: string | undefined;
+    let statisticsLevelChanged = false;
+    let captureError: unknown;
+    let artifact: ActualPlanArtifact | undefined;
+    let cleanupError: unknown;
+    const breakExecution = (): void => {
+      void con.break();
+    };
+    options?.signal?.addEventListener('abort', breakExecution, { once: true });
+
+    try {
+      if (options?.timeoutMs && options.timeoutMs > 0) {
+        con.callTimeout = options.timeoutMs;
+      }
+      const setting = await con.execute<{ VALUE: string }>(
+        "SELECT VALUE FROM V$PARAMETER WHERE NAME = 'statistics_level'",
+      );
+      previousStatisticsLevel = String(setting.rows?.[0]?.VALUE ?? '').toUpperCase();
+      if (!['BASIC', 'TYPICAL', 'ALL'].includes(previousStatisticsLevel)) {
+        throw new Error('Oracle did not return a restorable STATISTICS_LEVEL value');
+      }
+      await con.execute('ALTER SESSION SET STATISTICS_LEVEL = ALL');
+      statisticsLevelChanged = true;
+
+      await con.execute(params.sql, params.conditions?.binds ?? [], { autoCommit: false });
+      const cursor = await con.execute<{ PREV_SQL_ID: string; PREV_CHILD_NUMBER: number }>(
+        `SELECT PREV_SQL_ID, PREV_CHILD_NUMBER
+FROM V$SESSION
+WHERE AUDSID = SYS_CONTEXT('USERENV', 'SESSIONID')`,
+      );
+      const sqlId = cursor.rows?.[0]?.PREV_SQL_ID;
+      const childNumber = cursor.rows?.[0]?.PREV_CHILD_NUMBER;
+      if (!sqlId || childNumber === undefined || childNumber === null) {
+        throw new Error('Oracle could not identify the executed cursor for actual-plan capture');
+      }
+      const display = await con.execute<{ PLAN_TABLE_OUTPUT: string }>(
+        "SELECT PLAN_TABLE_OUTPUT FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(:1, :2, 'ALLSTATS LAST'))",
+        [sqlId, childNumber],
+      );
+      const content = (display.rows ?? [])
+        .map((row) => row.PLAN_TABLE_OUTPUT)
+        .filter((line): line is string => typeof line === 'string')
+        .join('\n');
+      if (!content) {
+        throw new Error('Oracle did not return an ALLSTATS LAST cursor plan');
+      }
+      artifact = { source: 'DBMS_XPLAN.DISPLAY_CURSOR ALLSTATS LAST', format: 'text', content };
+    } catch (e) {
+      captureError = e;
+    } finally {
+      options?.signal?.removeEventListener('abort', breakExecution);
+      if (statisticsLevelChanged && previousStatisticsLevel) {
+        try {
+          await con.execute(`ALTER SESSION SET STATISTICS_LEVEL = ${previousStatisticsLevel}`);
+        } catch (e) {
+          cleanupError = e;
+        }
+      }
+      con.callTimeout = oldCallTimeout;
+    }
+    if (cleanupError) {
+      // If STATISTICS_LEVEL cannot be restored, retaining this session could
+      // silently alter later user queries. Close it rather than leaking state.
+      const disconnectError = await this.disconnect();
+      if (disconnectError) {
+        throw new Error(`Failed to restore Oracle actual-plan session state; connection was closed. ${disconnectError}`);
+      }
+    }
+    if (captureError) {
+      throw captureError;
+    }
+    if (cleanupError) {
+      throw cleanupError;
+    }
+    if (!artifact) {
+      throw new Error('Oracle actual-plan capture completed without a cursor plan');
+    }
+    return artifact;
   }
 
   supportsGetStatementStatistics(): boolean {

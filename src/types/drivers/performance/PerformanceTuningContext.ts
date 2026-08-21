@@ -147,6 +147,17 @@ export type DominantCostPlanNodeRef = {
   exclusiveValue: number; // this node's own contribution (ms for 'actual', vendor cost units for 'estimated')
 };
 
+// A database-native plan captured while the target SELECT really executed.
+// This stays separate from normalizedPlan: PostgreSQL can normalize its
+// ANALYZE JSON directly, but MySQL, Oracle, and SQL Server expose their
+// runtime evidence as text or XML. Consumers must not infer planNodeId
+// correspondence from the artifact's visual/tree order alone.
+export type ActualPlanArtifact = {
+  source: string;
+  format: 'json' | 'text' | 'xml';
+  content: string;
+};
+
 export type ExecutionPlanContext = {
   mode: 'estimate' | 'analyze';
   format: 'json';
@@ -154,19 +165,14 @@ export type ExecutionPlanContext = {
   normalizedPlan?: PlanNode;
   planningTimeMs?: number;
   executionTimeMs?: number;
-  // MySQL-only (today): EXPLAIN ANALYZE's own tree-text output, verbatim
-  // and unparsed - MySQL has no EXPLAIN ANALYZE FORMAT=JSON (confirmed:
-  // "ERROR 1235 ... doesn't yet support 'EXPLAIN ANALYZE with JSON
-  // format'"), so this carries the real per-node actual time/rows/loops
-  // data an AI can still read directly, without a dedicated tree-text
-  // parser. `normalizedPlan`/`planTableMappings` still come from the
-  // (always-collected) estimate-mode EXPLAIN FORMAT=JSON plan, since MySQL
-  // computes the same plan either way - ANALYZE just executes it.
-  actualPlanText?: string;
+  // Database-native runtime evidence. `normalizedPlan`/planTableMappings
+  // may still be estimate-mode topology (MySQL/Oracle/SQL Server); this
+  // artifact must therefore never be positionally matched to planNodeIds.
+  actualPlan?: ActualPlanArtifact;
   // See DominantCostPlanNodeRef above. Computed by RDSBaseDriver for every
   // vendor from normalizedPlan's estimated/actual costs
   // (planNodeMath.ts's findDominantCostPlanNode()); MySQL additionally
-  // resolves this from actualPlanText itself when analyze mode is on
+  // resolves this from its actual-plan artifact when analyze mode is on
   // (mysqlActualPlanTextParser.ts), since MySQL's normalizedPlan tree never
   // carries real per-node actual timing the way Postgres's does.
   // `undefined` only when no node in the plan has any usable cost/time data

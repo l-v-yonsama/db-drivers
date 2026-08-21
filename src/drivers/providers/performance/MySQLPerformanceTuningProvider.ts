@@ -209,7 +209,9 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
         // actualPlanText instead (unparsed - see the comment above).
         planningTimeMs: undefined,
         executionTimeMs: undefined,
-        actualPlanText,
+        actualPlan: actualPlanText
+          ? { source: 'EXPLAIN ANALYZE', format: 'text', content: actualPlanText }
+          : undefined,
         // `undefined` when nothing resolves - RDSBaseDriver falls back to
         // the generic, estimated-cost-based walk in that case.
         dominantCostPlanNode: actualPlanTableStats?.dominantCostPlanNode,

@@ -331,19 +331,14 @@ describe('PostgresDriver', () => {
       );
     });
 
-    it('should return explain analyze error result', async () => {
+    it('rejects a non-SELECT explain analyze request without executing it', async () => {
       const query = 'DELETE FROM EMP WHERE SAL > 1000 ';
-      await driver.begin();
       const rdh = await driver.explainSql({ sql: query });
       const queryPlan = rdh.rows[0].values['QUERY PLAN'];
-      const analyzedRdh = await driver.explainAnalyzeSql({ sql: query });
-
-      await driver.rollback();
 
       expect(queryPlan).toMatch(/^Delete on emp .+/);
-
-      expect(analyzedRdh.rows[0].values['EXPLAIN']).toMatch(
-        /^Delete on emp .+actual time=[0-9.]+ rows=0 .+/,
+      await expect(driver.explainAnalyzeSql({ sql: query })).rejects.toThrow(
+        'Explain analyze is limited to a single SELECT statement',
       );
     });
   });

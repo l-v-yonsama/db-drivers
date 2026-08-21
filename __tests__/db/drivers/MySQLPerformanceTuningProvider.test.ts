@@ -269,8 +269,8 @@ describe('MySQLPerformanceTuningProvider', () => {
     expect(result.result!.planTableMappings).toHaveLength(1);
     expect(result.result!.normalizedPlan).toMatchObject({ id: 'n0', operation: 'ALL' });
     // The analyze text itself is carried through completely unparsed.
-    expect(result.result!.actualPlanText).toBe(analyzeText);
-    // 2026-08-21 follow-up: resolved from the real actualPlanText (the leaf
+    expect(result.result!.actualPlan).toEqual({ source: 'EXPLAIN ANALYZE', format: 'text', content: analyzeText });
+    // 2026-08-21 follow-up: resolved from the real actual-plan text (the leaf
     // table scan is the exclusive-cost winner - the Filter above it has
     // only 1.2-1.1=0.1ms of its own once the table scan's 1.1ms is
     // subtracted out), matched against planTableMappings by table name.
@@ -293,7 +293,7 @@ describe('MySQLPerformanceTuningProvider', () => {
     });
   });
 
-  it('leaves dominantCostPlanNode undefined in estimate mode (no actualPlanText to resolve it from)', async () => {
+  it('leaves dominantCostPlanNode undefined in estimate mode (no actual plan to resolve it from)', async () => {
     const explainRoot = {
       query_block: { select_id: 1, table: { table_name: 'perf_orders', access_type: 'ALL' } },
     };
@@ -643,7 +643,7 @@ describe('MySQLPerformanceTuningProvider (live MySQL)', () => {
     // Structure still comes from the (also-collected) estimate-mode plan.
     expect(result.result!.planTableMappings?.[0]).toMatchObject({ tableName: 'perf_orders' });
     // Real MySQL EXPLAIN ANALYZE output, not something this driver invented.
-    expect(result.result!.actualPlanText).toContain('actual time=');
+    expect(result.result!.actualPlan?.content).toContain('actual time=');
   });
 
   it('collects DDL/columns/constraints/indexes for perf_orders, including the CHECK constraint and functional index', async () => {
@@ -730,7 +730,7 @@ describe('MySQLPerformanceTuningProvider (live MySQL)', () => {
     expect(context.database.version).toBeDefined();
   });
 
-  it('end-to-end via getPerformanceTuningContext() in analyze mode: actualPlanText is populated', async () => {
+  it('end-to-end via getPerformanceTuningContext() in analyze mode: actual plan is populated', async () => {
     const result = await driver.getPerformanceTuningContext({
       databaseName: 'test-db',
       statement: { sql: "SELECT * FROM perf_orders WHERE status = 'shipped'", source: 'editor' },
@@ -740,7 +740,7 @@ describe('MySQLPerformanceTuningProvider (live MySQL)', () => {
     expect(result.ok).toBe(true);
     const context = result.result!;
     expect(context.executionPlan.mode).toBe('analyze');
-    expect(context.executionPlan.actualPlanText).toContain('actual time=');
+    expect(context.executionPlan.actualPlan?.content).toContain('actual time=');
     expect(context.tables[0].tableName).toBe('perf_orders');
   });
 

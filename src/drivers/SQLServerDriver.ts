@@ -20,6 +20,7 @@ import {
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import {
   ConnectionSetting,
+  ActualPlanArtifact,
   GeneralResult,
   LimitClauseStyle,
   QueryParams,
@@ -34,6 +35,7 @@ import { PerformanceTuningContextProvider, SQLServerPerformanceTuningProvider } 
 import { QuoteChar, wrapSingleQuote } from '../helpers';
 import {
   getStatementStatisticsOrderByColumn,
+  isSingleSelectStatement,
   normalizeStatementStatisticsParams,
 } from '../utils';
 
@@ -431,10 +433,10 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
   }
 
   async explainAnalyzeSqlSub(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
-    throw new Error('SQL Server does not support explain analyze');
+    const actualPlan = await this.collectPerformanceTuningActualPlan(params);
+    return this.actualPlanArtifactToResultSet(actualPlan);
   }
 
   async getVersion(): Promise<string> {
@@ -556,6 +558,134 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     } finally {
       await tran.commit();
     }
+  }
+
+  /**
+   * Executes a diagnostic SELECT with STATISTICS XML enabled on a session
+   * pinned by a short-lived transaction.  Unlike SHOWPLAN this intentionally
+   * runs the statement, so callers must have passed the public SELECT-only
+   * and explicit-allowExecution checks before reaching here.
+   */
+  async collectPerformanceTuningActualPlan(
+    params: QueryParams,
+    bindMarkers?: string[],
+    options?: { timeoutMs?: number; signal?: AbortSignal },
+  ): Promise<ActualPlanArtifact> {
+    if (!this.con) {
+      throw new Error('No connection');
+    }
+    if (!isSingleSelectStatement(params.sql)) {
+      throw new Error('SQL Server actual-plan capture is limited to a single SELECT statement');
+    }
+    if (this.tran) {
+      throw new Error('Cannot capture an actual plan while a transaction is active');
+    }
+    if (options?.signal?.aborted) {
+      throw new Error('Actual plan capture was cancelled');
+    }
+
+    const tran = new Transaction(this.con);
+    let req: Request | undefined;
+    let statisticsXmlEnabled = false;
+    let begun = false;
+    let captureError: unknown;
+    let artifact: ActualPlanArtifact | undefined;
+    let cleanupError: unknown;
+    const cancel = (): void => {
+      req?.cancel();
+    };
+    options?.signal?.addEventListener('abort', cancel, { once: true });
+
+    try {
+      await tran.begin();
+      begun = true;
+      req = tran.request();
+      this.req = req;
+      await req.batch('SET STATISTICS XML ON');
+      statisticsXmlEnabled = true;
+
+      const binds = params.conditions?.binds ?? [];
+      const sql = this.substituteShowplanBinds(params.sql, binds, bindMarkers);
+      const result = await req.batch(sql);
+      const content = this.findStatisticsXml(result.recordsets ?? [result.recordset]);
+      artifact = { source: 'SET STATISTICS XML', format: 'xml', content };
+    } catch (e) {
+      captureError = e;
+    } finally {
+      options?.signal?.removeEventListener('abort', cancel);
+      this.req = undefined;
+      if (statisticsXmlEnabled && req) {
+        try {
+          await req.batch('SET STATISTICS XML OFF');
+        } catch (e) {
+          cleanupError = e;
+        }
+      }
+      if (begun) {
+        try {
+          // The target is required to be SELECT-only. Rollback still makes
+          // the lifecycle explicit and protects us if a future driver change
+          // accidentally adds transactional session work here.
+          await tran.rollback();
+        } catch (e) {
+          cleanupError ??= e;
+        }
+      }
+    }
+    if (cleanupError) {
+      // A failed OFF means the pooled session might retain STATISTICS XML.
+      // Do not return that connection to normal requestSql callers.
+      const disconnectError = await this.disconnect();
+      if (disconnectError) {
+        throw new Error(`Failed to restore SQL Server actual-plan session state; connection was closed. ${disconnectError}`);
+      }
+    }
+    if (captureError) {
+      throw captureError;
+    }
+    if (cleanupError) {
+      throw cleanupError;
+    }
+    if (!artifact) {
+      throw new Error('SQL Server actual-plan capture completed without a showplan');
+    }
+    return artifact;
+  }
+
+  private findStatisticsXml(recordsets: unknown): string {
+    const matches: string[] = [];
+    const sets = Array.isArray(recordsets) ? recordsets : [];
+    for (const recordset of sets) {
+      if (!Array.isArray(recordset)) {
+        continue;
+      }
+      for (const row of recordset ?? []) {
+        if (!row || typeof row !== 'object') {
+          continue;
+        }
+        for (const value of Object.values(row)) {
+          if (typeof value === 'string' && /<ShowPlanXML(?:\s|>)/i.test(value)) {
+            matches.push(value);
+          }
+        }
+      }
+    }
+    if (matches.length !== 1) {
+      throw new Error(
+        matches.length === 0
+          ? 'SQL Server did not return a STATISTICS XML showplan'
+          : 'SQL Server returned multiple STATISTICS XML showplans',
+      );
+    }
+    return matches[0];
+  }
+
+  private actualPlanArtifactToResultSet(actualPlan: ActualPlanArtifact): ResultSetDataBuilder {
+    const rdb = new ResultSetDataBuilder([
+      createRdhKey({ name: 'ActualPlanXml', type: GeneralColumnType.TEXT, width: 300 }),
+    ]);
+    rdb.addRow({ ActualPlanXml: actualPlan.content });
+    return rdb;
   }
 
   supportsGetStatementStatistics(): boolean {

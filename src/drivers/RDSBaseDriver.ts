@@ -37,6 +37,7 @@ import {
 } from '../types';
 import {
   acceptResourceFilter,
+  isSingleSelectStatement,
   normalizePerformanceTuningContextParams,
   setRdhMetaAndStatement,
   validatePerformanceTuningContextParams,
@@ -822,8 +823,8 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           normalizedPlan: vendorPlan?.normalizedPlan,
           planningTimeMs: vendorPlan?.planningTimeMs,
           executionTimeMs: vendorPlan?.executionTimeMs,
-          actualPlanText: vendorPlan?.actualPlanText,
-          // A Provider's own answer (MySQL, from real actualPlanText) wins
+          actualPlan: vendorPlan?.actualPlan,
+          // A Provider's own answer (MySQL, from real actual-plan evidence) wins
           // when it has one; every vendor otherwise falls back to the
           // generic, normalizedPlan-based walk (2026-08-21 follow-up,
           // summary.md's Full Context improvement item 5).
@@ -869,6 +870,13 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
 
   async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
     const { sql, prepare } = params;
+    // Keep this public API subject to the same fail-closed predicate as the
+    // Performance Tuning context. EXPLAIN ANALYZE actually executes its
+    // target on supported vendors, so non-SELECT statements must never reach
+    // a vendor implementation merely because they came through this older UI.
+    if (!isSingleSelectStatement(sql)) {
+      throw new Error('Explain analyze is limited to a single SELECT statement');
+    }
     const ast = parseQuery(sql);
     const dbTable = this.getDbTable(ast);
 

@@ -1,6 +1,7 @@
 import { ResultSetData } from '@l-v-yonsama/rdh';
 import { GeneralResult } from '../../../types/drivers/GeneralResult';
 import {
+  ActualPlanArtifact,
   ColumnDefinition,
   ConstraintDefinition,
   IndexDefinition,
@@ -48,6 +49,11 @@ export interface SQLServerPerformanceTuningDriverAccess {
     params: QueryParams,
     bindMarkers?: string[],
   ): Promise<ResultSetData>;
+  collectPerformanceTuningActualPlan(
+    params: QueryParams,
+    bindMarkers?: string[],
+    options?: { timeoutMs?: number; signal?: AbortSignal },
+  ): Promise<ActualPlanArtifact>;
 }
 
 // SQL Server always has a real schema (unlike MySQL, where "schema" and
@@ -71,8 +77,9 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
     const capabilities: PerformanceTuningCapabilities = {
       executionPlan: { available: true, source: 'SET SHOWPLAN_ALL ON' },
       analyzedExecutionPlan: {
-        available: false,
-        message: 'Not implemented yet (estimate plans only).',
+        available: true,
+        source: 'SET STATISTICS XML ON',
+        requiredPermissions: ['SHOWPLAN permission', 'permission to execute the target SELECT'],
       },
       tableDefinition: { available: true, source: 'sys.columns / sys.indexes / sys.check_constraints' },
       optimizerStatistics: {
@@ -90,16 +97,8 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
 
   async collectExecutionPlan(
     params: PerformanceTuningContextParams,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: PerformanceTuningCallOptions & { timeoutMs: number },
   ): Promise<GeneralResult<VendorExecutionPlan>> {
-    if (params.plan?.mode === 'analyze') {
-      return {
-        ok: false,
-        message: 'Analyze mode is not implemented yet for SQL Server.',
-      };
-    }
-
     // binds are used only to obtain a parameter-specific plan (§4.1); they
     // are never placed anywhere in the returned VendorExecutionPlan. Same
     // for bindMarkers (call-scoped only, per performance-tuning-query-
@@ -146,6 +145,27 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
       diagnostics.push(planUnresolvedDiagnostic());
     }
 
+    let actualPlan: ActualPlanArtifact | undefined;
+    if (params.plan?.mode === 'analyze') {
+      try {
+        actualPlan = await this.driver.collectPerformanceTuningActualPlan(
+          {
+            sql: params.statement.sql,
+            conditions: { rawQueries: true, binds },
+            meta: { type: 'performanceTuningContext' },
+          },
+          bindMarkers,
+          options,
+        );
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        return {
+          ok: false,
+          message: `Failed to retrieve the actual execution plan.${detail ? ` ${detail}` : ''}`,
+        };
+      }
+    }
+
     return {
       ok: true,
       message: '',
@@ -159,6 +179,7 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
         // (estimate mode only, same as the other two vendors).
         planningTimeMs: undefined,
         executionTimeMs: undefined,
+        actualPlan,
         diagnostics,
         planTableMappings,
       },

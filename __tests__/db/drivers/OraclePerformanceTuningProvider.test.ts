@@ -237,9 +237,11 @@ describe('OraclePerformanceTuningProvider', () => {
     collectPerformanceTuningPlanRows: jest.Mock = jest.fn(),
     getTableDDL: jest.Mock = jest.fn(),
     getCurrentSchema: jest.Mock = jest.fn().mockResolvedValue('TESTUSER'),
+    collectPerformanceTuningActualPlan: jest.Mock = jest.fn(),
   ) => ({
     requestSql,
     collectPerformanceTuningPlanRows,
+    collectPerformanceTuningActualPlan,
     getTableDDL,
     getCurrentSchema,
   });
@@ -287,10 +289,13 @@ describe('OraclePerformanceTuningProvider', () => {
     expect(result.result!.normalizedPlan).toMatchObject({ operation: 'SELECT STATEMENT' });
   });
 
-  it('rejects analyze mode without querying the database at all', async () => {
-    const collectPerformanceTuningPlanRows = jest.fn();
+  it('collects a native actual-plan artifact in analyze mode after resolving the estimate plan', async () => {
+    const collectPerformanceTuningPlanRows = jest.fn().mockResolvedValue({ rows: [] });
+    const collectPerformanceTuningActualPlan = jest.fn().mockResolvedValue({
+      source: 'DBMS_XPLAN.DISPLAY_CURSOR ALLSTATS LAST', format: 'text', content: 'Plan hash value: 1',
+    });
     const provider = new OraclePerformanceTuningProvider(
-      makeDriver(jest.fn(), collectPerformanceTuningPlanRows),
+      makeDriver(jest.fn(), collectPerformanceTuningPlanRows, undefined, undefined, collectPerformanceTuningActualPlan),
     );
 
     const result = await provider.collectExecutionPlan(
@@ -301,9 +306,14 @@ describe('OraclePerformanceTuningProvider', () => {
       },
       { timeoutMs: 5000 },
     );
-    expect(result.ok).toBe(false);
-    expect(result.message).toContain('Analyze mode is not implemented yet');
-    expect(collectPerformanceTuningPlanRows).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    expect(result.result!.actualPlan).toEqual({
+      source: 'DBMS_XPLAN.DISPLAY_CURSOR ALLSTATS LAST', format: 'text', content: 'Plan hash value: 1',
+    });
+    expect(collectPerformanceTuningActualPlan).toHaveBeenCalledWith(
+      expect.objectContaining({ sql: 'SELECT 1 FROM DUAL' }),
+      { timeoutMs: 5000 },
+    );
   });
 
   it('surfaces a failed EXPLAIN PLAN with detail instead of throwing', async () => {
@@ -568,14 +578,14 @@ describe('OraclePerformanceTuningProvider', () => {
     });
   });
 
-  it('reports capability status: everything true except analyzedExecutionPlan', async () => {
+  it('reports capability status including analyzedExecutionPlan', async () => {
     const provider = new OraclePerformanceTuningProvider(makeDriver(jest.fn()));
     const result = await provider.checkCapabilities({ databaseName: 'FREEPDB1' });
 
     expect(result.ok).toBe(true);
     expect(result.result).toEqual({
       executionPlan: { available: true, source: 'EXPLAIN PLAN / PLAN_TABLE' },
-      analyzedExecutionPlan: expect.objectContaining({ available: false }),
+      analyzedExecutionPlan: expect.objectContaining({ available: true }),
       tableDefinition: expect.objectContaining({ available: true }),
       optimizerStatistics: expect.objectContaining({ available: true }),
       physicalHealth: expect.objectContaining({ available: true }),

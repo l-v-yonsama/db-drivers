@@ -1,6 +1,7 @@
 import { ResultSetData } from '@l-v-yonsama/rdh';
 import { GeneralResult } from '../../../types/drivers/GeneralResult';
 import {
+  ActualPlanArtifact,
   ColumnDefinition,
   ConstraintDefinition,
   IndexDefinition,
@@ -49,6 +50,10 @@ export interface OraclePerformanceTuningDriverAccess {
   requestSql(params: QueryParams): Promise<ResultSetData>;
   getTableDDL(params: { tableName: string; schemaName?: string }): Promise<string>;
   collectPerformanceTuningPlanRows(params: QueryParams): Promise<ResultSetData>;
+  collectPerformanceTuningActualPlan(
+    params: QueryParams,
+    options?: { timeoutMs?: number; signal?: AbortSignal },
+  ): Promise<ActualPlanArtifact>;
   getCurrentSchema(): Promise<string>;
 }
 
@@ -70,8 +75,13 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
     const capabilities: PerformanceTuningCapabilities = {
       executionPlan: { available: true, source: 'EXPLAIN PLAN / PLAN_TABLE' },
       analyzedExecutionPlan: {
-        available: false,
-        message: 'Not implemented yet (estimate plans only).',
+        available: true,
+        source: 'DBMS_XPLAN.DISPLAY_CURSOR(..., ALLSTATS LAST)',
+        requiredPermissions: [
+          'permission to execute the target SELECT',
+          'SELECT on V$PARAMETER and V$SESSION',
+          'access required by DBMS_XPLAN.DISPLAY_CURSOR',
+        ],
       },
       tableDefinition: { available: true, source: 'ALL_TAB_COLUMNS / ALL_CONSTRAINTS / ALL_INDEXES' },
       optimizerStatistics: { available: true, source: 'ALL_TABLES / ALL_TAB_COL_STATISTICS / ALL_TAB_MODIFICATIONS' },
@@ -133,16 +143,8 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
 
   async collectExecutionPlan(
     params: PerformanceTuningContextParams,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: PerformanceTuningCallOptions & { timeoutMs: number },
   ): Promise<GeneralResult<VendorExecutionPlan>> {
-    if (params.plan?.mode === 'analyze') {
-      return {
-        ok: false,
-        message: 'Analyze mode is not implemented yet for Oracle.',
-      };
-    }
-
     // binds are used only to obtain a parameter-specific plan (§4.1); they
     // are never placed anywhere in the returned VendorExecutionPlan.
     const binds = params.plan?.binds?.map((v) => String(v));
@@ -180,6 +182,26 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
       diagnostics.push(planUnresolvedDiagnostic());
     }
 
+    let actualPlan: ActualPlanArtifact | undefined;
+    if (params.plan?.mode === 'analyze') {
+      try {
+        actualPlan = await this.driver.collectPerformanceTuningActualPlan(
+          {
+            sql: params.statement.sql,
+            conditions: { rawQueries: true, binds },
+            meta: { type: 'performanceTuningContext' },
+          },
+          options,
+        );
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        return {
+          ok: false,
+          message: `Failed to retrieve the actual execution plan.${detail ? ` ${detail}` : ''}`,
+        };
+      }
+    }
+
     return {
       ok: true,
       message: '',
@@ -193,6 +215,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
         // (estimate mode only, same as the other three vendors).
         planningTimeMs: undefined,
         executionTimeMs: undefined,
+        actualPlan,
         diagnostics,
         planTableMappings,
       },

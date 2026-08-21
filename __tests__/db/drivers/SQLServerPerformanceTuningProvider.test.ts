@@ -219,9 +219,11 @@ describe('SQLServerPerformanceTuningProvider', () => {
   const makeDriver = (
     requestSql: jest.Mock,
     collectPerformanceTuningShowplan: jest.Mock = jest.fn(),
+    collectPerformanceTuningActualPlan: jest.Mock = jest.fn(),
   ) => ({
     requestSql,
     collectPerformanceTuningShowplan,
+    collectPerformanceTuningActualPlan,
   });
 
   it('runs SHOWPLAN via the dedicated driver method and resolves the plan + table mappings', async () => {
@@ -266,10 +268,15 @@ describe('SQLServerPerformanceTuningProvider', () => {
     expect(result.result!.normalizedPlan).toMatchObject({ operation: 'SELECT' });
   });
 
-  it('rejects analyze mode without querying the database at all', async () => {
-    const collectPerformanceTuningShowplan = jest.fn();
+  it('collects a native actual-plan artifact in analyze mode after resolving the estimate plan', async () => {
+    const collectPerformanceTuningShowplan = jest.fn().mockResolvedValue({
+      rows: [{ values: { StmtId: 1, NodeId: 1, Parent: 0, Type: 'SELECT' } }],
+    });
+    const collectPerformanceTuningActualPlan = jest.fn().mockResolvedValue({
+      source: 'SET STATISTICS XML', format: 'xml', content: '<ShowPlanXML />',
+    });
     const provider = new SQLServerPerformanceTuningProvider(
-      makeDriver(jest.fn(), collectPerformanceTuningShowplan),
+      makeDriver(jest.fn(), collectPerformanceTuningShowplan, collectPerformanceTuningActualPlan),
     );
 
     const result = await provider.collectExecutionPlan(
@@ -280,9 +287,15 @@ describe('SQLServerPerformanceTuningProvider', () => {
       },
       { timeoutMs: 5000 },
     );
-    expect(result.ok).toBe(false);
-    expect(result.message).toContain('Analyze mode is not implemented yet');
-    expect(collectPerformanceTuningShowplan).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    expect(result.result!.actualPlan).toEqual({
+      source: 'SET STATISTICS XML', format: 'xml', content: '<ShowPlanXML />',
+    });
+    expect(collectPerformanceTuningActualPlan).toHaveBeenCalledWith(
+      expect.objectContaining({ sql: 'SELECT 1' }),
+      undefined,
+      { timeoutMs: 5000 },
+    );
   });
 
   it('surfaces a failed SHOWPLAN with detail instead of throwing', async () => {
@@ -494,14 +507,14 @@ describe('SQLServerPerformanceTuningProvider', () => {
     });
   });
 
-  it('reports capability status: everything true except analyzedExecutionPlan', async () => {
+  it('reports capability status including analyzedExecutionPlan', async () => {
     const provider = new SQLServerPerformanceTuningProvider(makeDriver(jest.fn()));
     const result = await provider.checkCapabilities({ databaseName: 'testdb' });
 
     expect(result.ok).toBe(true);
     expect(result.result).toEqual({
       executionPlan: { available: true, source: 'SET SHOWPLAN_ALL ON' },
-      analyzedExecutionPlan: expect.objectContaining({ available: false }),
+      analyzedExecutionPlan: expect.objectContaining({ available: true }),
       tableDefinition: expect.objectContaining({ available: true }),
       optimizerStatistics: expect.objectContaining({ available: true }),
       physicalHealth: expect.objectContaining({ available: true }),

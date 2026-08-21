@@ -2,6 +2,7 @@ import { GeneralResult } from '../../../types/drivers/GeneralResult';
 import {
   ColumnDefinition,
   ColumnStatisticsContext,
+  ActualPlanArtifact,
   ConstraintDefinition,
   DominantCostPlanNodeRef,
   IndexDefinition,
@@ -45,11 +46,11 @@ export type VendorExecutionPlan = {
   // line up between the two (a mapping's planNodeId always matches a node
   // somewhere in this tree).
   normalizedPlan?: PlanNode;
-  // See ExecutionPlanContext.actualPlanText - MySQL-only today.
-  actualPlanText?: string;
+  // Database-native runtime evidence. See ExecutionPlanContext.actualPlan.
+  actualPlan?: ActualPlanArtifact;
   // See DominantCostPlanNodeRef (PerformanceTuningContext.ts). Optional,
-  // vendor-supplied-if-available, same pattern as actualPlanText above -
-  // only MySQL's Provider sets this today (resolved from actualPlanText via
+  // vendor-supplied-if-available, same pattern as actualPlan above -
+  // MySQL resolves this from its tree-text artifact via
   // mysqlActualPlanTextParser.ts, since normalizedPlan never carries real
   // per-node actual timing for MySQL the way it does for Postgres).
   // RDSBaseDriver falls back to computing this itself from normalizedPlan

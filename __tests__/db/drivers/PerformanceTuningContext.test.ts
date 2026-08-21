@@ -1143,7 +1143,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
               raw: {},
               normalizedPlan: { id: 'n0', depth: 0, operation: 'Seq Scan', estimated: { totalCost: 999 }, children: [] },
               // A vendor Provider (MySQL) resolving this itself from real
-              // actualPlanText, deliberately different from what the
+              // actual plan, deliberately different from what the
               // generic estimated-cost fallback below would compute from
               // normalizedPlan (totalCost: 999) - proves the Provider's own
               // answer wins.

@@ -461,12 +461,9 @@ describe('MySQLDriver', () => {
       ).toBe(true);
     });
 
-    it('should return explain analyze error result', async () => {
+    it('rejects a non-SELECT explain analyze request without executing it', async () => {
       const query = 'DELETE FROM EMP WHERE SAL > 1000 ';
-      await driver.begin();
       const rdh = await driver.explainSql({ sql: query });
-      const analyzedRdh = await driver.explainAnalyzeSql({ sql: query });
-      await driver.rollback();
 
       expect(rdh.rows[0].values).toEqual({
         id: 1,
@@ -483,11 +480,9 @@ describe('MySQLDriver', () => {
         Extra: expect.anything(),
       });
 
-      expect(
-        analyzedRdh.rows[0].values['EXPLAIN'].includes(
-          'not executable by iterator executor',
-        ),
-      ).toBe(true);
+      await expect(driver.explainAnalyzeSql({ sql: query })).rejects.toThrow(
+        'Explain analyze is limited to a single SELECT statement',
+      );
     });
   });
 
