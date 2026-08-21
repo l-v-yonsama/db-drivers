@@ -114,27 +114,33 @@ export function findDominantCostPlanNode(root: PlanNode | undefined): DominantCo
   return best ? { planNodeId: best.planNodeId, metric, exclusiveValue: best.exclusiveValue } : undefined;
 }
 
-// See PlanTableMapping.filterSelectivity (PerformanceTuningContext.ts) for
-// the rationale (summary.md's Full Context improvement item 3). Basis
-// prefers `actualRows` (a real measurement) over `estimatedRows`; the
-// result's `estimated` flag reflects whichever inputs actually ended up
-// used - true unless both the row-count basis is `actualRows` *and* the
-// table's own row count isn't itself an estimate.
-export function computeFilterSelectivity(
-  mapping: { estimatedRows?: number; actualRows?: number },
+// These two ratios must not be collapsed into a single vaguely named
+// "selectivity". A table-access candidate set and the pass rate of a local
+// Filter answer different questions and require different evidence.
+export function computeTableAccessFraction(
+  tableAccessRows: MetricValue<number> | undefined,
   tableEstimatedRowCount: MetricValue<number> | undefined,
 ): MetricValue<number> | undefined {
-  if (!tableEstimatedRowCount || tableEstimatedRowCount.value <= 0) {
-    return undefined;
-  }
-  const basisIsActual = mapping.actualRows !== undefined;
-  const matchedRows = mapping.actualRows ?? mapping.estimatedRows;
-  if (matchedRows === undefined) {
+  if (!tableAccessRows || !tableEstimatedRowCount || tableEstimatedRowCount.value <= 0) {
     return undefined;
   }
   return {
-    value: Math.min(1, matchedRows / tableEstimatedRowCount.value),
-    estimated: !basisIsActual || tableEstimatedRowCount.estimated,
-    source: `${basisIsActual ? 'planTableMapping.actualRows' : 'planTableMapping.estimatedRows'} / ${tableEstimatedRowCount.source}`,
+    value: Math.min(1, tableAccessRows.value / tableEstimatedRowCount.value),
+    estimated: tableAccessRows.estimated || tableEstimatedRowCount.estimated,
+    source: `${tableAccessRows.source} / ${tableEstimatedRowCount.source}`,
+  };
+}
+
+export function computePredicateFilterSelectivity(
+  inputRows: MetricValue<number> | undefined,
+  outputRows: MetricValue<number> | undefined,
+): MetricValue<number> | undefined {
+  if (!inputRows || !outputRows || inputRows.value <= 0) {
+    return undefined;
+  }
+  return {
+    value: Math.min(1, outputRows.value / inputRows.value),
+    estimated: inputRows.estimated || outputRows.estimated,
+    source: `${outputRows.source} / ${inputRows.source}`,
   };
 }

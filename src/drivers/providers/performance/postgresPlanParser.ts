@@ -200,6 +200,40 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
       const alias = aliasValue && aliasValue !== tableName ? aliasValue : undefined;
       const estimatedRows = asNumber(node['Plan Rows']);
       const actualRows = asNumber(node['Actual Rows']);
+      const rowsRemovedByFilter = asNumber(node['Rows Removed by Filter']);
+      const hasLocalFilter = asString(node['Filter']) !== undefined;
+      // PostgreSQL reports Actual Rows and Rows Removed by Filter per loop.
+      // Keep that per-execution basis: multiplying nested-loop rescans by
+      // loops could exceed the physical table cardinality and would make a
+      // table fraction misleading. When a local Filter is present and its
+      // removals are known, the sum is exactly the candidate set that
+      // reached that Filter; otherwise Actual Rows is only an access-set
+      // measure for an unfiltered table node.
+      const tableAccessRows = actualRows !== undefined
+        ? {
+            value: actualRows + (hasLocalFilter && rowsRemovedByFilter !== undefined ? rowsRemovedByFilter : 0),
+            estimated: false,
+            source:
+              hasLocalFilter && rowsRemovedByFilter !== undefined
+                ? 'PostgreSQL EXPLAIN ANALYZE Actual Rows + Rows Removed by Filter (per loop)'
+                : 'PostgreSQL EXPLAIN ANALYZE Actual Rows (per loop)',
+          }
+        : undefined;
+      const predicateFilterInputRows =
+        hasLocalFilter && actualRows !== undefined && rowsRemovedByFilter !== undefined
+          ? {
+              value: actualRows + rowsRemovedByFilter,
+              estimated: false,
+              source: 'PostgreSQL EXPLAIN ANALYZE Actual Rows + Rows Removed by Filter (per loop)',
+            }
+          : undefined;
+      const predicateFilterOutputRows = predicateFilterInputRows
+        ? {
+            value: actualRows!,
+            estimated: false,
+            source: 'PostgreSQL EXPLAIN ANALYZE Actual Rows (per loop)',
+          }
+        : undefined;
       mappings.push({
         planNodeId: id,
         schemaName,
@@ -208,6 +242,9 @@ export function parsePostgresPlan(explainRoot: unknown): ParsedPostgresPlan {
         indexName: indexName ?? mergedBitmapIndexName,
         estimatedRows,
         actualRows,
+        tableAccessRows,
+        predicateFilterInputRows,
+        predicateFilterOutputRows,
         rowEstimateRatio: computeRowEstimateRatio(estimatedRows, actualRows),
         filterColumns: mappingFilterColumns.size > 0 ? [...mappingFilterColumns] : undefined,
       });

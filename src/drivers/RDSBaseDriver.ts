@@ -49,7 +49,8 @@ import {
   VendorPhysicalHealth,
   VendorTableDefinition,
   VendorTableStatistics,
-  computeFilterSelectivity,
+  computePredicateFilterSelectivity,
+  computeTableAccessFraction,
   findDominantCostPlanNode,
 } from './providers';
 
@@ -766,20 +767,25 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         }),
       );
 
-      // filterSelectivity (2026-08-21 follow-up, summary.md's Full Context
-      // improvement item 3) - the earliest point both tables[].statistics.
-      // estimatedRowCount and planTableMappings are simultaneously in
-      // scope. Computed once here for every vendor rather than per-Provider
-      // (planNodeMath.ts's computeFilterSelectivity() is pure/vendor-
-      // neutral) - do not fold this into relevantColumnsByTable above, an
-      // earlier, independent consumer of the original planTableMappings.
+      // The two selectivity measures are computed only after both plan
+      // mappings and table statistics are available. They remain absent when
+      // a vendor cannot provide the exact input rows needed for either
+      // ratio; a plausible-looking estimate would conflate access range and
+      // predicate pass rate again.
       const tableStatsByKey = new Map<string, TableStatisticsContext['estimatedRowCount']>();
       for (const t of tables) {
         tableStatsByKey.set(tableKeyOf(t), t.statistics?.estimatedRowCount);
       }
       const planTableMappingsWithSelectivity = planTableMappings.map((mapping) => ({
         ...mapping,
-        filterSelectivity: computeFilterSelectivity(mapping, tableStatsByKey.get(tableKeyOf(mapping))),
+        tableAccessFraction: computeTableAccessFraction(
+          mapping.tableAccessRows,
+          tableStatsByKey.get(tableKeyOf(mapping)),
+        ),
+        predicateFilterSelectivity: computePredicateFilterSelectivity(
+          mapping.predicateFilterInputRows,
+          mapping.predicateFilterOutputRows,
+        ),
       }));
 
       // Best-effort, non-fatal: a version-fetch failure should not turn an

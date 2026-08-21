@@ -300,20 +300,28 @@ export type PlanTableMapping = {
   estimatedRows?: number;
   actualRows?: number;
   rowEstimateRatio?: number;
+  // Rows entering the table-local filtering stage, per execution when the
+  // vendor reports it. This is intentionally separate from actualRows:
+  // actualRows is the node's output, while tableAccessRows is the scanned /
+  // index-accessed candidate set before a local Filter removes rows.
+  tableAccessRows?: MetricValue<number>;
+  // Explicit local Filter input/output counts. Omitted unless one vendor
+  // reports both counts for this exact table access; never inferred by
+  // aligning visual nodes from an independent actual-plan artifact.
+  predicateFilterInputRows?: MetricValue<number>;
+  predicateFilterOutputRows?: MetricValue<number>;
   filterColumns?: string[];
   joinColumns?: string[];
   groupColumns?: string[];
   sortColumns?: string[];
-  // What fraction of this table's total rows this plan node's filter
-  // actually/estimated-ly matched (2026-08-21 follow-up, summary.md's Full
-  // Context improvement item 3) - i.e. (actualRows ?? estimatedRows) /
-  // tables[this table].statistics.estimatedRowCount, computed by
-  // RDSBaseDriver (planNodeMath.ts's computeFilterSelectivity()) once both
-  // sides are available. A low-selectivity value here is exactly the signal
-  // that was previously scattered across two nested JSON paths an AI had to
-  // cross-reference itself (and in one documented case, failed to). `value`
-  // is a fraction in [0,1], never a percentage.
-  filterSelectivity?: MetricValue<number>;
+  // The independently meaningful selectivity measures are deliberately
+  // separate. Both are fractions in [0,1], never percentages.
+  // `tableAccessFraction` is the candidate set reached by the table access
+  // relative to total table rows. `predicateFilterSelectivity` is the
+  // fraction that a local Filter passed (output / input). Either is absent
+  // when the vendor did not provide the required count(s).
+  tableAccessFraction?: MetricValue<number>;
+  predicateFilterSelectivity?: MetricValue<number>;
 };
 
 export type UnavailableSectionName =

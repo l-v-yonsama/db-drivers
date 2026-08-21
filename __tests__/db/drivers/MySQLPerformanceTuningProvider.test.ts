@@ -290,6 +290,9 @@ describe('MySQLPerformanceTuningProvider', () => {
       estimatedRows: 10,
       actualRows: 50,
       rowEstimateRatio: 5,
+      tableAccessRows: expect.objectContaining({ value: 50, estimated: false }),
+      predicateFilterInputRows: expect.objectContaining({ value: 50, estimated: false }),
+      predicateFilterOutputRows: expect.objectContaining({ value: 5, estimated: false }),
     });
   });
 

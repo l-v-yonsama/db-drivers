@@ -192,9 +192,39 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
       actualPlanTableStats && actualPlanTableStats.actualRowsByPlanNodeId.size > 0
         ? planTableMappings.map((m) => {
             const actualRows = actualPlanTableStats.actualRowsByPlanNodeId.get(m.planNodeId);
+            const tableAccessRows = actualPlanTableStats.tableAccessRowsByPlanNodeId.get(m.planNodeId);
+            const filterRows = actualPlanTableStats.predicateFilterRowsByPlanNodeId.get(m.planNodeId);
             return actualRows === undefined
               ? m
-              : { ...m, actualRows, rowEstimateRatio: computeRowEstimateRatio(m.estimatedRows, actualRows) };
+              : {
+                  ...m,
+                  actualRows,
+                  rowEstimateRatio: computeRowEstimateRatio(m.estimatedRows, actualRows),
+                  tableAccessRows:
+                    tableAccessRows === undefined
+                      ? undefined
+                      : {
+                          value: tableAccessRows,
+                          estimated: false,
+                          source: 'MySQL EXPLAIN ANALYZE table-access rows (per loop)',
+                        },
+                  predicateFilterInputRows:
+                    filterRows === undefined
+                      ? undefined
+                      : {
+                          value: filterRows.inputRows,
+                          estimated: false,
+                          source: 'MySQL EXPLAIN ANALYZE child table-access rows (per loop)',
+                        },
+                  predicateFilterOutputRows:
+                    filterRows === undefined
+                      ? undefined
+                      : {
+                          value: filterRows.outputRows,
+                          estimated: false,
+                          source: 'MySQL EXPLAIN ANALYZE Filter rows (per loop)',
+                        },
+                };
           })
         : planTableMappings;
 

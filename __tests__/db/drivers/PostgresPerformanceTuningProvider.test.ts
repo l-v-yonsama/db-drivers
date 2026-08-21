@@ -156,6 +156,7 @@ describe('postgresPlanParser', () => {
           'Actual Total Time': 1.234,
           'Actual Rows': 37,
           'Actual Loops': 1,
+          'Rows Removed by Filter': 63,
           'Shared Hit Blocks': 120,
           'Shared Read Blocks': 4,
           'Shared Dirtied Blocks': 0,
@@ -174,6 +175,9 @@ describe('postgresPlanParser', () => {
         estimatedRows: 41,
         actualRows: 37,
         rowEstimateRatio: expect.any(Number),
+        tableAccessRows: expect.objectContaining({ value: 100, estimated: false }),
+        predicateFilterInputRows: expect.objectContaining({ value: 100, estimated: false }),
+        predicateFilterOutputRows: expect.objectContaining({ value: 37, estimated: false }),
       });
     });
 

@@ -1,5 +1,11 @@
 import type { PlanNode } from '../../../src';
-import { computeExclusiveCost, computeFilterSelectivity, computeRowEstimateRatio, findDominantCostPlanNode } from '../../../src';
+import {
+  computeExclusiveCost,
+  computePredicateFilterSelectivity,
+  computeRowEstimateRatio,
+  computeTableAccessFraction,
+  findDominantCostPlanNode,
+} from '../../../src';
 
 // Minimal PlanNode fixture builder - only the fields each test actually
 // needs are set, `children` always required (matches the real type).
@@ -117,54 +123,51 @@ describe('computeExclusiveCost', () => {
   });
 });
 
-describe('computeFilterSelectivity', () => {
-  it('computes matched-rows / table-row-count from actualRows when present', () => {
-    const result = computeFilterSelectivity(
-      { actualRows: 150, estimatedRows: 3254 },
+describe('separated selectivity metrics', () => {
+  it('computes table-access fraction only from an explicit access-row basis', () => {
+    const result = computeTableAccessFraction(
+      { value: 600, estimated: false, source: 'actual access rows' },
       { value: 300000, estimated: false, source: 'pg_class.reltuples' },
     );
     expect(result).toEqual({
-      value: 0.0005,
+      value: 0.002,
       estimated: false,
-      source: 'planTableMapping.actualRows / pg_class.reltuples',
+      source: 'actual access rows / pg_class.reltuples',
     });
   });
 
-  it('falls back to estimatedRows when actualRows is absent, and marks the result as estimated', () => {
-    const result = computeFilterSelectivity(
-      { estimatedRows: 30000 },
-      { value: 300000, estimated: false, source: 'pg_class.reltuples' },
-    );
-    expect(result?.value).toBeCloseTo(0.1);
-    expect(result?.estimated).toBe(true);
+  it('computes predicate pass rate only from explicit Filter input/output', () => {
+    expect(
+      computePredicateFilterSelectivity(
+        { value: 600, estimated: false, source: 'filter input' },
+        { value: 150, estimated: false, source: 'filter output' },
+      ),
+    ).toEqual({ value: 0.25, estimated: false, source: 'filter output / filter input' });
   });
 
-  it('returns undefined when the table row count is missing or <= 0', () => {
-    expect(computeFilterSelectivity({ actualRows: 10 }, undefined)).toBeUndefined();
+  it('leaves a metric absent when its required evidence is missing or invalid', () => {
+    expect(computeTableAccessFraction(undefined, undefined)).toBeUndefined();
     expect(
-      computeFilterSelectivity({ actualRows: 10 }, { value: 0, estimated: false, source: 'x' }),
+      computeTableAccessFraction(
+        { value: 10, estimated: false, source: 'x' },
+        { value: 0, estimated: false, source: 'x' },
+      ),
+    ).toBeUndefined();
+    expect(computePredicateFilterSelectivity(undefined, { value: 1, estimated: false, source: 'x' })).toBeUndefined();
+    expect(
+      computePredicateFilterSelectivity(
+        { value: 0, estimated: false, source: 'x' },
+        { value: 1, estimated: false, source: 'x' },
+      ),
     ).toBeUndefined();
   });
 
-  it('returns undefined when neither actualRows nor estimatedRows is available', () => {
-    expect(
-      computeFilterSelectivity({}, { value: 300000, estimated: false, source: 'x' }),
-    ).toBeUndefined();
-  });
-
-  it('clamps to 1 when matched rows exceed the table row count (estimate imprecision)', () => {
-    const result = computeFilterSelectivity(
-      { actualRows: 500000 },
-      { value: 300000, estimated: false, source: 'x' },
-    );
-    expect(result?.value).toBe(1);
-  });
-
-  it('is estimated:true when the table row count itself is an estimate, even with a real actualRows basis', () => {
-    const result = computeFilterSelectivity(
-      { actualRows: 150 },
+  it('propagates estimated provenance and clamps impossible ratios', () => {
+    const result = computeTableAccessFraction(
+      { value: 500000, estimated: false, source: 'actual access' },
       { value: 300000, estimated: true, source: 'information_schema.TABLES.TABLE_ROWS' },
     );
+    expect(result?.value).toBe(1);
     expect(result?.estimated).toBe(true);
   });
 });

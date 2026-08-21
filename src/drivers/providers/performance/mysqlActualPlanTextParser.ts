@@ -237,6 +237,8 @@ export type MysqlActualPlanTableStats = {
   // columns stayed blank for MySQL even with a successful, fully-parsed
   // EXPLAIN ANALYZE).
   actualRowsByPlanNodeId: Map<string, number>;
+  tableAccessRowsByPlanNodeId: Map<string, number>;
+  predicateFilterRowsByPlanNodeId: Map<string, { inputRows: number; outputRows: number }>;
 };
 
 // Single walk of actualPlanText that both resolvers below are built on -
@@ -253,6 +255,8 @@ export function resolveMysqlActualPlanTableStats(
 
   const candidates: Array<{ line: MysqlActualPlanNode; exclusiveValue: number }> = [];
   const actualRowsByPlanNodeId = new Map<string, number>();
+  const tableAccessRowsByPlanNodeId = new Map<string, number>();
+  const predicateFilterRowsByPlanNodeId = new Map<string, { inputRows: number; outputRows: number }>();
   const getInclusiveValue = (n: MysqlActualPlanNode): number | undefined =>
     // Same "actual time is a per-loop average" reasoning as
     // planNodeMath.ts's findDominantCostPlanNode() - multiply by loops to
@@ -272,9 +276,38 @@ export function resolveMysqlActualPlanTableStats(
       const match = resolveMapping(node, planTableMappings);
       if (match) {
         actualRowsByPlanNodeId.set(match.planNodeId, node.actualRows);
+        tableAccessRowsByPlanNodeId.set(match.planNodeId, node.actualRows);
       }
     });
   }
+
+  // A MySQL Filter line is safely attributable only when its subtree has one
+  // resolvable physical table access. A Filter above a join can remove rows
+  // from a combined relation, so assigning it to either input table would be
+  // fabricated evidence; leave those mappings unset instead.
+  const tableAccessesBelow = (node: MysqlActualPlanNode): MysqlActualPlanNode[] => {
+    const own = node.kind === 'tableAccess' && node.alias ? [node] : [];
+    const descendants: MysqlActualPlanNode[] = [];
+    node.children.forEach((child) => descendants.push(...tableAccessesBelow(child)));
+    return own.concat(descendants);
+  };
+  const visitFilters = (node: MysqlActualPlanNode): void => {
+    if (node.kind === 'filter' && node.actualRows !== undefined) {
+      const accesses = tableAccessesBelow(node);
+      const resolved = accesses
+        .filter((access) => access.actualRows !== undefined)
+        .map((access) => ({ access, mapping: resolveMapping(access, planTableMappings) }))
+        .filter((item): item is { access: MysqlActualPlanNode; mapping: PlanTableMapping } => item.mapping !== undefined);
+      if (resolved.length === 1) {
+        predicateFilterRowsByPlanNodeId.set(resolved[0].mapping.planNodeId, {
+          inputRows: resolved[0].access.actualRows!,
+          outputRows: node.actualRows,
+        });
+      }
+    }
+    node.children.forEach(visitFilters);
+  };
+  roots.forEach(visitFilters);
   candidates.sort((a, b) => b.exclusiveValue - a.exclusiveValue);
 
   let dominantCostPlanNode: DominantCostPlanNodeRef | undefined;
@@ -286,7 +319,12 @@ export function resolveMysqlActualPlanTableStats(
     }
   }
 
-  return { dominantCostPlanNode, actualRowsByPlanNodeId };
+  return {
+    dominantCostPlanNode,
+    actualRowsByPlanNodeId,
+    tableAccessRowsByPlanNodeId,
+    predicateFilterRowsByPlanNodeId,
+  };
 }
 
 export function resolveDominantCostFromMysqlActualPlanText(

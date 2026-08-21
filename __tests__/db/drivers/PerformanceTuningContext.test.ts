@@ -1252,9 +1252,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
     }
   });
 
-  // 2026-08-21 follow-up (summary.md's Full Context improvement item 3):
-  // planTableMappings[].filterSelectivity.
-  it('computes filterSelectivity end-to-end from planTableMappings.actualRows and the resolved table\'s estimatedRowCount', async () => {
+  it('keeps table-access fraction and predicate-filter pass rate separate', async () => {
     const getVersion = mockVersion();
     try {
       const driver = new FakeProviderDriver(
@@ -1267,7 +1265,12 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
               raw: {},
               diagnostics: [],
               planTableMappings: [
-                { planNodeId: 'n0', tableName: 'orders', estimatedRows: 32400, actualRows: 150 },
+                {
+                  planNodeId: 'n0', tableName: 'orders', estimatedRows: 32400, actualRows: 150,
+                  tableAccessRows: { value: 600, estimated: false, source: 'test access input' },
+                  predicateFilterInputRows: { value: 600, estimated: false, source: 'test filter input' },
+                  predicateFilterOutputRows: { value: 150, estimated: false, source: 'test filter output' },
+                },
               ],
             },
           }),
@@ -1284,10 +1287,15 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
 
       const result = await driver.getPerformanceTuningContext(baseParams());
       expect(result.ok).toBe(true);
-      expect(result.result!.planTableMappings[0].filterSelectivity).toEqual({
-        value: 0.0005,
+      expect(result.result!.planTableMappings[0].tableAccessFraction).toEqual({
+        value: 0.002,
         estimated: true,
-        source: 'planTableMapping.actualRows / pg_class.reltuples',
+        source: 'test access input / pg_class.reltuples',
+      });
+      expect(result.result!.planTableMappings[0].predicateFilterSelectivity).toEqual({
+        value: 0.25,
+        estimated: false,
+        source: 'test filter output / test filter input',
       });
     } finally {
       getVersion.mockRestore();
