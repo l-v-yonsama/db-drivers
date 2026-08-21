@@ -48,6 +48,7 @@ export class OracleDriver extends RDSBaseDriver {
   }
 
   async begin(): Promise<void> {
+    this.assertSessionStateAvailable('begin a transaction');
     this.autoCommitEnabled = false;
     const { transactionIsolationLevel } = this.conRes;
     if (
@@ -68,11 +69,13 @@ export class OracleDriver extends RDSBaseDriver {
   }
 
   async commit(): Promise<void> {
+    this.assertSessionStateAvailable('commit a transaction');
     await this.con?.commit();
     this.autoCommitEnabled = true;
   }
 
   async rollback(): Promise<void> {
+    this.assertSessionStateAvailable('roll back a transaction');
     await this.con?.rollback();
     this.autoCommitEnabled = true;
   }
@@ -213,6 +216,7 @@ export class OracleDriver extends RDSBaseDriver {
   async requestSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
+    this.assertSessionStateAvailable('run a query');
     const { sql, conditions, dbTable, meta } = params;
     if (!this.con) {
       throw new Error('No connection');
@@ -256,6 +260,7 @@ export class OracleDriver extends RDSBaseDriver {
   async explainSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
+    this.assertSessionStateAvailable('retrieve an execution plan');
     if (!this.con) {
       throw new Error('No connection');
     }
@@ -324,6 +329,7 @@ export class OracleDriver extends RDSBaseDriver {
   async collectPerformanceTuningPlanRows(
     params: QueryParams,
   ): Promise<ResultSetData> {
+    this.assertSessionStateAvailable('retrieve an execution plan');
     if (!this.con) {
       throw new Error('No connection');
     }
@@ -392,6 +398,9 @@ FROM PLAN_TABLE WHERE STATEMENT_ID = :1 ORDER BY ID`,
       throw new Error('Actual plan capture was cancelled');
     }
 
+    const releaseSessionState = this.beginExclusiveSessionStateOperation(
+      'Oracle actual-plan capture',
+    );
     const con = this.con;
     const oldCallTimeout = con.callTimeout;
     let previousStatisticsLevel: string | undefined;
@@ -453,6 +462,7 @@ WHERE AUDSID = SYS_CONTEXT('USERENV', 'SESSIONID')`,
         }
       }
       con.callTimeout = oldCallTimeout;
+      releaseSessionState();
     }
     if (cleanupError) {
       // If STATISTICS_LEVEL cannot be restored, retaining this session could

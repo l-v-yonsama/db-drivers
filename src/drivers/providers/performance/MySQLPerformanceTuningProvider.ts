@@ -192,7 +192,6 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
       actualPlanTableStats && actualPlanTableStats.actualRowsByPlanNodeId.size > 0
         ? planTableMappings.map((m) => {
             const actualRows = actualPlanTableStats.actualRowsByPlanNodeId.get(m.planNodeId);
-            const tableAccessRows = actualPlanTableStats.tableAccessRowsByPlanNodeId.get(m.planNodeId);
             const filterRows = actualPlanTableStats.predicateFilterRowsByPlanNodeId.get(m.planNodeId);
             return actualRows === undefined
               ? m
@@ -201,10 +200,10 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
                   actualRows,
                   rowEstimateRatio: computeRowEstimateRatio(m.estimatedRows, actualRows),
                   tableAccessRows:
-                    tableAccessRows === undefined
+                    actualRows === undefined
                       ? undefined
                       : {
-                          value: tableAccessRows,
+                          value: actualRows,
                           estimated: false,
                           source: 'MySQL EXPLAIN ANALYZE table-access rows (per loop)',
                         },

@@ -237,7 +237,6 @@ export type MysqlActualPlanTableStats = {
   // columns stayed blank for MySQL even with a successful, fully-parsed
   // EXPLAIN ANALYZE).
   actualRowsByPlanNodeId: Map<string, number>;
-  tableAccessRowsByPlanNodeId: Map<string, number>;
   predicateFilterRowsByPlanNodeId: Map<string, { inputRows: number; outputRows: number }>;
 };
 
@@ -255,7 +254,6 @@ export function resolveMysqlActualPlanTableStats(
 
   const candidates: Array<{ line: MysqlActualPlanNode; exclusiveValue: number }> = [];
   const actualRowsByPlanNodeId = new Map<string, number>();
-  const tableAccessRowsByPlanNodeId = new Map<string, number>();
   const predicateFilterRowsByPlanNodeId = new Map<string, { inputRows: number; outputRows: number }>();
   const getInclusiveValue = (n: MysqlActualPlanNode): number | undefined =>
     // Same "actual time is a per-loop average" reasoning as
@@ -276,7 +274,6 @@ export function resolveMysqlActualPlanTableStats(
       const match = resolveMapping(node, planTableMappings);
       if (match) {
         actualRowsByPlanNodeId.set(match.planNodeId, node.actualRows);
-        tableAccessRowsByPlanNodeId.set(match.planNodeId, node.actualRows);
       }
     });
   }
@@ -322,7 +319,6 @@ export function resolveMysqlActualPlanTableStats(
   return {
     dominantCostPlanNode,
     actualRowsByPlanNodeId,
-    tableAccessRowsByPlanNodeId,
     predicateFilterRowsByPlanNodeId,
   };
 }

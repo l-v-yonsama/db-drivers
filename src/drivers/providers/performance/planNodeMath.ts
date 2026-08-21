@@ -78,11 +78,12 @@ export function computeExclusiveCost<T>(
 // real total-time contribution when it sits on the inner side of a nested
 // loop) when *any* node in the tree has it, else fall back to
 // `estimated.totalCost` for every node. Today only Postgres ever populates
-// PlanNode.actual directly (MySQL's real timing lives separately in
-// actualPlanText - see mysqlActualPlanTextParser.ts instead; Oracle/SQL
-// Server have no analyze-mode support yet at all) - so in practice this
-// function is "Postgres: prefer real analyze data; everyone else:
-// estimated.totalCost", with no vendor-specific code inside it.
+// PlanNode.actual directly. MySQL resolves its separate actualPlanText into
+// a vendor-specific dominant node; Oracle and SQL Server now capture actual
+// plan artifacts too, but those text/XML artifacts are not yet normalized
+// and matched to their estimated-plan nodes. Therefore this generic walk
+// still uses estimated.totalCost for Oracle/SQL Server, with no
+// vendor-specific code inside it.
 export function findDominantCostPlanNode(root: PlanNode | undefined): DominantCostPlanNodeRef | undefined {
   if (!root) {
     return undefined;

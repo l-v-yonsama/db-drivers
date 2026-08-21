@@ -32,7 +32,7 @@ import {
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { PerformanceTuningContextProvider, SQLServerPerformanceTuningProvider } from './providers';
-import { QuoteChar, wrapSingleQuote } from '../helpers';
+import { QuoteChar } from '../helpers';
 import {
   getStatementStatisticsOrderByColumn,
   isSingleSelectStatement,
@@ -124,6 +124,7 @@ export class SQLServerDriver extends RDSBaseDriver {
   }
 
   async begin(): Promise<void> {
+    this.assertSessionStateAvailable('begin a transaction');
     this.tran = this.con.transaction();
     const { transactionIsolationLevel } = this.conRes;
     if (transactionIsolationLevel) {
@@ -153,6 +154,7 @@ export class SQLServerDriver extends RDSBaseDriver {
   }
 
   async commit(): Promise<void> {
+    this.assertSessionStateAvailable('commit a transaction');
     try {
       if (this.tran) {
         await this.tran?.commit();
@@ -163,6 +165,7 @@ export class SQLServerDriver extends RDSBaseDriver {
   }
 
   async rollback(): Promise<void> {
+    this.assertSessionStateAvailable('roll back a transaction');
     try {
       if (this.tran) {
         await this.tran?.rollback();
@@ -206,6 +209,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
   }
 
   async useDatabase(database: string): Promise<void> {
+    this.assertSessionStateAvailable('change the database');
     const sql = `USE [${database.replace(/\]/g, ']]')}]`;
     await this.requestSqlSub({ sql, dbTable: undefined });
   }
@@ -331,6 +335,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
   async requestSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
+    this.assertSessionStateAvailable('run a query');
     const { sql, conditions, dbTable, meta } = params;
     let rdb: ResultSetDataBuilder;
 
@@ -398,6 +403,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
   async explainSqlSub(
     params: QueryParams & { dbTable: DbTable },
   ): Promise<ResultSetDataBuilder> {
+    this.assertSessionStateAvailable('retrieve an execution plan');
     const req = this.con.request();
     await req.batch(`SET SHOWPLAN_ALL ON`);
 
@@ -413,7 +419,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
       const binds = params.conditions?.binds ?? [];
       const sql = binds.reduce<string>((acc, bind, idx) => {
         const placeholder = new RegExp(`@${idx + 1}(?!\\d)`, 'g');
-        return acc.replace(placeholder, wrapSingleQuote(bind));
+        return acc.replace(placeholder, this.toSqlServerStringLiteral(bind));
       }, params.sql);
 
       const result = await req.batch(sql);
@@ -487,8 +493,16 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
   // falls back to the legacy positional-only `@${index + 1}` substitution -
   // this method's only caller (collectPerformanceTuningShowplan() below)
   // still works when a caller has binds but no markers yet to pair with
-  // them. explainSqlSub() (the general "Explain" feature) is untouched by
-  // this design and keeps its own separate positional-only substitution.
+  // them. explainSqlSub() uses the same safe literal conversion below.
+  //
+  // Do not use wrapSingleQuote() here. That generic identifier/display
+  // helper deliberately preserves an already-quoted input, while bind
+  // values are data: a value such as `'a' OR '1'='1'` must still have every
+  // quote escaped before it is embedded in a batch that may be executed.
+  private toSqlServerStringLiteral(value: string): string {
+    return `'${value.replace(/'/g, "''")}'`;
+  }
+
   private substituteShowplanBinds(sql: string, binds: string[], bindMarkers?: string[]): string {
     const markers =
       bindMarkers && bindMarkers.length === binds.length
@@ -502,7 +516,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
       // if one happened to share a name with a bind marker; `(?![\w$#])`
       // stops `@1` from matching inside `@10`/`@name2`.
       const placeholder = new RegExp(`(?<!@)${escapedMarker}(?![\\w$#])`, 'g');
-      return acc.replace(placeholder, wrapSingleQuote(bind));
+      return acc.replace(placeholder, this.toSqlServerStringLiteral(bind));
     }, sql);
   }
 
@@ -510,6 +524,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     params: QueryParams,
     bindMarkers?: string[],
   ): Promise<ResultSetData> {
+    this.assertSessionStateAvailable('retrieve an execution plan');
     // A pool-backed Request (this.con.request()) does not guarantee its
     // separate batch() calls all run on the same physical connection -
     // node-mssql may hand each call whichever pooled connection happens to
@@ -584,6 +599,9 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
       throw new Error('Actual plan capture was cancelled');
     }
 
+    const releaseSessionState = this.beginExclusiveSessionStateOperation(
+      'SQL Server actual-plan capture',
+    );
     const tran = new Transaction(this.con);
     let req: Request | undefined;
     let statisticsXmlEnabled = false;
@@ -591,6 +609,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     let captureError: unknown;
     let artifact: ActualPlanArtifact | undefined;
     let cleanupError: unknown;
+    let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
     const cancel = (): void => {
       req?.cancel();
     };
@@ -601,6 +620,13 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
       begun = true;
       req = tran.request();
       this.req = req;
+      // RDSBaseDriver.withDeadline() bounds the caller-facing promise, but
+      // does not itself interrupt a server-side request on timeout. Schedule
+      // cancellation on this pinned Request as well, so timeoutMs limits the
+      // SELECT that STATISTICS XML intentionally executes.
+      if (options?.timeoutMs && options.timeoutMs > 0) {
+        timeoutTimer = setTimeout(cancel, options.timeoutMs);
+      }
       await req.batch('SET STATISTICS XML ON');
       statisticsXmlEnabled = true;
 
@@ -613,6 +639,9 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
       captureError = e;
     } finally {
       options?.signal?.removeEventListener('abort', cancel);
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+      }
       this.req = undefined;
       if (statisticsXmlEnabled && req) {
         try {
@@ -631,6 +660,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
           cleanupError ??= e;
         }
       }
+      releaseSessionState();
     }
     if (cleanupError) {
       // A failed OFF means the pooled session might retain STATISTICS XML.

@@ -55,8 +55,35 @@ import {
 } from './providers';
 
 export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
+  // Actual-plan capture temporarily changes connection/session state on
+  // Oracle and SQL Server.  A caller-facing deadline can return before the
+  // vendor operation has finished its finally-based restoration, so reject
+  // new work during that narrow interval instead of letting it observe or
+  // overwrite the temporary state.
+  private exclusiveSessionStateOperation: string | undefined;
+
   constructor(conRes: ConnectionSetting) {
     super(conRes);
+  }
+
+  protected assertSessionStateAvailable(operation: string): void {
+    if (this.exclusiveSessionStateOperation) {
+      throw new Error(
+        `Cannot ${operation} while ${this.exclusiveSessionStateOperation} is in progress`,
+      );
+    }
+  }
+
+  protected beginExclusiveSessionStateOperation(operation: string): () => void {
+    this.assertSessionStateAvailable(operation);
+    this.exclusiveSessionStateOperation = operation;
+    let released = false;
+    return (): void => {
+      if (!released) {
+        released = true;
+        this.exclusiveSessionStateOperation = undefined;
+      }
+    };
   }
 
   protected abstract getTestSqlStatement(): string;
@@ -126,6 +153,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
   }
 
   async requestSql(params: QueryParams): Promise<ResultSetData> {
+    this.assertSessionStateAvailable('run a query');
     const { sql, conditions, prepare } = params;
 
     let qst: QStatement | undefined = undefined;
@@ -180,6 +208,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
   ): Promise<ResultSetDataBuilder>;
 
   async explainSql(params: QueryParams): Promise<ResultSetData> {
+    this.assertSessionStateAvailable('retrieve an execution plan');
     const { sql, prepare } = params;
     const ast = parseQuery(sql);
     const dbTable = this.getDbTable(ast);
@@ -451,6 +480,14 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     params: PerformanceTuningContextParams,
     options?: PerformanceTuningCallOptions,
   ): Promise<GeneralResult<PerformanceTuningContext>> {
+    try {
+      this.assertSessionStateAvailable('collect a performance tuning context');
+    } catch {
+      return {
+        ok: false,
+        message: 'An actual-plan capture is still restoring its session state. Retry shortly.',
+      };
+    }
     const provider = this.getPerformanceTuningContextProvider();
     if (!provider) {
       return {
@@ -875,6 +912,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
   }
 
   async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
+    this.assertSessionStateAvailable('run explain analyze');
     const { sql, prepare } = params;
     // Keep this public API subject to the same fail-closed predicate as the
     // Performance Tuning context. EXPLAIN ANALYZE actually executes its
