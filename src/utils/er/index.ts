@@ -19,3 +19,7 @@ export {
 } from './erDiagramGenerator';
 export { createDrawioErDiagram } from './erDiagramDrawioGenerator';
 export { createDrawioErDiagramAsync } from './erDiagramDrawioGeneratorAuto';
+export {
+  createPerformanceQueryDiagram,
+  type PerformanceQueryDiagramResult,
+} from './performanceQueryDiagram';
