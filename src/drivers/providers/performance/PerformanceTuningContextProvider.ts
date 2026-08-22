@@ -10,6 +10,7 @@ import {
   PerformanceTuningCallOptions,
   PerformanceTuningContextParams,
   PlanTableMapping,
+  RuntimeObservation,
   TableStatisticsContext,
 } from '../../../types/drivers/performance/PerformanceTuningContext';
 import { PerformanceTuningDiagnostic } from '../../../types/drivers/performance/PerformanceTuningDiagnostic';
@@ -48,6 +49,7 @@ export type VendorExecutionPlan = {
   normalizedPlan?: PlanNode;
   // Database-native runtime evidence. See ExecutionPlanContext.actualPlan.
   actualPlan?: ActualPlanArtifact;
+  runtimeObservations?: RuntimeObservation[];
   // See DominantCostPlanNodeRef (PerformanceTuningContext.ts). Optional,
   // vendor-supplied-if-available, same pattern as actualPlan above -
   // MySQL resolves this from its tree-text artifact via

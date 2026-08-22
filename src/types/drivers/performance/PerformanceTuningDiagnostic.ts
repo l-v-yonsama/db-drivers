@@ -102,7 +102,11 @@ export type PerformanceTuningDiagnosticCode =
   | 'COLLECTION_TRUNCATED'
   // The database version could not be retrieved, so version-specific
   // judgement elsewhere is working with one less piece of context.
-  | 'DATABASE_VERSION_UNAVAILABLE';
+  | 'DATABASE_VERSION_UNAVAILABLE'
+  // A measured table output differed materially from the optimizer estimate.
+  // This is factual evidence for considering statistics/cardinality work in
+  // addition to access-path changes; it is not a collection failure.
+  | 'CARDINALITY_MISESTIMATE';
 
 export type PerformanceTuningDiagnosticNode = {
   id: string;
@@ -142,4 +146,10 @@ export type PerformanceTuningDiagnostic = {
   // exists at runtime, and this project's tsconfig has isolatedModules off.
   section?: UnavailableSectionName;
   suggestedAction?: string;
+  cardinality?: {
+    estimatedRows: number;
+    actualRows: number;
+    actualToEstimatedRatio: number;
+    candidatePredicateColumns?: string[];
+  };
 };

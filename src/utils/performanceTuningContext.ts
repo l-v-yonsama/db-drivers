@@ -156,6 +156,36 @@ export function isSingleSelectStatement(sql: unknown): boolean {
   }
 }
 
+export function classifyPerformanceTuningStatement(sql: unknown): {
+  kind: 'select' | 'insert' | 'update' | 'delete' | 'other';
+  analyzeEligibility: { allowed: boolean; reason?: string };
+} {
+  if (isSingleSelectStatement(sql)) {
+    return { kind: 'select', analyzeEligibility: { allowed: true } };
+  }
+  let kind: 'insert' | 'update' | 'delete' | 'other' = 'other';
+  if (typeof sql === 'string' && sql.trim()) {
+    try {
+      const trimmed = sql.trim().replace(/;+\s*$/, '');
+      if (!trimmed.includes(';')) {
+        const type = parseQuery(trimmed)?.ast?.type;
+        if (type === 'insert' || type === 'update' || type === 'delete') {
+          kind = type;
+        }
+      }
+    } catch {
+      // Keep the fail-closed 'other' classification.
+    }
+  }
+  return {
+    kind,
+    analyzeEligibility: {
+      allowed: false,
+      reason: 'Explain Analyze is limited to a single SELECT statement.',
+    },
+  };
+}
+
 // Validation for conditions that must reject the request outright (§9.1,
 // §4.3): callers get these back as a GeneralResult({ ok: false }) message
 // list, never as a thrown exception and never as a silent downgrade (e.g. an

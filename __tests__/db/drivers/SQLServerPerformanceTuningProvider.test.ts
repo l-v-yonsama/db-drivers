@@ -2,7 +2,9 @@ import {
   ConnectionSetting,
   DBType,
   extractSqlServerPredicateColumns,
+  extractSqlServerRuntimeObservations,
   parseSqlServerPlan,
+  resolveSqlServerActualPlanTableStats,
   SQLServerDriver,
   SQLServerPerformanceTuningProvider,
 } from '../../../src';
@@ -215,6 +217,82 @@ describe('parseSqlServerPlan', () => {
   });
 });
 
+describe('extractSqlServerRuntimeObservations', () => {
+  it('keeps missing-index, memory-grant, and timing facts for compact AI input', () => {
+    const xml = `<ShowPlanXML><MissingIndexGroup Impact="87.5"><MissingIndex Schema="[dbo]" Table="[orders]"><ColumnGroup Usage="EQUALITY"><Column Name="[tenant_id]" /></ColumnGroup><ColumnGroup Usage="INCLUDE"><Column Name="[total_amount]" /></ColumnGroup></MissingIndex></MissingIndexGroup><MemoryGrantInfo RequestedMemory="1024" GrantedMemory="2048" MaxUsedMemory="512" GrantWarning="NoJoinPredicate" /><QueryTimeStats CpuTime="12" ElapsedTime="45" /><WaitStats><Wait WaitType="PAGEIOLATCH_SH" WaitTimeMs="9" WaitCount="2" /></WaitStats></ShowPlanXML>`;
+    expect(extractSqlServerRuntimeObservations(xml)).toEqual([
+      expect.objectContaining({
+        kind: 'missingIndex',
+        schemaName: 'dbo',
+        tableName: 'orders',
+        metrics: { impact: 87.5 },
+        columns: { equality: ['tenant_id'], include: ['total_amount'] },
+      }),
+      expect.objectContaining({
+        kind: 'memoryGrant',
+        metrics: { RequestedMemory: 1024, GrantedMemory: 2048, MaxUsedMemory: 512, GrantWarning: 'NoJoinPredicate' },
+      }),
+      expect.objectContaining({ kind: 'timing', metrics: { cpuTimeMs: 12, elapsedTimeMs: 45 } }),
+      expect.objectContaining({ kind: 'wait', metrics: { waitType: 'PAGEIOLATCH_SH', waitTimeMs: 9, waitCount: 2 } }),
+    ]);
+  });
+});
+
+describe('resolveSqlServerActualPlanTableStats', () => {
+  const mappings = [
+    {
+      planNodeId: 'n7',
+      schemaName: 'dbo',
+      tableName: 'customers',
+      alias: 'c',
+      indexName: 'PK_customers',
+      estimatedRows: 30_000,
+    },
+    {
+      planNodeId: 'n9',
+      schemaName: 'dbo',
+      tableName: 'orders',
+      alias: 'o',
+      indexName: 'PK_orders',
+      estimatedRows: 222.984,
+    },
+  ];
+
+  it('maps ActualRowsRead and ActualRows from a scan to the matching SHOWPLAN table identity', () => {
+    const xml = `
+      <ShowPlanXML><RelOp PhysicalOp="Nested Loops"><RelOp PhysicalOp="Clustered Index Scan">
+        <RunTimeInformation><RunTimeCountersPerThread Thread="0" ActualRows="29148" ActualRowsRead="29148" ActualExecutions="1" /></RunTimeInformation>
+        <IndexScan><Object Schema="[dbo]" Table="[customers]" Index="[PK_customers]" Alias="[c]" /></IndexScan>
+      </RelOp><RelOp PhysicalOp="Clustered Index Scan">
+        <RunTimeInformation><RunTimeCountersPerThread Thread="0" ActualRows="150" ActualRowsRead="300000" ActualExecutions="1" /></RunTimeInformation>
+        <IndexScan><Object Schema="[dbo]" Table="[orders]" Index="[PK_orders]" Alias="[o]" /><Predicate /></IndexScan>
+      </RelOp></RelOp></ShowPlanXML>`;
+
+    expect(resolveSqlServerActualPlanTableStats(xml, mappings)).toEqual(
+      new Map([
+        ['n7', { actualRows: 29148, tableAccessRows: 29148, indexName: 'PK_customers' }],
+        [
+          'n9',
+          {
+            actualRows: 150,
+            tableAccessRows: 300000,
+            predicateFilterInputRows: 300000,
+            predicateFilterOutputRows: 150,
+            indexName: 'PK_orders',
+          },
+        ],
+      ]),
+    );
+  });
+
+  it('does not guess when the same table identity is accessed more than once', () => {
+    const xml = `
+      <ShowPlanXML><RelOp PhysicalOp="Clustered Index Scan"><RunTimeInformation><RunTimeCountersPerThread ActualRows="1" ActualExecutions="1" /></RunTimeInformation><IndexScan><Object Schema="[dbo]" Table="[orders]" Alias="[o]" /></IndexScan></RelOp>
+      <RelOp PhysicalOp="Clustered Index Scan"><RunTimeInformation><RunTimeCountersPerThread ActualRows="2" ActualExecutions="1" /></RunTimeInformation><IndexScan><Object Schema="[dbo]" Table="[orders]" Alias="[o]" /></IndexScan></RelOp></ShowPlanXML>`;
+    expect(resolveSqlServerActualPlanTableStats(xml, mappings)).toEqual(new Map());
+  });
+});
+
 describe('SQLServerPerformanceTuningProvider', () => {
   const makeDriver = (
     requestSql: jest.Mock,
@@ -270,10 +348,25 @@ describe('SQLServerPerformanceTuningProvider', () => {
 
   it('collects a native actual-plan artifact in analyze mode after resolving the estimate plan', async () => {
     const collectPerformanceTuningShowplan = jest.fn().mockResolvedValue({
-      rows: [{ values: { StmtId: 1, NodeId: 1, Parent: 0, Type: 'SELECT' } }],
+      rows: [
+        { values: { StmtId: 1, NodeId: 1, Parent: 0, Type: 'SELECT' } },
+        {
+          values: {
+            StmtId: 1,
+            NodeId: 2,
+            Parent: 1,
+            PhysicalOp: 'Clustered Index Scan',
+            Argument: 'OBJECT:([testdb].[dbo].[orders].[PK_orders] AS [o])',
+            EstimateRows: 222.984,
+          },
+        },
+      ],
     });
     const collectPerformanceTuningActualPlan = jest.fn().mockResolvedValue({
-      source: 'SET STATISTICS XML', format: 'xml', content: '<ShowPlanXML />',
+      source: 'SET STATISTICS XML',
+      format: 'xml',
+      content:
+        '<ShowPlanXML><RelOp PhysicalOp="Clustered Index Scan"><RunTimeInformation><RunTimeCountersPerThread ActualRows="150" ActualRowsRead="300000" ActualExecutions="1" /></RunTimeInformation><IndexScan><Object Schema="[dbo]" Table="[orders]" Index="[PK_orders]" Alias="[o]" /><Predicate /></IndexScan></RelOp></ShowPlanXML>',
     });
     const provider = new SQLServerPerformanceTuningProvider(
       makeDriver(jest.fn(), collectPerformanceTuningShowplan, collectPerformanceTuningActualPlan),
@@ -288,9 +381,17 @@ describe('SQLServerPerformanceTuningProvider', () => {
       { timeoutMs: 5000 },
     );
     expect(result.ok).toBe(true);
-    expect(result.result!.actualPlan).toEqual({
-      source: 'SET STATISTICS XML', format: 'xml', content: '<ShowPlanXML />',
-    });
+    expect(result.result!.actualPlan).toMatchObject({ source: 'SET STATISTICS XML', format: 'xml' });
+    expect(result.result!.planTableMappings).toEqual([
+      expect.objectContaining({
+        tableName: 'orders',
+        actualRows: 150,
+        rowEstimateRatio: 150 / 222.984,
+        tableAccessRows: expect.objectContaining({ value: 300000, estimated: false }),
+        predicateFilterInputRows: expect.objectContaining({ value: 300000, estimated: false }),
+        predicateFilterOutputRows: expect.objectContaining({ value: 150, estimated: false }),
+      }),
+    ]);
     expect(collectPerformanceTuningActualPlan).toHaveBeenCalledWith(
       expect.objectContaining({ sql: 'SELECT 1' }),
       undefined,

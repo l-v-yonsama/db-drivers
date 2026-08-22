@@ -25,6 +25,8 @@ import {
   renderSqlServerTableDdl,
 } from './sqlServerCatalogMapper';
 import { parseSqlServerPlan } from './sqlServerPlanParser';
+import { extractSqlServerRuntimeObservations, resolveSqlServerActualPlanTableStats } from './sqlServerActualPlanXmlParser';
+import { computeRowEstimateRatio } from './planNodeMath';
 import {
   PerformanceTuningCollectionOptions,
   PerformanceTuningContextProvider,
@@ -166,6 +168,55 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
       }
     }
 
+    // SET STATISTICS XML is a separately produced runtime tree, so do not
+    // correlate it to SHOWPLAN_ALL by NodeId or tree position.  Its Object
+    // elements carry the real table/alias/index identity, which permits a
+    // conservative one-to-one match to the estimate mapping.  In addition
+    // to actual output rows, SQL Server exposes ActualRowsRead for scans;
+    // when present alongside a local Predicate it is the factual input for
+    // the distinct access-fraction and filter-pass-rate measures.
+    const actualPlanTableStats = actualPlan
+      ? resolveSqlServerActualPlanTableStats(actualPlan.content, planTableMappings)
+      : undefined;
+    if (actualPlanTableStats && actualPlanTableStats.size > 0) {
+      planTableMappings = planTableMappings.map((mapping) => {
+        const stats = actualPlanTableStats.get(mapping.planNodeId);
+        if (!stats) {
+          return mapping;
+        }
+        return {
+          ...mapping,
+          indexName: stats.indexName ?? mapping.indexName,
+          actualRows: stats.actualRows,
+          rowEstimateRatio: computeRowEstimateRatio(mapping.estimatedRows, stats.actualRows),
+          tableAccessRows:
+            stats.tableAccessRows === undefined
+              ? undefined
+              : {
+                  value: stats.tableAccessRows,
+                  estimated: false,
+                  source: 'SQL Server SET STATISTICS XML ActualRowsRead (per execution)',
+                },
+          predicateFilterInputRows:
+            stats.predicateFilterInputRows === undefined
+              ? undefined
+              : {
+                  value: stats.predicateFilterInputRows,
+                  estimated: false,
+                  source: 'SQL Server SET STATISTICS XML ActualRowsRead before local predicate (per execution)',
+                },
+          predicateFilterOutputRows:
+            stats.predicateFilterOutputRows === undefined
+              ? undefined
+              : {
+                  value: stats.predicateFilterOutputRows,
+                  estimated: false,
+                  source: 'SQL Server SET STATISTICS XML ActualRows after local predicate (per execution)',
+                },
+        };
+      });
+    }
+
     return {
       ok: true,
       message: '',
@@ -180,6 +231,7 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
         planningTimeMs: undefined,
         executionTimeMs: undefined,
         actualPlan,
+        runtimeObservations: actualPlan ? extractSqlServerRuntimeObservations(actualPlan.content) : undefined,
         diagnostics,
         planTableMappings,
       },

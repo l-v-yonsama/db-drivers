@@ -5,6 +5,7 @@ import {
   MAX_MAX_PAYLOAD_BYTES,
   MAX_PLAN_TIMEOUT_MS,
   MySQLDriver,
+  classifyPerformanceTuningStatement,
   isSingleSelectStatement,
   normalizePerformanceTuningContextParams,
   OracleDriver,
@@ -161,6 +162,16 @@ describe('performance tuning context params', () => {
         plan: { mode: 'analyze', allowExecution: true },
       }),
     ).toEqual([]);
+  });
+
+  it('classifies DML so clients can consistently disable Analyze', () => {
+    expect(classifyPerformanceTuningStatement('UPDATE orders SET status = 1')).toEqual({
+      kind: 'update',
+      analyzeEligibility: {
+        allowed: false,
+        reason: 'Explain Analyze is limited to a single SELECT statement.',
+      },
+    });
   });
 
   it('rejects an unrecognized plan.mode/statement.source at runtime', () => {

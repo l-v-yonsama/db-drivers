@@ -22,8 +22,10 @@ import {
   mapOraclePhysicalHealthRow,
   mapOracleTableStatisticsRow,
 } from './oracleCatalogMapper';
+import { extractOracleRuntimeObservations, resolveOracleActualPlanTableStats } from './oracleActualPlanTextParser';
 import { findUnresolvedIndexOnlyAccessKeys, OracleIndexTableKey, parseOraclePlan } from './oraclePlanParser';
 import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
+import { computeRowEstimateRatio } from './planNodeMath';
 import {
   PerformanceTuningCollectionOptions,
   PerformanceTuningContextProvider,
@@ -202,6 +204,54 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
       }
     }
 
+    // DISPLAY_CURSOR can show a runtime topology different from EXPLAIN
+    // PLAN (adaptive choices, bind peeking, and reoptimization). Resolve
+    // only a unique table-name match from the actual artifact; never align
+    // the two independent plan ID sequences by position. This mirrors
+    // MySQL's semantic actual-plan-to-mapping resolution, while preserving
+    // Oracle's structured PLAN_TABLE result as the estimate/fallback source.
+    const actualPlanTableStats = actualPlan
+      ? resolveOracleActualPlanTableStats(actualPlan.content, planTableMappings)
+      : undefined;
+    if (actualPlanTableStats && actualPlanTableStats.size > 0) {
+      planTableMappings = planTableMappings.map((mapping) => {
+        const stats = actualPlanTableStats.get(mapping.planNodeId);
+        if (!stats) {
+          return mapping;
+        }
+        return {
+          ...mapping,
+          indexName: stats.indexName ?? mapping.indexName,
+          actualRows: stats.actualRows,
+          rowEstimateRatio: computeRowEstimateRatio(mapping.estimatedRows, stats.actualRows),
+          tableAccessRows:
+            stats.tableAccessRows === undefined
+              ? undefined
+              : {
+                  value: stats.tableAccessRows,
+                  estimated: false,
+                  source: 'Oracle DBMS_XPLAN ALLSTATS LAST table/index access rows (per start)',
+                },
+          predicateFilterInputRows:
+            stats.predicateFilterInputRows === undefined
+              ? undefined
+              : {
+                  value: stats.predicateFilterInputRows,
+                  estimated: false,
+                  source: 'Oracle DBMS_XPLAN ALLSTATS LAST index rows before local filter (per start)',
+                },
+          predicateFilterOutputRows:
+            stats.predicateFilterOutputRows === undefined
+              ? undefined
+              : {
+                  value: stats.predicateFilterOutputRows,
+                  estimated: false,
+                  source: 'Oracle DBMS_XPLAN ALLSTATS LAST table-access rows after local filter (per start)',
+                },
+        };
+      });
+    }
+
     return {
       ok: true,
       message: '',
@@ -216,6 +266,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
         planningTimeMs: undefined,
         executionTimeMs: undefined,
         actualPlan,
+        runtimeObservations: actualPlan ? extractOracleRuntimeObservations(actualPlan.content) : undefined,
         diagnostics,
         planTableMappings,
       },

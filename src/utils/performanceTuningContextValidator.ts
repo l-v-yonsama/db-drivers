@@ -30,6 +30,7 @@ const DIAGNOSTIC_CODES = [
   'SECTION_COLLECTION_FAILED',
   'COLLECTION_TRUNCATED',
   'DATABASE_VERSION_UNAVAILABLE',
+  'CARDINALITY_MISESTIMATE',
 ];
 const DIAGNOSTIC_NODE_OBJECT_KINDS = [
   'function',
@@ -110,6 +111,19 @@ const validateStatement = (statement: unknown, errors: string[]): void => {
       `statement.source must be one of: ${VALID_STATEMENT_SOURCES.join(', ')}.`,
     );
   }
+  if (statement.kind !== undefined && !oneOf(statement.kind, ['select', 'insert', 'update', 'delete', 'other'])) {
+    errors.push("statement.kind must be one of: select, insert, update, delete, other.");
+  }
+  if (statement.analyzeEligibility !== undefined) {
+    if (!isPlainObject(statement.analyzeEligibility) || typeof statement.analyzeEligibility.allowed !== 'boolean') {
+      errors.push('statement.analyzeEligibility must have a boolean allowed field.');
+    } else if (
+      statement.analyzeEligibility.reason !== undefined &&
+      typeof statement.analyzeEligibility.reason !== 'string'
+    ) {
+      errors.push('statement.analyzeEligibility.reason must be a string.');
+    }
+  }
 };
 
 // Recurses into every child, not just the top node - a normalizedPlan with
@@ -154,6 +168,9 @@ const validateExecutionPlan = (plan: unknown, errors: string[]): void => {
   }
   if (plan.normalizedPlan !== undefined) {
     validatePlanNode(plan.normalizedPlan, 'executionPlan.normalizedPlan', errors);
+  }
+  if (plan.runtimeObservations !== undefined && !Array.isArray(plan.runtimeObservations)) {
+    errors.push('executionPlan.runtimeObservations must be an array.');
   }
 };
 
@@ -287,6 +304,7 @@ const DIAGNOSTIC_CODE_SEVERITY: Record<string, 'info' | 'warning'> = {
   SECTION_COLLECTION_FAILED: 'warning',
   COLLECTION_TRUNCATED: 'warning',
   DATABASE_VERSION_UNAVAILABLE: 'warning',
+  CARDINALITY_MISESTIMATE: 'info',
 };
 
 // Checks the structural contract every PerformanceTuningDiagnostic must
@@ -349,6 +367,24 @@ const validateDiagnostic = (diagnostic: unknown, index: number, errors: string[]
   }
   if (diagnostic.suggestedAction !== undefined && typeof diagnostic.suggestedAction !== 'string') {
     errors.push(`${path}.suggestedAction must be a string.`);
+  }
+  if (diagnostic.cardinality !== undefined) {
+    if (!isPlainObject(diagnostic.cardinality)) {
+      errors.push(`${path}.cardinality must be an object.`);
+    } else {
+      for (const key of ['estimatedRows', 'actualRows', 'actualToEstimatedRatio']) {
+        if (typeof diagnostic.cardinality[key] !== 'number') {
+          errors.push(`${path}.cardinality.${key} must be a number.`);
+        }
+      }
+      if (
+        diagnostic.cardinality.candidatePredicateColumns !== undefined &&
+        (!Array.isArray(diagnostic.cardinality.candidatePredicateColumns) ||
+          diagnostic.cardinality.candidatePredicateColumns.some((column) => typeof column !== 'string'))
+      ) {
+        errors.push(`${path}.cardinality.candidatePredicateColumns must be an array of strings.`);
+      }
+    }
   }
 };
 

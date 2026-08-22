@@ -216,9 +216,10 @@ function buildNode(
   const estimatedRows = asNumber(row.EstimateRows);
 
   if (objectRef) {
-    // actualRows only exists under an ANALYZE-equivalent (SET STATISTICS
-    // XML/PROFILE), not implemented for SQL Server yet - left undefined
-    // (never guessed), same precedent as the other two vendors' parsers.
+    // SET STATISTICS XML is captured separately in analyze mode, but its XML
+    // has not yet been normalized and safely matched to this SHOWPLAN_ALL
+    // mapping. Leave actualRows undefined rather than guessing from a
+    // visually similar XML node.
     ctx.mappings.push({
       planNodeId: id,
       schemaName: objectRef.schemaName,

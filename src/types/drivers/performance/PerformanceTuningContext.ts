@@ -98,6 +98,14 @@ export type DatabaseContext = {
 export type StatementContext = {
   sql: string;
   source: 'statementStatistics' | 'sqlHistory' | 'editor';
+  // The driver classifies the statement once, before plan collection.  UI
+  // clients must use this rather than trying to infer executability from
+  // SQL text: an analyze-mode plan is deliberately limited to one SELECT.
+  kind?: 'select' | 'insert' | 'update' | 'delete' | 'other';
+  analyzeEligibility?: {
+    allowed: boolean;
+    reason?: string;
+  };
   bindMetadata?: Array<{
     type?: string;
     selectivityClass?: string;
@@ -158,6 +166,26 @@ export type ActualPlanArtifact = {
   content: string;
 };
 
+// A small, vendor-neutral summary extracted from a native actual-plan
+// artifact.  It remains available even when the AI input must omit a large
+// XML/text artifact, and intentionally has no planNodeId: a native runtime
+// plan must not be matched to estimate-plan topology by visual position.
+export type RuntimeObservation = {
+  kind: 'runtimeOperation' | 'missingIndex' | 'memoryGrant' | 'timing' | 'wait';
+  source: string;
+  label: string;
+  detail?: string;
+  schemaName?: string;
+  tableName?: string;
+  operation?: string;
+  metrics?: Record<string, number | string>;
+  columns?: {
+    equality?: string[];
+    inequality?: string[];
+    include?: string[];
+  };
+};
+
 export type ExecutionPlanContext = {
   mode: 'estimate' | 'analyze';
   format: 'json';
@@ -169,6 +197,9 @@ export type ExecutionPlanContext = {
   // may still be estimate-mode topology (MySQL/Oracle/SQL Server); this
   // artifact must therefore never be positionally matched to planNodeIds.
   actualPlan?: ActualPlanArtifact;
+  // Runtime facts extracted conservatively from actualPlan.  These are not
+  // table-mapping metrics and never imply a node correspondence.
+  runtimeObservations?: RuntimeObservation[];
   // See DominantCostPlanNodeRef above. Computed by RDSBaseDriver for every
   // vendor from normalizedPlan's estimated/actual costs
   // (planNodeMath.ts's findDominantCostPlanNode()); MySQL additionally

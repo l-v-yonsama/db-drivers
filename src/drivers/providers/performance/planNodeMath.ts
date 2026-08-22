@@ -9,13 +9,10 @@ import type {
 } from '../../../types/drivers/performance/PerformanceTuningContext';
 import type { PlanNode } from '../../../types/drivers/performance/PlanNode';
 
-// Only meaningful once both figures exist - `actualRows` currently never
-// does for any vendor (it only comes from an EXPLAIN ANALYZE-equivalent,
-// and `mode: 'analyze'` isn't implemented anywhere yet), but the
-// computation itself is vendor- and mode-independent, so it's written and
-// tested now rather than left as a TODO for whichever step adds Analyze
-// (§10 Phase 2: "estimated / actual rows が両方ある場合だけ row estimate ratio
-// を計算する"). `estimatedRows <= 0` is excluded too - a zero-row estimate
+// Only meaningful once both figures exist. PostgreSQL supplies both from its
+// normalized ANALYZE JSON; MySQL and Oracle resolve compatible runtime rows
+// from their separate actual-plan artifacts. The computation itself remains
+// vendor- and mode-independent. `estimatedRows <= 0` is excluded too - a zero-row estimate
 // makes the ratio either undefined (0/0) or meaningless (n/0 -> Infinity),
 // neither of which is a fact worth handing to an AI.
 export function computeRowEstimateRatio(

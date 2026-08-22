@@ -316,6 +316,61 @@ describe('OraclePerformanceTuningProvider', () => {
     );
   });
 
+  it('backfills a uniquely resolved table mapping with ALLSTATS LAST runtime rows and filter evidence', async () => {
+    const planRows = [
+      { ID: 0, PARENT_ID: null, OPERATION: 'SELECT STATEMENT' },
+      {
+        ID: 1,
+        PARENT_ID: 0,
+        OPERATION: 'TABLE ACCESS',
+        OPTIONS: 'FULL',
+        OBJECT_OWNER: 'TESTUSER',
+        OBJECT_NAME: 'PERF_ORDERS',
+        OBJECT_ALIAS: '"O"@"SEL$1"',
+        OBJECT_TYPE: 'TABLE',
+        CARDINALITY: 25,
+      },
+    ];
+    const actualPlanText = `| Id  | Operation                               | Name              | Starts | E-Rows | A-Rows |
+|   0 | SELECT STATEMENT                        |                   |      1 |        |      5 |
+|*  5 |  TABLE ACCESS BY INDEX ROWID BATCHED    | PERF_ORDERS       |      1 |     25 |      5 |
+|*  6 |   INDEX RANGE SCAN                      | IDX_PERF_STATUS   |      1 |    100 |    100 |
+
+Predicate Information (identified by operation id):
+   5 - filter(("O"."TENANT_ID"=42))`;
+    const collectPerformanceTuningPlanRows = jest
+      .fn()
+      .mockResolvedValue({ rows: planRows.map((values) => ({ values })) });
+    const collectPerformanceTuningActualPlan = jest.fn().mockResolvedValue({
+      source: 'DBMS_XPLAN.DISPLAY_CURSOR ALLSTATS LAST',
+      format: 'text',
+      content: actualPlanText,
+    });
+    const provider = new OraclePerformanceTuningProvider(
+      makeDriver(jest.fn(), collectPerformanceTuningPlanRows, undefined, undefined, collectPerformanceTuningActualPlan),
+    );
+
+    const result = await provider.collectExecutionPlan(
+      {
+        databaseName: 'FREEPDB1',
+        statement: { sql: 'SELECT * FROM perf_orders WHERE tenant_id = 42', source: 'editor' },
+        plan: { mode: 'analyze', allowExecution: true },
+      },
+      { timeoutMs: 5000 },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.result!.planTableMappings[0]).toMatchObject({
+      tableName: 'PERF_ORDERS',
+      indexName: 'IDX_PERF_STATUS',
+      actualRows: 5,
+      rowEstimateRatio: 0.2,
+      tableAccessRows: expect.objectContaining({ value: 100, estimated: false }),
+      predicateFilterInputRows: expect.objectContaining({ value: 100, estimated: false }),
+      predicateFilterOutputRows: expect.objectContaining({ value: 5, estimated: false }),
+    });
+  });
+
   it('surfaces a failed EXPLAIN PLAN with detail instead of throwing', async () => {
     const collectPerformanceTuningPlanRows = jest
       .fn()

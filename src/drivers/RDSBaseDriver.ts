@@ -37,6 +37,7 @@ import {
 } from '../types';
 import {
   acceptResourceFilter,
+  classifyPerformanceTuningStatement,
   isSingleSelectStatement,
   normalizePerformanceTuningContextParams,
   setRdhMetaAndStatement,
@@ -825,6 +826,41 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         ),
       }));
 
+      // A material measured-vs-estimated row difference is useful evidence
+      // for a statistics/cardinality remedy, distinct from an index/access
+      // path recommendation.  Emit it only when both values are factual and
+      // the ratio is clearly large enough to avoid noisy diagnostics.
+      for (const mapping of planTableMappingsWithSelectivity) {
+        const ratio = mapping.rowEstimateRatio;
+        if (
+          mapping.estimatedRows === undefined ||
+          mapping.actualRows === undefined ||
+          ratio === undefined ||
+          (ratio < 10 && ratio > 0.1)
+        ) {
+          continue;
+        }
+        const candidatePredicateColumns = [
+          ...(mapping.filterColumns ?? []),
+          ...(mapping.joinColumns ?? []),
+        ];
+        diagnostics.push({
+          code: 'CARDINALITY_MISESTIMATE',
+          severity: 'info',
+          affectsCompleteness: false,
+          scope: 'executionPlan',
+          message: `Actual rows (${mapping.actualRows}) differ materially from estimated rows (${mapping.estimatedRows}) for ${mapping.tableName}.`,
+          schemaName: mapping.schemaName,
+          tableName: mapping.tableName,
+          cardinality: {
+            estimatedRows: mapping.estimatedRows,
+            actualRows: mapping.actualRows,
+            actualToEstimatedRatio: ratio,
+            candidatePredicateColumns: [...new Set(candidatePredicateColumns)],
+          },
+        });
+      }
+
       // Best-effort, non-fatal: a version-fetch failure should not turn an
       // otherwise-usable plan+table-resolution result into a hard error.
       let version: string | undefined;
@@ -856,6 +892,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         statement: {
           sql: normalized.statement.sql,
           source: normalized.statement.source,
+          ...classifyPerformanceTuningStatement(normalized.statement.sql),
           bindMetadata: normalized.plan.bindMetadata,
         },
         workload: normalized.statement.statistics,
@@ -867,6 +904,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           planningTimeMs: vendorPlan?.planningTimeMs,
           executionTimeMs: vendorPlan?.executionTimeMs,
           actualPlan: vendorPlan?.actualPlan,
+          runtimeObservations: vendorPlan?.runtimeObservations,
           // A Provider's own answer (MySQL, from real actual-plan evidence) wins
           // when it has one; every vendor otherwise falls back to the
           // generic, normalizedPlan-based walk (2026-08-21 follow-up,
