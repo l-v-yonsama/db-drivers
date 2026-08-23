@@ -1,5 +1,6 @@
 import {
   hasSetVariableClause,
+  isReadOnlyQuery,
   parseQuery,
   separateMultipleQueries,
   toSafeQueryForPgsqlAst,
@@ -7,6 +8,162 @@ import {
 
 describe('SQLHelper', () => {
   describe('parseQuery', () => {
+    describe('dialect regression matrix', () => {
+      it.each([
+        [
+          'PostgreSQL quoted identifier and $1 bind',
+          'SELECT * FROM "audit"."event log" WHERE id = $1',
+          'select',
+          'audit',
+          'event log',
+          true,
+        ],
+        [
+          'PostgreSQL CTE',
+          'WITH active_users AS (SELECT * FROM users) SELECT * FROM active_users',
+          'select',
+          undefined,
+          'active_users',
+          true,
+        ],
+        [
+          'PostgreSQL RETURNING mutation',
+          'INSERT INTO audit.events (id) VALUES ($1) RETURNING id',
+          'insert',
+          'audit',
+          'events',
+          false,
+        ],
+        [
+          'PostgreSQL multiple FROM tables',
+          'SELECT * FROM users u JOIN roles r ON r.id = u.role_id',
+          'select',
+          undefined,
+          'users',
+          true,
+          'roles',
+        ],
+        [
+          'MySQL positional bind and backtick identifier',
+          'SELECT * FROM `shop`.`order items` WHERE id = ?',
+          'select',
+          'shop',
+          'order items',
+          true,
+        ],
+        [
+          'MySQL LIMIT offset,count',
+          'SELECT * FROM orders LIMIT 10, 20',
+          'select',
+          undefined,
+          'orders',
+          true,
+        ],
+        [
+          'MySQL ON DUPLICATE KEY',
+          'INSERT INTO orders (id) VALUES (?) ON DUPLICATE KEY UPDATE id = VALUES(id)',
+          'insert',
+          undefined,
+          'orders',
+          false,
+        ],
+        [
+          'MySQL LOCK IN SHARE MODE',
+          'SELECT * FROM orders LOCK IN SHARE MODE',
+          'select',
+          undefined,
+          'orders',
+          true,
+        ],
+        [
+          'SQL Server local variable, TOP, and bracket identifier',
+          'SELECT TOP 10 * FROM [sales].[order items] WHERE id = @id',
+          'select',
+          'sales',
+          'order items',
+          true,
+        ],
+        [
+          'SQL Server table hint',
+          'SELECT * FROM [sales].[orders] WITH (NOLOCK)',
+          'select',
+          'sales',
+          'orders',
+          true,
+        ],
+        [
+          'SQL Server DATETIME2 type',
+          'CREATE TABLE [audit] (created_at DATETIME2)',
+          'create table',
+          undefined,
+          undefined,
+          false,
+        ],
+        [
+          'SQL Server system variable is not a bind',
+          'SELECT @@ROWCOUNT FROM [sales].[orders]',
+          'select',
+          'sales',
+          'orders',
+          true,
+        ],
+        [
+          'Oracle named bind and FETCH FIRST',
+          'SELECT * FROM "HR"."EMPLOYEES" WHERE employee_id = :id FETCH FIRST 1 ROWS ONLY',
+          'select',
+          'HR',
+          'EMPLOYEES',
+          true,
+        ],
+        [
+          'Oracle ROWNUM',
+          'SELECT * FROM employees WHERE ROWNUM <= :limit',
+          'select',
+          undefined,
+          'employees',
+          true,
+        ],
+        [
+          'Oracle quoted identifier',
+          'SELECT * FROM "HR"."Employee Log"',
+          'select',
+          'HR',
+          'Employee Log',
+          true,
+        ],
+        [
+          'Oracle named bind in mutation',
+          'UPDATE HR.EMPLOYEES SET salary = :salary WHERE employee_id = :id',
+          'update',
+          'HR',
+          'EMPLOYEES',
+          false,
+        ],
+      ])(
+        '%s',
+        (
+          _label,
+          sql,
+          type,
+          schemaName,
+          tableName,
+          readOnly,
+          additionalTableName = undefined,
+        ) => {
+          const parsed = parseQuery(sql);
+
+          expect(parsed?.ast.type).toBe(type);
+          expect(parsed?.names).toEqual(
+            tableName ? { schemaName, tableName } : undefined,
+          );
+          expect(parsed?.additionalNames?.[0]?.tableName).toBe(
+            additionalTableName,
+          );
+          expect(isReadOnlyQuery(sql)).toBe(readOnly);
+        },
+      );
+    });
+
     it('Calculate timestamp', () => {
       const sql =
         'select 1 from hoge where a_timestamp >= currenttimestamp - interval 1 hour';
@@ -258,6 +415,46 @@ EXIT
     });
   });
   describe('toSafeQueryForPgsqlAst', () => {
+    it('only transforms markers outside literals and comments', () => {
+      const safe = toSafeQueryForPgsqlAst(
+        "SELECT '? :id @owner DATETIME' AS note, ? FROM `orders` -- ? :id @owner\nWHERE id = :id AND owner = @owner",
+      );
+
+      expect(safe).toContain("'? :id @owner DATETIME'");
+      expect(safe).toContain('FROM "orders"');
+      expect(safe).toContain('WHERE id = $1 AND owner = $1');
+      expect(safe).not.toContain('-- ? :id @owner');
+    });
+
+    it('retains PostgreSQL casts and Oracle assignments', () => {
+      expect(toSafeQueryForPgsqlAst('SELECT now()::timestamp, :id := 1')).toBe(
+        'SELECT now()::timestamp, $1 := 1',
+      );
+    });
+
+    it('continues to transform rules that include a string literal', () => {
+      expect(toSafeQueryForPgsqlAst("WAITFOR DELAY '00:00:01'")).toBe(
+        'SELECT pg_sleep(1)',
+      );
+      expect(
+        toSafeQueryForPgsqlAst("SET GLOBAL sql_mode = 'TRADITIONAL'"),
+      ).toBe('SET sql_mode TO dummy');
+      expect(
+        toSafeQueryForPgsqlAst("SELECT DATEDIFF('day', starts_at, ends_at)"),
+      ).toBe('SELECT 1');
+    });
+
+    it('falls back to quoted schema and table names when parsing fails', () => {
+      const ast = parseQuery(
+        'SELECT * FROM "sales data"."order items" WHERE ???',
+      );
+
+      expect(ast).toEqual({
+        ast: { type: 'select' },
+        names: { schemaName: 'sales data', tableName: 'order items' },
+      });
+    });
+
     it('replaces the standalone DATETIME keyword with TIMESTAMP', () => {
       const sql = 'CREATE TABLE t (created_at DATETIME)';
       expect(toSafeQueryForPgsqlAst(sql)).toBe(
@@ -273,12 +470,12 @@ EXIT
     });
 
     it('does not touch SMALLDATETIME or DATETIMEOFFSET', () => {
-      expect(
-        toSafeQueryForPgsqlAst('CREATE TABLE t (c SMALLDATETIME)'),
-      ).toBe('CREATE TABLE t (c SMALLDATETIME)');
-      expect(
-        toSafeQueryForPgsqlAst('CREATE TABLE t (c DATETIMEOFFSET)'),
-      ).toBe('CREATE TABLE t (c DATETIMEOFFSET)');
+      expect(toSafeQueryForPgsqlAst('CREATE TABLE t (c SMALLDATETIME)')).toBe(
+        'CREATE TABLE t (c SMALLDATETIME)',
+      );
+      expect(toSafeQueryForPgsqlAst('CREATE TABLE t (c DATETIMEOFFSET)')).toBe(
+        'CREATE TABLE t (c DATETIMEOFFSET)',
+      );
     });
   });
 });
