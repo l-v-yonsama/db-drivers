@@ -25,7 +25,7 @@ import {
 import { extractOracleRuntimeObservations, resolveOracleActualPlanTableStats } from './oracleActualPlanTextParser';
 import { findUnresolvedIndexOnlyAccessKeys, OracleIndexTableKey, parseOraclePlan } from './oraclePlanParser';
 import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
-import { computeRowEstimateRatio } from './planNodeMath';
+import { applyActualPlanTableStats } from './planNodeMath';
 import {
   PerformanceTuningCollectionOptions,
   PerformanceTuningContextProvider,
@@ -213,42 +213,11 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
     const actualPlanTableStats = actualPlan
       ? resolveOracleActualPlanTableStats(actualPlan.content, planTableMappings)
       : undefined;
-    if (actualPlanTableStats && actualPlanTableStats.size > 0) {
-      planTableMappings = planTableMappings.map((mapping) => {
-        const stats = actualPlanTableStats.get(mapping.planNodeId);
-        if (!stats) {
-          return mapping;
-        }
-        return {
-          ...mapping,
-          indexName: stats.indexName ?? mapping.indexName,
-          actualRows: stats.actualRows,
-          rowEstimateRatio: computeRowEstimateRatio(mapping.estimatedRows, stats.actualRows),
-          tableAccessRows:
-            stats.tableAccessRows === undefined
-              ? undefined
-              : {
-                  value: stats.tableAccessRows,
-                  estimated: false,
-                  source: 'Oracle DBMS_XPLAN ALLSTATS LAST table/index access rows (per start)',
-                },
-          predicateFilterInputRows:
-            stats.predicateFilterInputRows === undefined
-              ? undefined
-              : {
-                  value: stats.predicateFilterInputRows,
-                  estimated: false,
-                  source: 'Oracle DBMS_XPLAN ALLSTATS LAST index rows before local filter (per start)',
-                },
-          predicateFilterOutputRows:
-            stats.predicateFilterOutputRows === undefined
-              ? undefined
-              : {
-                  value: stats.predicateFilterOutputRows,
-                  estimated: false,
-                  source: 'Oracle DBMS_XPLAN ALLSTATS LAST table-access rows after local filter (per start)',
-                },
-        };
+    if (actualPlanTableStats) {
+      planTableMappings = applyActualPlanTableStats(planTableMappings, actualPlanTableStats, {
+        tableAccessRows: 'Oracle DBMS_XPLAN ALLSTATS LAST table/index access rows (per start)',
+        predicateFilterInputRows: 'Oracle DBMS_XPLAN ALLSTATS LAST index rows before local filter (per start)',
+        predicateFilterOutputRows: 'Oracle DBMS_XPLAN ALLSTATS LAST table-access rows after local filter (per start)',
       });
     }
 

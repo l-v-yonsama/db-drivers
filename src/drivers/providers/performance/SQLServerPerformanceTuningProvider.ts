@@ -26,7 +26,7 @@ import {
 } from './sqlServerCatalogMapper';
 import { parseSqlServerPlan } from './sqlServerPlanParser';
 import { extractSqlServerRuntimeObservations, resolveSqlServerActualPlanTableStats } from './sqlServerActualPlanXmlParser';
-import { computeRowEstimateRatio } from './planNodeMath';
+import { applyActualPlanTableStats } from './planNodeMath';
 import {
   PerformanceTuningCollectionOptions,
   PerformanceTuningContextProvider,
@@ -178,42 +178,11 @@ export class SQLServerPerformanceTuningProvider implements PerformanceTuningCont
     const actualPlanTableStats = actualPlan
       ? resolveSqlServerActualPlanTableStats(actualPlan.content, planTableMappings)
       : undefined;
-    if (actualPlanTableStats && actualPlanTableStats.size > 0) {
-      planTableMappings = planTableMappings.map((mapping) => {
-        const stats = actualPlanTableStats.get(mapping.planNodeId);
-        if (!stats) {
-          return mapping;
-        }
-        return {
-          ...mapping,
-          indexName: stats.indexName ?? mapping.indexName,
-          actualRows: stats.actualRows,
-          rowEstimateRatio: computeRowEstimateRatio(mapping.estimatedRows, stats.actualRows),
-          tableAccessRows:
-            stats.tableAccessRows === undefined
-              ? undefined
-              : {
-                  value: stats.tableAccessRows,
-                  estimated: false,
-                  source: 'SQL Server SET STATISTICS XML ActualRowsRead (per execution)',
-                },
-          predicateFilterInputRows:
-            stats.predicateFilterInputRows === undefined
-              ? undefined
-              : {
-                  value: stats.predicateFilterInputRows,
-                  estimated: false,
-                  source: 'SQL Server SET STATISTICS XML ActualRowsRead before local predicate (per execution)',
-                },
-          predicateFilterOutputRows:
-            stats.predicateFilterOutputRows === undefined
-              ? undefined
-              : {
-                  value: stats.predicateFilterOutputRows,
-                  estimated: false,
-                  source: 'SQL Server SET STATISTICS XML ActualRows after local predicate (per execution)',
-                },
-        };
+    if (actualPlanTableStats) {
+      planTableMappings = applyActualPlanTableStats(planTableMappings, actualPlanTableStats, {
+        tableAccessRows: 'SQL Server SET STATISTICS XML ActualRowsRead (per execution)',
+        predicateFilterInputRows: 'SQL Server SET STATISTICS XML ActualRowsRead before local predicate (per execution)',
+        predicateFilterOutputRows: 'SQL Server SET STATISTICS XML ActualRows after local predicate (per execution)',
       });
     }
 

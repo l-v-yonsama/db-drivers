@@ -24,7 +24,7 @@ import {
 import { resolveMysqlActualPlanTableStats } from './mysqlActualPlanTextParser';
 import { parseMysqlPlan } from './mysqlPlanParser';
 import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
-import { computeRowEstimateRatio } from './planNodeMath';
+import { applyActualPlanTableStats } from './planNodeMath';
 import {
   PerformanceTuningCollectionOptions,
   PerformanceTuningContextProvider,
@@ -170,62 +170,34 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
       actualPlanText = typeof analyzeValue === 'string' ? analyzeValue : undefined;
     }
 
-    // 2026-08-21 follow-up (summary.md's Full Context improvement item 5,
-    // plus a follow-up gap found while manually verifying it in the
-    // Extension Development Host): resolved once here, not just for
-    // dominantCostPlanNode - the same tableAccess-line resolution also
-    // backfills each resolved table's real actualRows/rowEstimateRatio,
-    // which mysqlPlanParser.ts's visitTable() always leaves undefined (it
-    // has no EXPLAIN ANALYZE-equivalent data of its own to draw from - see
-    // that function's own comment). Without this, "Actual rows"/"Est./
-    // actual ratio" stayed blank in the rendered plan table even after a
-    // fully successful, fully-parsed EXPLAIN ANALYZE. Only resolvable when
-    // actualPlanText exists (analyze mode) and at least one "table access"
-    // line matches a table this same EXPLAIN FORMAT=JSON pass already
-    // resolved into planTableMappings (see mysqlActualPlanTextParser.ts's
-    // own doc comment for why this is done semantically, not by
-    // positionally aligning the two trees).
+    // Match text-plan runtime evidence to estimate mappings by table identity,
+    // never by the independent trees' positions.
     const actualPlanTableStats = actualPlanText
       ? resolveMysqlActualPlanTableStats(actualPlanText, planTableMappings)
       : undefined;
-    const planTableMappingsWithActualRows =
-      actualPlanTableStats && actualPlanTableStats.actualRowsByPlanNodeId.size > 0
-        ? planTableMappings.map((m) => {
-            const actualRows = actualPlanTableStats.actualRowsByPlanNodeId.get(m.planNodeId);
-            const filterRows = actualPlanTableStats.predicateFilterRowsByPlanNodeId.get(m.planNodeId);
-            return actualRows === undefined
-              ? m
-              : {
-                  ...m,
-                  actualRows,
-                  rowEstimateRatio: computeRowEstimateRatio(m.estimatedRows, actualRows),
-                  tableAccessRows:
-                    actualRows === undefined
-                      ? undefined
-                      : {
-                          value: actualRows,
-                          estimated: false,
-                          source: 'MySQL EXPLAIN ANALYZE table-access rows (per loop)',
-                        },
-                  predicateFilterInputRows:
-                    filterRows === undefined
-                      ? undefined
-                      : {
-                          value: filterRows.inputRows,
-                          estimated: false,
-                          source: 'MySQL EXPLAIN ANALYZE child table-access rows (per loop)',
-                        },
-                  predicateFilterOutputRows:
-                    filterRows === undefined
-                      ? undefined
-                      : {
-                          value: filterRows.outputRows,
-                          estimated: false,
-                          source: 'MySQL EXPLAIN ANALYZE Filter rows (per loop)',
-                        },
-                };
-          })
-        : planTableMappings;
+    const mysqlActualStatsByPlanNodeId = new Map(
+      Array.from(actualPlanTableStats?.actualRowsByPlanNodeId ?? []).map(([planNodeId, actualRows]) => {
+        const filterRows = actualPlanTableStats?.predicateFilterRowsByPlanNodeId.get(planNodeId);
+        return [
+          planNodeId,
+          {
+            actualRows,
+            tableAccessRows: actualRows,
+            predicateFilterInputRows: filterRows?.inputRows,
+            predicateFilterOutputRows: filterRows?.outputRows,
+          },
+        ] as const;
+      }),
+    );
+    const planTableMappingsWithActualRows = applyActualPlanTableStats(
+      planTableMappings,
+      mysqlActualStatsByPlanNodeId,
+      {
+        tableAccessRows: 'MySQL EXPLAIN ANALYZE table-access rows (per loop)',
+        predicateFilterInputRows: 'MySQL EXPLAIN ANALYZE child table-access rows (per loop)',
+        predicateFilterOutputRows: 'MySQL EXPLAIN ANALYZE Filter rows (per loop)',
+      },
+    );
 
     return {
       ok: true,

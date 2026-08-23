@@ -6,6 +6,7 @@
 import type {
   DominantCostPlanNodeRef,
   MetricValue,
+  PlanTableMapping,
 } from '../../../types/drivers/performance/PerformanceTuningContext';
 import type { PlanNode } from '../../../types/drivers/performance/PlanNode';
 
@@ -25,10 +26,54 @@ export function computeRowEstimateRatio(
   return actualRows / estimatedRows;
 }
 
-// Generic "self cost" walk shared by findDominantCostPlanNode() below and
-// mysqlActualPlanTextParser.ts's resolveDominantCostFromMysqlActualPlanText()
-// (2026-08-21 follow-up, summary.md's Full Context improvement item 5) - one
-// recursive algorithm, reused over two different node shapes (PlanNode's
+// Runtime artifacts are vendor-specific, but once a parser has conservatively
+// matched one to a plan mapping, enriching that mapping follows the same
+// provenance rules for every vendor.
+export type ActualPlanTableStat = {
+  actualRows?: number;
+  tableAccessRows?: number;
+  predicateFilterInputRows?: number;
+  predicateFilterOutputRows?: number;
+  indexName?: string;
+};
+
+export type ActualPlanMetricSources = {
+  tableAccessRows: string;
+  predicateFilterInputRows: string;
+  predicateFilterOutputRows: string;
+};
+
+function actualMetric(value: number | undefined, source: string): MetricValue<number> | undefined {
+  return value === undefined ? undefined : { value, estimated: false, source };
+}
+
+export function applyActualPlanTableStats(
+  mappings: PlanTableMapping[],
+  statsByPlanNodeId: ReadonlyMap<string, ActualPlanTableStat>,
+  sources: ActualPlanMetricSources,
+): PlanTableMapping[] {
+  if (statsByPlanNodeId.size === 0) {
+    return mappings;
+  }
+  return mappings.map((mapping) => {
+    const stats = statsByPlanNodeId.get(mapping.planNodeId);
+    if (!stats) {
+      return mapping;
+    }
+    return {
+      ...mapping,
+      indexName: stats.indexName ?? mapping.indexName,
+      actualRows: stats.actualRows,
+      rowEstimateRatio: computeRowEstimateRatio(mapping.estimatedRows, stats.actualRows),
+      tableAccessRows: actualMetric(stats.tableAccessRows, sources.tableAccessRows),
+      predicateFilterInputRows: actualMetric(stats.predicateFilterInputRows, sources.predicateFilterInputRows),
+      predicateFilterOutputRows: actualMetric(stats.predicateFilterOutputRows, sources.predicateFilterOutputRows),
+    };
+  });
+}
+
+// Generic "self cost" walk shared by findDominantCostPlanNode() and
+// mysqlActualPlanTextParser.ts. It is reused over two node shapes (PlanNode's
 // `children: PlanNode[]` tree, and the MySQL actual-text parser's own small
 // depth-reconstructed tree) via the accessor callbacks, rather than writing
 // the same recursion twice.
