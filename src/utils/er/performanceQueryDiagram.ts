@@ -1,5 +1,6 @@
 import {
   ConstraintDefinition,
+  IndexDefinition,
   PerformanceTuningContext,
   PlanTableMapping,
   TableTuningContext,
@@ -9,7 +10,21 @@ import { parseQuery } from '../../helpers/sql/queryParser';
 export type PerformanceQueryDiagramResult = {
   /** Mermaid source without a Markdown fence. */
   mermaid: string;
+  /** Indexes that participate in the query's predicates, joins, grouping, sorting, or plan access. */
+  relevantIndexes: PerformanceQueryRelevantIndex[];
   warnings: string[];
+};
+
+export type PerformanceQueryRelevantIndex = {
+  schemaName?: string;
+  tableName: string;
+  alias?: string;
+  indexName: string;
+  columns: string[];
+  includedColumns?: string[];
+  unique: boolean;
+  primary: boolean;
+  relevance: string[];
 };
 
 type DiagramEntity = {
@@ -416,6 +431,60 @@ function renderSqlJoinRelationships(
   return lines;
 }
 
+function indexRelevance(entity: DiagramEntity, index: IndexDefinition): string[] {
+  const relevance = new Set<string>();
+  const indexColumns = new Set(
+    index.columns.flatMap((column) =>
+      column.columnName ? [column.columnName.toLocaleLowerCase()] : [],
+    ),
+  );
+  const touches = (columns: string[] | undefined, label: string): void => {
+    if (columns?.some((column) => indexColumns.has(column.toLocaleLowerCase()))) {
+      relevance.add(label);
+    }
+  };
+  entity.mappings.forEach((mapping) => {
+    if (eq(mapping.indexName, index.indexName)) relevance.add('plan access');
+    touches(mapping.filterColumns, 'WHERE');
+    touches(mapping.joinColumns, 'JOIN');
+    touches(mapping.groupColumns, 'GROUP BY');
+    touches(mapping.sortColumns, 'ORDER BY');
+  });
+  return [...relevance];
+}
+
+function indexColumnLabels(index: IndexDefinition): string[] {
+  return index.columns.flatMap((column) =>
+    column.columnName ? [column.columnName] : column.expression ? [column.expression] : [],
+  );
+}
+
+function collectRelevantIndexes(entities: DiagramEntity[]): PerformanceQueryRelevantIndex[] {
+  const result: PerformanceQueryRelevantIndex[] = [];
+  const seen = new Set<string>();
+  for (const entity of entities) {
+    for (const index of entity.table?.definition?.indexes ?? []) {
+      const relevance = indexRelevance(entity, index);
+      if (relevance.length === 0) continue;
+      const key = `${entity.id.toLocaleLowerCase()}.${index.indexName.toLocaleLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push({
+        schemaName: entity.schemaName,
+        tableName: entity.tableName,
+        alias: entity.alias,
+        indexName: index.indexName,
+        columns: indexColumnLabels(index),
+        includedColumns: index.includedColumns,
+        unique: index.unique,
+        primary: index.primary === true,
+        relevance,
+      });
+    }
+  }
+  return result;
+}
+
 /**
  * Builds a conservative, query-scoped ER diagram from already collected
  * facts. Declared foreign keys are preferred; simple equality JOINs are also
@@ -460,5 +529,5 @@ export function createPerformanceQueryDiagram(
     ...entities.flatMap(renderEntity),
     ...relationshipLines,
   ];
-  return { mermaid: lines.join('\n'), warnings };
+  return { mermaid: lines.join('\n'), relevantIndexes: collectRelevantIndexes(entities), warnings };
 }

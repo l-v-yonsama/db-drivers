@@ -92,6 +92,7 @@ const LINE_GROUP = {
 // listed roughly most- to least-specific for readability.
 const TABLE_ACCESS_PATTERNS: Array<{ pattern: RegExp; hasIndex: boolean }> = [
   { pattern: /^Covering index lookup on (\S+) using (\S+)/i, hasIndex: true },
+  { pattern: /^Covering index scan on (\S+) using (\S+)/i, hasIndex: true },
   { pattern: /^Single-row index lookup on (\S+) using (\S+)/i, hasIndex: true },
   { pattern: /^Index range scan on (\S+) using (\S+)/i, hasIndex: true },
   { pattern: /^Index scan on (\S+) using (\S+)/i, hasIndex: true },

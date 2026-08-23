@@ -217,19 +217,42 @@ function collectTableAccessNodes(nodes: OracleActualPlanNode[]): OracleActualPla
   return found;
 }
 
+// An INDEX FAST FULL SCAN can be the physical relation access itself (for
+// example COUNT(*) can be satisfied from an index) and therefore have no
+// TABLE ACCESS parent in DISPLAY_CURSOR. Do not collect an INDEX child below
+// TABLE ACCESS here: that child is already used as the table access's input
+// row source, and treating it as a second independent candidate would make
+// the mapping ambiguous.
+function collectStandaloneIndexAccessNodes(nodes: OracleActualPlanNode[]): OracleActualPlanNode[] {
+  const found: OracleActualPlanNode[] = [];
+  const visit = (node: OracleActualPlanNode, belowTableAccess: boolean): void => {
+    const isTableAccess = /^TABLE ACCESS\b/i.test(node.operation);
+    if (!belowTableAccess && !isTableAccess && /^INDEX\b/i.test(node.operation) && node.name) {
+      found.push(node);
+    }
+    node.children.forEach((child) => visit(child, belowTableAccess || isTableAccess));
+  };
+  nodes.forEach((node) => visit(node, false));
+  return found;
+}
+
 /**
  * Resolves only a one-to-one table-name match between DISPLAY_CURSOR's
- * runtime table access and the structured PLAN_TABLE mapping. A self join,
- * a same-named table from multiple schemas, or repeated physical access is
- * deliberately left unresolved rather than guessed. `A-Rows / Starts`
- * normalizes Oracle's cumulative row-source counter to the same per-start
- * grain as the optimizer's E-Rows estimate.
+ * runtime table access and the structured PLAN_TABLE mapping. If there is
+ * no runtime TABLE ACCESS at all, an index-only access can instead resolve
+ * by a one-to-one index-name match. A self join, a same-named table from
+ * multiple schemas, or repeated physical access is deliberately left
+ * unresolved rather than guessed. `A-Rows / Starts` normalizes Oracle's
+ * cumulative row-source counter to the same per-start grain as the
+ * optimizer's E-Rows estimate.
  */
 export function resolveOracleActualPlanTableStats(
   actualPlanText: string,
   planTableMappings: PlanTableMapping[],
 ): Map<string, OracleActualPlanTableStat> {
-  const actualNodes = collectTableAccessNodes(buildActualPlanTree(actualPlanText));
+  const actualPlanNodes = buildActualPlanTree(actualPlanText);
+  const actualNodes = collectTableAccessNodes(actualPlanNodes);
+  const standaloneIndexNodes = collectStandaloneIndexAccessNodes(actualPlanNodes);
   const filterIds = filterOperationIds(actualPlanText);
   const mappingsByTable = new Map<string, PlanTableMapping[]>();
   for (const mapping of planTableMappings) {
@@ -246,6 +269,25 @@ export function resolveOracleActualPlanTableStats(
     }
   }
 
+  // Index-only operations have no table name in DISPLAY_CURSOR, but are safe
+  // to attach when exactly one existing PLAN_TABLE mapping uses that index.
+  // This deliberately does not infer a tableAccessRows value: A-Rows on a
+  // filtered INDEX FAST FULL SCAN is its output, not the number of index
+  // entries read before the filter.
+  const mappingsByIndex = new Map<string, PlanTableMapping[]>();
+  for (const mapping of planTableMappings) {
+    if (!mapping.indexName) continue;
+    const key = mapping.indexName.toLowerCase();
+    mappingsByIndex.set(key, [...(mappingsByIndex.get(key) ?? []), mapping]);
+  }
+  for (const node of standaloneIndexNodes) {
+    const candidates = mappingsByIndex.get(node.name!.toLowerCase()) ?? [];
+    if (candidates.length === 1) {
+      const mapping = candidates[0];
+      nodesByMappingId.set(mapping.planNodeId, [...(nodesByMappingId.get(mapping.planNodeId) ?? []), node]);
+    }
+  }
+
   const result = new Map<string, OracleActualPlanTableStat>();
   for (const mapping of planTableMappings) {
     const candidates = nodesByMappingId.get(mapping.planNodeId) ?? [];
@@ -254,21 +296,24 @@ export function resolveOracleActualPlanTableStats(
     }
     const node = candidates[0];
     const actualRows = rowsPerExecution(node.actualRows, node.starts);
+    const isStandaloneIndexAccess = standaloneIndexNodes.includes(node);
     const indexChildren = node.children.filter((child) => /^INDEX\b/i.test(child.operation));
     const indexChild = indexChildren.length === 1 ? indexChildren[0] : undefined;
     const indexRows = indexChild ? rowsPerExecution(indexChild.actualRows, indexChild.starts) : undefined;
     const hasLocalFilter = filterIds.has(node.id);
-    const tableAccessRows = indexRows ?? (hasLocalFilter ? undefined : actualRows);
+    const tableAccessRows = isStandaloneIndexAccess
+      ? undefined
+      : indexRows ?? (hasLocalFilter ? undefined : actualRows);
 
-    if (actualRows === undefined && tableAccessRows === undefined && !indexChild?.name) {
+    if (actualRows === undefined && tableAccessRows === undefined && !indexChild?.name && !node.name) {
       continue;
     }
     result.set(mapping.planNodeId, {
       actualRows,
       tableAccessRows,
-      predicateFilterInputRows: hasLocalFilter ? indexRows : undefined,
+      predicateFilterInputRows: hasLocalFilter && !isStandaloneIndexAccess ? indexRows : undefined,
       predicateFilterOutputRows: hasLocalFilter ? actualRows : undefined,
-      indexName: indexChild?.name,
+      indexName: isStandaloneIndexAccess ? node.name : indexChild?.name,
     });
   }
   return result;

@@ -29,7 +29,14 @@ function context(): PerformanceTuningContext {
               constraintName: 'orders_customer_fk',
             },
           ],
-          indexes: [],
+          indexes: [
+            {
+              indexName: 'idx_orders_status_customer',
+              unique: false,
+              primary: false,
+              columns: [{ columnName: 'status', direction: 'asc' }, { columnName: 'customer_id', direction: 'asc' }],
+            },
+          ],
         },
       },
       {
@@ -88,6 +95,15 @@ describe('createPerformanceQueryDiagram', () => {
     expect(result?.mermaid).toContain('--||');
     expect(result?.mermaid).not.toContain('unused_payload');
     expect(result?.warnings).toEqual([]);
+    expect(result?.relevantIndexes).toEqual([
+      expect.objectContaining({
+        tableName: 'orders',
+        alias: 'o',
+        indexName: 'idx_orders_status_customer',
+        columns: ['status', 'customer_id'],
+        relevance: expect.arrayContaining(['WHERE', 'JOIN']),
+      }),
+    ]);
   });
 
   it('keeps self-join aliases separate and refuses to guess an ambiguous FK endpoint', () => {

@@ -29,6 +29,22 @@ const MAPPINGS: PlanTableMapping[] = [
   { planNodeId: 'n5', schemaName: 'PERFLAB', tableName: 'CUSTOMERS', alias: 'C', estimatedRows: 30000 },
 ];
 
+const INDEX_ONLY_ACTUAL_PLAN = `Plan hash value: 2146646389
+
+---------------------------------------------------------------------------------------------------------
+| Id  | Operation             | Name                  | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+---------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT      |                       |      1 |        |      1 |00:00:00.04 |     807 |
+|   1 |  SORT AGGREGATE       |                       |      1 |      1 |      1 |00:00:00.04 |     807 |
+|*  2 |   INDEX FAST FULL SCAN| IDX_ORDERS_CREATED_AT |      1 |   3000 |    411 |00:00:00.04 |     807 |
+---------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - filter(TRUNC(INTERNAL_FUNCTION("O"."CREATED_AT"))=TO_DATE(' 2025-12-15 00:00:00',
+              'syyyy-mm-dd hh24:mi:ss'))`;
+
 describe('resolveOracleActualPlanTableStats', () => {
   it('resolves a unique table access and normalizes A-Rows by Starts', () => {
     const stats = resolveOracleActualPlanTableStats(ACTUAL_PLAN, MAPPINGS);
@@ -60,6 +76,25 @@ describe('resolveOracleActualPlanTableStats', () => {
     const stats = resolveOracleActualPlanTableStats(ACTUAL_PLAN, MAPPINGS);
     expect(stats.get('n5')?.predicateFilterInputRows).toBeUndefined();
     expect(stats.get('n5')?.predicateFilterOutputRows).toBeUndefined();
+  });
+
+  it('resolves a standalone index-only scan by its unique index name without inventing input rows', () => {
+    const stats = resolveOracleActualPlanTableStats(INDEX_ONLY_ACTUAL_PLAN, [
+      {
+        planNodeId: 'n2',
+        schemaName: 'PERFLAB',
+        tableName: 'ORDERS',
+        alias: 'O',
+        indexName: 'IDX_ORDERS_CREATED_AT',
+        estimatedRows: 3000,
+      },
+    ]);
+
+    expect(stats.get('n2')).toEqual({
+      actualRows: 411,
+      predicateFilterOutputRows: 411,
+      indexName: 'IDX_ORDERS_CREATED_AT',
+    });
   });
 
   it('keeps a compact dominant runtime operation without inventing a plan-node match', () => {

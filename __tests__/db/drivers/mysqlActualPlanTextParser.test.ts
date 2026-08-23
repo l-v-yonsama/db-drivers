@@ -64,6 +64,11 @@ describe('parseMysqlActualPlanText', () => {
     );
     expect(coveringLines[0]).toMatchObject({ kind: 'tableAccess', alias: 'p', indexName: 'idx_products_category' });
 
+    const coveringScanLines = parseMysqlActualPlanText(
+      '-> Covering index scan on o using idx_orders_created_at  (actual time=1..2 rows=300000 loops=1)',
+    );
+    expect(coveringScanLines[0]).toMatchObject({ kind: 'tableAccess', alias: 'o', indexName: 'idx_orders_created_at' });
+
     const rangeLines = parseMysqlActualPlanText(
       '-> Index range scan on o using idx_orders_created_at  (actual time=1..2 rows=3 loops=1)',
     );
@@ -167,5 +172,21 @@ describe('resolveMysqlActualPlanTableStats', () => {
     ]);
     expect(stats.actualRowsByPlanNodeId.size).toBe(0);
     expect(stats.dominantCostPlanNode).toBeUndefined();
+  });
+
+  it('maps a covering index scan and its single-table Filter to actual row metrics', () => {
+    const actualPlan = `-> Aggregate: count(0)  (actual time=69..69 rows=1 loops=1)
+    -> Filter: (cast(o.created_at as date) = '2025-12-15')  (actual time=67.9..69 rows=411 loops=1)
+        -> Covering index scan on o using idx_orders_created_at  (actual time=1.55..47.7 rows=300000 loops=1)`;
+    const mappings: PlanTableMapping[] = [
+      { planNodeId: 'n0', tableName: 'o', indexName: 'idx_orders_created_at', estimatedRows: 294372 },
+    ];
+
+    const stats = resolveMysqlActualPlanTableStats(actualPlan, mappings);
+    expect(stats.actualRowsByPlanNodeId.get('n0')).toBe(300000);
+    expect(stats.predicateFilterRowsByPlanNodeId.get('n0')).toEqual({
+      inputRows: 300000,
+      outputRows: 411,
+    });
   });
 });
