@@ -489,6 +489,7 @@ describe('AwsDynamoDBDriver', () => {
           IndexArn: expect.any(String),
           IndexSizeBytes: expect.any(Number),
           ItemCount: 6,
+          Projection: { ProjectionType: 'ALL' },
         });
         expect(food.attr?.gsi[0]).toEqual({
           IndexName: 'iCountry',
@@ -497,6 +498,9 @@ describe('AwsDynamoDBDriver', () => {
           IndexSizeBytes: expect.any(Number),
           ItemCount: 6,
           IndexStatus: 'ACTIVE',
+          Projection: { ProjectionType: 'ALL' },
+          ReadCapacityUnits: 10,
+          WriteCapacityUnits: 5,
         });
         // console.log(food.getProperties());
 

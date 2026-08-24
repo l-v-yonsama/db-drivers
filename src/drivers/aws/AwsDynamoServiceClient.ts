@@ -288,6 +288,9 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
           TableSizeBytes: table.TableSizeBytes,
           ItemCount: table.ItemCount,
           TableArn: table.TableArn,
+          BillingMode: table.BillingModeSummary?.BillingMode,
+          OnDemandMaxReadRequestUnits: table.OnDemandThroughput?.MaxReadRequestUnits,
+          OnDemandMaxWriteRequestUnits: table.OnDemandThroughput?.MaxWriteRequestUnits,
           ttl: table.ttl,
           lsi:
             table.LocalSecondaryIndexes?.map((it) => {
@@ -297,6 +300,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
                 IndexSizeBytes: it.IndexSizeBytes,
                 ItemCount: it.ItemCount,
                 IndexArn: it.IndexArn,
+                Projection: it.Projection,
               };
             }) ?? [],
           gsi:
@@ -308,6 +312,11 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
                 IndexSizeBytes: it.IndexSizeBytes,
                 ItemCount: it.ItemCount,
                 IndexArn: it.IndexArn,
+                Projection: it.Projection,
+                ReadCapacityUnits: it.ProvisionedThroughput?.ReadCapacityUnits,
+                WriteCapacityUnits: it.ProvisionedThroughput?.WriteCapacityUnits,
+                OnDemandMaxReadRequestUnits: it.OnDemandThroughput?.MaxReadRequestUnits,
+                OnDemandMaxWriteRequestUnits: it.OnDemandThroughput?.MaxWriteRequestUnits,
               };
             }) ?? [],
         });

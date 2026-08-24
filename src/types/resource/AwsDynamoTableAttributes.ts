@@ -54,6 +54,12 @@ export type AwsDynamoTableAttributes = {
    */
   TableArn?: string;
 
+  /** PROVISIONED or PAY_PER_REQUEST, from DescribeTable's BillingModeSummary. */
+  BillingMode?: 'PROVISIONED' | 'PAY_PER_REQUEST';
+  /** Only present for an on-demand table that has an explicit max request-unit cap set. */
+  OnDemandMaxReadRequestUnits?: number;
+  OnDemandMaxWriteRequestUnits?: number;
+
   lsi: LSI[];
 
   gsi: GSI[];
@@ -63,12 +69,19 @@ export type AwsDynamoTableAttributes = {
   [key: string]: any;
 };
 
+export type IndexProjection = {
+  ProjectionType?: 'ALL' | 'KEYS_ONLY' | 'INCLUDE';
+  /** Only meaningful (and only ever populated) when ProjectionType is INCLUDE. */
+  NonKeyAttributes?: string[];
+};
+
 export type LSI = {
   IndexName?: string;
   KeySchema?: KeySchemaElement[];
   IndexSizeBytes?: number;
   ItemCount?: number;
   IndexArn?: string;
+  Projection?: IndexProjection;
 };
 
 export type GSI = {
@@ -78,6 +91,12 @@ export type GSI = {
   IndexSizeBytes?: number;
   ItemCount?: number;
   IndexArn?: string;
+  Projection?: IndexProjection;
+  /** GSI only - an LSI always shares the base table's throughput. */
+  ReadCapacityUnits?: number;
+  WriteCapacityUnits?: number;
+  OnDemandMaxReadRequestUnits?: number;
+  OnDemandMaxWriteRequestUnits?: number;
 };
 
 export type KeySchemaElement = {
