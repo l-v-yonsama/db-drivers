@@ -111,3 +111,74 @@ export function aggregateConsumedCapacity(
 
   return breakdown;
 }
+
+// ---------------------------------------------------------------------------
+// Execution-evidence tracking (§7.5 "通常実行からの証拠保存"). Ordinary
+// PartiQL/Query/Scan execution in AwsDynamoServiceClient shares the exact
+// same do/while pagination shape in five different methods - this tracker
+// centralizes the bookkeeping (request/retry count, Consumed Capacity
+// accumulation, native-API Count/ScannedCount summation) so each call site
+// only has to call recordResponse() once per page and build() once at the end.
+// ---------------------------------------------------------------------------
+
+export type DynamoDbExecutionMeta = {
+  requestCount: number;
+  retryCount: number;
+  // true iff the API still had more data (a LastEvaluatedKey/NextToken
+  // remained) when the loop stopped - whether that's because a caller
+  // Limit was reached or the loop's own page cap kicked in first.
+  hasMorePages: boolean;
+  // Only ever set by a native Query/Scan response (never ExecuteStatement -
+  // see AwsDynamoServiceClient.ts's own note: PartiQL's response type has no
+  // Count/ScannedCount fields at all, so these must stay undefined for it
+  // rather than being estimated from Items.length).
+  scannedCount?: number;
+  reportedCount?: number;
+  capacityBreakdown?: DynamoDbCapacityBreakdown;
+};
+
+export class DynamoDbExecutionMetaTracker {
+  private requestCount = 0;
+  private retryCount = 0;
+  private scannedCount: number | undefined;
+  private reportedCount: number | undefined;
+  private readonly capacityResponses: RawConsumedCapacity[] = [];
+
+  // `attempts` is the SDK's total send attempts including the first
+  // (non-retried) one - 1 means "no retry", so retryCount accumulates
+  // `attempts - 1`, floored at 0 defensively.
+  recordResponse(
+    response: {
+      $metadata?: { attempts?: number };
+      ConsumedCapacity?: RawConsumedCapacity;
+      Count?: number;
+      ScannedCount?: number;
+    },
+    options?: { trackNativeCounts?: boolean },
+  ): void {
+    this.requestCount += 1;
+    this.retryCount += Math.max(0, (response.$metadata?.attempts ?? 1) - 1);
+    if (response.ConsumedCapacity) {
+      this.capacityResponses.push(response.ConsumedCapacity);
+    }
+    if (options?.trackNativeCounts) {
+      if (response.Count !== undefined) {
+        this.reportedCount = (this.reportedCount ?? 0) + response.Count;
+      }
+      if (response.ScannedCount !== undefined) {
+        this.scannedCount = (this.scannedCount ?? 0) + response.ScannedCount;
+      }
+    }
+  }
+
+  build(hasMorePages: boolean): DynamoDbExecutionMeta {
+    return {
+      requestCount: this.requestCount,
+      retryCount: this.retryCount,
+      hasMorePages,
+      scannedCount: this.scannedCount,
+      reportedCount: this.reportedCount,
+      capacityBreakdown: aggregateConsumedCapacity(this.capacityResponses),
+    };
+  }
+}

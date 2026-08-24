@@ -814,6 +814,28 @@ describe('AwsDynamoDBDriver', () => {
         Count: 1003,
         Items: expect.any(Array),
         CapacityUnits: expect.any(Number),
+        LastEvaluatedKey: undefined,
+        // 1003 records exceed one page's 1MB response limit even with no
+        // caller Limit, so this is 2 requests - and the loop's own
+        // `while (LastEvaluatedKey)` condition means it only stops once
+        // AWS itself reports no more data, so hasMorePages is false.
+        meta: {
+          requestCount: 2,
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: 1003,
+          reportedCount: 1003,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
     });
 
@@ -827,6 +849,23 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: { Id: expect.any(Number) },
         CapacityUnits: expect.any(Number),
+        meta: {
+          requestCount: 2,
+          retryCount: 0,
+          hasMorePages: true,
+          scannedCount: 1000,
+          reportedCount: 1000,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
 
       const r2 = await driver.dynamoClient.scanItems({
@@ -838,6 +877,24 @@ describe('AwsDynamoDBDriver', () => {
         Count: 3,
         Items: expect.any(Array),
         CapacityUnits: expect.any(Number),
+        LastEvaluatedKey: undefined,
+        meta: {
+          requestCount: expect.any(Number),
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: 3,
+          reportedCount: 3,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
     });
 
@@ -851,6 +908,23 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: { Id: expect.any(Number) },
         CapacityUnits: expect.any(Number),
+        meta: {
+          requestCount: 1,
+          retryCount: 0,
+          hasMorePages: true,
+          scannedCount: 1,
+          reportedCount: 1,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
     });
   });
@@ -875,6 +949,23 @@ describe('AwsDynamoDBDriver', () => {
         ],
         CapacityUnits: expect.any(Number),
         LastEvaluatedKey: undefined,
+        meta: {
+          requestCount: 1,
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: 1,
+          reportedCount: 1,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
     });
   });
@@ -888,8 +979,27 @@ describe('AwsDynamoDBDriver', () => {
         Count: 1003,
         Items: expect.any(Array),
         CapacityUnits: expect.any(Number),
+        LastEvaluatedKey: undefined,
+        NextToken: undefined,
         extra: {
           allAttributeNames: expect.any(Array),
+        },
+        // PartiQL's ExecuteStatement response has no Count/ScannedCount
+        // field at all (confirmed against this LocalStack instance too),
+        // so scannedCount/reportedCount stay undefined - never estimated
+        // from Items.length. This LocalStack version also does not surface
+        // a Table/Index Consumed Capacity breakdown for ExecuteStatement,
+        // unlike native Query/Scan above - capacityBreakdown is undefined
+        // as a result (a LocalStack fidelity gap, not a bug: see
+        // aggregateConsumedCapacity's dedicated unit tests with synthetic
+        // data in dynamoDbCapacity.test.ts for the breakdown path itself).
+        meta: {
+          requestCount: 2,
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
         },
       });
     });
@@ -908,6 +1018,14 @@ describe('AwsDynamoDBDriver', () => {
         extra: {
           allAttributeNames: expect.any(Array),
         },
+        meta: {
+          requestCount: 2,
+          retryCount: 0,
+          hasMorePages: true,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
+        },
       });
 
       const r2 = await driver.dynamoClient.executeStatementAtDocClient({
@@ -919,9 +1037,18 @@ describe('AwsDynamoDBDriver', () => {
         Count: 3,
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
+        NextToken: undefined,
         CapacityUnits: expect.any(Number),
         extra: {
           allAttributeNames: expect.any(Array),
+        },
+        meta: {
+          requestCount: expect.any(Number),
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
         },
       });
     });
@@ -940,6 +1067,14 @@ describe('AwsDynamoDBDriver', () => {
         extra: {
           allAttributeNames: expect.any(Array),
         },
+        meta: {
+          requestCount: 1,
+          retryCount: 0,
+          hasMorePages: true,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
+        },
       });
     });
 
@@ -956,6 +1091,14 @@ describe('AwsDynamoDBDriver', () => {
         CapacityUnits: expect.any(Number),
         extra: {
           allAttributeNames: expect.any(Array),
+        },
+        meta: {
+          requestCount: 1,
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
         },
       });
     });

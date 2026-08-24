@@ -16,6 +16,10 @@ import {
   AttributeValue,
   ScanCommand as OriginalScanCommand,
   DescribeTimeToLiveCommand,
+  TimeToLiveDescription,
+  DescribeContributorInsightsCommand,
+  ContributorInsightsStatus,
+  ContributorInsightsMode,
 } from '@aws-sdk/client-dynamodb';
 import {
   DeleteCommand,
@@ -64,6 +68,12 @@ import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 import { parseQuery } from '../../helpers';
 import { unmarshall, marshall } from '@aws-sdk/util-dynamodb';
+import {
+  aggregateConsumedCapacity,
+  DynamoDbExecutionMeta,
+  DynamoDbExecutionMetaTracker,
+} from '../providers/performance/dynamoDbCapacity';
+import { DynamoDbCapacityBreakdown } from '../../types/drivers/performance/DynamoDbPerformanceTuningContext';
 
 export type QueryItemsAtClientInputParams = OriginalQueryCommandInput;
 
@@ -71,6 +81,45 @@ export type TableDescWithExtraAttrs = TableDescription & {
   ExtraItems?: { name: string; value: AttributeValue }[];
   ttl?: TTLDesc;
 };
+
+// §7.4's hard cap on Run Observed Read - both the default and the ceiling a
+// caller's own maxEvaluatedItems is clamped to. Not configurable past this
+// from any caller.
+export const DYNAMODB_OBSERVED_READ_MAX_ITEMS = 100;
+
+export type DynamoDbObservedReadResult = {
+  returnedItemCount: number;
+  // Only ever set for a native Query observation - PartiQL's
+  // ExecuteStatement response has no ScannedCount field (never estimated).
+  scannedItemCount?: number;
+  hasMorePages: boolean;
+  capacityBreakdown?: DynamoDbCapacityBreakdown;
+  clientElapsedTimeMs: number;
+  requestCount: 1;
+  retryCount: number;
+};
+
+// Races `promise` against a plain timer so a caller-specified timeoutMs is
+// enforced regardless of whether the underlying SDK request handler honors
+// a per-call request-timeout option. Does not abort the underlying request
+// itself - callers that also pass an AbortSignal get that cancellation
+// semantics separately, from the SDK's own abortSignal support.
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number | undefined): Promise<T> {
+  if (!timeoutMs) return promise;
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Run Observed Read timed out.')), timeoutMs);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
 export class AwsDynamoServiceClient extends AwsServiceClient {
   client: DynamoDBClient;
   docClient: DynamoDBDocumentClient;
@@ -133,6 +182,40 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       }),
     );
     return res.Table.ItemCount;
+  }
+
+  // Standalone Describe* helpers for the DynamoDB performance tuning
+  // static collection sequence (§7.1 steps 4/6) - deliberately separate
+  // from listTables()'s own inline DescribeTable/DescribeTimeToLive calls
+  // (used for the resource-tree/schema-load path) rather than a shared
+  // refactor, so neither path can regress the other. None of these read
+  // item data.
+
+  async describeTable(tableName: string): Promise<TableDescription | undefined> {
+    const res = await this.client.send(new DescribeTableCommand({ TableName: tableName }));
+    return res.Table;
+  }
+
+  async describeTimeToLive(tableName: string): Promise<TimeToLiveDescription | undefined> {
+    const res = await this.client.send(new DescribeTimeToLiveCommand({ TableName: tableName }));
+    return res.TimeToLiveDescription;
+  }
+
+  // Contributor Insights is only ever enabled per-table or per-GSI, never
+  // per-LSI (AWS API constraint - omit indexName for the table itself). A
+  // table/index with it never enabled still responds successfully with
+  // ContributorInsightsStatus: 'DISABLED', not an exception - that is the
+  // common case, not a collection failure. v1 only ever reads this status/
+  // mode summary, never a key report (§4's "Contributor Insights の key 値
+  // は機微情報になり得る").
+  async describeContributorInsights(
+    tableName: string,
+    indexName?: string,
+  ): Promise<{ status?: ContributorInsightsStatus; mode?: ContributorInsightsMode }> {
+    const res = await this.client.send(
+      new DescribeContributorInsightsCommand({ TableName: tableName, IndexName: indexName }),
+    );
+    return { status: res.ContributorInsightsStatus, mode: res.ContributorInsightsMode };
   }
 
   async listTables(): Promise<TableDescWithExtraAttrs[]> {
@@ -322,6 +405,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
     CapacityUnits: number;
+    meta: DynamoDbExecutionMeta;
   }> {
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
@@ -331,15 +415,22 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     }
 
     const Items: ScanCommandOutput['Items'] = [];
+    const tracker = new DynamoDbExecutionMetaTracker();
     do {
       const command = new ScanCommand({
         ...params,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
         ExclusiveStartKey: LastEvaluatedKey ? LastEvaluatedKey : undefined,
-        ReturnConsumedCapacity: 'TOTAL',
+        // INDEXES is a strict superset of TOTAL's response (same
+        // CapacityUnits/ReadCapacityUnits/WriteCapacityUnits fields, plus a
+        // per-table/per-index breakdown) at no extra cost - see
+        // dynamoDbCapacity.ts's DynamoDbExecutionMetaTracker, which is what
+        // actually makes use of the added breakdown.
+        ReturnConsumedCapacity: 'INDEXES',
       });
 
       const response = await this.client.send(command);
+      tracker.recordResponse(response, { trackNativeCounts: true });
       LastEvaluatedKey = response.LastEvaluatedKey;
       CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
@@ -353,6 +444,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       LastEvaluatedKey,
       Count: Items.length,
       CapacityUnits,
+      meta: tracker.build(!!LastEvaluatedKey),
     };
   }
 
@@ -361,6 +453,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
     CapacityUnits: number;
+    meta: DynamoDbExecutionMeta;
   }> {
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
@@ -370,15 +463,17 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     }
 
     const Items: QueryCommandOutput['Items'] = [];
+    const tracker = new DynamoDbExecutionMetaTracker();
     do {
       const command = new QueryCommand({
         ...params,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
         ExclusiveStartKey: LastEvaluatedKey ? LastEvaluatedKey : undefined,
-        ReturnConsumedCapacity: 'TOTAL',
+        ReturnConsumedCapacity: 'INDEXES',
       });
 
       const response = await this.docClient.send(command);
+      tracker.recordResponse(response, { trackNativeCounts: true });
       LastEvaluatedKey = response.LastEvaluatedKey;
       CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
@@ -392,6 +487,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       LastEvaluatedKey,
       Count: Items.length,
       CapacityUnits,
+      meta: tracker.build(!!LastEvaluatedKey),
     };
   }
 
@@ -413,6 +509,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
 
     const allAttributeTypes = new Map<string, GeneralColumnType>();
     const startTime = new Date().getTime();
+    const tracker = new DynamoDbExecutionMetaTracker();
     do {
       const command = new OriginalQueryCommand({
         ...params,
@@ -420,11 +517,12 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         IndexName,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
         ExclusiveStartKey: LastEvaluatedKey ? LastEvaluatedKey : undefined,
-        ReturnConsumedCapacity: 'TOTAL',
+        ReturnConsumedCapacity: 'INDEXES',
       });
 
       try {
         const response = await this.client.send(command);
+        tracker.recordResponse(response, { trackNativeCounts: true });
         LastEvaluatedKey = response.LastEvaluatedKey;
         CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
         Items.push(...response.Items);
@@ -466,6 +564,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       capacityUnits: CapacityUnits,
       dbTable,
       allAttributeTypes,
+      meta: tracker.build(!!LastEvaluatedKey),
     });
     rs.meta.queryInput = JSON.stringify(params, null, 2);
     return rs;
@@ -482,6 +581,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     extra: {
       allAttributeNames: string[];
     };
+    meta: DynamoDbExecutionMeta;
   }> {
     this.interrupted = false;
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
@@ -491,6 +591,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     const allAttributeNames = new Set<string>();
 
     const Items: QueryCommandOutput['Items'] = [];
+    const tracker = new DynamoDbExecutionMetaTracker();
     do {
       if (this.interrupted) {
         this.interrupted = false;
@@ -500,10 +601,14 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         ...params,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
         NextToken,
-        ReturnConsumedCapacity: 'TOTAL',
+        ReturnConsumedCapacity: 'INDEXES',
       });
 
       const response = await this.docClient.send(command);
+      // PartiQL's ExecuteStatement response has no Count/ScannedCount field
+      // at all (an AWS API fact, not a collection gap) - trackNativeCounts
+      // is omitted here deliberately, never inferred from Items.length.
+      tracker.recordResponse(response);
       LastEvaluatedKey = response.LastEvaluatedKey;
       NextToken = response.NextToken;
       CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
@@ -529,6 +634,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       extra: {
         allAttributeNames: [...allAttributeNames],
       },
+      meta: tracker.build(!!(LastEvaluatedKey || NextToken)),
     };
   }
 
@@ -543,6 +649,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     extra: {
       allAttributeTypes: Map<string, GeneralColumnType>;
     };
+    meta: DynamoDbExecutionMeta;
   }> {
     this.interrupted = false;
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
@@ -552,6 +659,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     const allAttributeTypes = new Map<string, GeneralColumnType>();
 
     const Items: OriginalExecuteStatementCommandOutput['Items'] = [];
+    const tracker = new DynamoDbExecutionMetaTracker();
     do {
       if (this.interrupted) {
         this.interrupted = false;
@@ -562,10 +670,13 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         ...params,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
         NextToken,
-        ReturnConsumedCapacity: 'TOTAL',
+        ReturnConsumedCapacity: 'INDEXES',
       });
 
       const response = await this.client.send(command);
+      // Same rule as executeStatementAtDocClient above: PartiQL responses
+      // never carry Count/ScannedCount, so trackNativeCounts is not used.
+      tracker.recordResponse(response);
       LastEvaluatedKey = response.LastEvaluatedKey;
       NextToken = response.NextToken;
       CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
@@ -592,6 +703,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       extra: {
         allAttributeTypes,
       },
+      meta: tracker.build(!!(LastEvaluatedKey || NextToken)),
     };
   }
 
@@ -653,6 +765,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       Count,
       Items,
       extra: { allAttributeTypes },
+      meta,
     } = await this.executeStatementAtClient(input);
 
     const elapsedTimeMilli = new Date().getTime() - startTime;
@@ -666,7 +779,91 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       capacityUnits,
       dbTable,
       allAttributeTypes,
+      meta,
     });
+  }
+
+  // ---------------------------------------------------------------------
+  // Run Observed Read (§7.4) - a single, explicitly-confirmed, capacity-
+  // consuming read used only by the DynamoDB performance tuning feature.
+  // Both methods below share every constraint in the design doc's list:
+  // exactly one API response (never a pagination loop), the caller's own
+  // ExclusiveStartKey/NextToken is always discarded (this always observes
+  // the *first* page), maxEvaluatedItems is clamped to
+  // DYNAMODB_OBSERVED_READ_MAX_ITEMS, ReturnConsumedCapacity: 'INDEXES',
+  // and the return type never carries Item bodies, bind values, or
+  // LastEvaluatedKey/NextToken - only counts/capacity/timing metadata a
+  // Context is allowed to keep.
+  // ---------------------------------------------------------------------
+
+  async observeNativeQueryRead(params: {
+    input: OriginalQueryCommandInput;
+    maxEvaluatedItems?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResult> {
+    const limit = Math.min(params.maxEvaluatedItems ?? DYNAMODB_OBSERVED_READ_MAX_ITEMS, DYNAMODB_OBSERVED_READ_MAX_ITEMS);
+    const startTime = Date.now();
+    const command = new OriginalQueryCommand({
+      ...params.input,
+      Limit: limit,
+      ExclusiveStartKey: undefined,
+      ReturnConsumedCapacity: 'INDEXES',
+    });
+    const response = await withTimeout(
+      this.client.send(command, { abortSignal: params.signal }),
+      params.timeoutMs,
+    );
+    return {
+      returnedItemCount: response.Count ?? response.Items?.length ?? 0,
+      scannedItemCount: response.ScannedCount,
+      hasMorePages: !!response.LastEvaluatedKey,
+      capacityBreakdown: aggregateConsumedCapacity([response.ConsumedCapacity]),
+      clientElapsedTimeMs: Date.now() - startTime,
+      requestCount: 1,
+      retryCount: Math.max(0, (response.$metadata?.attempts ?? 1) - 1),
+    };
+  }
+
+  async observePartiqlRead(params: {
+    statement: string;
+    parameters?: unknown[];
+    maxEvaluatedItems?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResult> {
+    // Defense in depth: the Provider is the primary gate on
+    // observationEligibility/write-statement rejection (§7.1/§7.4), but
+    // this is the last line of code before capacity is actually consumed -
+    // never trust a caller's classification alone for that.
+    const qst = parseQuery(params.statement);
+    if (!qst || qst.ast?.type !== 'select') {
+      throw new Error('Run Observed Read only supports a single SELECT statement.');
+    }
+
+    const limit = Math.min(params.maxEvaluatedItems ?? DYNAMODB_OBSERVED_READ_MAX_ITEMS, DYNAMODB_OBSERVED_READ_MAX_ITEMS);
+    const startTime = Date.now();
+    const input: OriginalExecuteStatementCommandInput = {
+      Statement: params.statement,
+      Limit: limit,
+      ReturnConsumedCapacity: 'INDEXES',
+    };
+    if (params.parameters && params.parameters.length > 0) {
+      input.Parameters = marshall(params.parameters);
+    }
+    const response = await withTimeout(
+      this.client.send(new OriginalExecuteStatementCommand(input), { abortSignal: params.signal }),
+      params.timeoutMs,
+    );
+    return {
+      returnedItemCount: response.Items?.length ?? 0,
+      scannedItemCount: undefined,
+      hasMorePages: !!(response.LastEvaluatedKey || response.NextToken),
+      capacityBreakdown: aggregateConsumedCapacity([response.ConsumedCapacity]),
+      clientElapsedTimeMs: Date.now() - startTime,
+      requestCount: 1,
+      retryCount: Math.max(0, (response.$metadata?.attempts ?? 1) - 1),
+    };
   }
 
   private itemsToResultSetData({
@@ -678,6 +875,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     capacityUnits,
     dbTable,
     allAttributeTypes,
+    meta,
   }: {
     Count: number;
     Items?: Record<string, AttributeValue>[];
@@ -687,6 +885,11 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     capacityUnits: number;
     dbTable: DbDynamoTable;
     allAttributeTypes: Map<string, GeneralColumnType>;
+    // Optional: absent for callers that don't (yet) track it. Feeds
+    // RdhSummary's additive DynamoDB fields (rdh Phase 1) so SQL History
+    // retains scanned/request/retry/capacity-breakdown evidence per §7.5 -
+    // see AwsDynamoServiceClient.ts's callers of this method.
+    meta?: DynamoDbExecutionMeta;
   }): ResultSetData {
     let rdb: ResultSetDataBuilder | undefined = undefined;
 
@@ -789,7 +992,20 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       elapsedTimeMilli,
       selectedRows: rdb.rs.rows.length,
       capacityUnits,
+      scannedRows: meta?.scannedCount,
+      requestCount: meta?.requestCount,
+      retryCount: meta?.retryCount,
+      readCapacityUnits: meta?.capacityBreakdown?.readCapacityUnits,
+      writeCapacityUnits: meta?.capacityBreakdown?.writeCapacityUnits,
+      hasMoreRows: meta?.hasMorePages,
     });
+    if (meta?.capacityBreakdown) {
+      // Per-table/per-index Capacity is AWS-specific and does not belong in
+      // rdh's own RdhSummary type (design doc §11.1) - RdhMeta's open index
+      // signature is where a driver stashes vendor-specific detail like
+      // this without requiring an rdh change.
+      rdb.rs.meta.dynamoDb = { consumedCapacity: meta.capacityBreakdown };
+    }
     return rdb.build();
   }
 
