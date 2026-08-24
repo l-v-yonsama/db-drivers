@@ -192,6 +192,28 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
       expect(r.accessPath).toBe('tableScan');
       expect(r.postReadFilter).toEqual({ present: false, attributes: [] });
     });
+
+    it('treats a case-only mismatch against the partition key name as tableScan, not tableQuery (DynamoDB attribute names are case-sensitive)', () => {
+      const r = analyzeDynamoPartiqlAccessPattern({
+        sql: `SELECT * FROM orders WHERE tenantid = ?`,
+        keySchema: pkOnly, // partitionKey.attributeName is 'tenantId'
+        tableName: 'orders',
+      });
+      expect(r.accessPath).toBe('tableScan');
+      expect(r.partitionKey).toEqual({ attributeName: 'tenantId', operator: undefined, conditionPresent: false });
+      expect(r.postReadFilter).toEqual({ present: true, attributes: ['tenantid'] });
+    });
+
+    it('treats a case-only mismatch against the sort key name as an unreported condition, not a Query-qualifying sortKey match', () => {
+      const r = analyzeDynamoPartiqlAccessPattern({
+        sql: `SELECT * FROM orders WHERE tenantId = ? AND orderid > ?`,
+        keySchema: pkAndSk, // sortKey.attributeName is 'orderId'
+        tableName: 'orders',
+      });
+      expect(r.accessPath).toBe('tableQuery'); // pk alone still guarantees the Query
+      expect(r.sortKey).toEqual({ attributeName: 'orderId', operator: undefined, conditionPresent: false });
+      expect(r.postReadFilter).toEqual({ present: true, attributes: ['orderid'] });
+    });
   });
 
   describe('unknown / unparseable cases', () => {

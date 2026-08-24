@@ -617,22 +617,28 @@ function parseDynamoPartiqlSelect(sql: string): ParsedSelect | undefined {
 // Classification (the decision table at the top of this file)
 // ---------------------------------------------------------------------------
 
-// True iff `node` being true structurally GUARANTEES that `attrLower` was
+// True iff `node` being true structurally GUARANTEES that `attrName` was
 // compared with `=`/`IN` - the single recursive rule that captures both
 // "Query" rows of the decision table at once: an AND-conjunct guarantees it
 // for the whole AND (only one branch needs to hold), while an OR only
 // guarantees it when EVERY branch independently guarantees it (any other
 // branch could be the one that actually held).
-function guaranteesKeyEquality(node: BoolNode, attrLower: string): boolean {
+//
+// Matches `node.attribute` against `attrName` case-sensitively: DynamoDB
+// attribute names are case-sensitive (AWS naming rules), so a schema key
+// named `tenantId` must never match a statement's `tenantid` - that would
+// misclassify a full scan as a key-condition Query and silently drop the
+// DYNAMODB_FULL_TABLE_SCAN/DYNAMODB_FULL_INDEX_SCAN warning.
+function guaranteesKeyEquality(node: BoolNode, attrName: string): boolean {
   switch (node.kind) {
     case 'and':
-      return node.children.some((child) => guaranteesKeyEquality(child, attrLower));
+      return node.children.some((child) => guaranteesKeyEquality(child, attrName));
     case 'or':
-      return node.children.length > 0 && node.children.every((child) => guaranteesKeyEquality(child, attrLower));
+      return node.children.length > 0 && node.children.every((child) => guaranteesKeyEquality(child, attrName));
     case 'not':
       return false;
     case 'compare':
-      return node.attribute?.toLowerCase() === attrLower && (node.op === '=' || node.op === 'IN');
+      return node.attribute === attrName && (node.op === '=' || node.op === 'IN');
     case 'other':
       return false;
   }
@@ -654,22 +660,23 @@ function toReportableOp(op: CompareOp): DynamoDbKeyConditionOperator | undefined
     : undefined;
 }
 
-// First direct comparison found anywhere in the tree for `attrLower` -
+// First direct comparison found anywhere in the tree for `attrName` -
 // descriptive metadata only (partitionKey/sortKey reporting), never used to
-// decide accessPath itself.
-function findFirstComparison(node: BoolNode, attrLower: string): CompareOp | undefined {
+// decide accessPath itself. Case-sensitive for the same reason as
+// guaranteesKeyEquality above.
+function findFirstComparison(node: BoolNode, attrName: string): CompareOp | undefined {
   switch (node.kind) {
     case 'and':
     case 'or':
       for (const child of node.children) {
-        const found = findFirstComparison(child, attrLower);
+        const found = findFirstComparison(child, attrName);
         if (found) return found;
       }
       return undefined;
     case 'not':
-      return findFirstComparison(node.child, attrLower);
+      return findFirstComparison(node.child, attrName);
     case 'compare':
-      return node.attribute?.toLowerCase() === attrLower ? node.op : undefined;
+      return node.attribute === attrName ? node.op : undefined;
     case 'other':
       return undefined;
   }
@@ -739,10 +746,13 @@ function classify(params: {
     params;
   const pkAttr = keySchema.partitionKey.attributeName;
   const skAttr = keySchema.sortKey?.attributeName;
-  const pkAttrLower = pkAttr.toLowerCase();
-  const skAttrLower = skAttr?.toLowerCase();
 
-  const isQuery = where !== undefined && guaranteesKeyEquality(where, pkAttrLower);
+  // Exact, case-sensitive match against the schema's own key attribute
+  // names - DynamoDB attribute names are case-sensitive, so e.g. a
+  // `tenantid = ?` predicate must never be treated as satisfying a
+  // `tenantId` partition key (AWS naming rules; see this function's own
+  // doc comment above for the classification impact).
+  const isQuery = where !== undefined && guaranteesKeyEquality(where, pkAttr);
 
   const accessPath: DynamoDbAccessPath = isQuery
     ? indexName
@@ -766,13 +776,13 @@ function classify(params: {
     : undefined;
 
   if (where) {
-    const pkOp = findFirstComparison(where, pkAttrLower);
+    const pkOp = findFirstComparison(where, pkAttr);
     if (pkOp) {
       partitionKey.conditionPresent = true;
       if (pkOp === '=' || pkOp === 'IN') partitionKey.operator = pkOp;
     }
-    if (skAttrLower && sortKey) {
-      const skOp = findFirstComparison(where, skAttrLower);
+    if (skAttr && sortKey) {
+      const skOp = findFirstComparison(where, skAttr);
       if (skOp) {
         sortKey.conditionPresent = true;
         sortKey.operator = toReportableOp(skOp);

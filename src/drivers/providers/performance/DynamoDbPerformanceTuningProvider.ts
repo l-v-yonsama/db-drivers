@@ -136,9 +136,28 @@ function mapWarmThroughput(
   return { readCapacityUnits: w.ReadUnitsPerSecond, writeCapacityUnits: w.WriteUnitsPerSecond };
 }
 
+// BillingModeSummary is only guaranteed to be populated once a table has
+// been PAY_PER_REQUEST at some point (AWS API_BillingModeSummary docs); a
+// legacy table that has always been PROVISIONED can omit it entirely even
+// though ProvisionedThroughput carries real RCU/WCU numbers. Falling back
+// to 'unknown' in that case would silently drop ProvisionedReadCapacityUnits
+// CloudWatch collection (§7.3) for a genuinely provisioned table, so treat
+// "no BillingModeSummary but a real ProvisionedThroughput" as PROVISIONED.
+function resolveBillingMode(table: TableDescription): 'PROVISIONED' | 'PAY_PER_REQUEST' | 'unknown' {
+  const billingMode = table.BillingModeSummary?.BillingMode;
+  if (billingMode === 'PROVISIONED' || billingMode === 'PAY_PER_REQUEST') return billingMode;
+  if (billingMode === undefined && table.ProvisionedThroughput?.ReadCapacityUnits !== undefined) return 'PROVISIONED';
+  return 'unknown';
+}
+
 function mapIndex(
   index: GlobalSecondaryIndexDescription | LocalSecondaryIndexDescription,
   indexType: 'LSI' | 'GSI',
+  // The table's own AttributeDefinitions (LSI/GSI key schemas reference the
+  // *same* table-level attribute definitions - DescribeTable never repeats
+  // per-index type info). Without this, every index key silently reported
+  // 'S' regardless of its real N/B type.
+  tableAttributeDefinitions: AttributeDefinition[] | undefined,
 ): DynamoDbIndexContext | undefined {
   if (!index.IndexName) return undefined;
   const gsi = indexType === 'GSI' ? (index as GlobalSecondaryIndexDescription) : undefined;
@@ -146,7 +165,7 @@ function mapIndex(
     indexName: index.IndexName,
     indexType,
     status: gsi?.IndexStatus,
-    keySchema: mapKeySchema(index.KeySchema, undefined) ?? {
+    keySchema: mapKeySchema(index.KeySchema, tableAttributeDefinitions) ?? {
       partitionKey: { attributeName: index.KeySchema?.[0]?.AttributeName ?? 'unknown', attributeType: 'S' },
     },
     projection: mapProjection(index.Projection),
@@ -178,20 +197,19 @@ function mapTableContext(
   const keySchema = mapKeySchema(table.KeySchema, table.AttributeDefinitions) ?? {
     partitionKey: { attributeName: table.KeySchema?.[0]?.AttributeName ?? 'unknown', attributeType: 'S' },
   };
-  const billingMode = table.BillingModeSummary?.BillingMode;
   return {
     tableName: table.TableName ?? '',
     status: table.TableStatus,
-    billingMode: billingMode === 'PROVISIONED' || billingMode === 'PAY_PER_REQUEST' ? billingMode : 'unknown',
+    billingMode: resolveBillingMode(table),
     keySchema,
     attributeDefinitions: (table.AttributeDefinitions ?? [])
       .filter((a): a is AttributeDefinition & { AttributeName: string; AttributeType: 'S' | 'N' | 'B' } => !!a.AttributeName)
       .map((a) => ({ attributeName: a.AttributeName, attributeType: a.AttributeType as 'S' | 'N' | 'B' })),
     localSecondaryIndexes: (table.LocalSecondaryIndexes ?? [])
-      .map((i) => mapIndex(i, 'LSI'))
+      .map((i) => mapIndex(i, 'LSI', table.AttributeDefinitions))
       .filter((i): i is DynamoDbIndexContext => !!i),
     globalSecondaryIndexes: (table.GlobalSecondaryIndexes ?? [])
-      .map((i) => mapIndex(i, 'GSI'))
+      .map((i) => mapIndex(i, 'GSI', table.AttributeDefinitions))
       .filter((i): i is DynamoDbIndexContext => !!i),
     provisionedThroughput: mapThroughput(table.ProvisionedThroughput),
     onDemandThroughput: table.OnDemandThroughput
@@ -477,6 +495,18 @@ export class DynamoDbPerformanceTuningProvider {
 
     // --- observed read (mode: executeOnce) ----------------------------------
     if (mode === 'executeOnce') {
+      // Fail-closed (§7.4: "allowExecution: true 必須"): this must be an
+      // explicit true from the caller, mirroring the RDB side's own
+      // `plan.mode === 'analyze' && plan.allowExecution !== true` gate
+      // (utils/performanceTuningContext.ts). Checked before `options.execution`
+      // is even inspected, so a caller can never trigger a real data-plane read
+      // by supplying execution options alone.
+      if (params.observation?.allowExecution !== true) {
+        return {
+          ok: false,
+          message: 'observation.mode is executeOnce but observation.allowExecution was not explicitly true. Run Observed Read requires explicit, host-confirmed authorization.',
+        };
+      }
       if (!options?.execution) {
         return { ok: false, message: 'observation.mode is executeOnce but no execution options were supplied.' };
       }
@@ -676,20 +706,30 @@ function limitIndexes(
   const total = table.localSecondaryIndexes.length + table.globalSecondaryIndexes.length;
   if (total <= maxIndexes) return table;
 
-  const keep = (list: DynamoDbIndexContext[]): DynamoDbIndexContext[] => {
-    const target = list.filter((i) => i.indexName === targetIndexName);
-    const rest = list.filter((i) => i.indexName !== targetIndexName);
-    return [...target, ...rest].slice(0, Math.max(0, maxIndexes - target.length + target.length));
-  };
   diagnostics.push(diag('DYNAMODB_COLLECTION_TRUNCATED', 'warning', true, 'tableDefinition', `Index list truncated to ${maxIndexes} entries.`, { tableName: table.tableName }));
-  // Simple, deterministic split: keep the target index (if any) plus as many
-  // of the rest as fit, preferring globalSecondaryIndexes since GSIs are the
-  // ones a caller is actually likely to be evaluating as an alternative.
-  const gsiBudget = Math.max(0, maxIndexes - (table.localSecondaryIndexes.some((i) => i.indexName === targetIndexName) ? 1 : 0));
+
+  // maxIndexes is a single shared budget across LSI+GSI combined (a payload
+  // cap on the *total* index count, not a per-list allowance - capping each
+  // list independently let e.g. maxIndexes=2 keep 2 LSI + 2 GSI = 4 entries,
+  // which defeats the limit). Priority: the target index first (if any),
+  // then the rest, preferring globalSecondaryIndexes since GSIs are the ones
+  // a caller is actually likely to be evaluating as an alternative.
+  type Entry = { index: DynamoDbIndexContext; kind: 'LSI' | 'GSI' };
+  const target: Entry[] = [];
+  const restLsi: Entry[] = [];
+  const restGsi: Entry[] = [];
+  for (const index of table.localSecondaryIndexes) {
+    (index.indexName === targetIndexName ? target : restLsi).push({ index, kind: 'LSI' });
+  }
+  for (const index of table.globalSecondaryIndexes) {
+    (index.indexName === targetIndexName ? target : restGsi).push({ index, kind: 'GSI' });
+  }
+  const kept = [...target, ...restGsi, ...restLsi].slice(0, Math.max(0, maxIndexes));
+
   return {
     ...table,
-    localSecondaryIndexes: keep(table.localSecondaryIndexes).slice(0, maxIndexes),
-    globalSecondaryIndexes: keep(table.globalSecondaryIndexes).slice(0, gsiBudget),
+    localSecondaryIndexes: kept.filter((e) => e.kind === 'LSI').map((e) => e.index),
+    globalSecondaryIndexes: kept.filter((e) => e.kind === 'GSI').map((e) => e.index),
   };
 }
 

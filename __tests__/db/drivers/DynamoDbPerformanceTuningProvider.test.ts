@@ -188,6 +188,116 @@ describe('DynamoDbPerformanceTuningProvider.collect (static mode, PartiQL)', () 
     expect(result.result?.cloudWatch).toBeUndefined();
   });
 
+  it('treats billingMode as PROVISIONED when BillingModeSummary is absent but ProvisionedThroughput is present (a legacy table never switched to on-demand)', async () => {
+    const driver = createMockDriver({
+      describeTable: jest.fn().mockResolvedValue({
+        ...baseTable,
+        BillingModeSummary: undefined,
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 },
+      }),
+    });
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(partiqlParams());
+    expect(result.ok).toBe(true);
+    expect(result.result?.table.billingMode).toBe('PROVISIONED');
+  });
+
+  it('leaves billingMode as unknown when both BillingModeSummary and ProvisionedThroughput are absent', async () => {
+    const driver = createMockDriver({
+      describeTable: jest.fn().mockResolvedValue({
+        ...baseTable,
+        BillingModeSummary: undefined,
+        ProvisionedThroughput: undefined,
+      }),
+    });
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(partiqlParams());
+    expect(result.ok).toBe(true);
+    expect(result.result?.table.billingMode).toBe('unknown');
+  });
+
+  it('derives a GSI sort key numeric (N) type from the table AttributeDefinitions instead of defaulting every index key to S', async () => {
+    const driver = createMockDriver({
+      describeTable: jest.fn().mockResolvedValue({
+        ...baseTable,
+        // createdAt is the GSI's sort key; give it a numeric type here to
+        // prove mapIndex() doesn't hardcode 'S'.
+        AttributeDefinitions: baseTable.AttributeDefinitions!.map((a) =>
+          a.AttributeName === 'createdAt' ? { ...a, AttributeType: 'N' as const } : a,
+        ),
+      }),
+    });
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(partiqlParams());
+    expect(result.ok).toBe(true);
+    const gsi = result.result?.table.globalSecondaryIndexes.find((i) => i.indexName === 'tenant-status-created-at-gsi');
+    expect(gsi?.keySchema.sortKey).toEqual({ attributeName: 'createdAt', attributeType: 'N' });
+  });
+
+  it('derives a GSI partition key binary (B) type from the table AttributeDefinitions instead of defaulting every index key to S', async () => {
+    const driver = createMockDriver({
+      describeTable: jest.fn().mockResolvedValue({
+        ...baseTable,
+        // tenantStatus is the GSI's partition key; give it a binary type
+        // here to prove mapIndex() doesn't hardcode 'S'.
+        AttributeDefinitions: baseTable.AttributeDefinitions!.map((a) =>
+          a.AttributeName === 'tenantStatus' ? { ...a, AttributeType: 'B' as const } : a,
+        ),
+      }),
+    });
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(partiqlParams());
+    expect(result.ok).toBe(true);
+    const gsi = result.result?.table.globalSecondaryIndexes.find((i) => i.indexName === 'tenant-status-created-at-gsi');
+    expect(gsi?.keySchema.partitionKey).toEqual({ attributeName: 'tenantStatus', attributeType: 'B' });
+  });
+
+  it('caps LSI+GSI to a single shared maxIndexes budget rather than maxIndexes per list', async () => {
+    const manyIndexesTable: TableDescription = {
+      ...baseTable,
+      LocalSecondaryIndexes: [
+        { IndexName: 'lsi-a', KeySchema: [{ AttributeName: 'tenantId', KeyType: 'HASH' }, { AttributeName: 'orderId', KeyType: 'RANGE' }], Projection: { ProjectionType: 'ALL' } },
+        { IndexName: 'lsi-b', KeySchema: [{ AttributeName: 'tenantId', KeyType: 'HASH' }, { AttributeName: 'orderId', KeyType: 'RANGE' }], Projection: { ProjectionType: 'ALL' } },
+      ],
+      GlobalSecondaryIndexes: [
+        { IndexName: 'gsi-a', KeySchema: [{ AttributeName: 'tenantStatus', KeyType: 'HASH' }], Projection: { ProjectionType: 'ALL' }, IndexStatus: 'ACTIVE' },
+        { IndexName: 'gsi-b', KeySchema: [{ AttributeName: 'tenantStatus', KeyType: 'HASH' }], Projection: { ProjectionType: 'ALL' }, IndexStatus: 'ACTIVE' },
+      ],
+    };
+    const driver = createMockDriver({ describeTable: jest.fn().mockResolvedValue(manyIndexesTable) });
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(partiqlParams({ limits: { maxIndexes: 2 } }));
+    expect(result.ok).toBe(true);
+    const table = result.result!.table;
+    expect(table.localSecondaryIndexes.length + table.globalSecondaryIndexes.length).toBe(2);
+    expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_COLLECTION_TRUNCATED')).toBe(true);
+  });
+
+  it('keeps the target index within the shared maxIndexes budget even when it would otherwise be dropped', async () => {
+    const manyIndexesTable: TableDescription = {
+      ...baseTable,
+      LocalSecondaryIndexes: [
+        { IndexName: 'lsi-a', KeySchema: [{ AttributeName: 'tenantId', KeyType: 'HASH' }, { AttributeName: 'orderId', KeyType: 'RANGE' }], Projection: { ProjectionType: 'ALL' } },
+        { IndexName: 'lsi-b', KeySchema: [{ AttributeName: 'tenantId', KeyType: 'HASH' }, { AttributeName: 'orderId', KeyType: 'RANGE' }], Projection: { ProjectionType: 'ALL' } },
+      ],
+      GlobalSecondaryIndexes: [
+        { IndexName: 'gsi-a', KeySchema: [{ AttributeName: 'tenantStatus', KeyType: 'HASH' }], Projection: { ProjectionType: 'ALL' }, IndexStatus: 'ACTIVE' },
+      ],
+    };
+    const driver = createMockDriver({ describeTable: jest.fn().mockResolvedValue(manyIndexesTable) });
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(
+      partiqlParams({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM "orders"."lsi-b" WHERE tenantId = ?` } },
+        limits: { maxIndexes: 1 },
+      }),
+    );
+    expect(result.ok).toBe(true);
+    const table = result.result!.table;
+    expect(table.localSecondaryIndexes.map((i) => i.indexName)).toEqual(['lsi-b']);
+    expect(table.globalSecondaryIndexes).toEqual([]);
+  });
+
   it('raises a throttling diagnostic when a throttle series has positive values, and CLOUDWATCH_NO_DATA when a series is empty', async () => {
     const driver = createMockDriver({
       collectCloudWatchMetrics: jest.fn().mockResolvedValue({
@@ -243,6 +353,34 @@ describe('DynamoDbPerformanceTuningProvider.collect (static mode, native Query)'
 });
 
 describe('DynamoDbPerformanceTuningProvider.collect (mode: executeOnce)', () => {
+  it('rejects (fail-closed) when allowExecution is not explicitly true, even though execution options are supplied', async () => {
+    const driver = createMockDriver();
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(
+      partiqlParams({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM orders WHERE tenantId = 'literal'` } },
+        observation: { mode: 'executeOnce' }, // allowExecution omitted
+      }),
+      { execution: { kind: 'partiql', parameters: [] } },
+    );
+    expect(result.ok).toBe(false);
+    expect(driver.observePartiqlRead).not.toHaveBeenCalled();
+  });
+
+  it('rejects (fail-closed) when allowExecution is explicitly false', async () => {
+    const driver = createMockDriver();
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(
+      partiqlParams({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM orders WHERE tenantId = 'literal'` } },
+        observation: { mode: 'executeOnce', allowExecution: false },
+      }),
+      { execution: { kind: 'partiql', parameters: [] } },
+    );
+    expect(result.ok).toBe(false);
+    expect(driver.observePartiqlRead).not.toHaveBeenCalled();
+  });
+
   it('rejects when execution options are missing', async () => {
     const provider = new DynamoDbPerformanceTuningProvider(createMockDriver());
     const result = await provider.collect(

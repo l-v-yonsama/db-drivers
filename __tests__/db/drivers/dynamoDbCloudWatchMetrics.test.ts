@@ -155,6 +155,22 @@ describe('DynamoDbCloudWatchMetricsCollector', () => {
     expect(latencyStats.sort()).toEqual(['p50', 'p90', 'p99']);
   });
 
+  it('requests ReturnedItemCount at operation scope but never ReturnedBytes (AWS only publishes ReturnedBytes for Streams GetRecords, never Query/Scan/ExecuteStatement)', async () => {
+    const send = jest.fn(async (command: GetMetricDataCommand) => emptyResponse(command.input.MetricDataQueries!.map((q) => q.Id!)));
+    const collector = new DynamoDbCloudWatchMetricsCollector(fakeClient(send));
+
+    await collector.collect({
+      tableName: 'orders',
+      operation: 'Query',
+      billingMode: 'PAY_PER_REQUEST',
+      hasOnDemandMaxLimit: false,
+      now,
+    });
+    const sentNames = send.mock.calls[0][0].input.MetricDataQueries.map((q: any) => q.MetricStat.Metric.MetricName);
+    expect(sentNames).toContain('ReturnedItemCount');
+    expect(sentNames).not.toContain('ReturnedBytes');
+  });
+
   it('marks a series with zero datapoints as noData: true with empty arrays, not as zero activity', async () => {
     const send = jest.fn(async (command: GetMetricDataCommand) => emptyResponse(command.input.MetricDataQueries!.map((q) => q.Id!)));
     const collector = new DynamoDbCloudWatchMetricsCollector(fakeClient(send));

@@ -34,7 +34,15 @@ const TABLE_OR_GSI_THROTTLE_METRICS = [
   'ReadMaxOnDemandThroughputThrottleEvents',
 ] as const;
 
-const OPERATION_SUM_METRICS = ['ThrottledRequests', 'SystemErrors', 'ReturnedItemCount', 'ReturnedBytes'] as const;
+// ReturnedBytes is intentionally excluded: AWS only ever publishes it for
+// DynamoDB Streams' GetRecords (Operation=GetRecords), never for
+// Query/Scan/ExecuteStatement (the only operations this collector's
+// operationScopeDimensions() ever requests) - "DynamoDB metrics and
+// dimensions" in the design doc's §20 references. Requesting it here would
+// always come back noData and manufacture a misleading
+// DYNAMODB_CLOUDWATCH_NO_DATA diagnostic for a metric that was never
+// applicable in the first place.
+const OPERATION_SUM_METRICS = ['ThrottledRequests', 'SystemErrors', 'ReturnedItemCount'] as const;
 const LATENCY_PERCENTILES = ['p50', 'p90', 'p99'] as const;
 
 export type DynamoDbCloudWatchMetricsInput = {
