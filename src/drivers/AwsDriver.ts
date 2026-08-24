@@ -486,8 +486,18 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
   // the RDB-side method names.
   // -------------------------------------------------------------------
 
+  // A static, connection-setting-only check, mirroring RDSBaseDriver's own
+  // supportsGetPerformanceTuningContext() (which answers from a per-vendor
+  // Provider hook wired at driver-construction time, never from
+  // connection state). createSQLSupportDriver()/createRDSDriver() callers
+  // in db-notebook call this on a driver instance that has NOT been
+  // connected yet - checking `this.dynamoClient` here (only ever populated
+  // by connectSub()) would incorrectly answer false for every caller of
+  // that established "quick check before opening progress" pattern.
+  // getDynamoDbPerformanceTuningContext() itself still separately guards on
+  // `this.dynamoClient` at call time, since that one always runs post-connect.
   supportsGetDynamoDbPerformanceTuningContext(): boolean {
-    return !!this.dynamoClient;
+    return !!this.conRes.awsSetting?.services?.includes(AwsServiceType.DynamoDB);
   }
 
   async checkDynamoDbPerformanceTuningContextAvailability(
