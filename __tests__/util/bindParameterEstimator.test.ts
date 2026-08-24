@@ -17,6 +17,8 @@ describe('estimateBindParameters', () => {
       [DBType.Postgres, 'a = $2 OR b = $1', ['$1', '$2']],
       [DBType.Oracle, 'a = :B1 AND b = :B2', [':B1', ':B2']],
       [DBType.SQLServer, 'a = @tenantId AND b = @status', ['@tenantId', '@status']],
+      // DynamoDB PartiQL - same positional `?` style as MySQL/JDBC.
+      [DBType.Aws, 'tenantId = ? AND status = ?', ['?', '?']],
     ] as const)('estimates markers for %s', (dbType, sql, expectedMarkers) => {
       const result = estimateBindParameters({ dbType, sql });
 
@@ -61,6 +63,39 @@ describe('estimateBindParameters', () => {
       const result = estimateBindParameters({
         dbType: DBType.MySQL,
         sql: 'SELECT * FROM t /* skip ? here */ WHERE id = ?',
+      });
+      expect(result.map((it) => it.marker)).toEqual(['?']);
+    });
+
+    it('does not count a DynamoDB PartiQL `?` inside a single-quoted string literal', () => {
+      const result = estimateBindParameters({
+        dbType: DBType.Aws,
+        sql: "SELECT * FROM orders WHERE status = '?' AND tenantId = ?",
+      });
+      expect(result.map((it) => it.marker)).toEqual(['?']);
+    });
+
+    it('does not count a DynamoDB PartiQL `?` inside a line comment', () => {
+      const result = estimateBindParameters({
+        dbType: DBType.Aws,
+        sql: 'SELECT * FROM orders -- what about ?\nWHERE tenantId = ?',
+      });
+      expect(result.map((it) => it.marker)).toEqual(['?']);
+    });
+
+    it('does not count a DynamoDB PartiQL `?` inside a block comment', () => {
+      const result = estimateBindParameters({
+        dbType: DBType.Aws,
+        sql: 'SELECT * FROM orders /* skip ? here */ WHERE tenantId = ?',
+      });
+      expect(result.map((it) => it.marker)).toEqual(['?']);
+    });
+
+    it('does not count a DynamoDB PartiQL `?` inside a double-quoted identifier', () => {
+      const result = estimateBindParameters({
+        dbType: DBType.Aws,
+        // A pathological but syntactically-legal quoted attribute name.
+        sql: 'SELECT * FROM orders WHERE "weird?name" = ? ',
       });
       expect(result.map((it) => it.marker)).toEqual(['?']);
     });

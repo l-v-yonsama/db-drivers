@@ -217,7 +217,16 @@ function scanRawMarkers(sql: string, dbType: DBType): RawMarkerOccurrence[] {
     }
 
     // -- markers -----------------------------------------------------------
-    if (dbType === DBType.MySQL && ch === '?') {
+    // DynamoDB PartiQL (ExecuteStatement) uses the same `?` positional
+    // marker style as MySQL/JDBC - each `?` binds to the next entry in a
+    // flat Parameters array, in appearance order, with no dedup. See
+    // db-notebook repo's misc/specs/dynamodb-performance-tuning-
+    // implementation-plan.ja.md §6.2/§7.1 for why this is needed:
+    // statement.observationEligibility is set to `allowed: false` whenever
+    // this scanner finds at least one unresolved marker in stored PartiQL
+    // text, since v1 has no DynamoDB Bind Parameters Panel to collect fresh
+    // values for Run Observed Read.
+    if ((dbType === DBType.MySQL || dbType === DBType.Aws) && ch === '?') {
       occurrences.push({ marker: '?', offset: i });
       i++;
       continue;
@@ -295,6 +304,7 @@ function skipQuoted(sql: string, start: number, quoteChar: string): number {
 function orderMarkers(raw: RawMarkerOccurrence[], dbType: DBType): RawMarkerOccurrence[] {
   switch (dbType) {
     case DBType.MySQL:
+    case DBType.Aws:
       // Each `?` is its own bind; appearance order is already ascending.
       return raw;
     case DBType.Postgres:
