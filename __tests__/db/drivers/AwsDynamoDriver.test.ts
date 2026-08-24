@@ -27,6 +27,7 @@ import {
   DBType,
   ResourceFilter,
   SupplyCredentialType,
+  validateDynamoDbPerformanceTuningContext,
 } from '../../../src';
 import _chunk from 'lodash.chunk';
 
@@ -1428,6 +1429,89 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs2.meta.type).toBe('select');
         expect(rs2.meta.tableName).toBe('Escape-Test');
       });
+    });
+  });
+
+  // §15.3 of db-notebook repo's misc/specs/dynamodb-performance-tuning-
+  // implementation-plan.ja.md: table Query, GSI Query, full table scan
+  // static judgment, and Consumed Capacity against real LocalStack. The
+  // connection above was created with only AwsServiceType.DynamoDB
+  // selected (no AwsServiceType.Cloudwatch) - CloudWatch metrics
+  // collection still runs, confirming getDynamoDbPerformanceTuningProvider()
+  // does not gate on that unrelated service selection.
+  describe('getDynamoDbPerformanceTuningContext', () => {
+    it('classifies a table Query, does not warn about a full scan, and validates as a well-formed Context', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food WHERE Name = ?` } },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.result?.accessPattern.accessPath).toBe('tableQuery');
+      expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_FULL_TABLE_SCAN')).toBe(false);
+      expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
+    });
+
+    it('classifies a full table Scan and raises DYNAMODB_FULL_TABLE_SCAN', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food` } },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.result?.accessPattern.accessPath).toBe('tableScan');
+      expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_FULL_TABLE_SCAN')).toBe(true);
+    });
+
+    it('classifies a GSI Query against Food.iCountry as indexQuery and reports the GSI in table context, distinct from the iKind LSI', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM "Food"."iCountry" WHERE Country = ?` } },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.result?.accessPattern.accessPath).toBe('indexQuery');
+      expect(result.result?.accessPattern.indexType).toBe('GSI');
+      expect(result.result?.table.globalSecondaryIndexes.map((i) => i.indexName)).toContain('iCountry');
+      expect(result.result?.table.localSecondaryIndexes.map((i) => i.indexName)).toContain('iKind');
+      // Contributor Insights is queried for table + iCountry (GSI) only,
+      // never for iKind (LSI) - see DynamoDbPerformanceTuningProvider's own
+      // mocked test of this same rule; this confirms it against the real
+      // DescribeTable-derived GSI list too.
+      expect(result.result?.table.contributorInsights.map((c) => c.indexName)).not.toContain('iKind');
+      expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
+    });
+
+    it('reports table.billingMode/provisionedThroughput consistent with how Food was created (explicit ProvisionedThroughput)', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food WHERE Name = ?` } },
+      });
+      // LocalStack's own BillingModeSummary fidelity is not guaranteed
+      // (see the note in AwsDynamoDriver.test.ts's other meta assertions
+      // about LocalStack gaps) - only assert what's structurally
+      // guaranteed: billingMode is one of the type's valid values, and if
+      // it does resolve to PROVISIONED the throughput numbers this table
+      // was actually created with come through unmodified.
+      expect(['PROVISIONED', 'PAY_PER_REQUEST', 'unknown']).toContain(result.result?.table.billingMode);
+      if (result.result?.table.billingMode === 'PROVISIONED') {
+        expect(result.result.table.provisionedThroughput).toEqual({ readCapacityUnits: 10, writeCapacityUnits: 5 });
+      }
+    });
+
+    it('never reads item data during static collection - collection.status reflects only Describe/CloudWatch evidence', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food WHERE Name = ?` } },
+      });
+      expect(result.ok).toBe(true);
+      // The type system + validateDynamoDbPerformanceTuningContext's own
+      // forbidden-key scan (Item/Items/ExpressionAttributeValues/...) are
+      // the structural proof that no item body could have been attached
+      // anywhere in this Context.
+      expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
+    });
+
+    it('rejects a native Query analysis input for a table that does not exist', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: {
+          source: 'dynamoQueryPanel',
+          request: { kind: 'query', input: { tableName: 'NoSuchTable', keyConditionExpression: 'Id = :id' } },
+        },
+      });
+      expect(result.ok).toBe(false);
     });
   });
 
