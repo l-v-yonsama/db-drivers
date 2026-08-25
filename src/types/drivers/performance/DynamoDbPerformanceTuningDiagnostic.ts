@@ -58,6 +58,11 @@ export type DynamoDbPerformanceTuningDiagnosticCode =
   // for the window - distinct from "0 activity"; see
   // DynamoDbCloudWatchSeries.noData.
   | 'DYNAMODB_CLOUDWATCH_NO_DATA'
+  // CloudWatch-backed monitoring was intentionally skipped because the
+  // connection did not select AwsServiceType.Cloudwatch or uses a custom
+  // endpoint. This is expected configuration/environment scope, never a
+  // collection failure and never a reason to make the Context partial.
+  | 'DYNAMODB_MONITORING_COLLECTION_SKIPPED'
   // A Describe*/GetMetricData call in the static collection sequence failed
   // (permissions, throttling, timeout, ...) - the corresponding section is
   // also recorded in collection.unavailableSections.

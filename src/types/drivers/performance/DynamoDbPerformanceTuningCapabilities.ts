@@ -7,8 +7,8 @@ import { CapabilityStatus } from './PerformanceTuningCapabilities';
 // implemented" + "what can this specific connection actually read right now"
 // for DynamoDB too.
 //
-// observedRead is special: unlike the other four (which are read-only
-// Describe/GetMetricData calls that can genuinely be probed ahead of time),
+// observedRead is special: unlike the other four (which describe read-only
+// Describe/GetMetricData capabilities and connection-level availability),
 // there is no side-effect-free way to check whether a caller's IAM policy
 // allows dynamodb:PartiQLSelect/dynamodb:Query without actually reading data.
 // So this capability's `available` only answers "does this driver/statement

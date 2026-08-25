@@ -1015,6 +1015,24 @@ describe('AwsDynamoDBDriver', () => {
     });
   });
 
+  describe('scanItemsAtClient (native Scan)', () => {
+    it('returns at most the requested number of items as ResultSetData', async () => {
+      const rs = await driver.dynamoClient.scanItemsAtClient({
+        TableName: 'MassiveRecords',
+        Limit: 100,
+      });
+
+      expect(rs.rows).toHaveLength(100);
+      expect(rs.summary.selectedRows).toBe(100);
+      expect(rs.summary.scannedRows).toBe(100);
+      expect(rs.summary.hasMoreRows).toBe(true);
+      expect(rs.meta.tableName).toBe('MassiveRecords');
+      expect(rs.meta.queryInput).toBe(
+        JSON.stringify({ TableName: 'MassiveRecords', Limit: 100 }, null, 2),
+      );
+    });
+  });
+
   describe('executeStatementAtDocClient', () => {
     it('no conditions', async () => {
       const r1 = await driver.dynamoClient.executeStatementAtDocClient({
@@ -1562,9 +1580,8 @@ describe('AwsDynamoDBDriver', () => {
   // implementation-plan.ja.md: table Query, GSI Query, full table scan
   // static judgment, and Consumed Capacity against real LocalStack. The
   // connection above was created with only AwsServiceType.DynamoDB
-  // selected (no AwsServiceType.Cloudwatch) - CloudWatch metrics
-  // collection still runs, confirming getDynamoDbPerformanceTuningProvider()
-  // does not gate on that unrelated service selection.
+  // selected (no AwsServiceType.Cloudwatch), so CloudWatch metrics and
+  // Contributor Insights are intentionally skipped.
   describe('getDynamoDbPerformanceTuningContext', () => {
     it('classifies a table Query, does not warn about a full scan, and validates as a well-formed Context', async () => {
       const result = await driver.getDynamoDbPerformanceTuningContext({
@@ -1573,6 +1590,9 @@ describe('AwsDynamoDBDriver', () => {
       expect(result.ok).toBe(true);
       expect(result.result?.accessPattern.accessPath).toBe('tableQuery');
       expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_FULL_TABLE_SCAN')).toBe(false);
+      expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_MONITORING_COLLECTION_SKIPPED')).toBe(true);
+      expect(result.result?.collection.unavailableSections).toEqual([]);
+      expect(result.result?.collection.status).toBe('complete');
       expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
     });
 

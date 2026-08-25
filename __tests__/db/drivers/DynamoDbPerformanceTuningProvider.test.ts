@@ -39,6 +39,7 @@ function createMockDriver(overrides?: Partial<DynamoDbPerformanceTuningDriverAcc
   return {
     region: 'ap-northeast-1',
     endpointKind: 'aws',
+    monitoringMode: 'enabled',
     describeTable: jest.fn().mockResolvedValue(baseTable),
     describeTimeToLive: jest.fn().mockResolvedValue({ TimeToLiveStatus: 'DISABLED' }),
     describeContributorInsights: jest.fn().mockResolvedValue({ status: 'DISABLED' }),
@@ -70,6 +71,16 @@ describe('DynamoDbPerformanceTuningProvider.checkCapabilities', () => {
     expect(result.ok).toBe(true);
     expect(result.result?.observedRead.available).toBe(true);
     expect(result.result?.observedRead.message).toMatch(/not pre-verified/i);
+  });
+
+  it.each([
+    ['cloudWatchNotSelected', /not enabled for this connection/i],
+    ['customEndpoint', /outside the scope of local\/custom/i],
+  ] as const)('reports monitoring as unavailable when mode is %s', async (monitoringMode, message) => {
+    const provider = new DynamoDbPerformanceTuningProvider(createMockDriver({ monitoringMode }));
+    const result = await provider.checkCapabilities({ tableName: 'orders' });
+    expect(result.result?.cloudWatchMetrics).toMatchObject({ available: false, message: expect.stringMatching(message) });
+    expect(result.result?.contributorInsightsStatus).toMatchObject({ available: false, message: expect.stringMatching(message) });
   });
 });
 
@@ -187,6 +198,33 @@ describe('DynamoDbPerformanceTuningProvider.collect (static mode, PartiQL)', () 
     expect(result.result?.collection.unavailableSections.some((s) => s.section === 'cloudWatchMetrics')).toBe(true);
     expect(result.result?.cloudWatch).toBeUndefined();
   });
+
+  it.each(['cloudWatchNotSelected', 'customEndpoint'] as const)(
+    'skips CloudWatch and Contributor Insights without making collection partial when mode is %s',
+    async (monitoringMode) => {
+      const driver = createMockDriver({ monitoringMode });
+      const provider = new DynamoDbPerformanceTuningProvider(driver);
+      const result = await provider.collect(partiqlParams());
+
+      expect(result.ok).toBe(true);
+      expect(driver.collectCloudWatchMetrics).not.toHaveBeenCalled();
+      expect(driver.describeContributorInsights).not.toHaveBeenCalled();
+      expect(result.result?.cloudWatch).toBeUndefined();
+      expect(result.result?.table.contributorInsights).toEqual([]);
+      expect(result.result?.collection.status).toBe('complete');
+      expect(result.result?.collection.unavailableSections).toEqual([]);
+      expect(result.result?.collection.diagnostics).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'DYNAMODB_MONITORING_COLLECTION_SKIPPED',
+            severity: 'info',
+            affectsCompleteness: false,
+          }),
+        ]),
+      );
+      expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
+    },
+  );
 
   it('treats billingMode as PROVISIONED when BillingModeSummary is absent but ProvisionedThroughput is present (a legacy table never switched to on-demand)', async () => {
     const driver = createMockDriver({

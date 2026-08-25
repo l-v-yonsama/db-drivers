@@ -114,11 +114,9 @@ export function aggregateConsumedCapacity(
 
 // ---------------------------------------------------------------------------
 // Execution-evidence tracking (§7.5 "通常実行からの証拠保存"). Ordinary
-// PartiQL/Query/Scan execution in AwsDynamoServiceClient shares the exact
-// same do/while pagination shape in five different methods - this tracker
-// centralizes the bookkeeping (request/retry count, Consumed Capacity
-// accumulation, native-API Count/ScannedCount summation) so each call site
-// only has to call recordResponse() once per page and build() once at the end.
+// PartiQL/Query/Scan execution in AwsDynamoServiceClient uses this tracker
+// to centralize request/retry count, Consumed Capacity accumulation, and
+// native-API Count/ScannedCount summation.
 // ---------------------------------------------------------------------------
 
 export type DynamoDbExecutionMeta = {

@@ -44,6 +44,7 @@ import {
 } from '../types/drivers/performance/DynamoDbPerformanceTuningContext';
 import { DynamoDbCloudWatchMetricsCollector } from './providers/performance/dynamoDbCloudWatchMetrics';
 import {
+  DynamoDbMonitoringMode,
   DynamoDbPerformanceTuningDriverAccess,
   DynamoDbPerformanceTuningProvider,
 } from './providers/performance/DynamoDbPerformanceTuningProvider';
@@ -521,24 +522,27 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     return this.getDynamoDbPerformanceTuningProvider().collect(params, options);
   }
 
-  // Deliberately not built in connectSub() alongside the other AWS service
-  // clients: those are gated on the connection's configured
-  // AwsServiceType.* list (which service categories a user chose to browse
-  // in the resource tree), but DynamoDB performance tuning must work
-  // whenever DynamoDB itself is configured, independent of whether
-  // AwsServiceType.Cloudwatch (Logs browsing) was separately selected -
-  // that is an unrelated AWS service from the caller's perspective. Built
-  // lazily instead, on first use, from the same createClientConfig() every
-  // other AWS service client already uses.
+  // Built lazily because performance tuning itself only requires DynamoDB.
+  // CloudWatch-backed evidence is additionally gated by the connection's
+  // selected services and is never requested from a custom/local endpoint.
   private getDynamoDbPerformanceTuningProvider(): DynamoDbPerformanceTuningProvider {
     if (!this.dynamoDbPerformanceTuningProvider) {
-      const config = this.createClientConfig();
-      const cloudWatchClient = new CloudWatchClient(config);
+      const cloudWatchSelected = !!this.conRes.awsSetting?.services?.includes(AwsServiceType.Cloudwatch);
+      const monitoringMode: DynamoDbMonitoringMode = !cloudWatchSelected
+        ? 'cloudWatchNotSelected'
+        : this.conRes.url
+          ? 'customEndpoint'
+          : 'enabled';
+      const cloudWatchCollector =
+        monitoringMode === 'enabled'
+          ? new DynamoDbCloudWatchMetricsCollector(new CloudWatchClient(this.createClientConfig()))
+          : undefined;
       const access = new AwsDriverDynamoDbPerformanceTuningAccess(
         this.dynamoClient,
-        new DynamoDbCloudWatchMetricsCollector(cloudWatchClient),
+        cloudWatchCollector,
         this.conRes.awsSetting?.region,
         this.conRes.url ? 'custom' : 'aws',
+        monitoringMode,
       );
       this.dynamoDbPerformanceTuningProvider = new DynamoDbPerformanceTuningProvider(access);
     }
@@ -555,9 +559,10 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
 class AwsDriverDynamoDbPerformanceTuningAccess implements DynamoDbPerformanceTuningDriverAccess {
   constructor(
     private readonly dynamoClient: AwsDynamoServiceClient,
-    private readonly cloudWatchCollector: DynamoDbCloudWatchMetricsCollector,
+    private readonly cloudWatchCollector: DynamoDbCloudWatchMetricsCollector | undefined,
     public readonly region: string | undefined,
     public readonly endpointKind: 'aws' | 'custom',
+    public readonly monitoringMode: DynamoDbMonitoringMode,
   ) {}
 
   describeTable(tableName: string) {
@@ -573,7 +578,9 @@ class AwsDriverDynamoDbPerformanceTuningAccess implements DynamoDbPerformanceTun
   }
 
   collectCloudWatchMetrics(input: Parameters<DynamoDbCloudWatchMetricsCollector['collect']>[0]) {
-    return this.cloudWatchCollector.collect(input);
+    return this.cloudWatchCollector
+      ? this.cloudWatchCollector.collect(input)
+      : Promise.resolve({ ok: false as const, message: 'CloudWatch monitoring is not enabled for this connection.' });
   }
 
   observeNativeQueryRead(params: { input: unknown; maxEvaluatedItems?: number; timeoutMs?: number; signal?: AbortSignal }) {

@@ -15,6 +15,8 @@ import {
   CreateTableCommandInput,
   AttributeValue,
   ScanCommand as OriginalScanCommand,
+  ScanCommandInput as OriginalScanCommandInput,
+  ScanCommandOutput as OriginalScanCommandOutput,
   DescribeTimeToLiveCommand,
   TimeToLiveDescription,
   DescribeContributorInsightsCommand,
@@ -77,6 +79,25 @@ import { DynamoDbCapacityBreakdown } from '../../types/drivers/performance/Dynam
 import { buildDynamoDbRdhSummaryInfo } from './dynamoDbRdhSummary';
 
 export type QueryItemsAtClientInputParams = OriginalQueryCommandInput;
+export type ScanItemsAtClientInputParams = OriginalScanCommandInput;
+
+type ScanPage<TItem, TKey> = {
+  Items?: TItem[];
+  LastEvaluatedKey?: TKey;
+  Count?: number;
+  ScannedCount?: number;
+  ConsumedCapacity?: OriginalScanCommandOutput['ConsumedCapacity'];
+  $metadata?: OriginalScanCommandOutput['$metadata'];
+};
+
+type CollectScanItemsParams<TItem, TKey> = {
+  limit?: number;
+  exclusiveStartKey?: TKey;
+  fetchPage: (
+    remainingLimit: number | undefined,
+    exclusiveStartKey: TKey | undefined,
+  ) => Promise<ScanPage<TItem, TKey> | undefined>;
+};
 
 export type TableDescWithExtraAttrs = TableDescription & {
   ExtraItems?: { name: string; value: AttributeValue }[];
@@ -410,6 +431,41 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     };
   }
 
+  private async collectScanItems<TItem, TKey>({
+    limit,
+    exclusiveStartKey,
+    fetchPage,
+  }: CollectScanItemsParams<TItem, TKey>): Promise<{
+    items: TItem[];
+    lastEvaluatedKey?: TKey;
+    meta: DynamoDbExecutionMeta;
+  }> {
+    let lastEvaluatedKey = exclusiveStartKey;
+    const items: TItem[] = [];
+    const tracker = new DynamoDbExecutionMetaTracker();
+
+    do {
+      const remainingLimit = limit ? limit - items.length : undefined;
+      const response = await fetchPage(remainingLimit, lastEvaluatedKey);
+      if (!response) {
+        break;
+      }
+
+      tracker.recordResponse(response, { trackNativeCounts: true });
+      lastEvaluatedKey = response.LastEvaluatedKey;
+      items.push(...(response.Items ?? []));
+      if (limit && items.length >= limit) {
+        break;
+      }
+    } while (lastEvaluatedKey);
+
+    return {
+      items,
+      lastEvaluatedKey,
+      meta: tracker.build(!!lastEvaluatedKey),
+    };
+  }
+
   async scanItems(params: ScanCommandInput): Promise<{
     Items: ScanCommandOutput['Items'];
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
@@ -421,41 +477,33 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     CapacityUnits: number | undefined;
     meta: DynamoDbExecutionMeta;
   }> {
-    let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
-      undefined;
-    if (params.ExclusiveStartKey) {
-      LastEvaluatedKey = params.ExclusiveStartKey;
-    }
+    const { items, lastEvaluatedKey, meta } = await this.collectScanItems<
+      Record<string, NativeAttributeValue>,
+      Record<string, NativeAttributeValue>
+    >({
+      limit: params.Limit,
+      exclusiveStartKey: params.ExclusiveStartKey,
+      fetchPage: async (remainingLimit, exclusiveStartKey) => {
+        return await this.docClient.send(
+          new ScanCommand({
+            ...params,
+            Limit: remainingLimit,
+            ExclusiveStartKey: exclusiveStartKey,
+            // INDEXES is a strict superset of TOTAL's response (same
+            // CapacityUnits/ReadCapacityUnits/WriteCapacityUnits fields, plus a
+            // per-table/per-index breakdown) at no extra cost - see
+            // dynamoDbCapacity.ts's DynamoDbExecutionMetaTracker, which is what
+            // actually makes use of the added breakdown.
+            ReturnConsumedCapacity: 'INDEXES',
+          }),
+        );
+      },
+    });
 
-    const Items: ScanCommandOutput['Items'] = [];
-    const tracker = new DynamoDbExecutionMetaTracker();
-    do {
-      const command = new ScanCommand({
-        ...params,
-        Limit: params.Limit ? params.Limit - Items.length : undefined,
-        ExclusiveStartKey: LastEvaluatedKey ? LastEvaluatedKey : undefined,
-        // INDEXES is a strict superset of TOTAL's response (same
-        // CapacityUnits/ReadCapacityUnits/WriteCapacityUnits fields, plus a
-        // per-table/per-index breakdown) at no extra cost - see
-        // dynamoDbCapacity.ts's DynamoDbExecutionMetaTracker, which is what
-        // actually makes use of the added breakdown.
-        ReturnConsumedCapacity: 'INDEXES',
-      });
-
-      const response = await this.client.send(command);
-      tracker.recordResponse(response, { trackNativeCounts: true });
-      LastEvaluatedKey = response.LastEvaluatedKey;
-      Items.push(...response.Items);
-      if (params.Limit && Items.length >= params.Limit) {
-        break;
-      }
-    } while (LastEvaluatedKey);
-
-    const meta = tracker.build(!!LastEvaluatedKey);
     return {
-      Items,
-      LastEvaluatedKey,
-      Count: Items.length,
+      Items: items,
+      LastEvaluatedKey: lastEvaluatedKey,
+      Count: items.length,
       CapacityUnits: meta.capacityBreakdown?.capacityUnits,
       meta,
     };
@@ -575,6 +623,74 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       dbTable,
       allAttributeTypes,
       meta: tracker.build(!!LastEvaluatedKey),
+    });
+    rs.meta.queryInput = JSON.stringify(params, null, 2);
+    return rs;
+  }
+
+  async scanItemsAtClient(
+    params: OriginalScanCommandInput,
+  ): Promise<ResultSetData> {
+    const { TableName } = params;
+    const qst: QStatement = {
+      ast: { type: 'select' },
+      names: { tableName: TableName },
+    };
+    const dbTable = this.getDbTable(qst);
+    const startTime = new Date().getTime();
+    const { items: Items, meta } = await this.collectScanItems<
+      Record<string, AttributeValue>,
+      Record<string, AttributeValue>
+    >({
+      limit: params.Limit,
+      exclusiveStartKey: params.ExclusiveStartKey,
+      fetchPage: async (remainingLimit, exclusiveStartKey) => {
+        try {
+          return await this.client.send(
+            new OriginalScanCommand({
+              ...params,
+              TableName,
+              Limit: remainingLimit,
+              ExclusiveStartKey: exclusiveStartKey,
+              ReturnConsumedCapacity: 'INDEXES',
+            }),
+          );
+        } catch (e) {
+          if (e.name === 'ResourceNotFoundException') {
+            return undefined;
+          }
+          throw e;
+        }
+      },
+    });
+
+    const allAttributeTypes = new Map<string, GeneralColumnType>();
+    Items.forEach((item) => {
+      Object.keys(item)
+        .filter((it) => !allAttributeTypes.has(it))
+        .forEach((it) => {
+          const colType = this.parseDynamoAttrTypeByNameAndItem(it, item);
+          allAttributeTypes.set(it, colType);
+        });
+    });
+
+    const elapsedTimeMilli = new Date().getTime() - startTime;
+    const rs = this.itemsToResultSetData({
+      Count: Items.length,
+      Items,
+      params: {
+        sql: '',
+        conditions: {},
+        meta: {
+          type: 'select',
+          tableName: TableName,
+        },
+      },
+      qst,
+      elapsedTimeMilli,
+      dbTable,
+      allAttributeTypes,
+      meta,
     });
     rs.meta.queryInput = JSON.stringify(params, null, 2);
     return rs;

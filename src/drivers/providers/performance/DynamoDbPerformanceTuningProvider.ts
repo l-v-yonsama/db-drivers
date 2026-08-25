@@ -68,6 +68,14 @@ export type DynamoDbObservedReadResultLike = {
   retryCount: number;
 };
 
+export type DynamoDbMonitoringMode = 'enabled' | 'cloudWatchNotSelected' | 'customEndpoint';
+
+function monitoringUnavailableMessage(mode: Exclude<DynamoDbMonitoringMode, 'enabled'>): string {
+  return mode === 'cloudWatchNotSelected'
+    ? 'CloudWatch metrics and Contributor Insights are not collected because CloudWatch is not enabled for this connection.'
+    : 'CloudWatch metrics and Contributor Insights are outside the scope of local/custom DynamoDB endpoints.';
+}
+
 // Narrow, structural view of AwsDriver/AwsDynamoServiceClient - just enough
 // for this Provider (mirrors MySQLPerformanceTuningDriverAccess's rationale:
 // unit-testable with a stub, and can't reach past this into connection
@@ -75,6 +83,7 @@ export type DynamoDbObservedReadResultLike = {
 export interface DynamoDbPerformanceTuningDriverAccess {
   region?: string;
   endpointKind: 'aws' | 'custom';
+  monitoringMode: DynamoDbMonitoringMode;
   describeTable(tableName: string): Promise<TableDescription | undefined>;
   describeTimeToLive(tableName: string): Promise<TimeToLiveDescription | undefined>;
   describeContributorInsights(
@@ -269,14 +278,25 @@ export class DynamoDbPerformanceTuningProvider {
     // observed read at all" - it never claims the caller's IAM policy has
     // been checked (§9's explicit rule; AccessDenied only ever surfaces as
     // the result of the user actually confirming Run Observed Read).
+    const monitoringMode = this.driver.monitoringMode;
+    const monitoringAvailable = monitoringMode === 'enabled';
+    const monitoringMessage = monitoringMode === 'enabled'
+      ? undefined
+      : monitoringUnavailableMessage(monitoringMode);
     const capabilities: DynamoDbPerformanceTuningCapabilities = {
       staticAccessPattern: { available: true, source: 'PartiQL/KeyCondition static parse against DescribeTable key schema' },
       tableDefinition: { available: true, source: 'dynamodb:DescribeTable', requiredPermissions: ['dynamodb:DescribeTable'] },
-      cloudWatchMetrics: { available: true, source: 'cloudwatch:GetMetricData', requiredPermissions: ['cloudwatch:GetMetricData'] },
+      cloudWatchMetrics: monitoringAvailable
+        ? { available: true, source: 'cloudwatch:GetMetricData', requiredPermissions: ['cloudwatch:GetMetricData'] }
+        : { available: false, message: monitoringMessage },
       contributorInsightsStatus: {
-        available: true,
-        source: 'dynamodb:DescribeContributorInsights',
-        requiredPermissions: ['dynamodb:DescribeContributorInsights'],
+        ...(monitoringAvailable
+          ? {
+              available: true,
+              source: 'dynamodb:DescribeContributorInsights',
+              requiredPermissions: ['dynamodb:DescribeContributorInsights'],
+            }
+          : { available: false, message: monitoringMessage }),
       },
       observedRead: {
         available: true,
@@ -337,6 +357,20 @@ export class DynamoDbPerformanceTuningProvider {
 
     const diagnostics: DynamoDbPerformanceTuningDiagnostic[] = [];
     const unavailableSections: DynamoDbUnavailableSection[] = [];
+    const monitoringMode = this.driver.monitoringMode;
+    const monitoringEnabled = monitoringMode === 'enabled';
+    if (monitoringMode !== 'enabled') {
+      diagnostics.push(
+        diag(
+          'DYNAMODB_MONITORING_COLLECTION_SKIPPED',
+          'info',
+          false,
+          'collection',
+          monitoringUnavailableMessage(monitoringMode),
+          { tableName },
+        ),
+      );
+    }
 
     // --- step 6a: TTL (best-effort - collection failure only degrades to partial) ---
     let ttl: TimeToLiveDescription | undefined;
@@ -358,40 +392,42 @@ export class DynamoDbPerformanceTuningProvider {
 
     // --- step 6b: Contributor Insights (table + every GSI; never LSI) -----
     const contributorInsights: DynamoDbTableContext['contributorInsights'] = [];
-    const ciTargets: Array<{ resource: 'table' | 'gsi'; indexName?: string }> = [
-      { resource: 'table' },
-      ...(rawTable.GlobalSecondaryIndexes ?? [])
-        .filter((i) => !!i.IndexName)
-        .map((i) => ({ resource: 'gsi' as const, indexName: i.IndexName })),
-    ];
-    const ciResults = await Promise.all(
-      ciTargets.map(async (target) => {
-        try {
-          const res = await this.driver.describeContributorInsights(tableName, target.indexName);
-          return { target, res, error: undefined as unknown };
-        } catch (e) {
-          return { target, res: undefined, error: e };
-        }
-      }),
-    );
-    for (const { target, res, error } of ciResults) {
-      if (error || !res) {
-        unavailableSections.push({
-          section: 'contributorInsights',
-          tableName,
-          indexName: target.indexName,
-          reason: describeError(error, 'DescribeContributorInsights failed.'),
-          requiredPermissions: ['dynamodb:DescribeContributorInsights'],
-        });
-        diagnostics.push(
-          diag('DYNAMODB_SECTION_COLLECTION_FAILED', 'warning', true, 'contributorInsights', 'Contributor Insights status could not be collected.', {
+    if (monitoringEnabled) {
+      const ciTargets: Array<{ resource: 'table' | 'gsi'; indexName?: string }> = [
+        { resource: 'table' },
+        ...(rawTable.GlobalSecondaryIndexes ?? [])
+          .filter((i) => !!i.IndexName)
+          .map((i) => ({ resource: 'gsi' as const, indexName: i.IndexName })),
+      ];
+      const ciResults = await Promise.all(
+        ciTargets.map(async (target) => {
+          try {
+            const res = await this.driver.describeContributorInsights(tableName, target.indexName);
+            return { target, res, error: undefined as unknown };
+          } catch (e) {
+            return { target, res: undefined, error: e };
+          }
+        }),
+      );
+      for (const { target, res, error } of ciResults) {
+        if (error || !res) {
+          unavailableSections.push({
+            section: 'contributorInsights',
             tableName,
             indexName: target.indexName,
-          }),
-        );
-        continue;
+            reason: describeError(error, 'DescribeContributorInsights failed.'),
+            requiredPermissions: ['dynamodb:DescribeContributorInsights'],
+          });
+          diagnostics.push(
+            diag('DYNAMODB_SECTION_COLLECTION_FAILED', 'warning', true, 'contributorInsights', 'Contributor Insights status could not be collected.', {
+              tableName,
+              indexName: target.indexName,
+            }),
+          );
+          continue;
+        }
+        contributorInsights.push({ resource: target.resource, status: res.status ?? 'UNKNOWN', mode: res.mode, indexName: target.indexName });
       }
-      contributorInsights.push({ resource: target.resource, status: res.status ?? 'UNKNOWN', mode: res.mode, indexName: target.indexName });
     }
 
     const table = mapTableContext(rawTable, ttl, contributorInsights);
@@ -455,38 +491,40 @@ export class DynamoDbPerformanceTuningProvider {
 
     // --- step 7: CloudWatch --------------------------------------------------
     let cloudWatch: DynamoDbCloudWatchContext | undefined;
-    const cwResult = await this.driver.collectCloudWatchMetrics({
-      tableName,
-      indexName,
-      indexType: resolvedTarget.indexType,
-      operation: accessPattern.operation,
-      billingMode: table.billingMode,
-      hasOnDemandMaxLimit: table.onDemandThroughput?.maxReadRequestUnits !== undefined,
-      lookbackMinutes: params.metrics?.lookbackMinutes,
-      periodSeconds: params.metrics?.periodSeconds,
-      signal: options?.signal,
-    });
-    if (cwResult.ok && cwResult.result) {
-      cloudWatch = cwResult.result;
-      for (const series of cloudWatch.series) {
-        if (series.noData) {
-          diagnostics.push(
-            diag('DYNAMODB_CLOUDWATCH_NO_DATA', 'info', false, 'cloudWatchMetrics', `No CloudWatch datapoints for ${series.metricName} (${series.statistic}).`, {
-              tableName,
-              metricName: series.metricName,
-            }),
-          );
-        }
-      }
-      applyThrottleDiagnostics(cloudWatch, diagnostics, tableName);
-    } else {
-      unavailableSections.push({
-        section: 'cloudWatchMetrics',
+    if (monitoringEnabled) {
+      const cwResult = await this.driver.collectCloudWatchMetrics({
         tableName,
-        reason: cwResult.message || 'CloudWatch metrics could not be collected.',
-        requiredPermissions: ['cloudwatch:GetMetricData'],
+        indexName,
+        indexType: resolvedTarget.indexType,
+        operation: accessPattern.operation,
+        billingMode: table.billingMode,
+        hasOnDemandMaxLimit: table.onDemandThroughput?.maxReadRequestUnits !== undefined,
+        lookbackMinutes: params.metrics?.lookbackMinutes,
+        periodSeconds: params.metrics?.periodSeconds,
+        signal: options?.signal,
       });
-      diagnostics.push(diag('DYNAMODB_SECTION_COLLECTION_FAILED', 'warning', true, 'cloudWatchMetrics', 'CloudWatch metrics could not be collected.', { tableName }));
+      if (cwResult.ok && cwResult.result) {
+        cloudWatch = cwResult.result;
+        for (const series of cloudWatch.series) {
+          if (series.noData) {
+            diagnostics.push(
+              diag('DYNAMODB_CLOUDWATCH_NO_DATA', 'info', false, 'cloudWatchMetrics', `No CloudWatch datapoints for ${series.metricName} (${series.statistic}).`, {
+                tableName,
+                metricName: series.metricName,
+              }),
+            );
+          }
+        }
+        applyThrottleDiagnostics(cloudWatch, diagnostics, tableName);
+      } else {
+        unavailableSections.push({
+          section: 'cloudWatchMetrics',
+          tableName,
+          reason: cwResult.message || 'CloudWatch metrics could not be collected.',
+          requiredPermissions: ['cloudwatch:GetMetricData'],
+        });
+        diagnostics.push(diag('DYNAMODB_SECTION_COLLECTION_FAILED', 'warning', true, 'cloudWatchMetrics', 'CloudWatch metrics could not be collected.', { tableName }));
+      }
     }
 
     // --- step 8: merge previous observation / workload ---------------------
