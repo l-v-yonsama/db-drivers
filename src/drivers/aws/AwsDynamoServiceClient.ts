@@ -74,6 +74,7 @@ import {
   DynamoDbExecutionMetaTracker,
 } from '../providers/performance/dynamoDbCapacity';
 import { DynamoDbCapacityBreakdown } from '../../types/drivers/performance/DynamoDbPerformanceTuningContext';
+import { buildDynamoDbRdhSummaryInfo } from './dynamoDbRdhSummary';
 
 export type QueryItemsAtClientInputParams = OriginalQueryCommandInput;
 
@@ -413,12 +414,15 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     Items: ScanCommandOutput['Items'];
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
-    CapacityUnits: number;
+    // undefined iff no response ever reported ConsumedCapacity (Capacity
+    // untracked/untracked-mode requests) - distinct from an explicit 0 -
+    // see dynamoDbCapacity.ts's DynamoDbExecutionMetaTracker, the single
+    // source of truth this is now sourced from (design doc §7.2).
+    CapacityUnits: number | undefined;
     meta: DynamoDbExecutionMeta;
   }> {
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
-    let CapacityUnits = 0;
     if (params.ExclusiveStartKey) {
       LastEvaluatedKey = params.ExclusiveStartKey;
     }
@@ -441,19 +445,19 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       const response = await this.client.send(command);
       tracker.recordResponse(response, { trackNativeCounts: true });
       LastEvaluatedKey = response.LastEvaluatedKey;
-      CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
       if (params.Limit && Items.length >= params.Limit) {
         break;
       }
     } while (LastEvaluatedKey);
 
+    const meta = tracker.build(!!LastEvaluatedKey);
     return {
       Items,
       LastEvaluatedKey,
       Count: Items.length,
-      CapacityUnits,
-      meta: tracker.build(!!LastEvaluatedKey),
+      CapacityUnits: meta.capacityBreakdown?.capacityUnits,
+      meta,
     };
   }
 
@@ -461,12 +465,12 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     Items: QueryCommandOutput['Items'];
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
-    CapacityUnits: number;
+    // See scanItems() above: undefined iff Capacity was never reported.
+    CapacityUnits: number | undefined;
     meta: DynamoDbExecutionMeta;
   }> {
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
-    let CapacityUnits = 0;
     if (params.ExclusiveStartKey) {
       LastEvaluatedKey = params.ExclusiveStartKey;
     }
@@ -484,19 +488,19 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       const response = await this.docClient.send(command);
       tracker.recordResponse(response, { trackNativeCounts: true });
       LastEvaluatedKey = response.LastEvaluatedKey;
-      CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
       if (params.Limit && Items.length >= params.Limit) {
         break;
       }
     } while (LastEvaluatedKey);
 
+    const meta = tracker.build(!!LastEvaluatedKey);
     return {
       Items,
       LastEvaluatedKey,
       Count: Items.length,
-      CapacityUnits,
-      meta: tracker.build(!!LastEvaluatedKey),
+      CapacityUnits: meta.capacityBreakdown?.capacityUnits,
+      meta,
     };
   }
 
@@ -507,7 +511,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
 
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
-    let CapacityUnits = 0;
     const qst: QStatement = {
       ast: { type: 'select' },
       names: { tableName: TableName },
@@ -533,7 +536,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         const response = await this.client.send(command);
         tracker.recordResponse(response, { trackNativeCounts: true });
         LastEvaluatedKey = response.LastEvaluatedKey;
-        CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
         Items.push(...response.Items);
         response.Items.forEach((item) => {
           Object.keys(item)
@@ -570,7 +572,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       },
       qst,
       elapsedTimeMilli,
-      capacityUnits: CapacityUnits,
       dbTable,
       allAttributeTypes,
       meta: tracker.build(!!LastEvaluatedKey),
@@ -586,7 +587,8 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     NextToken?: string;
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
-    CapacityUnits: number;
+    // See scanItems() above: undefined iff Capacity was never reported.
+    CapacityUnits: number | undefined;
     extra: {
       allAttributeNames: string[];
     };
@@ -596,7 +598,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
     let NextToken = params.NextToken;
-    let CapacityUnits = 0;
     const allAttributeNames = new Set<string>();
 
     const Items: QueryCommandOutput['Items'] = [];
@@ -620,7 +621,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       tracker.recordResponse(response);
       LastEvaluatedKey = response.LastEvaluatedKey;
       NextToken = response.NextToken;
-      CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
       response.Items.forEach((item) => {
         Object.keys(item)
@@ -634,16 +634,17 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       }
     } while (LastEvaluatedKey || NextToken);
 
+    const meta = tracker.build(!!(LastEvaluatedKey || NextToken));
     return {
       Items,
       LastEvaluatedKey,
       NextToken,
       Count: Items.length,
-      CapacityUnits,
+      CapacityUnits: meta.capacityBreakdown?.capacityUnits,
       extra: {
         allAttributeNames: [...allAttributeNames],
       },
-      meta: tracker.build(!!(LastEvaluatedKey || NextToken)),
+      meta,
     };
   }
 
@@ -654,7 +655,8 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     NextToken?: string;
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
-    CapacityUnits: number;
+    // See scanItems() above: undefined iff Capacity was never reported.
+    CapacityUnits: number | undefined;
     extra: {
       allAttributeTypes: Map<string, GeneralColumnType>;
     };
@@ -664,7 +666,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
     let NextToken = params.NextToken;
-    let CapacityUnits = 0;
     const allAttributeTypes = new Map<string, GeneralColumnType>();
 
     const Items: OriginalExecuteStatementCommandOutput['Items'] = [];
@@ -688,7 +689,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       tracker.recordResponse(response);
       LastEvaluatedKey = response.LastEvaluatedKey;
       NextToken = response.NextToken;
-      CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
       response.Items.forEach((item) => {
         Object.keys(item)
@@ -703,16 +703,17 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       }
     } while (LastEvaluatedKey || NextToken);
 
+    const meta = tracker.build(!!(LastEvaluatedKey || NextToken));
     return {
       Items,
       LastEvaluatedKey,
       NextToken,
       Count: Items.length,
-      CapacityUnits,
+      CapacityUnits: meta.capacityBreakdown?.capacityUnits,
       extra: {
         allAttributeTypes,
       },
-      meta: tracker.build(!!(LastEvaluatedKey || NextToken)),
+      meta,
     };
   }
 
@@ -770,7 +771,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     }
 
     const {
-      CapacityUnits: capacityUnits,
       Count,
       Items,
       extra: { allAttributeTypes },
@@ -785,7 +785,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       params,
       qst,
       elapsedTimeMilli,
-      capacityUnits,
       dbTable,
       allAttributeTypes,
       meta,
@@ -875,13 +874,35 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     };
   }
 
+  // Classifies a PartiQL statement's leading keyword without depending on
+  // parseQuery()/qst - qst is unavailable both when the caller opts out of
+  // parsing (conditions.rawQueries === true, e.g. an RDB-shared performance-
+  // tuning caller reusing QueryParams.conditions) and when parsing itself
+  // fails, and in neither case may a write be silently misclassified as a
+  // SELECT (design doc review 2026-08-25, round 2 - round 1's fix only
+  // covered the "operation stays undefined" symptom, not this cause of it).
+  private static classifyPartiqlOperationFromText(
+    sql: string,
+  ): 'select' | 'insert' | 'update' | 'delete' | undefined {
+    // Strips both comment styles the repo's own query parser treats as
+    // comments (`--` line comments and `/* ... */` block comments,
+    // interleaved in any order) before looking at the leading keyword - a
+    // raw DML statement opening with a block comment must classify the
+    // same as one with no comment at all (2026-08-25 review, round 3).
+    const withoutLeadingComments = sql.replace(
+      /^(\s*(?:--[^\n]*\n|\/\*[\s\S]*?\*\/))*\s*/,
+      '',
+    );
+    const m = withoutLeadingComments.match(/^(select|insert|update|delete)\b/i);
+    return m ? (m[1].toLowerCase() as 'select' | 'insert' | 'update' | 'delete') : undefined;
+  }
+
   private itemsToResultSetData({
     Count,
     Items,
     params,
     qst,
     elapsedTimeMilli,
-    capacityUnits,
     dbTable,
     allAttributeTypes,
     meta,
@@ -891,13 +912,16 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     params: QueryParams;
     qst: QStatement;
     elapsedTimeMilli: number;
-    capacityUnits: number;
     dbTable: DbDynamoTable;
     allAttributeTypes: Map<string, GeneralColumnType>;
     // Optional: absent for callers that don't (yet) track it. Feeds
     // RdhSummary's additive DynamoDB fields (rdh Phase 1) so SQL History
     // retains scanned/request/retry/capacity-breakdown evidence per §7.5 -
-    // see AwsDynamoServiceClient.ts's callers of this method.
+    // see AwsDynamoServiceClient.ts's callers of this method. Capacity
+    // (undefined vs. explicit 0) is sourced exclusively from
+    // meta.capacityBreakdown - see design doc §7.2 - never from a
+    // caller-passed capacityUnits, so there is exactly one place that
+    // decides "never reported" vs. "reported as 0".
     meta?: DynamoDbExecutionMeta;
   }): ResultSetData {
     let rdb: ResultSetDataBuilder | undefined = undefined;
@@ -997,16 +1021,62 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       dbTable,
     });
 
+    // Built once and fed to both the DynamoDB-specific info formatter and
+    // setSummary()'s structured fields (design doc §7.3), so the display
+    // text and the structured RdhSummary fields can never disagree.
+    //
+    // qst is unavailable both for conditions.rawQueries===true and for a
+    // parse failure; either way the statement's actual type is still
+    // determined from the raw text rather than left undefined, so a raw
+    // INSERT/UPDATE/DELETE is not misclassified as a SELECT (design doc
+    // review 2026-08-25, round 2).
+    const operation =
+      qst?.ast?.type ??
+      AwsDynamoServiceClient.classifyPartiqlOperationFromText(params.sql);
+    // Only a *known* write statement suppresses selectedRows - an
+    // operation that still couldn't be determined at all (an unrecognized
+    // leading keyword) must not be silently folded into "write": that case
+    // is also the only one that can actually report rows, so it keeps the
+    // select-style structured fields (2026-08-25 review).
+    const isKnownWrite =
+      operation === 'insert' || operation === 'update' || operation === 'delete';
+    const selectedRows = isKnownWrite ? undefined : rdb.rs.rows.length;
+    // DynamoDB's PartiQL response never reports an affected-item count for
+    // INSERT/UPDATE/DELETE, so this stays undefined rather than being
+    // guessed at (e.g. defaulted to 1) - see design doc review 2026-08-25.
+    const affectedRows: number | undefined = undefined;
+    const scannedRows = meta?.scannedCount;
+    const requestCount = meta?.requestCount;
+    const retryCount = meta?.retryCount;
+    const capacityUnits = meta?.capacityBreakdown?.capacityUnits;
+    const readCapacityUnits = meta?.capacityBreakdown?.readCapacityUnits;
+    const writeCapacityUnits = meta?.capacityBreakdown?.writeCapacityUnits;
+    const hasMoreRows = meta?.hasMorePages;
+
     rdb.setSummary({
+      info: buildDynamoDbRdhSummaryInfo({
+        operation,
+        elapsedTimeMilli,
+        selectedRows,
+        affectedRows,
+        scannedRows,
+        requestCount,
+        retryCount,
+        capacityUnits,
+        readCapacityUnits,
+        writeCapacityUnits,
+        hasMoreRows,
+      }),
       elapsedTimeMilli,
-      selectedRows: rdb.rs.rows.length,
+      selectedRows,
+      affectedRows,
       capacityUnits,
-      scannedRows: meta?.scannedCount,
-      requestCount: meta?.requestCount,
-      retryCount: meta?.retryCount,
-      readCapacityUnits: meta?.capacityBreakdown?.readCapacityUnits,
-      writeCapacityUnits: meta?.capacityBreakdown?.writeCapacityUnits,
-      hasMoreRows: meta?.hasMorePages,
+      scannedRows,
+      requestCount,
+      retryCount,
+      readCapacityUnits,
+      writeCapacityUnits,
+      hasMoreRows,
     });
     if (meta?.capacityBreakdown) {
       // Per-table/per-index Capacity is AWS-specific and does not belong in

@@ -975,6 +975,46 @@ describe('AwsDynamoDBDriver', () => {
     });
   });
 
+  describe('queryItemsAtClient (native Query)', () => {
+    it('reports returned/evaluated and a filter pass rate when a FilterExpression narrows results', async () => {
+      // Food has 2 items under Name = 'Apple' (Color Green/Nz and
+      // Color Red/Jp) - the KeyCondition alone would return both; a
+      // FilterExpression on the non-key Country attribute narrows the
+      // *returned* set to 1 without changing how many items DynamoDB
+      // evaluated (design doc §4.3/§11.4). (FilterExpression cannot
+      // reference a primary key attribute like Color, hence Country.)
+      const rs = await driver.dynamoClient.queryItemsAtClient({
+        TableName: 'Food',
+        KeyConditionExpression: '#n = :n',
+        FilterExpression: 'Country = :c',
+        ExpressionAttributeNames: { '#n': 'Name' },
+        ExpressionAttributeValues: {
+          ':n': { S: 'Apple' },
+          ':c': { S: 'Jp' },
+        },
+      });
+      expect(rs.summary.selectedRows).toBe(1);
+      expect(rs.summary.scannedRows).toBe(2);
+      expect(rs.summary.info).toContain('1 returned / 2 evaluated');
+      expect(rs.summary.info).toContain('50% pass');
+    });
+
+    it('keeps returned/evaluated equal (and pass rate 100%) when no FilterExpression is given', async () => {
+      const rs = await driver.dynamoClient.queryItemsAtClient({
+        TableName: 'Food',
+        KeyConditionExpression: '#n = :n',
+        ExpressionAttributeNames: { '#n': 'Name' },
+        ExpressionAttributeValues: {
+          ':n': { S: 'Apple' },
+        },
+      });
+      expect(rs.summary.selectedRows).toBe(2);
+      expect(rs.summary.scannedRows).toBe(2);
+      expect(rs.summary.info).toContain('2 returned / 2 evaluated');
+      expect(rs.summary.info).toContain('100% pass');
+    });
+  });
+
   describe('executeStatementAtDocClient', () => {
     it('no conditions', async () => {
       const r1 = await driver.dynamoClient.executeStatementAtDocClient({
@@ -983,7 +1023,7 @@ describe('AwsDynamoDBDriver', () => {
       expect(r1).toEqual({
         Count: 1003,
         Items: expect.any(Array),
-        CapacityUnits: expect.any(Number),
+        CapacityUnits: undefined,
         LastEvaluatedKey: undefined,
         NextToken: undefined,
         extra: {
@@ -1019,7 +1059,7 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
         NextToken: expect.any(String),
-        CapacityUnits: expect.any(Number),
+        CapacityUnits: undefined,
         extra: {
           allAttributeNames: expect.any(Array),
         },
@@ -1043,7 +1083,7 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
         NextToken: undefined,
-        CapacityUnits: expect.any(Number),
+        CapacityUnits: undefined,
         extra: {
           allAttributeNames: expect.any(Array),
         },
@@ -1067,7 +1107,7 @@ describe('AwsDynamoDBDriver', () => {
         Count: 1,
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
-        CapacityUnits: expect.any(Number),
+        CapacityUnits: undefined,
         NextToken: expect.any(String),
         extra: {
           allAttributeNames: expect.any(Array),
@@ -1093,7 +1133,7 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
         NextToken: undefined,
-        CapacityUnits: expect.any(Number),
+        CapacityUnits: undefined,
         extra: {
           allAttributeNames: expect.any(Array),
         },
@@ -1119,6 +1159,15 @@ describe('AwsDynamoDBDriver', () => {
           expect.arrayContaining(['Id', 'Title', 's1']),
         );
         expect(rs.summary.selectedRows).toBe(1003);
+        // PartiQL's ExecuteStatement never returns Count/ScannedCount or (on
+        // this LocalStack version) a Consumed Capacity breakdown - design
+        // doc §11.1: capacityUnits stays undefined (never 0) and info says
+        // so explicitly instead of showing a misleading "CU (0)".
+        expect(rs.summary.capacityUnits).toBeUndefined();
+        expect(rs.summary.scannedRows).toBeUndefined();
+        expect(rs.summary.info).toContain('1,003 items returned');
+        expect(rs.summary.info).toContain('Capacity not reported');
+        expect(rs.summary.info).not.toContain('evaluated');
       });
 
       it('no records', async () => {
@@ -1138,6 +1187,16 @@ describe('AwsDynamoDBDriver', () => {
           expect.arrayContaining(['Id', 'Title', 's1']),
         );
         expect(rs.summary.selectedRows).toBe(1000);
+        // 1000 rows over the 1MB-per-response limit takes 2+ requests
+        // (design doc §11.2), and the caller's Limit was reached while a
+        // token still remained, so the result is explicitly flagged as
+        // truncated (design doc §11.3) rather than silently incomplete.
+        expect(rs.summary.requestCount).toBeGreaterThanOrEqual(2);
+        expect(rs.summary.hasMoreRows).toBe(true);
+        expect(rs.summary.info).toContain('requests');
+        expect(rs.summary.info).toContain(
+          'Result limited; additional items exist',
+        );
       });
 
       it('variable attr types', async () => {
@@ -1149,6 +1208,17 @@ describe('AwsDynamoDBDriver', () => {
           expect.arrayContaining(['id', 'b', 'm', 'n', 's2', 'ss', 'null']),
         );
         expect(rs.summary.selectedRows).toBe(2);
+      });
+
+      it('conditions.rawQueries leaves qst unset but still shows select-style wording for a raw SELECT (2026-08-25 review, round 2: operation is resolved from the raw text, not left undefined)', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: 'SELECT * FROM testtable',
+          conditions: { rawQueries: true },
+        });
+        expect(rs.summary.selectedRows).toBe(2);
+        expect(rs.summary.affectedRows).toBeUndefined();
+        expect(rs.summary.info).toContain('items returned');
+        expect(rs.summary.info).not.toContain('affected');
       });
 
       it('using gsi', async () => {
@@ -1190,6 +1260,41 @@ describe('AwsDynamoDBDriver', () => {
       });
     });
     describe('INSERT', () => {
+      it('conditions.rawQueries does not misclassify a raw INSERT as a SELECT (2026-08-25 review, round 2)', async () => {
+        // rawQueries:true means qst stays unset (same as the raw SELECT
+        // test above), so operation has to come from a text-based fallback
+        // classification rather than parseQuery()/qst - this covers the
+        // write-specific case that fallback exists for: a raw DML must not
+        // fall into the SELECT summary branch just because it wasn't
+        // parsed.
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `INSERT INTO NoRecords VALUE {'Id': 'raw-1', 'CreatedAt': 1}`,
+          conditions: { rawQueries: true },
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
+        expect(rs.summary.info).not.toContain('items returned');
+        expect(rs.summary.info).not.toContain('RCU');
+      });
+
+      it('conditions.rawQueries does not misclassify a raw INSERT opening with a /* block comment */ (2026-08-25 review, round 3)', async () => {
+        // The repo's own query parser treats both `--` line comments and
+        // `/* ... */` block comments as comments - the text-based fallback
+        // classifier has to strip both the same way, not just `--`.
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `/* seed */ INSERT INTO NoRecords VALUE {'Id': 'raw-2', 'CreatedAt': 1}`,
+          conditions: { rawQueries: true },
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
+        expect(rs.summary.info).not.toContain('items returned');
+        expect(rs.summary.info).not.toContain('RCU');
+      });
+
       it('Music', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
           sql: `INSERT INTO 
@@ -1203,6 +1308,14 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('insert');
         expect(rs.meta.tableName).toBe('Music');
+        // A write must not fall into the SELECT summary branch (2026-08-25
+        // review): selectedRows stays undefined (not 0) and DynamoDB's
+        // PartiQL response never reports an affected-item count, so
+        // affectedRows also stays undefined rather than being invented.
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
+        expect(rs.summary.info).not.toContain('items returned');
+        expect(rs.summary.info).not.toContain('rows in set');
       });
       it('Escape-Test', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
@@ -1354,10 +1467,13 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('update');
         expect(rs.meta.tableName).toBe('testtable');
+        // See the INSERT 'Music' test above for why both stay undefined.
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
       });
       it('Escape-Test', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
-          sql: `UPDATE 
+          sql: `UPDATE
           "Escape-Test"
           SET "name with quote'""a" = 'value with quote''"a300'
           WHERE "id" = 3
@@ -1425,6 +1541,9 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('delete');
         expect(rs.meta.tableName).toBe('Escape-Test');
+        // See the INSERT 'Music' test above for why both stay undefined.
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
 
         const rs2 = await driver.dynamoClient.requestPartiql({
           sql: `SELECT * FROM "Escape-Test" WHERE id = 2`,
@@ -1432,6 +1551,9 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs2.rows).toHaveLength(0);
         expect(rs2.meta.type).toBe('select');
         expect(rs2.meta.tableName).toBe('Escape-Test');
+        // A SELECT with zero matching rows still takes the select branch:
+        // selectedRows is a real, reported 0 (not undefined).
+        expect(rs2.summary.selectedRows).toBe(0);
       });
     });
   });
