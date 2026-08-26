@@ -36,10 +36,11 @@ const ACCESS_PATHS = ['tableQuery', 'indexQuery', 'tableScan', 'indexScan', 'unk
 const OPERATIONS = ['PartiQLSelect', 'Query', 'Scan'];
 const CONFIDENCES = ['certain', 'unknown'];
 const CONSISTENT_READS = ['eventual', 'strong', 'unknown'];
+const PROJECTION_MODES = ['allAttributes', 'allProjectedAttributes', 'specific'];
 const BILLING_MODES = ['PROVISIONED', 'PAY_PER_REQUEST', 'unknown'];
 const ATTRIBUTE_TYPES = ['S', 'N', 'B'];
 const CLOUDWATCH_SCOPES = ['table', 'gsi', 'operation'];
-const OBSERVATION_SOURCES = ['sqlHistory', 'observedRead', 'dynamoQueryPanel'];
+const OBSERVATION_SOURCES = ['sqlHistory', 'observedRead'];
 
 // Never legitimate anywhere in a DynamoDbPerformanceTuningContext (§6.2,
 // §7.4, §13) - a key with one of these names, at any depth, means a value
@@ -85,8 +86,8 @@ function validateStatement(statement: unknown, errors: string[]): void {
     return;
   }
   if (!oneOf(statement.language, ['partiql', 'dynamodb-query'])) errors.push('statement.language must be "partiql" or "dynamodb-query".');
-  if (!oneOf(statement.source, ['sqlHistory', 'editor', 'dynamoQueryPanel'])) {
-    errors.push('statement.source must be one of sqlHistory/editor/dynamoQueryPanel.');
+  if (!oneOf(statement.source, ['sqlHistory', 'editor'])) {
+    errors.push('statement.source must be one of sqlHistory/editor.');
   }
   if (!oneOf(statement.kind, ['select', 'query'])) errors.push('statement.kind must be "select" or "query".');
   if (statement.text !== undefined && typeof statement.text !== 'string') errors.push('statement.text must be a string.');
@@ -122,6 +123,9 @@ function validateAccessPattern(accessPattern: unknown, errors: string[]): void {
   if (!isPlainObject(accessPattern.projection)) {
     errors.push('accessPattern.projection is required.');
   } else {
+    if (!oneOf(accessPattern.projection.mode, PROJECTION_MODES)) {
+      errors.push(`accessPattern.projection.mode must be one of: ${PROJECTION_MODES.join(', ')}.`);
+    }
     if (typeof accessPattern.projection.allAttributes !== 'boolean') errors.push('accessPattern.projection.allAttributes must be a boolean.');
     if (!Array.isArray(accessPattern.projection.attributes)) errors.push('accessPattern.projection.attributes must be an array.');
   }
@@ -218,9 +222,9 @@ function validateObservation(observation: unknown, errors: string[]): void {
   if (observation.filterPassRate !== undefined && !isRatio(observation.filterPassRate)) {
     errors.push('observation.filterPassRate must be a number in [0, 1].');
   }
-  // §6.5: filterPassRate is only ever computed when scannedItemCount > 0.
-  if (observation.scannedItemCount === undefined && observation.filterPassRate !== undefined) {
-    errors.push('observation.filterPassRate must be undefined when scannedItemCount is undefined.');
+  // §6.5: filterPassRate is only ever computed when evaluatedItemCount > 0.
+  if (observation.evaluatedItemCount === undefined && observation.filterPassRate !== undefined) {
+    errors.push('observation.filterPassRate must be undefined when evaluatedItemCount is undefined.');
   }
 }
 

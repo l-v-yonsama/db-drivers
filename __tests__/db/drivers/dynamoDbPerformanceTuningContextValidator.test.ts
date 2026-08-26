@@ -18,7 +18,7 @@ function baseContext(): DynamoDbPerformanceTuningContext {
       confidence: 'certain',
       tableName: 'orders',
       postReadFilter: { present: false, attributes: [] },
-      projection: { allAttributes: true, attributes: [] },
+      projection: { mode: 'allAttributes', allAttributes: true, attributes: [] },
       consistentRead: 'unknown',
     },
     table: {
@@ -44,7 +44,7 @@ describe('validateDynamoDbPerformanceTuningContext', () => {
     ctx.observation = {
       source: 'observedRead',
       returnedItemCount: 10,
-      scannedItemCount: 20,
+      evaluatedItemCount: 20,
       filterPassRate: 0.5,
       bounded: true,
     };
@@ -94,14 +94,14 @@ describe('validateDynamoDbPerformanceTuningContext', () => {
 
   it('rejects a filterPassRate outside [0, 1]', () => {
     const ctx: any = baseContext();
-    ctx.observation = { source: 'observedRead', returnedItemCount: 1, scannedItemCount: 1, filterPassRate: 1.5, bounded: true };
+    ctx.observation = { source: 'observedRead', returnedItemCount: 1, evaluatedItemCount: 1, filterPassRate: 1.5, bounded: true };
     expect(validateDynamoDbPerformanceTuningContext(ctx).some((e) => e.includes('filterPassRate'))).toBe(true);
   });
 
-  it('rejects a filterPassRate present without scannedItemCount', () => {
+  it('rejects a filterPassRate present without evaluatedItemCount', () => {
     const ctx: any = baseContext();
     ctx.observation = { source: 'observedRead', returnedItemCount: 1, filterPassRate: 0.5, bounded: true };
-    expect(validateDynamoDbPerformanceTuningContext(ctx).some((e) => e.includes('undefined when scannedItemCount'))).toBe(true);
+    expect(validateDynamoDbPerformanceTuningContext(ctx).some((e) => e.includes('undefined when evaluatedItemCount'))).toBe(true);
   });
 
   it('rejects mismatched CloudWatch timestamps/values lengths', () => {

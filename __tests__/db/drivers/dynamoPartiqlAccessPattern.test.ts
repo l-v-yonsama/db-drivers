@@ -411,6 +411,28 @@ describe('analyzeDynamoNativeQueryAccessPattern', () => {
     expect(r.accessPath).toBe('indexQuery');
     expect(r.indexName).toBe('email-gsi');
     expect(r.indexType).toBe('GSI');
+    expect(r.projection.mode).toBe('allProjectedAttributes');
+  });
+
+  it('resolves ProjectionExpression aliases and keeps resultItemLimit distinct from API Limit', () => {
+    const r = analyzeDynamoNativeQueryAccessPattern({
+      input: {
+        tableName: 'orders',
+        keyConditionExpression: '#pk = :pk',
+        projectionExpression: '#p0, #p1',
+        expressionAttributeNames: { '#pk': 'tenantId', '#p0': 'status', '#p1': 'createdAt' },
+        limit: 25,
+        resultItemLimit: 100,
+      },
+      keySchema: pkOnly,
+    });
+    expect(r.projection).toEqual({
+      mode: 'specific',
+      allAttributes: false,
+      attributes: ['status', 'createdAt'],
+    });
+    expect(r.limit).toBe(25);
+    expect(r.resultItemLimit).toBe(100);
   });
 
   it('returns unknown for an unparseable keyConditionExpression', () => {
@@ -438,6 +460,6 @@ describe('analyzeDynamoNativeQueryAccessPattern', () => {
       input: { tableName: 'orders', keyConditionExpression: 'tenantId = :pk' },
       keySchema: pkOnly,
     });
-    expect(unset.consistentRead).toBe('unknown');
+    expect(unset.consistentRead).toBe('eventual');
   });
 });

@@ -379,14 +379,55 @@ describe('DynamoDbPerformanceTuningProvider.collect (static mode, native Query)'
     const provider = new DynamoDbPerformanceTuningProvider(driver);
     const result = await provider.collect({
       statement: {
-        source: 'dynamoQueryPanel',
-        request: { kind: 'query', input: { tableName: 'orders', keyConditionExpression: 'tenantId = :pk' } },
+        source: 'sqlHistory',
+        request: {
+          kind: 'query',
+          input: {
+            tableName: 'orders',
+            keyConditionExpression: '#pk = :pk',
+            expressionAttributeNames: { '#pk': 'tenantId', '#p0': 'status' },
+            projectionExpression: '#p0',
+            resultItemLimit: 100,
+          },
+        },
       },
     });
     expect(result.ok).toBe(true);
     expect(result.result?.accessPattern.operation).toBe('Query');
     expect(result.result?.accessPattern.accessPath).toBe('tableQuery');
+    expect(result.result?.accessPattern.consistentRead).toBe('eventual');
+    expect(result.result?.accessPattern.projection).toEqual({
+      mode: 'specific',
+      allAttributes: false,
+      attributes: ['status'],
+    });
+    expect(result.result?.accessPattern.limit).toBeUndefined();
+    expect(result.result?.accessPattern.resultItemLimit).toBe(100);
     expect(result.result?.statement.text).toBeUndefined();
+  });
+
+  it('reports an index Query default as all projected attributes, not all table attributes', async () => {
+    const provider = new DynamoDbPerformanceTuningProvider(createMockDriver());
+    const result = await provider.collect({
+      statement: {
+        source: 'sqlHistory',
+        request: {
+          kind: 'query',
+          input: {
+            tableName: 'orders',
+            indexName: 'tenant-status-created-at-gsi',
+            keyConditionExpression: '#pk = :pk',
+            expressionAttributeNames: { '#pk': 'tenantStatus' },
+          },
+        },
+      },
+    });
+
+    expect(result.result?.accessPattern.projection).toEqual({
+      mode: 'allProjectedAttributes',
+      allAttributes: false,
+      attributes: [],
+    });
   });
 });
 
@@ -465,7 +506,7 @@ describe('DynamoDbPerformanceTuningProvider.collect (mode: executeOnce)', () => 
     expect(result.ok).toBe(true);
     expect(result.result?.observation?.returnedItemCount).toBe(100);
     expect(result.result?.observation?.source).toBe('observedRead');
-    expect(result.result?.observation?.scannedItemCount).toBeUndefined(); // PartiQL never carries this
+    expect(result.result?.observation?.evaluatedItemCount).toBeUndefined(); // PartiQL never carries this
     expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_OBSERVATION_BOUNDED')).toBe(true);
     expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
   });
@@ -486,7 +527,7 @@ describe('DynamoDbPerformanceTuningProvider.collect (mode: executeOnce)', () => 
     const result = await provider.collect(
       {
         statement: {
-          source: 'dynamoQueryPanel',
+          source: 'sqlHistory',
           request: { kind: 'query', input: { tableName: 'orders', keyConditionExpression: 'tenantId = :pk' } },
         },
         observation: { mode: 'executeOnce', allowExecution: true },
@@ -495,6 +536,9 @@ describe('DynamoDbPerformanceTuningProvider.collect (mode: executeOnce)', () => 
     );
     expect(result.ok).toBe(true);
     expect(result.result?.observation?.filterPassRate).toBeCloseTo(1 / 500);
+    expect(result.result?.observation?.evaluatedItemCount).toBe(500);
+    expect(result.result?.observation?.completeness).toBe('complete');
+    expect(result.result?.observation?.bounded).toBe(false);
     expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_HIGH_SCANNED_TO_RETURNED')).toBe(true);
   });
 

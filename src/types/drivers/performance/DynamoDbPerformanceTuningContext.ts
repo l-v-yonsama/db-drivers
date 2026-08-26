@@ -87,11 +87,19 @@ export type DynamoDbAccessPattern = {
     attributes: string[];
   };
   projection: {
+    // Describes the actual DynamoDB projection semantics. In particular,
+    // an index Query with no Select/ProjectionExpression uses
+    // ALL_PROJECTED_ATTRIBUTES, which is not the same as all table
+    // attributes.
+    mode: 'allAttributes' | 'allProjectedAttributes' | 'specific';
     allAttributes: boolean;
     attributes: string[];
   };
   consistentRead: 'eventual' | 'strong' | 'unknown';
+  // Raw DynamoDB statement/API Limit. This is intentionally distinct from
+  // resultItemLimit, which is the Query Panel's cross-response result cap.
   limit?: number;
+  resultItemLimit?: number;
   scanForward?: boolean;
 };
 
@@ -224,13 +232,34 @@ export type DynamoDbWorkloadContext = {
   maxCapacityUnits?: number;
   lastCapacityUnits?: number;
   lastReturnedItemCount?: number;
-  lastScannedItemCount?: number;
+  lastEvaluatedItemCount?: number;
   source?: string;
   lastExecutedAt?: string;
+
+  // Rolling aggregate built from SQL History's repeated-execution stats for
+  // the same structural statement (query panel history/performance plan
+  // §7.3/§9.2) - a different degree of evidence than `observation` below
+  // (one recent execution) or a CloudWatch series (server-side, unscoped to
+  // this one statement). Only ever populated for native Query/Scan history,
+  // since evaluatedItemCount/filterPassRate have no PartiQL equivalent.
+  readObservationSampleCount?: number;
+  evaluatedCountSampleCount?: number;
+  totalReturnedItemCount?: number;
+  totalEvaluatedItemCount?: number;
+  // returned/evaluated computed across the *sums* above, not an average of
+  // per-sample rates - see design doc §7.3's "weighted pass rate は保存せ
+  // ず...から算出する".
+  weightedFilterPassRate?: number;
+  minFilterPassRate?: number;
+  maxFilterPassRate?: number;
+  lastFilterPassRate?: number;
+  // Count of samples where continuationTokenPresent === true - i.e. samples
+  // that did not observe the statement's full result (design doc §7.3).
+  boundedObservationCount?: number;
 };
 
 export type DynamoDbReadObservation = {
-  source: 'sqlHistory' | 'observedRead' | 'dynamoQueryPanel';
+  source: 'sqlHistory' | 'observedRead';
   observedAt?: string;
   clientElapsedTimeMs?: number;
   requestCount?: number;
@@ -240,17 +269,30 @@ export type DynamoDbReadObservation = {
   // response has no ScannedCount field at all (AWS API fact, not a
   // collection gap) - a PartiQL observation must leave this undefined,
   // never 0 or an estimate.
-  scannedItemCount?: number;
-  // returned / scanned, computed only when scannedItemCount > 0. Always
+  evaluatedItemCount?: number;
+  // returned / evaluated, computed only when evaluatedItemCount > 0. Always
   // undefined for a PartiQL observation, for the same reason as above.
   filterPassRate?: number;
   consumedCapacity?: DynamoDbCapacityBreakdown;
   hasMorePages?: boolean;
   // true whenever this observation was deliberately cut short (Run Observed
   // Read's 1-response/maxEvaluatedItems cap) rather than reflecting the
-  // statement's full result.
+  // statement's full result. Kept as the compatibility field alongside the
+  // more expressive `completeness` below (query panel history/performance
+  // plan §9.1) - existing readers of `bounded` alone keep working.
   bounded: boolean;
   boundDescription?: string;
+  // 'complete': every matching item was evaluated (no continuation token
+  // remained). 'bounded': evaluation was deliberately or structurally cut
+  // short (Run Observed Read, or a native Query/Scan history sample whose
+  // LastEvaluatedKey/NextToken was present) - same fact `bounded: true`
+  // reports, just named for a 3-way state. 'unknown': completeness could
+  // not be determined at all (e.g. an older history entry saved before this
+  // field existed) - callers must not treat 'unknown' as 'complete'.
+  // Optional so existing constructors that only ever set `bounded` remain
+  // valid; a caller that can determine this should always set both fields
+  // consistently.
+  completeness?: 'complete' | 'bounded' | 'unknown';
 };
 
 // ---------------------------------------------------------------------------
@@ -324,7 +366,7 @@ export type DynamoDbStatementContext = {
   // at the top of PerformanceTuningContext.ts) - Preview/Copy Prompt/AI/
   // report all label this text as possibly containing literals.
   text?: string;
-  source: 'sqlHistory' | 'editor' | 'dynamoQueryPanel';
+  source: 'sqlHistory' | 'editor';
   kind: 'select' | 'query';
   // The single source of truth for whether Run Observed Read may run at all
   // (§7.1, §7.4). v1 sets allowed: false whenever `text` still contains an
@@ -379,15 +421,24 @@ export type DynamoDbQueryAnalysisInput = {
   keyConditionExpression: string;
   filterExpression?: string;
   projectionExpression?: string;
+  select?: 'ALL_ATTRIBUTES' | 'ALL_PROJECTED_ATTRIBUTES' | 'COUNT' | 'SPECIFIC_ATTRIBUTES';
   expressionAttributeNames?: Record<string, string>;
   consistentRead?: boolean;
   scanIndexForward?: boolean;
+  // Raw DynamoDB Query API Limit. Query Panel callers must not put their
+  // cross-response result cap here; use resultItemLimit instead.
   limit?: number;
+  // The cap on items retained in the *combined* result across however many
+  // Query requests the panel issues, not a single API call's raw `Limit`
+  // (query panel history/performance plan §6.3). A caller building this
+  // input from AwsDynamoServiceClient.queryItemsAtClient()'s own params
+  // should use this field rather than `limit`.
+  resultItemLimit?: number;
 };
 
 export type DynamoDbPerformanceTuningContextParams = {
   statement: {
-    source: 'sqlHistory' | 'editor' | 'dynamoQueryPanel';
+    source: 'sqlHistory' | 'editor';
     request:
       | { kind: 'partiql'; text: string }
       | { kind: 'query'; input: DynamoDbQueryAnalysisInput };

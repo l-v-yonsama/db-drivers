@@ -20,6 +20,13 @@ import { SQLLang } from '../../types';
 
 export type QuoteChar = '"' | '`' | "'";
 
+/** Quotes a raw SQL/PartiQL string value, even if it already looks quoted. */
+export const quoteStringLiteral = (input: string): string =>
+  quoteRaw(input, "'");
+
+/** Quotes a raw SQL/PartiQL identifier, even if it already looks quoted. */
+export const quoteIdentifier = (input: string): string => quoteRaw(input, '"');
+
 export const wrapSingleQuote = (input: string): string => wrapQuote(input, "'");
 
 export const wrapDoubleQuote = (input: string): string => wrapQuote(input, '"');
@@ -30,6 +37,10 @@ export const wrapQuote = (input: string, quoteChar: QuoteChar): string => {
   if (input.startsWith(quoteChar) && input.endsWith(quoteChar)) {
     return input; // already wrapped
   }
+  return quoteRaw(input, quoteChar);
+};
+
+const quoteRaw = (input: string, quoteChar: QuoteChar): string => {
   switch (quoteChar) {
     case '"':
       return `"${input.replace(/"/g, '""')}"`;

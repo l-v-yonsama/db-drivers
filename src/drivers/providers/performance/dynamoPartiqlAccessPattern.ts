@@ -499,7 +499,7 @@ function parseOr(c: TokenCursor): BoolNode {
 type ParsedSelect = {
   tableName: string;
   indexName?: string;
-  projection: { allAttributes: boolean; attributes: string[] };
+  projection: DynamoDbAccessPattern['projection'];
   where?: BoolNode;
   limit?: number;
   scanForward?: boolean;
@@ -529,10 +529,10 @@ function parseTableRef(c: TokenCursor): { tableName: string; indexName?: string 
   return { tableName: first.value };
 }
 
-function parseProjection(c: TokenCursor): { allAttributes: boolean; attributes: string[] } {
+function parseProjection(c: TokenCursor): DynamoDbAccessPattern['projection'] {
   if (c.isPunct('*')) {
     c.next();
-    return { allAttributes: true, attributes: [] };
+    return { mode: 'allAttributes', allAttributes: true, attributes: [] };
   }
   const attributes: string[] = [];
   for (;;) {
@@ -549,7 +549,7 @@ function parseProjection(c: TokenCursor): { allAttributes: boolean; attributes: 
     }
     break;
   }
-  return { allAttributes: false, attributes };
+  return { mode: 'specific', allAttributes: false, attributes };
 }
 
 function parseDynamoPartiqlSelect(sql: string): ParsedSelect | undefined {
@@ -737,13 +737,24 @@ function classify(params: {
   tableName: string;
   indexName?: string;
   indexType?: 'LSI' | 'GSI';
-  projection: { allAttributes: boolean; attributes: string[] };
+  projection: DynamoDbAccessPattern['projection'];
   consistentRead: 'eventual' | 'strong' | 'unknown';
   limit?: number;
+  resultItemLimit?: number;
   scanForward?: boolean;
 }): DynamoDbAccessPattern {
-  const { keySchema, tableName, indexName, indexType, projection, consistentRead, limit, scanForward, where } =
-    params;
+  const {
+    keySchema,
+    tableName,
+    indexName,
+    indexType,
+    projection,
+    consistentRead,
+    limit,
+    resultItemLimit,
+    scanForward,
+    where,
+  } = params;
   const pkAttr = keySchema.partitionKey.attributeName;
   const skAttr = keySchema.sortKey?.attributeName;
 
@@ -811,6 +822,7 @@ function classify(params: {
     projection,
     consistentRead,
     limit,
+    resultItemLimit,
     scanForward,
   };
 }
@@ -830,7 +842,7 @@ function unknownAccessPattern(params: {
     indexName: params.indexName,
     indexType: params.indexType,
     postReadFilter: { present: false, attributes: [] },
-    projection: { allAttributes: true, attributes: [] },
+    projection: { mode: 'allAttributes', allAttributes: true, attributes: [] },
     consistentRead: params.consistentRead,
   };
 }
@@ -905,8 +917,9 @@ export function analyzeDynamoNativeQueryAccessPattern(params: {
   indexType?: 'LSI' | 'GSI';
 }): DynamoDbAccessPattern {
   const { input, keySchema, indexType } = params;
-  const consistentRead: 'eventual' | 'strong' | 'unknown' =
-    input.consistentRead === undefined ? 'unknown' : input.consistentRead ? 'strong' : 'eventual';
+  // Query's documented default is eventual consistency when ConsistentRead
+  // is omitted. This is known execution semantics, not missing evidence.
+  const consistentRead: 'eventual' | 'strong' = input.consistentRead ? 'strong' : 'eventual';
 
   const keyTokens = tokenize(input.keyConditionExpression ?? '', true);
   if (!keyTokens) {
@@ -941,10 +954,20 @@ export function analyzeDynamoNativeQueryAccessPattern(params: {
     indexName: input.indexName,
     indexType,
     projection: input.projectionExpression
-      ? { allAttributes: false, attributes: input.projectionExpression.split(',').map((s) => s.trim()) }
-      : { allAttributes: true, attributes: [] },
+      ? {
+          mode: 'specific',
+          allAttributes: false,
+          attributes: input.projectionExpression
+            .split(',')
+            .map((s) => s.trim())
+            .map((attribute) => input.expressionAttributeNames?.[attribute] ?? attribute),
+        }
+      : input.select === 'ALL_ATTRIBUTES' || !input.indexName
+        ? { mode: 'allAttributes', allAttributes: true, attributes: [] }
+        : { mode: 'allProjectedAttributes', allAttributes: false, attributes: [] },
     consistentRead,
     limit: input.limit,
+    resultItemLimit: input.resultItemLimit,
     scanForward: input.scanIndexForward,
   });
 

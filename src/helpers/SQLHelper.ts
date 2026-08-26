@@ -32,6 +32,8 @@ export {
 export {
   createTableNameWithSchema,
   needsQuoting,
+  quoteIdentifier,
+  quoteStringLiteral,
   wrapBackQuote,
   wrapDoubleQuote,
   wrapQuote,

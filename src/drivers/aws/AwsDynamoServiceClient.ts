@@ -46,6 +46,7 @@ import {
 import {
   createRdhKey,
   GeneralColumnType,
+  RdhDynamoDbSummary,
   RdhKey,
   ResultSetData,
   ResultSetDataBuilder,
@@ -623,6 +624,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       dbTable,
       allAttributeTypes,
       meta: tracker.build(!!LastEvaluatedKey),
+      apiOperation: 'Query',
     });
     rs.meta.queryInput = JSON.stringify(params, null, 2);
     return rs;
@@ -691,6 +693,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       dbTable,
       allAttributeTypes,
       meta,
+      apiOperation: 'Scan',
     });
     rs.meta.queryInput = JSON.stringify(params, null, 2);
     return rs;
@@ -904,6 +907,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       dbTable,
       allAttributeTypes,
       meta,
+      apiOperation: 'ExecuteStatement',
     });
   }
 
@@ -1022,6 +1026,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     dbTable,
     allAttributeTypes,
     meta,
+    apiOperation,
   }: {
     Count: number;
     Items?: Record<string, AttributeValue>[];
@@ -1031,14 +1036,19 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     dbTable: DbDynamoTable;
     allAttributeTypes: Map<string, GeneralColumnType>;
     // Optional: absent for callers that don't (yet) track it. Feeds
-    // RdhSummary's additive DynamoDB fields (rdh Phase 1) so SQL History
-    // retains scanned/request/retry/capacity-breakdown evidence per §7.5 -
-    // see AwsDynamoServiceClient.ts's callers of this method. Capacity
-    // (undefined vs. explicit 0) is sourced exclusively from
-    // meta.capacityBreakdown - see design doc §7.2 - never from a
-    // caller-passed capacityUnits, so there is exactly one place that
-    // decides "never reported" vs. "reported as 0".
+    // RdhSummary.dynamoDb (rdh Phase 1) so SQL History retains
+    // evaluated/response/retry/capacity-breakdown evidence per the query
+    // panel history/performance plan §5 - see AwsDynamoServiceClient.ts's
+    // callers of this method. Capacity (undefined vs. explicit 0) is
+    // sourced exclusively from meta.capacityBreakdown - see design doc
+    // §7.2 - never from a caller-passed capacityUnits, so there is exactly
+    // one place that decides "never reported" vs. "reported as 0".
     meta?: DynamoDbExecutionMeta;
+    // Which AWS DynamoDB API produced Items/meta - stored verbatim into
+    // RdhSummary.dynamoDb.apiOperation. Distinct from `operation` below
+    // (the SQL-classified select/insert/update/delete), which decides
+    // read-vs-write wording, not which API was called.
+    apiOperation: RdhDynamoDbSummary['apiOperation'];
   }): ResultSetData {
     let rdb: ResultSetDataBuilder | undefined = undefined;
 
@@ -1161,13 +1171,51 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     // INSERT/UPDATE/DELETE, so this stays undefined rather than being
     // guessed at (e.g. defaulted to 1) - see design doc review 2026-08-25.
     const affectedRows: number | undefined = undefined;
-    const scannedRows = meta?.scannedCount;
-    const requestCount = meta?.requestCount;
-    const retryCount = meta?.retryCount;
     const capacityUnits = meta?.capacityBreakdown?.capacityUnits;
-    const readCapacityUnits = meta?.capacityBreakdown?.readCapacityUnits;
-    const writeCapacityUnits = meta?.capacityBreakdown?.writeCapacityUnits;
-    const hasMoreRows = meta?.hasMorePages;
+
+    // meta.reportedCount (the sum of each page's Count field, native
+    // Query/Scan only) and selectedRows (the number of items actually
+    // materialized into rdb.rs.rows) are expected to always agree - both
+    // ultimately count the same Items across the same pages. A mismatch
+    // would mean this method and the tracker disagree about what was
+    // fetched, so it is surfaced rather than silently resolved by
+    // preferring one value over the other (query panel history/performance
+    // plan §10.2).
+    if (
+      meta?.reportedCount !== undefined &&
+      selectedRows !== undefined &&
+      meta.reportedCount !== selectedRows
+    ) {
+      console.warn(
+        `[AwsDynamoServiceClient] DynamoDB-reported Count (${meta.reportedCount}) does not match the number of items materialized into ResultSetData (${selectedRows}) for table "${dbTable?.name ?? params.meta?.tableName ?? 'unknown'}".`,
+      );
+    }
+
+    // Single source of truth for DynamoDB API execution evidence (query
+    // panel history/performance plan §5.4/§10.2) - built once here and fed
+    // to both setSummary()'s `dynamoDb` and, via the local variables above/
+    // below, the display-only info formatter. Never dual-written to
+    // rdb.rs.meta.dynamoDb or any of rdh's now-removed flat summary fields.
+    const dynamoDb: RdhDynamoDbSummary | undefined = meta
+      ? {
+          apiOperation,
+          returnedItemCount: selectedRows,
+          evaluatedItemCount: meta.scannedCount,
+          successfulResponseCount: meta.requestCount,
+          sdkRetryCount: meta.retryCount,
+          continuationTokenPresent: meta.hasMorePages,
+          consumedCapacity: meta.capacityBreakdown
+            ? {
+                totalCapacityUnits: meta.capacityBreakdown.capacityUnits,
+                totalReadCapacityUnits: meta.capacityBreakdown.readCapacityUnits,
+                totalWriteCapacityUnits: meta.capacityBreakdown.writeCapacityUnits,
+                table: meta.capacityBreakdown.table,
+                localSecondaryIndexes: meta.capacityBreakdown.localSecondaryIndexes,
+                globalSecondaryIndexes: meta.capacityBreakdown.globalSecondaryIndexes,
+              }
+            : undefined,
+        }
+      : undefined;
 
     rdb.setSummary({
       info: buildDynamoDbRdhSummaryInfo({
@@ -1175,32 +1223,20 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         elapsedTimeMilli,
         selectedRows,
         affectedRows,
-        scannedRows,
-        requestCount,
-        retryCount,
+        scannedRows: meta?.scannedCount,
+        requestCount: meta?.requestCount,
+        retryCount: meta?.retryCount,
         capacityUnits,
-        readCapacityUnits,
-        writeCapacityUnits,
-        hasMoreRows,
+        readCapacityUnits: meta?.capacityBreakdown?.readCapacityUnits,
+        writeCapacityUnits: meta?.capacityBreakdown?.writeCapacityUnits,
+        hasMoreRows: meta?.hasMorePages,
       }),
       elapsedTimeMilli,
       selectedRows,
       affectedRows,
       capacityUnits,
-      scannedRows,
-      requestCount,
-      retryCount,
-      readCapacityUnits,
-      writeCapacityUnits,
-      hasMoreRows,
+      dynamoDb,
     });
-    if (meta?.capacityBreakdown) {
-      // Per-table/per-index Capacity is AWS-specific and does not belong in
-      // rdh's own RdhSummary type (design doc §11.1) - RdhMeta's open index
-      // signature is where a driver stashes vendor-specific detail like
-      // this without requiring an rdh change.
-      rdb.rs.meta.dynamoDb = { consumedCapacity: meta.capacityBreakdown };
-    }
     return rdb.build();
   }
 

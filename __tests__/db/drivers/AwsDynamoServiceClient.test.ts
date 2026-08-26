@@ -67,8 +67,14 @@ describe('AwsDynamoServiceClient scan pagination', () => {
       { id: 3, status: 'shipped' },
     ]);
     expect(rs.summary.selectedRows).toBe(3);
-    expect(rs.summary.scannedRows).toBe(3);
-    expect(rs.summary.hasMoreRows).toBe(true);
+    expect(rs.summary.dynamoDb?.apiOperation).toBe('Scan');
+    expect(rs.summary.dynamoDb?.returnedItemCount).toBe(3);
+    expect(rs.summary.dynamoDb?.evaluatedItemCount).toBe(3);
+    expect(rs.summary.dynamoDb?.continuationTokenPresent).toBe(true);
+    // Capacity breakdown lives only under summary.dynamoDb - never
+    // duplicated into rs.meta.dynamoDb (query panel history/performance
+    // plan §5.4/§12.3).
+    expect(rs.meta.dynamoDb).toBeUndefined();
     expect(rs.meta.tableName).toBe('Orders');
 
     const firstCommand = send.mock.calls[0][0] as ScanCommand;

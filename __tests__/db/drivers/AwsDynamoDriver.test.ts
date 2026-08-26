@@ -994,7 +994,9 @@ describe('AwsDynamoDBDriver', () => {
         },
       });
       expect(rs.summary.selectedRows).toBe(1);
-      expect(rs.summary.scannedRows).toBe(2);
+      expect(rs.summary.dynamoDb?.apiOperation).toBe('Query');
+      expect(rs.summary.dynamoDb?.returnedItemCount).toBe(1);
+      expect(rs.summary.dynamoDb?.evaluatedItemCount).toBe(2);
       expect(rs.summary.info).toContain('1 returned / 2 evaluated');
       expect(rs.summary.info).toContain('50% pass');
     });
@@ -1009,7 +1011,7 @@ describe('AwsDynamoDBDriver', () => {
         },
       });
       expect(rs.summary.selectedRows).toBe(2);
-      expect(rs.summary.scannedRows).toBe(2);
+      expect(rs.summary.dynamoDb?.evaluatedItemCount).toBe(2);
       expect(rs.summary.info).toContain('2 returned / 2 evaluated');
       expect(rs.summary.info).toContain('100% pass');
     });
@@ -1024,8 +1026,9 @@ describe('AwsDynamoDBDriver', () => {
 
       expect(rs.rows).toHaveLength(100);
       expect(rs.summary.selectedRows).toBe(100);
-      expect(rs.summary.scannedRows).toBe(100);
-      expect(rs.summary.hasMoreRows).toBe(true);
+      expect(rs.summary.dynamoDb?.apiOperation).toBe('Scan');
+      expect(rs.summary.dynamoDb?.evaluatedItemCount).toBe(100);
+      expect(rs.summary.dynamoDb?.continuationTokenPresent).toBe(true);
       expect(rs.meta.tableName).toBe('MassiveRecords');
       expect(rs.meta.queryInput).toBe(
         JSON.stringify({ TableName: 'MassiveRecords', Limit: 100 }, null, 2),
@@ -1182,7 +1185,8 @@ describe('AwsDynamoDBDriver', () => {
         // doc §11.1: capacityUnits stays undefined (never 0) and info says
         // so explicitly instead of showing a misleading "CU (0)".
         expect(rs.summary.capacityUnits).toBeUndefined();
-        expect(rs.summary.scannedRows).toBeUndefined();
+        expect(rs.summary.dynamoDb?.apiOperation).toBe('ExecuteStatement');
+        expect(rs.summary.dynamoDb?.evaluatedItemCount).toBeUndefined();
         expect(rs.summary.info).toContain('1,003 items returned');
         expect(rs.summary.info).toContain('Capacity not reported');
         expect(rs.summary.info).not.toContain('evaluated');
@@ -1209,8 +1213,8 @@ describe('AwsDynamoDBDriver', () => {
         // (design doc §11.2), and the caller's Limit was reached while a
         // token still remained, so the result is explicitly flagged as
         // truncated (design doc §11.3) rather than silently incomplete.
-        expect(rs.summary.requestCount).toBeGreaterThanOrEqual(2);
-        expect(rs.summary.hasMoreRows).toBe(true);
+        expect(rs.summary.dynamoDb?.successfulResponseCount).toBeGreaterThanOrEqual(2);
+        expect(rs.summary.dynamoDb?.continuationTokenPresent).toBe(true);
         expect(rs.summary.info).toContain('requests');
         expect(rs.summary.info).toContain(
           'Result limited; additional items exist',
@@ -1660,7 +1664,7 @@ describe('AwsDynamoDBDriver', () => {
     it('rejects a native Query analysis input for a table that does not exist', async () => {
       const result = await driver.getDynamoDbPerformanceTuningContext({
         statement: {
-          source: 'dynamoQueryPanel',
+          source: 'sqlHistory',
           request: { kind: 'query', input: { tableName: 'NoSuchTable', keyConditionExpression: 'Id = :id' } },
         },
       });

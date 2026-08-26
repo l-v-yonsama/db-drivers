@@ -569,7 +569,7 @@ export class DynamoDbPerformanceTuningProvider {
                 signal: options.signal,
               });
         observation = buildObservation(observed, mode, request.kind);
-        if (observed.hasMorePages || observed.returnedItemCount >= maxEvaluatedItems) {
+        if (observed.hasMorePages) {
           diagnostics.push(
             diag('DYNAMODB_OBSERVATION_BOUNDED', 'info', false, 'observation', `Run Observed Read stopped after one response / ${maxEvaluatedItems} evaluated items.`, {
               tableName,
@@ -584,7 +584,7 @@ export class DynamoDbPerformanceTuningProvider {
           observed.returnedItemCount / observed.scannedItemCount < HIGH_SCANNED_TO_RETURNED_MAX_PASS_RATE
         ) {
           diagnostics.push(
-            diag('DYNAMODB_HIGH_SCANNED_TO_RETURNED', 'warning', false, 'observation', 'A large fraction of scanned items were filtered out after being read.', {
+            diag('DYNAMODB_HIGH_SCANNED_TO_RETURNED', 'warning', false, 'observation', 'A large fraction of evaluated items were filtered out after being read.', {
               tableName,
               indexName,
             }),
@@ -697,6 +697,7 @@ function buildObservation(
     observed.scannedItemCount !== undefined && observed.scannedItemCount > 0
       ? observed.returnedItemCount / observed.scannedItemCount
       : undefined;
+  const bounded = observed.hasMorePages;
   return {
     source: 'observedRead',
     observedAt: new Date().toISOString(),
@@ -704,12 +705,15 @@ function buildObservation(
     requestCount: observed.requestCount,
     retryCount: observed.retryCount,
     returnedItemCount: observed.returnedItemCount,
-    scannedItemCount: requestKind === 'partiql' ? undefined : observed.scannedItemCount,
+    evaluatedItemCount: requestKind === 'partiql' ? undefined : observed.scannedItemCount,
     filterPassRate: requestKind === 'partiql' ? undefined : filterPassRate,
     consumedCapacity: observed.capacityBreakdown,
     hasMorePages: observed.hasMorePages,
-    bounded: true,
-    boundDescription: `Limited to ${mode === 'executeOnce' ? 'a single API response' : 'the source evidence'} by Run Observed Read.`,
+    bounded,
+    completeness: bounded ? 'bounded' : 'complete',
+    boundDescription: bounded
+      ? `Limited to ${mode === 'executeOnce' ? 'a single API response' : 'the source evidence'} by Run Observed Read; a continuation key remains.`
+      : undefined,
   };
 }
 
