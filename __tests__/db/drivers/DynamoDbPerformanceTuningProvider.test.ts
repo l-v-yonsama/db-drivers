@@ -98,6 +98,17 @@ describe('DynamoDbPerformanceTuningProvider.collect (static mode, PartiQL)', () 
     expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
   });
 
+  it('maps PartiQLSelect to the ExecuteStatement CloudWatch operation', async () => {
+    const driver = createMockDriver();
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(partiqlParams());
+
+    expect(result.ok).toBe(true);
+    expect(driver.collectCloudWatchMetrics).toHaveBeenCalledWith(
+      expect.objectContaining({ operation: 'ExecuteStatement' }),
+    );
+  });
+
   it('classifies a table Scan and reports DYNAMODB_FULL_TABLE_SCAN as an info-level-affecting-nothing warning', async () => {
     const driver = createMockDriver();
     const provider = new DynamoDbPerformanceTuningProvider(driver);
@@ -362,6 +373,16 @@ describe('DynamoDbPerformanceTuningProvider.collect (static mode, PartiQL)', () 
               noData: true,
               source: 'AWS/DynamoDB',
             },
+            {
+              metricName: 'ReadThrottleEvents',
+              statistic: 'Sum',
+              scope: 'gsi',
+              indexName: 'tenant-status-created-at-gsi',
+              timestamps: [],
+              values: [],
+              noData: true,
+              source: 'AWS/DynamoDB',
+            },
           ],
         },
       }),
@@ -370,6 +391,11 @@ describe('DynamoDbPerformanceTuningProvider.collect (static mode, PartiQL)', () 
     const result = await provider.collect(partiqlParams());
     expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_READ_THROTTLING_OBSERVED')).toBe(true);
     expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_CLOUDWATCH_NO_DATA')).toBe(true);
+    expect(
+      result.result?.collection.diagnostics.find(
+        (d) => d.code === 'DYNAMODB_CLOUDWATCH_NO_DATA' && d.metricName === 'ReadThrottleEvents',
+      ),
+    ).toMatchObject({ tableName: 'orders', indexName: 'tenant-status-created-at-gsi' });
   });
 });
 

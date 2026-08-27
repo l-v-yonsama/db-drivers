@@ -11,6 +11,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { GeneralResult } from '../../../types/drivers/GeneralResult';
 import {
+  DynamoDbAccessPattern,
   DynamoDbCapacityBreakdown,
   DynamoDbCloudWatchContext,
   DynamoDbIndexContext,
@@ -74,6 +75,10 @@ function monitoringUnavailableMessage(mode: Exclude<DynamoDbMonitoringMode, 'ena
   return mode === 'cloudWatchNotSelected'
     ? 'CloudWatch metrics and Contributor Insights are not collected because CloudWatch is not enabled for this connection.'
     : 'CloudWatch metrics and Contributor Insights are outside the scope of local/custom DynamoDB endpoints.';
+}
+
+function toCloudWatchOperation(operation: DynamoDbAccessPattern['operation']): DynamoDbCloudWatchMetricsInput['operation'] {
+  return operation === 'PartiQLSelect' ? 'ExecuteStatement' : operation;
 }
 
 // Narrow, structural view of AwsDriver/AwsDynamoServiceClient - just enough
@@ -439,7 +444,7 @@ export class DynamoDbPerformanceTuningProvider {
     }
 
     let observationEligibility: { allowed: boolean; reason?: string } = { allowed: true };
-    let accessPattern;
+    let accessPattern: DynamoDbAccessPattern;
     if (request.kind === 'partiql') {
       if (containsUnresolvedBindMarker(statementText!)) {
         observationEligibility = {
@@ -496,7 +501,7 @@ export class DynamoDbPerformanceTuningProvider {
         tableName,
         indexName,
         indexType: resolvedTarget.indexType,
-        operation: accessPattern.operation,
+        operation: toCloudWatchOperation(accessPattern.operation),
         billingMode: table.billingMode,
         hasOnDemandMaxLimit: table.onDemandThroughput?.maxReadRequestUnits !== undefined,
         lookbackMinutes: params.metrics?.lookbackMinutes,
@@ -510,6 +515,7 @@ export class DynamoDbPerformanceTuningProvider {
             diagnostics.push(
               diag('DYNAMODB_CLOUDWATCH_NO_DATA', 'info', false, 'cloudWatchMetrics', `No CloudWatch datapoints for ${series.metricName} (${series.statistic}).`, {
                 tableName,
+                indexName: series.scope === 'gsi' ? series.indexName : undefined,
                 metricName: series.metricName,
               }),
             );
