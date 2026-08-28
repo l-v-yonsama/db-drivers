@@ -585,6 +585,69 @@ describe('DynamoDbPerformanceTuningProvider.collect (mode: executeOnce)', () => 
   });
 });
 
+describe('DynamoDbPerformanceTuningProvider.collect (mode: executeComplete)', () => {
+  it('uses the continuation-aware PartiQL reader and reports a complete observation', async () => {
+    const observePartiqlReadComplete = jest.fn().mockResolvedValue({
+      returnedItemCount: 38,
+      scannedItemCount: undefined,
+      hasMorePages: false,
+      capacityBreakdown: { capacityUnits: 4.5 },
+      clientElapsedTimeMs: 103,
+      requestCount: 2,
+      retryCount: 0,
+    });
+    const driver = createMockDriver({ observePartiqlReadComplete });
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(
+      partiqlParams({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM orders WHERE tenantId = 'literal'` } },
+        observation: { mode: 'executeComplete', allowExecution: true, maxPages: 10 },
+      }),
+      { execution: { kind: 'partiql', parameters: [] } },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(observePartiqlReadComplete).toHaveBeenCalledWith(expect.objectContaining({ maxPages: 10 }));
+    expect(result.result?.observation).toMatchObject({
+      completeness: 'complete',
+      bounded: false,
+      requestCount: 2,
+      returnedItemCount: 38,
+    });
+  });
+
+  it('reports incomplete coverage when the complete-result safety limit is reached', async () => {
+    const driver = createMockDriver({
+      observeNativeQueryReadComplete: jest.fn().mockResolvedValue({
+        returnedItemCount: 130,
+        scannedItemCount: 1000,
+        hasMorePages: true,
+        capacityBreakdown: { capacityUnits: 25 },
+        clientElapsedTimeMs: 500,
+        requestCount: 10,
+        retryCount: 0,
+      }),
+    });
+    const provider = new DynamoDbPerformanceTuningProvider(driver);
+    const result = await provider.collect(
+      {
+        statement: {
+          source: 'sqlHistory',
+          request: { kind: 'query', input: { tableName: 'orders', keyConditionExpression: 'tenantId = :pk' } },
+        },
+        observation: { mode: 'executeComplete', allowExecution: true, maxPages: 10, maxEvaluatedItems: 1000 },
+      },
+      { execution: { kind: 'query', input: {} as never } },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.result?.observation).toMatchObject({ completeness: 'bounded', bounded: true });
+    expect(result.result?.collection.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'DYNAMODB_OBSERVATION_BOUNDED' }),
+    ]));
+  });
+});
+
 describe('DynamoDbPerformanceTuningProvider.collect (payload limit)', () => {
   it('truncates CloudWatch datapoints and flags DYNAMODB_COLLECTION_TRUNCATED when over a small maxPayloadBytes', async () => {
     const bigSeries = Array.from({ length: 5 }, (_, seriesIdx) => ({

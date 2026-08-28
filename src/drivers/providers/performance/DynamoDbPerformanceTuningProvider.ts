@@ -109,6 +109,20 @@ export interface DynamoDbPerformanceTuningDriverAccess {
     timeoutMs?: number;
     signal?: AbortSignal;
   }): Promise<DynamoDbObservedReadResultLike>;
+  observeNativeQueryReadComplete?(params: {
+    input: unknown;
+    maxEvaluatedItems?: number;
+    maxPages?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResultLike>;
+  observePartiqlReadComplete?(params: {
+    statement: string;
+    parameters?: unknown[];
+    maxPages?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResultLike>;
 }
 
 // ---------------------------------------------------------------------------
@@ -538,7 +552,7 @@ export class DynamoDbPerformanceTuningProvider {
     const workload = params.statement.workload;
 
     // --- observed read (mode: executeOnce) ----------------------------------
-    if (mode === 'executeOnce') {
+    if (mode === 'executeOnce' || mode === 'executeComplete') {
       // Fail-closed (§7.4: "allowExecution: true 必須"): this must be an
       // explicit true from the caller, mirroring the RDB side's own
       // `plan.mode === 'analyze' && plan.allowExecution !== true` gate
@@ -548,19 +562,44 @@ export class DynamoDbPerformanceTuningProvider {
       if (params.observation?.allowExecution !== true) {
         return {
           ok: false,
-          message: 'observation.mode is executeOnce but observation.allowExecution was not explicitly true. Run Observed Read requires explicit, host-confirmed authorization.',
+          message: `observation.mode is ${mode} but observation.allowExecution was not explicitly true. A measured read requires explicit, host-confirmed authorization.`,
         };
       }
       if (!options?.execution) {
-        return { ok: false, message: 'observation.mode is executeOnce but no execution options were supplied.' };
+        return { ok: false, message: `observation.mode is ${mode} but no execution options were supplied.` };
       }
       if (!observationEligibility.allowed) {
         return { ok: false, message: observationEligibility.reason ?? 'This statement is not eligible for Run Observed Read.' };
       }
-      const maxEvaluatedItems = clamp(params.observation?.maxEvaluatedItems, DEFAULT_MAX_EVALUATED_ITEMS, 1, DEFAULT_MAX_EVALUATED_ITEMS);
+      const maxEvaluatedItems = mode === 'executeComplete'
+        ? clamp(params.observation?.maxEvaluatedItems, 1000, 1, 1000)
+        : clamp(params.observation?.maxEvaluatedItems, DEFAULT_MAX_EVALUATED_ITEMS, 1, DEFAULT_MAX_EVALUATED_ITEMS);
+      const maxPages = clamp(params.observation?.maxPages, 10, 1, 10);
+      if (
+        mode === 'executeComplete' &&
+        ((options.execution.kind === 'partiql' && !this.driver.observePartiqlReadComplete) ||
+          (options.execution.kind === 'query' && !this.driver.observeNativeQueryReadComplete))
+      ) {
+        return { ok: false, message: 'Complete-result Benchmark is not supported by this DynamoDB driver.' };
+      }
       try {
-        const observed =
-          options.execution.kind === 'partiql'
+        const observed = mode === 'executeComplete'
+          ? options.execution.kind === 'partiql'
+            ? await this.driver.observePartiqlReadComplete!({
+                statement: statementText!,
+                parameters: options.execution.parameters,
+                maxPages,
+                timeoutMs: params.observation?.timeoutMs,
+                signal: options.signal,
+              })
+            : await this.driver.observeNativeQueryReadComplete!({
+                input: options.execution.input,
+                maxEvaluatedItems,
+                maxPages,
+                timeoutMs: params.observation?.timeoutMs,
+                signal: options.signal,
+              })
+          : options.execution.kind === 'partiql'
             ? await this.driver.observePartiqlRead({
                 statement: statementText!,
                 parameters: options.execution.parameters,
@@ -577,7 +616,9 @@ export class DynamoDbPerformanceTuningProvider {
         observation = buildObservation(observed, mode, request.kind);
         if (observed.hasMorePages) {
           diagnostics.push(
-            diag('DYNAMODB_OBSERVATION_BOUNDED', 'info', false, 'observation', `Run Observed Read stopped after one response / ${maxEvaluatedItems} evaluated items.`, {
+            diag('DYNAMODB_OBSERVATION_BOUNDED', 'info', false, 'observation', mode === 'executeComplete'
+              ? `Complete-result Benchmark reached its safety limit (${maxPages} pages / ${maxEvaluatedItems} evaluated items).`
+              : `Run Observed Read stopped after one response / ${maxEvaluatedItems} evaluated items.`, {
               tableName,
               indexName,
             }),
@@ -696,7 +737,7 @@ function containsUnresolvedBindMarker(sql: string): boolean {
 
 function buildObservation(
   observed: DynamoDbObservedReadResultLike,
-  mode: 'static' | 'executeOnce',
+  mode: 'static' | 'executeOnce' | 'executeComplete',
   requestKind: 'partiql' | 'query',
 ): DynamoDbReadObservation {
   const filterPassRate =
@@ -718,7 +759,9 @@ function buildObservation(
     bounded,
     completeness: bounded ? 'bounded' : 'complete',
     boundDescription: bounded
-      ? `Limited to ${mode === 'executeOnce' ? 'a single API response' : 'the source evidence'} by Run Observed Read; a continuation key remains.`
+      ? mode === 'executeComplete'
+        ? 'Complete-result Benchmark reached its safety limit; a continuation key remains.'
+        : `Limited to ${mode === 'executeOnce' ? 'a single API response' : 'the source evidence'} by Run Observed Read; a continuation key remains.`
       : undefined,
   };
 }

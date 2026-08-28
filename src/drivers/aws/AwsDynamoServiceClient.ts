@@ -118,9 +118,13 @@ export type DynamoDbObservedReadResult = {
   hasMorePages: boolean;
   capacityBreakdown?: DynamoDbCapacityBreakdown;
   clientElapsedTimeMs: number;
-  requestCount: 1;
+  requestCount: number;
   retryCount: number;
 };
+
+export const DYNAMODB_COMPLETE_READ_MAX_PAGES = 10;
+export const DYNAMODB_COMPLETE_READ_MAX_EVALUATED_ITEMS = 1000;
+export const DYNAMODB_COMPLETE_READ_TIMEOUT_MS = 30_000;
 
 // Races `promise` against a plain timer so a caller-specified timeoutMs is
 // enforced regardless of whether the underlying SDK request handler honors
@@ -991,6 +995,117 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       clientElapsedTimeMs: Date.now() - startTime,
       requestCount: 1,
       retryCount: Math.max(0, (response.$metadata?.attempts ?? 1) - 1),
+    };
+  }
+
+  async observeNativeQueryReadComplete(params: {
+    input: OriginalQueryCommandInput;
+    maxPages?: number;
+    maxEvaluatedItems?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResult> {
+    const maxPages = Math.min(params.maxPages ?? DYNAMODB_COMPLETE_READ_MAX_PAGES, DYNAMODB_COMPLETE_READ_MAX_PAGES);
+    const maxEvaluatedItems = Math.min(
+      params.maxEvaluatedItems ?? DYNAMODB_COMPLETE_READ_MAX_EVALUATED_ITEMS,
+      DYNAMODB_COMPLETE_READ_MAX_EVALUATED_ITEMS,
+    );
+    const timeoutMs = Math.min(params.timeoutMs ?? DYNAMODB_COMPLETE_READ_TIMEOUT_MS, DYNAMODB_COMPLETE_READ_TIMEOUT_MS);
+    const startedAt = Date.now();
+    let exclusiveStartKey: OriginalQueryCommandInput['ExclusiveStartKey'];
+    let returnedItemCount = 0;
+    let scannedItemCount = 0;
+    let requestCount = 0;
+    let retryCount = 0;
+    let hasMorePages = false;
+    const consumedCapacity: Array<OriginalQueryCommandOutput['ConsumedCapacity']> = [];
+
+    do {
+      const remainingItems = maxEvaluatedItems - scannedItemCount;
+      if (remainingItems <= 0 || requestCount >= maxPages) break;
+      const response = await withTimeout(
+        this.client.send(
+          new OriginalQueryCommand({
+            ...params.input,
+            Limit: Math.min(DYNAMODB_OBSERVED_READ_MAX_ITEMS, remainingItems),
+            ExclusiveStartKey: exclusiveStartKey,
+            ReturnConsumedCapacity: 'INDEXES',
+          }),
+          { abortSignal: params.signal },
+        ),
+        Math.max(1, timeoutMs - (Date.now() - startedAt)),
+      );
+      requestCount += 1;
+      retryCount += Math.max(0, (response.$metadata?.attempts ?? 1) - 1);
+      returnedItemCount += response.Count ?? response.Items?.length ?? 0;
+      scannedItemCount += response.ScannedCount ?? response.Count ?? response.Items?.length ?? 0;
+      consumedCapacity.push(response.ConsumedCapacity);
+      exclusiveStartKey = response.LastEvaluatedKey;
+      hasMorePages = !!exclusiveStartKey;
+    } while (hasMorePages);
+
+    return {
+      returnedItemCount,
+      scannedItemCount,
+      hasMorePages,
+      capacityBreakdown: aggregateConsumedCapacity(consumedCapacity),
+      clientElapsedTimeMs: Date.now() - startedAt,
+      requestCount,
+      retryCount,
+    };
+  }
+
+  async observePartiqlReadComplete(params: {
+    statement: string;
+    parameters?: unknown[];
+    maxPages?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResult> {
+    const qst = parseQuery(params.statement);
+    if (!qst || qst.ast?.type !== 'select') {
+      throw new Error('Complete-result Benchmark only supports a single SELECT statement.');
+    }
+    const maxPages = Math.min(params.maxPages ?? DYNAMODB_COMPLETE_READ_MAX_PAGES, DYNAMODB_COMPLETE_READ_MAX_PAGES);
+    const timeoutMs = Math.min(params.timeoutMs ?? DYNAMODB_COMPLETE_READ_TIMEOUT_MS, DYNAMODB_COMPLETE_READ_TIMEOUT_MS);
+    const startedAt = Date.now();
+    let nextToken: string | undefined;
+    let returnedItemCount = 0;
+    let requestCount = 0;
+    let retryCount = 0;
+    let hasMorePages = false;
+    const consumedCapacity: Array<OriginalExecuteStatementCommandOutput['ConsumedCapacity']> = [];
+
+    do {
+      if (requestCount >= maxPages) break;
+      const input: OriginalExecuteStatementCommandInput = {
+        Statement: params.statement,
+        Limit: DYNAMODB_OBSERVED_READ_MAX_ITEMS,
+        NextToken: nextToken,
+        ReturnConsumedCapacity: 'INDEXES',
+      };
+      if (params.parameters && params.parameters.length > 0) input.Parameters = marshall(params.parameters);
+      const response = await withTimeout(
+        this.client.send(new OriginalExecuteStatementCommand(input), { abortSignal: params.signal }),
+        Math.max(1, timeoutMs - (Date.now() - startedAt)),
+      );
+      requestCount += 1;
+      retryCount += Math.max(0, (response.$metadata?.attempts ?? 1) - 1);
+      returnedItemCount += response.Items?.length ?? 0;
+      consumedCapacity.push(response.ConsumedCapacity);
+      nextToken = response.NextToken;
+      hasMorePages = !!(response.NextToken || response.LastEvaluatedKey);
+      if (!nextToken && hasMorePages) break;
+    } while (hasMorePages);
+
+    return {
+      returnedItemCount,
+      scannedItemCount: undefined,
+      hasMorePages,
+      capacityBreakdown: aggregateConsumedCapacity(consumedCapacity),
+      clientElapsedTimeMs: Date.now() - startedAt,
+      requestCount,
+      retryCount,
     };
   }
 

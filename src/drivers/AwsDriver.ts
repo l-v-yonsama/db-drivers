@@ -598,4 +598,12 @@ class AwsDriverDynamoDbPerformanceTuningAccess implements DynamoDbPerformanceTun
   }) {
     return this.dynamoClient.observePartiqlRead(params);
   }
+
+  observeNativeQueryReadComplete(params: Parameters<AwsDynamoServiceClient['observeNativeQueryReadComplete']>[0]) {
+    return this.dynamoClient.observeNativeQueryReadComplete(params);
+  }
+
+  observePartiqlReadComplete(params: Parameters<AwsDynamoServiceClient['observePartiqlReadComplete']>[0]) {
+    return this.dynamoClient.observePartiqlReadComplete(params);
+  }
 }

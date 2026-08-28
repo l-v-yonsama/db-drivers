@@ -136,6 +136,32 @@ export type WorkloadContext = {
 // what ends up in `PerformanceTuningContext.workload` after the API copies it.
 export type SelectedStatementStatistics = WorkloadContext;
 
+// A deliberately-triggered, short benchmark is different evidence from the
+// rolling workload above. Every sample is retained so callers can show the
+// spread and audit the median instead of receiving only a pre-aggregated
+// number. EXPLAIN ANALYZE is collected immediately before these ordinary
+// SELECT executions, but its instrumented execution time is never mixed into
+// this client-observed series.
+export type PerformanceTuningBenchmarkSample = {
+  run: number;
+  clientElapsedTimeMs: number;
+  returnedRowCount?: number;
+};
+
+export type PerformanceTuningBenchmarkSession = {
+  startedAt: string;
+  completedAt: string;
+  requestedRuns: 3 | 5;
+  completedRuns: number;
+  samples: PerformanceTuningBenchmarkSample[];
+  medianClientElapsedTimeMs: number;
+  averageClientElapsedTimeMs: number;
+  minClientElapsedTimeMs: number;
+  maxClientElapsedTimeMs: number;
+  planCollectedBeforeBenchmark: true;
+  source: 'performanceTuningBenchmark';
+};
+
 // A purely factual, computed pointer at the one PlanNode that accounts for
 // the most cost/time in a plan - never a verdict ("this is the problem"),
 // just "this is where the numbers concentrate" (2026-08-21 follow-up, see
@@ -377,6 +403,7 @@ export type PerformanceTuningContext = {
   database: DatabaseContext;
   statement: StatementContext;
   workload?: WorkloadContext;
+  benchmark?: PerformanceTuningBenchmarkSession;
   executionPlan: ExecutionPlanContext;
   tables: TableTuningContext[];
   planTableMappings: PlanTableMapping[];

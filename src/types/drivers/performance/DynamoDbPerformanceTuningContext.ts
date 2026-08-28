@@ -295,6 +295,41 @@ export type DynamoDbReadObservation = {
   completeness?: 'complete' | 'bounded' | 'unknown';
 };
 
+// An explicitly-triggered 3/5-run session. `page` measures one safely bounded
+// API response; `completeResult` follows continuation tokens up to hard safety
+// caps and records bounded when those caps stop it before completion.
+export type DynamoDbBenchmarkSample = {
+  run: number;
+  clientElapsedTimeMs: number;
+  requestCount?: number;
+  retryCount?: number;
+  returnedItemCount?: number;
+  evaluatedItemCount?: number;
+  filterPassRate?: number;
+  consumedCapacity?: DynamoDbCapacityBreakdown;
+  completeness: 'complete' | 'bounded' | 'unknown';
+};
+
+export type DynamoDbBenchmarkSession = {
+  startedAt: string;
+  completedAt: string;
+  requestedRuns: 3 | 5;
+  completedRuns: number;
+  samples: DynamoDbBenchmarkSample[];
+  medianClientElapsedTimeMs: number;
+  averageClientElapsedTimeMs: number;
+  minClientElapsedTimeMs: number;
+  maxClientElapsedTimeMs: number;
+  medianConsumedReadCapacityUnits?: number;
+  averageConsumedReadCapacityUnits?: number;
+  medianReturnedItemCount?: number;
+  medianEvaluatedItemCount?: number;
+  mode?: 'page' | 'completeResult';
+  completeness?: 'complete' | 'bounded' | 'unknown' | 'mixed';
+  boundDescription?: string;
+  source: 'performanceTuningBenchmark';
+};
+
 // ---------------------------------------------------------------------------
 // CloudWatch (§6.5, §7.3). Normalized into named series with explicit
 // provenance (window/scope/operation) - never the raw GetMetricData
@@ -388,6 +423,7 @@ export type DynamoDbPerformanceTuningContext = {
   statement: DynamoDbStatementContext;
 
   accessPattern: DynamoDbAccessPattern;
+  benchmark?: DynamoDbBenchmarkSession;
   table: DynamoDbTableContext;
   workload?: DynamoDbWorkloadContext;
   observation?: DynamoDbReadObservation;
@@ -448,9 +484,10 @@ export type DynamoDbPerformanceTuningContextParams = {
   target?: { tableName: string; indexName?: string };
   metrics?: { lookbackMinutes?: number; periodSeconds?: number };
   observation?: {
-    mode?: 'static' | 'executeOnce';
+    mode?: 'static' | 'executeOnce' | 'executeComplete';
     allowExecution?: boolean;
     maxEvaluatedItems?: number;
+    maxPages?: number;
     timeoutMs?: number;
   };
   limits?: { maxPayloadBytes?: number; maxIndexes?: number };

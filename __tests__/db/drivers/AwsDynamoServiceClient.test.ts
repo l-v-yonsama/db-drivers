@@ -150,3 +150,86 @@ describe('AwsDynamoServiceClient scan pagination', () => {
     });
   });
 });
+
+describe('AwsDynamoServiceClient complete-result observed reads', () => {
+  function createClient(): AwsDynamoServiceClient {
+    return new AwsDynamoServiceClient(
+      { name: 'aws-connection' } as ConnectionSetting,
+      { credentials: { accessKeyId: 'test', secretAccessKey: 'test' } },
+      {} as AwsDriver,
+    );
+  }
+
+  it('follows native Query continuation keys and aggregates metadata only', async () => {
+    const client = createClient();
+    const lastKey = { tenantId: { S: 'T#1' }, orderId: { S: 'O#100' } };
+    const send = jest.fn()
+      .mockResolvedValueOnce({
+        Count: 13,
+        ScannedCount: 100,
+        LastEvaluatedKey: lastKey,
+        ConsumedCapacity: { TableName: 'orders', CapacityUnits: 11.5 },
+        $metadata: { attempts: 2 },
+      })
+      .mockResolvedValueOnce({
+        Count: 4,
+        ScannedCount: 20,
+        ConsumedCapacity: { TableName: 'orders', CapacityUnits: 2.5 },
+        $metadata: { attempts: 1 },
+      });
+    client.client = { send } as unknown as DynamoDBClient;
+
+    const result = await client.observeNativeQueryReadComplete({
+      input: { TableName: 'orders', KeyConditionExpression: 'tenantId = :pk' },
+      maxPages: 10,
+      maxEvaluatedItems: 1000,
+    });
+
+    expect(result).toMatchObject({
+      returnedItemCount: 17,
+      scannedItemCount: 120,
+      hasMorePages: false,
+      requestCount: 2,
+      retryCount: 1,
+      capacityBreakdown: { capacityUnits: 14 },
+    });
+    expect(send.mock.calls[1][0].input).toMatchObject({
+      ExclusiveStartKey: lastKey,
+      Limit: 100,
+      ReturnConsumedCapacity: 'INDEXES',
+    });
+  });
+
+  it('stops PartiQL at the page safety limit and preserves incomplete coverage', async () => {
+    const client = createClient();
+    const send = jest.fn()
+      .mockResolvedValueOnce({
+        Items: [{ id: { S: '1' } }],
+        NextToken: 'next-1',
+        $metadata: { attempts: 1 },
+      })
+      .mockResolvedValueOnce({
+        Items: [{ id: { S: '2' } }],
+        NextToken: 'next-2',
+        $metadata: { attempts: 1 },
+      });
+    client.client = { send } as unknown as DynamoDBClient;
+
+    const result = await client.observePartiqlReadComplete({
+      statement: "SELECT * FROM orders WHERE tenantId = 'T#1'",
+      maxPages: 2,
+    });
+
+    expect(result).toMatchObject({
+      returnedItemCount: 2,
+      hasMorePages: true,
+      requestCount: 2,
+      retryCount: 0,
+    });
+    expect(send.mock.calls[1][0].input).toMatchObject({
+      NextToken: 'next-1',
+      Limit: 100,
+      ReturnConsumedCapacity: 'INDEXES',
+    });
+  });
+});
