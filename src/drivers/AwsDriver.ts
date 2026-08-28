@@ -65,12 +65,10 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
   public secretsManagerClient: AwsSecretsManagerServiceClient;
   public cloudFormationClient: AwsCloudFormationServiceClient;
 
-  // Lazily constructed on first DynamoDB performance-tuning call, not part
-  // of connectSub()'s AwsServiceType.* gating (see the note on
-  // getDynamoDbPerformanceTuningProvider() below) - cached afterward so a
-  // Preview reopening the same connection doesn't re-create a
-  // CloudWatchClient every call.
-  private dynamoDbPerformanceTuningProvider: DynamoDbPerformanceTuningProvider | undefined;
+  // Lazily reuse the tuning provider without changing normal AWS service initialization.
+  private dynamoDbPerformanceTuningProvider:
+    | DynamoDbPerformanceTuningProvider
+    | undefined;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
@@ -478,27 +476,11 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     throw new Error('Not supported.');
   }
 
-  // -------------------------------------------------------------------
-  // DynamoDB performance tuning (design doc §6.7). A parallel API, not
-  // RDSBaseDriver's getPerformanceTuningContext()/
-  // checkPerformanceTuningContextAvailability() - AwsDriver is a sibling
-  // of RDSBaseDriver under BaseSQLSupportDriver, not a subclass, so this
-  // adds nothing to either base class's contract and cannot collide with
-  // the RDB-side method names.
-  // -------------------------------------------------------------------
-
-  // A static, connection-setting-only check, mirroring RDSBaseDriver's own
-  // supportsGetPerformanceTuningContext() (which answers from a per-vendor
-  // Provider hook wired at driver-construction time, never from
-  // connection state). createSQLSupportDriver()/createRDSDriver() callers
-  // in db-notebook call this on a driver instance that has NOT been
-  // connected yet - checking `this.dynamoClient` here (only ever populated
-  // by connectSub()) would incorrectly answer false for every caller of
-  // that established "quick check before opening progress" pattern.
-  // getDynamoDbPerformanceTuningContext() itself still separately guards on
-  // `this.dynamoClient` at call time, since that one always runs post-connect.
+  // Capability support comes from connection settings because callers check before connecting.
   supportsGetDynamoDbPerformanceTuningContext(): boolean {
-    return !!this.conRes.awsSetting?.services?.includes(AwsServiceType.DynamoDB);
+    return !!this.conRes.awsSetting?.services?.includes(
+      AwsServiceType.DynamoDB,
+    );
   }
 
   async checkDynamoDbPerformanceTuningContextAvailability(
@@ -507,9 +489,14 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     options?: PerformanceTuningCallOptions,
   ): Promise<GeneralResult<DynamoDbPerformanceTuningCapabilities>> {
     if (!this.dynamoClient) {
-      return { ok: false, message: 'This connection does not have DynamoDB configured.' };
+      return {
+        ok: false,
+        message: 'This connection does not have DynamoDB configured.',
+      };
     }
-    return this.getDynamoDbPerformanceTuningProvider().checkCapabilities(params);
+    return this.getDynamoDbPerformanceTuningProvider().checkCapabilities(
+      params,
+    );
   }
 
   async getDynamoDbPerformanceTuningContext(
@@ -517,25 +504,30 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     options?: DynamoDbPerformanceTuningCallOptions,
   ): Promise<GeneralResult<DynamoDbPerformanceTuningContext>> {
     if (!this.dynamoClient) {
-      return { ok: false, message: 'This connection does not have DynamoDB configured.' };
+      return {
+        ok: false,
+        message: 'This connection does not have DynamoDB configured.',
+      };
     }
     return this.getDynamoDbPerformanceTuningProvider().collect(params, options);
   }
 
-  // Built lazily because performance tuning itself only requires DynamoDB.
-  // CloudWatch-backed evidence is additionally gated by the connection's
-  // selected services and is never requested from a custom/local endpoint.
+  // CloudWatch evidence is created lazily only for supported AWS connections.
   private getDynamoDbPerformanceTuningProvider(): DynamoDbPerformanceTuningProvider {
     if (!this.dynamoDbPerformanceTuningProvider) {
-      const cloudWatchSelected = !!this.conRes.awsSetting?.services?.includes(AwsServiceType.Cloudwatch);
+      const cloudWatchSelected = !!this.conRes.awsSetting?.services?.includes(
+        AwsServiceType.Cloudwatch,
+      );
       const monitoringMode: DynamoDbMonitoringMode = !cloudWatchSelected
         ? 'cloudWatchNotSelected'
         : this.conRes.url
-          ? 'customEndpoint'
-          : 'enabled';
+        ? 'customEndpoint'
+        : 'enabled';
       const cloudWatchCollector =
         monitoringMode === 'enabled'
-          ? new DynamoDbCloudWatchMetricsCollector(new CloudWatchClient(this.createClientConfig()))
+          ? new DynamoDbCloudWatchMetricsCollector(
+              new CloudWatchClient(this.createClientConfig()),
+            )
           : undefined;
       const access = new AwsDriverDynamoDbPerformanceTuningAccess(
         this.dynamoClient,
@@ -544,46 +536,63 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         this.conRes.url ? 'custom' : 'aws',
         monitoringMode,
       );
-      this.dynamoDbPerformanceTuningProvider = new DynamoDbPerformanceTuningProvider(access);
+      this.dynamoDbPerformanceTuningProvider =
+        new DynamoDbPerformanceTuningProvider(access);
     }
     return this.dynamoDbPerformanceTuningProvider;
   }
 }
 
-// Adapter satisfying DynamoDbPerformanceTuningDriverAccess by delegating to
-// AwsDynamoServiceClient's Describe*/observe* methods and a
-// DynamoDbCloudWatchMetricsCollector - kept as a small standalone class
-// (rather than having AwsDriver itself implement the interface) so the
-// Provider's dependency stays exactly as narrow as
-// MySQLPerformanceTuningDriverAccess's own rationale calls for.
-class AwsDriverDynamoDbPerformanceTuningAccess implements DynamoDbPerformanceTuningDriverAccess {
+// Keeps the performance provider dependent on its narrow driver-access contract.
+class AwsDriverDynamoDbPerformanceTuningAccess
+  implements DynamoDbPerformanceTuningDriverAccess
+{
   constructor(
     private readonly dynamoClient: AwsDynamoServiceClient,
-    private readonly cloudWatchCollector: DynamoDbCloudWatchMetricsCollector | undefined,
+    private readonly cloudWatchCollector:
+      | DynamoDbCloudWatchMetricsCollector
+      | undefined,
     public readonly region: string | undefined,
     public readonly endpointKind: 'aws' | 'custom',
     public readonly monitoringMode: DynamoDbMonitoringMode,
   ) {}
 
-  describeTable(tableName: string) {
+  describeTable(
+    tableName: string,
+  ): ReturnType<AwsDynamoServiceClient['describeTable']> {
     return this.dynamoClient.describeTable(tableName);
   }
 
-  describeTimeToLive(tableName: string) {
+  describeTimeToLive(
+    tableName: string,
+  ): ReturnType<AwsDynamoServiceClient['describeTimeToLive']> {
     return this.dynamoClient.describeTimeToLive(tableName);
   }
 
-  describeContributorInsights(tableName: string, indexName?: string) {
+  describeContributorInsights(
+    tableName: string,
+    indexName?: string,
+  ): ReturnType<AwsDynamoServiceClient['describeContributorInsights']> {
     return this.dynamoClient.describeContributorInsights(tableName, indexName);
   }
 
-  collectCloudWatchMetrics(input: Parameters<DynamoDbCloudWatchMetricsCollector['collect']>[0]) {
+  collectCloudWatchMetrics(
+    input: Parameters<DynamoDbCloudWatchMetricsCollector['collect']>[0],
+  ): ReturnType<DynamoDbCloudWatchMetricsCollector['collect']> {
     return this.cloudWatchCollector
       ? this.cloudWatchCollector.collect(input)
-      : Promise.resolve({ ok: false as const, message: 'CloudWatch monitoring is not enabled for this connection.' });
+      : Promise.resolve({
+          ok: false as const,
+          message: 'CloudWatch monitoring is not enabled for this connection.',
+        });
   }
 
-  observeNativeQueryRead(params: { input: unknown; maxEvaluatedItems?: number; timeoutMs?: number; signal?: AbortSignal }) {
+  observeNativeQueryRead(params: {
+    input: unknown;
+    maxEvaluatedItems?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): ReturnType<AwsDynamoServiceClient['observeNativeQueryRead']> {
     return this.dynamoClient.observeNativeQueryRead(
       params as Parameters<AwsDynamoServiceClient['observeNativeQueryRead']>[0],
     );
@@ -595,15 +604,21 @@ class AwsDriverDynamoDbPerformanceTuningAccess implements DynamoDbPerformanceTun
     maxEvaluatedItems?: number;
     timeoutMs?: number;
     signal?: AbortSignal;
-  }) {
+  }): ReturnType<AwsDynamoServiceClient['observePartiqlRead']> {
     return this.dynamoClient.observePartiqlRead(params);
   }
 
-  observeNativeQueryReadComplete(params: Parameters<AwsDynamoServiceClient['observeNativeQueryReadComplete']>[0]) {
+  observeNativeQueryReadComplete(
+    params: Parameters<
+      AwsDynamoServiceClient['observeNativeQueryReadComplete']
+    >[0],
+  ): ReturnType<AwsDynamoServiceClient['observeNativeQueryReadComplete']> {
     return this.dynamoClient.observeNativeQueryReadComplete(params);
   }
 
-  observePartiqlReadComplete(params: Parameters<AwsDynamoServiceClient['observePartiqlReadComplete']>[0]) {
+  observePartiqlReadComplete(
+    params: Parameters<AwsDynamoServiceClient['observePartiqlReadComplete']>[0],
+  ): ReturnType<AwsDynamoServiceClient['observePartiqlReadComplete']> {
     return this.dynamoClient.observePartiqlReadComplete(params);
   }
 }

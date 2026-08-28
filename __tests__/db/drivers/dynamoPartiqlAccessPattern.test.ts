@@ -5,19 +5,6 @@ import {
 } from '../../../src';
 import { DynamoDbKeySchema } from '../../../src/types/drivers/performance/DynamoDbPerformanceTuningContext';
 
-// Decision table under test (db-notebook repo's
-// misc/specs/dynamodb-performance-tuning-implementation-plan.ja.md §7.2):
-//
-// | condition                                                | verdict          |
-// |-----------------------------------------------------------|------------------|
-// | pk `=`/`IN` guaranteed by an AND-conjunct                 | table/index Query |
-// | pk equality-only OR (same pk attribute)                   | table/index Query |
-// | no WHERE                                                   | table/index Scan  |
-// | non-key predicates only                                    | table/index Scan  |
-// | pk range condition only                                    | table/index Scan  |
-// | `pk = ? OR nonKey = ?`                                     | table/index Scan  |
-// | parser cannot preserve meaning                             | unknown           |
-
 const pkOnly: DynamoDbKeySchema = {
   partitionKey: { attributeName: 'tenantId', attributeType: 'S' },
 };
@@ -36,7 +23,11 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
       });
       expect(r.accessPath).toBe('tableQuery');
       expect(r.confidence).toBe('certain');
-      expect(r.partitionKey).toEqual({ attributeName: 'tenantId', operator: '=', conditionPresent: true });
+      expect(r.partitionKey).toEqual({
+        attributeName: 'tenantId',
+        operator: '=',
+        conditionPresent: true,
+      });
       expect(r.postReadFilter).toEqual({ present: false, attributes: [] });
     });
 
@@ -47,7 +38,11 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
         tableName: 'orders',
       });
       expect(r.accessPath).toBe('tableQuery');
-      expect(r.sortKey).toEqual({ attributeName: 'orderId', operator: '>', conditionPresent: true });
+      expect(r.sortKey).toEqual({
+        attributeName: 'orderId',
+        operator: '>',
+        conditionPresent: true,
+      });
     });
 
     it('classifies pk equality AND-ed with a non-key predicate as tableQuery, with the extra attribute as a post-read filter', () => {
@@ -57,7 +52,10 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
         tableName: 'orders',
       });
       expect(r.accessPath).toBe('tableQuery');
-      expect(r.postReadFilter).toEqual({ present: true, attributes: ['status'] });
+      expect(r.postReadFilter).toEqual({
+        present: true,
+        attributes: ['status'],
+      });
     });
 
     it('classifies an OR of pk equalities on the same attribute as tableQuery (equivalent to pk IN (...))', () => {
@@ -91,7 +89,9 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
     it('classifies against a table.index FROM clause as indexQuery, with sortKey from the index key schema', () => {
       const r = analyzeDynamoPartiqlAccessPattern({
         sql: `SELECT * FROM "orders"."tenant-status-created-at-gsi" WHERE tenantStatus = ?`,
-        keySchema: { partitionKey: { attributeName: 'tenantStatus', attributeType: 'S' } },
+        keySchema: {
+          partitionKey: { attributeName: 'tenantStatus', attributeType: 'S' },
+        },
         tableName: 'orders',
         indexName: 'tenant-status-created-at-gsi',
         indexType: 'GSI',
@@ -108,7 +108,11 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
         tableName: 'orders',
       });
       expect(r.accessPath).toBe('tableQuery');
-      expect(r.sortKey).toEqual({ attributeName: 'orderId', operator: 'begins_with', conditionPresent: true });
+      expect(r.sortKey).toEqual({
+        attributeName: 'orderId',
+        operator: 'begins_with',
+        conditionPresent: true,
+      });
     });
 
     it('supports BETWEEN as a sortKey condition and still classifies as Query', () => {
@@ -141,7 +145,10 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
         tableName: 'orders',
       });
       expect(r.accessPath).toBe('tableScan');
-      expect(r.postReadFilter).toEqual({ present: true, attributes: ['status'] });
+      expect(r.postReadFilter).toEqual({
+        present: true,
+        attributes: ['status'],
+      });
     });
 
     it('classifies a partition key range-only condition as tableScan (a range can never satisfy the partition key)', () => {
@@ -151,7 +158,11 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
         tableName: 'orders',
       });
       expect(r.accessPath).toBe('tableScan');
-      expect(r.partitionKey).toEqual({ attributeName: 'tenantId', operator: undefined, conditionPresent: true });
+      expect(r.partitionKey).toEqual({
+        attributeName: 'tenantId',
+        operator: undefined,
+        conditionPresent: true,
+      });
     });
 
     it('classifies `pk = ? OR nonKey = ?` as tableScan (the OR is not guaranteed to hit the pk branch)', () => {
@@ -175,7 +186,9 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
     it('classifies against an index with no key condition as indexScan', () => {
       const r = analyzeDynamoPartiqlAccessPattern({
         sql: `SELECT * FROM "orders"."email-gsi" WHERE contains(email, ?)`,
-        keySchema: { partitionKey: { attributeName: 'email', attributeType: 'S' } },
+        keySchema: {
+          partitionKey: { attributeName: 'email', attributeType: 'S' },
+        },
         tableName: 'orders',
         indexName: 'email-gsi',
         indexType: 'GSI',
@@ -200,8 +213,15 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
         tableName: 'orders',
       });
       expect(r.accessPath).toBe('tableScan');
-      expect(r.partitionKey).toEqual({ attributeName: 'tenantId', operator: undefined, conditionPresent: false });
-      expect(r.postReadFilter).toEqual({ present: true, attributes: ['tenantid'] });
+      expect(r.partitionKey).toEqual({
+        attributeName: 'tenantId',
+        operator: undefined,
+        conditionPresent: false,
+      });
+      expect(r.postReadFilter).toEqual({
+        present: true,
+        attributes: ['tenantid'],
+      });
     });
 
     it('treats a case-only mismatch against the sort key name as an unreported condition, not a Query-qualifying sortKey match', () => {
@@ -211,8 +231,15 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
         tableName: 'orders',
       });
       expect(r.accessPath).toBe('tableQuery'); // pk alone still guarantees the Query
-      expect(r.sortKey).toEqual({ attributeName: 'orderId', operator: undefined, conditionPresent: false });
-      expect(r.postReadFilter).toEqual({ present: true, attributes: ['orderid'] });
+      expect(r.sortKey).toEqual({
+        attributeName: 'orderId',
+        operator: undefined,
+        conditionPresent: false,
+      });
+      expect(r.postReadFilter).toEqual({
+        present: true,
+        attributes: ['orderid'],
+      });
     });
   });
 
@@ -344,14 +371,20 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
 
 describe('extractDynamoPartiqlTarget', () => {
   it('extracts a bare table name', () => {
-    expect(extractDynamoPartiqlTarget(`SELECT * FROM orders WHERE tenantId = ?`)).toEqual({
+    expect(
+      extractDynamoPartiqlTarget(`SELECT * FROM orders WHERE tenantId = ?`),
+    ).toEqual({
       tableName: 'orders',
       indexName: undefined,
     });
   });
 
   it('extracts table and index from a table.index FROM clause', () => {
-    expect(extractDynamoPartiqlTarget(`SELECT * FROM "orders"."email-gsi" WHERE email = ?`)).toEqual({
+    expect(
+      extractDynamoPartiqlTarget(
+        `SELECT * FROM "orders"."email-gsi" WHERE email = ?`,
+      ),
+    ).toEqual({
       tableName: 'orders',
       indexName: 'email-gsi',
     });
@@ -404,8 +437,14 @@ describe('analyzeDynamoNativeQueryAccessPattern', () => {
 
   it('marks indexType/indexName from the input on the result', () => {
     const r = analyzeDynamoNativeQueryAccessPattern({
-      input: { tableName: 'orders', indexName: 'email-gsi', keyConditionExpression: 'email = :e' },
-      keySchema: { partitionKey: { attributeName: 'email', attributeType: 'S' } },
+      input: {
+        tableName: 'orders',
+        indexName: 'email-gsi',
+        keyConditionExpression: 'email = :e',
+      },
+      keySchema: {
+        partitionKey: { attributeName: 'email', attributeType: 'S' },
+      },
       indexType: 'GSI',
     });
     expect(r.accessPath).toBe('indexQuery');
@@ -420,7 +459,11 @@ describe('analyzeDynamoNativeQueryAccessPattern', () => {
         tableName: 'orders',
         keyConditionExpression: '#pk = :pk',
         projectionExpression: '#p0, #p1',
-        expressionAttributeNames: { '#pk': 'tenantId', '#p0': 'status', '#p1': 'createdAt' },
+        expressionAttributeNames: {
+          '#pk': 'tenantId',
+          '#p0': 'status',
+          '#p1': 'createdAt',
+        },
         limit: 25,
         resultItemLimit: 100,
       },
@@ -445,13 +488,21 @@ describe('analyzeDynamoNativeQueryAccessPattern', () => {
 
   it('derives consistentRead from the input boolean', () => {
     const strong = analyzeDynamoNativeQueryAccessPattern({
-      input: { tableName: 'orders', keyConditionExpression: 'tenantId = :pk', consistentRead: true },
+      input: {
+        tableName: 'orders',
+        keyConditionExpression: 'tenantId = :pk',
+        consistentRead: true,
+      },
       keySchema: pkOnly,
     });
     expect(strong.consistentRead).toBe('strong');
 
     const eventual = analyzeDynamoNativeQueryAccessPattern({
-      input: { tableName: 'orders', keyConditionExpression: 'tenantId = :pk', consistentRead: false },
+      input: {
+        tableName: 'orders',
+        keyConditionExpression: 'tenantId = :pk',
+        consistentRead: false,
+      },
       keySchema: pkOnly,
     });
     expect(eventual.consistentRead).toBe('eventual');

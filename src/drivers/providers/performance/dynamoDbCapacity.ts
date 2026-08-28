@@ -3,22 +3,7 @@ import {
   DynamoDbCapacityBreakdown,
 } from '../../../types/drivers/performance/DynamoDbPerformanceTuningContext';
 
-// See db-notebook repo's
-// misc/specs/dynamodb-performance-tuning-implementation-plan.ja.md §7.5.
-// Sums one or more raw SDK ConsumedCapacity responses (one per page for
-// normal multi-page execution evidence, or exactly one for Run Observed
-// Read) into a single DynamoDbCapacityBreakdown. A per-table/per-index
-// breakdown is only ever present in the input at all when the request used
-// ReturnConsumedCapacity: 'INDEXES' (AwsDynamoServiceClient's ordinary
-// Query/Scan/PartiQL execution always uses 'TOTAL', which never populates
-// Table/LocalSecondaryIndexes/GlobalSecondaryIndexes) - this function does
-// not know or care which mode produced its input, it just sums whatever
-// fields are actually present.
-
-// Structural subset of the SDK's ConsumedCapacity/Capacity - avoids
-// depending on the exact @aws-sdk/client-dynamodb type names here so this
-// file works unchanged against either the client-dynamodb or lib-dynamodb
-// response shape (both use the same field names).
+// Shared structural subset of the native and document-client Capacity response shapes.
 export type RawCapacityAmount = {
   CapacityUnits?: number;
   ReadCapacityUnits?: number;
@@ -37,15 +22,21 @@ type AmountAccumulator = {
   writeCapacityUnits?: number;
 };
 
-// Adds `add` into `acc`, keeping a field `undefined` unless at least one
-// input actually reported it - so "never reported" (TOTAL mode's missing
-// Read/Write split) stays distinguishable from "reported as 0".
-function accumulate(acc: AmountAccumulator, add: RawCapacityAmount | undefined): AmountAccumulator {
+// Preserve the distinction between an unreported field and an explicit zero.
+function accumulate(
+  acc: AmountAccumulator,
+  add: RawCapacityAmount | undefined,
+): AmountAccumulator {
   if (!add) return acc;
   return {
-    capacityUnits: add.CapacityUnits !== undefined ? (acc.capacityUnits ?? 0) + add.CapacityUnits : acc.capacityUnits,
+    capacityUnits:
+      add.CapacityUnits !== undefined
+        ? (acc.capacityUnits ?? 0) + add.CapacityUnits
+        : acc.capacityUnits,
     readCapacityUnits:
-      add.ReadCapacityUnits !== undefined ? (acc.readCapacityUnits ?? 0) + add.ReadCapacityUnits : acc.readCapacityUnits,
+      add.ReadCapacityUnits !== undefined
+        ? (acc.readCapacityUnits ?? 0) + add.ReadCapacityUnits
+        : acc.readCapacityUnits,
     writeCapacityUnits:
       add.WriteCapacityUnits !== undefined
         ? (acc.writeCapacityUnits ?? 0) + add.WriteCapacityUnits
@@ -54,7 +45,11 @@ function accumulate(acc: AmountAccumulator, add: RawCapacityAmount | undefined):
 }
 
 function toAmount(acc: AmountAccumulator): DynamoDbCapacityAmount | undefined {
-  if (acc.capacityUnits === undefined && acc.readCapacityUnits === undefined && acc.writeCapacityUnits === undefined) {
+  if (
+    acc.capacityUnits === undefined &&
+    acc.readCapacityUnits === undefined &&
+    acc.writeCapacityUnits === undefined
+  ) {
     return undefined;
   }
   return acc;
@@ -76,10 +71,14 @@ export function aggregateConsumedCapacity(
     if (!response) continue;
     top = accumulate(top, response);
     table = accumulate(table, response.Table);
-    for (const [name, amount] of Object.entries(response.LocalSecondaryIndexes ?? {})) {
+    for (const [name, amount] of Object.entries(
+      response.LocalSecondaryIndexes ?? {},
+    )) {
       lsi.set(name, accumulate(lsi.get(name) ?? {}, amount));
     }
-    for (const [name, amount] of Object.entries(response.GlobalSecondaryIndexes ?? {})) {
+    for (const [name, amount] of Object.entries(
+      response.GlobalSecondaryIndexes ?? {},
+    )) {
       gsi.set(name, accumulate(gsi.get(name) ?? {}, amount));
     }
   }
@@ -112,24 +111,12 @@ export function aggregateConsumedCapacity(
   return breakdown;
 }
 
-// ---------------------------------------------------------------------------
-// Execution-evidence tracking (§7.5 "通常実行からの証拠保存"). Ordinary
-// PartiQL/Query/Scan execution in AwsDynamoServiceClient uses this tracker
-// to centralize request/retry count, Consumed Capacity accumulation, and
-// native-API Count/ScannedCount summation.
-// ---------------------------------------------------------------------------
-
 export type DynamoDbExecutionMeta = {
   requestCount: number;
   retryCount: number;
-  // true iff the API still had more data (a LastEvaluatedKey/NextToken
-  // remained) when the loop stopped - whether that's because a caller
-  // Limit was reached or the loop's own page cap kicked in first.
+  // True when execution stopped with an API continuation token.
   hasMorePages: boolean;
-  // Only ever set by a native Query/Scan response (never ExecuteStatement -
-  // see AwsDynamoServiceClient.ts's own note: PartiQL's response type has no
-  // Count/ScannedCount fields at all, so these must stay undefined for it
-  // rather than being estimated from Items.length).
+  // Native Query/Scan counts; ExecuteStatement leaves both undefined.
   scannedCount?: number;
   reportedCount?: number;
   capacityBreakdown?: DynamoDbCapacityBreakdown;
@@ -142,9 +129,7 @@ export class DynamoDbExecutionMetaTracker {
   private reportedCount: number | undefined;
   private readonly capacityResponses: RawConsumedCapacity[] = [];
 
-  // `attempts` is the SDK's total send attempts including the first
-  // (non-retried) one - 1 means "no retry", so retryCount accumulates
-  // `attempts - 1`, floored at 0 defensively.
+  // SDK attempts include the initial request, so only attempts after the first are retries.
   recordResponse(
     response: {
       $metadata?: { attempts?: number };

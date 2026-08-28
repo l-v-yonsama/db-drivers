@@ -6,49 +6,33 @@ import {
   DynamoDbQueryAnalysisInput,
 } from '../../../types/drivers/performance/DynamoDbPerformanceTuningContext';
 
-// See db-notebook repo's
-// misc/specs/dynamodb-performance-tuning-implementation-plan.ja.md §7.2 for
-// the full rationale and the decision table this file implements.
-//
-// This is a purpose-built, quote-aware tokenizer and recursive-descent
-// parser for exactly the subset of DynamoDB PartiQL SELECT (and, via
-// analyzeDynamoNativeQueryAccessPattern, native Query's
-// KeyConditionExpression/FilterExpression grammar) needed to classify a
-// statement's access path - never a general SQL/PartiQL engine. The
-// db-drivers-wide parseQuery() (pgsql-ast-parser, a Postgres grammar) is not
-// used here even opportunistically: it cannot parse PartiQL's `IN [...]`
-// bracket-list syntax or `begins_with(...)`/`contains(...)` predicate
-// functions at all, and coercing its AST into this file's classification
-// logic would mean maintaining a second, harder-to-verify translation layer
-// on top of a parser that was never built for this grammar. A single
-// self-contained parser, exhaustively unit-tested against the decision table
-// below, is safer for a result that directly drives a
-// DYNAMODB_FULL_TABLE_SCAN/DYNAMODB_FULL_INDEX_SCAN warning.
-//
-// Hard safety rule: no literal value (string/number/param text) is ever
-// captured into any node this file returns - see skipValue() below. Only
-// attribute names, operators, and structural booleans survive parsing.
-//
-// | 条件                                                          | 判定             |
-// |----------------------------------------------------------------|------------------|
-// | 対象 partition key の `=`/`IN` が AND 系で保証される            | table/index Query |
-// | 同じ partition key の equality だけを OR したもの                | table/index Query |
-// | WHERE なし                                                     | table/index Scan  |
-// | 非キー条件のみ                                                  | table/index Scan  |
-// | partition key が range 条件のみ                                 | table/index Scan  |
-// | `pk = ? OR nonKey = ?`                                          | table/index Scan  |
-// | parser が意味を保存できない                                      | unknown           |
+// Purpose-built structural parser classifies DynamoDB access paths without retaining literal values.
 
-// ---------------------------------------------------------------------------
-// Tokenizer
-// ---------------------------------------------------------------------------
-
-type TokenType = 'ident' | 'qident' | 'string' | 'number' | 'param' | 'punct' | 'eof';
+type TokenType =
+  | 'ident'
+  | 'qident'
+  | 'string'
+  | 'number'
+  | 'param'
+  | 'punct'
+  | 'eof';
 
 type Token = { type: TokenType; value: string };
 
 const PUNCT_2 = new Set(['<=', '>=', '<>', '!=']);
-const PUNCT_1 = new Set(['(', ')', '[', ']', ',', '.', '=', '<', '>', '*', ';']);
+const PUNCT_1 = new Set([
+  '(',
+  ')',
+  '[',
+  ']',
+  ',',
+  '.',
+  '=',
+  '<',
+  '>',
+  '*',
+  ';',
+]);
 
 // Returns undefined on any lexical error (unterminated string/identifier) -
 // callers must treat that identically to a parse failure (accessPath:
@@ -95,7 +79,10 @@ function tokenize(sql: string, allowNamedParam = false): Token[] | undefined {
     if (ch === '"') {
       const end = readQuoted(sql, i, '"');
       if (end === undefined) return undefined;
-      tokens.push({ type: 'qident', value: unescapeQuoted(sql.slice(i + 1, end - 1), '"') });
+      tokens.push({
+        type: 'qident',
+        value: unescapeQuoted(sql.slice(i + 1, end - 1), '"'),
+      });
       i = end;
       continue;
     }
@@ -155,7 +142,11 @@ function tokenize(sql: string, allowNamedParam = false): Token[] | undefined {
   return tokens;
 }
 
-function readQuoted(sql: string, start: number, quoteChar: string): number | undefined {
+function readQuoted(
+  sql: string,
+  start: number,
+  quoteChar: string,
+): number | undefined {
   let i = start + 1;
   const n = sql.length;
   while (i < n) {
@@ -359,7 +350,8 @@ const COMPARE_PUNCT: Record<string, CompareOp> = {
 // value)` call, or any other function call (kept as 'other' / with
 // `attribute: undefined` when it appears on the left of a comparison).
 function parsePredicate(c: TokenCursor): BoolNode {
-  const startsWithPath = c.peek().type === 'ident' || c.peek().type === 'qident';
+  const startsWithPath =
+    c.peek().type === 'ident' || c.peek().type === 'qident';
   if (!startsWithPath) {
     throw new ParseError('expected predicate');
   }
@@ -413,7 +405,10 @@ function parsePathOrThrow(c: TokenCursor): string[] {
 // After a bare path or a function call, look for BETWEEN / IN / a
 // comparison operator; if none follows, the path/call was itself the whole
 // (boolean-valued) predicate.
-function maybeTrailingComparison(c: TokenCursor, attribute: string | undefined): BoolNode {
+function maybeTrailingComparison(
+  c: TokenCursor,
+  attribute: string | undefined,
+): BoolNode {
   let negated = false;
   if (c.isKeyword('NOT')) {
     negated = true;
@@ -425,7 +420,11 @@ function maybeTrailingComparison(c: TokenCursor, attribute: string | undefined):
     skipValue(c);
     c.expectKeyword('AND');
     skipValue(c);
-    return { kind: 'compare', attribute, op: negated ? 'NOT_BETWEEN' : 'BETWEEN' };
+    return {
+      kind: 'compare',
+      attribute,
+      op: negated ? 'NOT_BETWEEN' : 'BETWEEN',
+    };
   }
   if (c.isKeyword('IN')) {
     c.next();
@@ -511,7 +510,10 @@ type ParsedSelect = {
 // as a single length-2 path before this function ever saw the `.` - exactly
 // the bug caught by this file's own test suite. A FROM-clause ref is at most
 // one `.` between exactly two identifiers, parsed directly here instead.
-function parseTableRef(c: TokenCursor): { tableName: string; indexName?: string } {
+function parseTableRef(c: TokenCursor): {
+  tableName: string;
+  indexName?: string;
+} {
   const first = c.peek();
   if (first.type !== 'ident' && first.type !== 'qident') {
     throw new ParseError('expected table name');
@@ -632,13 +634,20 @@ function parseDynamoPartiqlSelect(sql: string): ParsedSelect | undefined {
 function guaranteesKeyEquality(node: BoolNode, attrName: string): boolean {
   switch (node.kind) {
     case 'and':
-      return node.children.some((child) => guaranteesKeyEquality(child, attrName));
+      return node.children.some((child) =>
+        guaranteesKeyEquality(child, attrName),
+      );
     case 'or':
-      return node.children.length > 0 && node.children.every((child) => guaranteesKeyEquality(child, attrName));
+      return (
+        node.children.length > 0 &&
+        node.children.every((child) => guaranteesKeyEquality(child, attrName))
+      );
     case 'not':
       return false;
     case 'compare':
-      return node.attribute === attrName && (node.op === '=' || node.op === 'IN');
+      return (
+        node.attribute === attrName && (node.op === '=' || node.op === 'IN')
+      );
     case 'other':
       return false;
   }
@@ -654,7 +663,9 @@ const REPORTABLE_SORT_OPS = new Set<DynamoDbKeyConditionOperator>([
   'begins_with',
 ]);
 
-function toReportableOp(op: CompareOp): DynamoDbKeyConditionOperator | undefined {
+function toReportableOp(
+  op: CompareOp,
+): DynamoDbKeyConditionOperator | undefined {
   return REPORTABLE_SORT_OPS.has(op as DynamoDbKeyConditionOperator)
     ? (op as DynamoDbKeyConditionOperator)
     : undefined;
@@ -664,7 +675,10 @@ function toReportableOp(op: CompareOp): DynamoDbKeyConditionOperator | undefined
 // descriptive metadata only (partitionKey/sortKey reporting), never used to
 // decide accessPath itself. Case-sensitive for the same reason as
 // guaranteesKeyEquality above.
-function findFirstComparison(node: BoolNode, attrName: string): CompareOp | undefined {
+function findFirstComparison(
+  node: BoolNode,
+  attrName: string,
+): CompareOp | undefined {
   switch (node.kind) {
     case 'and':
     case 'or':
@@ -708,13 +722,26 @@ function collectAttributes(node: BoolNode, into: Set<string>): void {
 // collectAttributes ever run. A `#xxx` with no entry in `names` is left as
 // the literal placeholder string, which safely never matches any real key
 // attribute name (under-classifies toward Scan rather than guessing).
-function resolveAttributeNames(node: BoolNode, names: Record<string, string> | undefined): BoolNode {
+function resolveAttributeNames(
+  node: BoolNode,
+  names: Record<string, string> | undefined,
+): BoolNode {
   if (!names) return node;
   switch (node.kind) {
     case 'and':
-      return { kind: 'and', children: node.children.map((child) => resolveAttributeNames(child, names)) };
+      return {
+        kind: 'and',
+        children: node.children.map((child) =>
+          resolveAttributeNames(child, names),
+        ),
+      };
     case 'or':
-      return { kind: 'or', children: node.children.map((child) => resolveAttributeNames(child, names)) };
+      return {
+        kind: 'or',
+        children: node.children.map((child) =>
+          resolveAttributeNames(child, names),
+        ),
+      };
     case 'not':
       return { kind: 'not', child: resolveAttributeNames(node.child, names) };
     case 'compare':
@@ -770,8 +797,8 @@ function classify(params: {
       ? 'indexQuery'
       : 'tableQuery'
     : indexName
-      ? 'indexScan'
-      : 'tableScan';
+    ? 'indexScan'
+    : 'tableScan';
 
   const allAttrs = new Set<string>();
   if (where) collectAttributes(where, allAttrs);
@@ -783,7 +810,11 @@ function classify(params: {
     conditionPresent: false,
   };
   const sortKey = skAttr
-    ? { attributeName: skAttr, operator: undefined as DynamoDbKeyConditionOperator | undefined, conditionPresent: false }
+    ? {
+        attributeName: skAttr,
+        operator: undefined as DynamoDbKeyConditionOperator | undefined,
+        conditionPresent: false,
+      }
     : undefined;
 
   if (where) {
@@ -857,7 +888,9 @@ function unknownAccessPattern(params: {
 // well-formed SELECT) - callers must treat that as a hard failure for static
 // collection, per §7.2's last decision-table row / §9's "usable context な
 // し" rule, not silently fall back to Scan.
-export function extractDynamoPartiqlTarget(sql: string): { tableName: string; indexName?: string } | undefined {
+export function extractDynamoPartiqlTarget(
+  sql: string,
+): { tableName: string; indexName?: string } | undefined {
   const parsed = parseDynamoPartiqlSelect(sql);
   if (!parsed) return undefined;
   return { tableName: parsed.tableName, indexName: parsed.indexName };
@@ -919,7 +952,9 @@ export function analyzeDynamoNativeQueryAccessPattern(params: {
   const { input, keySchema, indexType } = params;
   // Query's documented default is eventual consistency when ConsistentRead
   // is omitted. This is known execution semantics, not missing evidence.
-  const consistentRead: 'eventual' | 'strong' = input.consistentRead ? 'strong' : 'eventual';
+  const consistentRead: 'eventual' | 'strong' = input.consistentRead
+    ? 'strong'
+    : 'eventual';
 
   const keyTokens = tokenize(input.keyConditionExpression ?? '', true);
   if (!keyTokens) {
@@ -934,7 +969,10 @@ export function analyzeDynamoNativeQueryAccessPattern(params: {
   let keyWhere: BoolNode;
   try {
     const c = new TokenCursor(keyTokens);
-    keyWhere = resolveAttributeNames(parseOr(c), input.expressionAttributeNames);
+    keyWhere = resolveAttributeNames(
+      parseOr(c),
+      input.expressionAttributeNames,
+    );
     if (!c.atEnd()) throw new ParseError('unexpected trailing content');
   } catch {
     return unknownAccessPattern({
@@ -960,11 +998,18 @@ export function analyzeDynamoNativeQueryAccessPattern(params: {
           attributes: input.projectionExpression
             .split(',')
             .map((s) => s.trim())
-            .map((attribute) => input.expressionAttributeNames?.[attribute] ?? attribute),
+            .map(
+              (attribute) =>
+                input.expressionAttributeNames?.[attribute] ?? attribute,
+            ),
         }
       : input.select === 'ALL_ATTRIBUTES' || !input.indexName
-        ? { mode: 'allAttributes', allAttributes: true, attributes: [] }
-        : { mode: 'allProjectedAttributes', allAttributes: false, attributes: [] },
+      ? { mode: 'allAttributes', allAttributes: true, attributes: [] }
+      : {
+          mode: 'allProjectedAttributes',
+          allAttributes: false,
+          attributes: [],
+        },
     consistentRead,
     limit: input.limit,
     resultItemLimit: input.resultItemLimit,
@@ -980,7 +1025,10 @@ export function analyzeDynamoNativeQueryAccessPattern(params: {
     if (filterTokens) {
       try {
         const c = new TokenCursor(filterTokens);
-        const filterWhere = resolveAttributeNames(parseOr(c), input.expressionAttributeNames);
+        const filterWhere = resolveAttributeNames(
+          parseOr(c),
+          input.expressionAttributeNames,
+        );
         if (c.atEnd()) {
           collectAttributes(filterWhere, filterAttrs);
         }

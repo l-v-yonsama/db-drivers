@@ -1,20 +1,6 @@
 import { DynamoDbUnavailableSectionName } from './DynamoDbPerformanceTuningContext';
 
-// Stable, structured diagnostics emitted during
-// getDynamoDbPerformanceTuningContext() collection - the DynamoDB analogue of
-// PerformanceTuningDiagnostic.ts. Kept as its own independent code space
-// rather than reusing PerformanceTuningDiagnosticCode: RDB and DynamoDB
-// diagnose fundamentally different things (an optimizer plan vs. a static
-// access-path classification + Capacity/throttling evidence), and forcing
-// them into one enum would make every consumer switch on codes that can
-// never actually occur for the Context type it's holding.
-//
-// Driver-side rule, same as RDB: report a stable `code` plus honest
-// technical fields only. Never a conclusion ("add a GSI", "raise Capacity")
-// - see db-notebook repo's
-// misc/specs/dynamodb-performance-tuning-implementation-plan.ja.md §8 for the
-// full inventory this file implements, and §4 for why CloudWatch table-level
-// utilization alone never becomes a "this statement caused it" diagnostic.
+// DynamoDB diagnostics report stable technical facts, never remediation conclusions.
 export type DynamoDbPerformanceTuningDiagnosticSeverity = 'info' | 'warning';
 
 export type DynamoDbPerformanceTuningDiagnosticCode =
@@ -28,8 +14,7 @@ export type DynamoDbPerformanceTuningDiagnosticCode =
   // carries at least one non-key predicate that DynamoDB evaluates only
   // after reading each item.
   | 'DYNAMODB_POST_READ_FILTER'
-  // The parser could not classify the statement against the decision table
-  // (implementation plan §7.2) safely - never defaulted to Scan or Query.
+  // The parser could not safely classify the statement as Scan or Query.
   | 'DYNAMODB_ACCESS_PATTERN_UNRESOLVED'
   // A native Query/Scan observation reported ScannedCount >= 100 and a
   // returned/scanned pass rate below the configured threshold. Never raised
@@ -67,7 +52,7 @@ export type DynamoDbPerformanceTuningDiagnosticCode =
   // (permissions, throttling, timeout, ...) - the corresponding section is
   // also recorded in collection.unavailableSections.
   | 'DYNAMODB_SECTION_COLLECTION_FAILED'
-  // Payload/index limits (§7.1) trimmed the Context to stay under
+  // Payload/index limits trimmed the Context to stay under
   // maxPayloadBytes.
   | 'DYNAMODB_COLLECTION_TRUNCATED';
 
