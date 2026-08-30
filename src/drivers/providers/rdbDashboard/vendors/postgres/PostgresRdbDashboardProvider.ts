@@ -13,6 +13,11 @@ import {
 } from '../../../../../types/drivers/rdbDashboard';
 import { RdbDashboardProvider } from '../../RdbDashboardProvider';
 import {
+  dashboardBoolean as bool,
+  dashboardNumberOrNull as numberOrNull,
+  dashboardSuccess as ok,
+} from '../../rdbDashboardValueUtils';
+import {
   POSTGRES_RDB_DASHBOARD_PROVIDER_ID,
   resolvePostgresDashboard,
 } from './postgresDashboardCatalog';
@@ -46,23 +51,9 @@ const DATABASE_METRIC_IDS = [
   'block_write_time',
 ] as const;
 
-function bool(value: unknown): boolean {
-  return value === true || value === 'true' || value === 1 || value === '1';
-}
-
 function iso(value: unknown, fallback = new Date().toISOString()): string {
   const date = value instanceof Date ? value : new Date(String(value ?? ''));
   return Number.isFinite(date.getTime()) ? date.toISOString() : fallback;
-}
-
-function numberOrNull(value: unknown): number | null {
-  if (value === null || value === undefined || value === '') return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function ok<T>(result: T): GeneralResult<T> {
-  return { ok: true, message: '', result };
 }
 
 export class PostgresRdbDashboardProvider implements RdbDashboardProvider {

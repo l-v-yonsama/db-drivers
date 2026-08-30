@@ -14,6 +14,10 @@ import {
 } from '../../../../../types/drivers/rdbDashboard';
 import { RdbDashboardProvider } from '../../RdbDashboardProvider';
 import {
+  dashboardNumberOrNull as numberOrNull,
+  dashboardSuccess as ok,
+} from '../../rdbDashboardValueUtils';
+import {
   resolveSqliteDashboard,
   SQLITE_RDB_DASHBOARD_PROVIDER_ID,
   sqliteFileScope,
@@ -28,10 +32,6 @@ import {
 type Row = Record<string, unknown>;
 type AttachedDatabase = { name: string; file: string };
 
-function ok<T>(result: T): GeneralResult<T> {
-  return { ok: true, message: '', result };
-}
-
 function rowValue(row: Row | undefined, ...names: string[]): unknown {
   if (!row) return undefined;
   const entries = Object.entries(row);
@@ -40,12 +40,6 @@ function rowValue(row: Row | undefined, ...names: string[]): unknown {
     if (found) return found[1];
   }
   return undefined;
-}
-
-function numberOrNull(value: unknown): number | null {
-  if (value === null || value === undefined || value === '') return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function pragmaMode(value: unknown, names: readonly string[]): string {

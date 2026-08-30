@@ -14,6 +14,11 @@ import {
 } from '../../../../../types/drivers/rdbDashboard';
 import { RdbDashboardProvider } from '../../RdbDashboardProvider';
 import {
+  dashboardNumberOrNull as numberOrNull,
+  dashboardRowValue as rowValue,
+  dashboardSuccess as ok,
+} from '../../rdbDashboardValueUtils';
+import {
   OracleDashboardContext,
   oracleConnectionScope,
   ORACLE_RDB_DASHBOARD_PROVIDER_ID,
@@ -66,27 +71,6 @@ const RESOURCE_METRIC_IDS = [
   'processes_current',
   'processes_limit',
 ] as const;
-
-function ok<T>(result: T): GeneralResult<T> {
-  return { ok: true, message: '', result };
-}
-
-function rowValue(row: Row, ...names: string[]): unknown {
-  for (const name of names) {
-    if (Object.prototype.hasOwnProperty.call(row, name)) return row[name];
-  }
-  const lowered = new Map(Object.entries(row).map(([key, value]) => [key.toLowerCase(), value]));
-  for (const name of names) {
-    if (lowered.has(name.toLowerCase())) return lowered.get(name.toLowerCase());
-  }
-  return undefined;
-}
-
-function numberOrNull(value: unknown): number | null {
-  if (value === null || value === undefined || value === '') return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 function iso(value: unknown, fallback = new Date().toISOString()): string {
   const date = value instanceof Date ? value : new Date(String(value ?? ''));
