@@ -11,6 +11,7 @@ import {
   AwsServiceType,
   ClientConfigType,
   ConnectionSetting,
+  DbS3Bucket,
   DBType,
   SupplyCredentialType,
 } from '../../../src';
@@ -62,16 +63,36 @@ describe('generic AWS resource filter', () => {
       config,
       awsDriver,
     );
+    const send = jest
+      .fn()
+      .mockResolvedValueOnce({
+        Buckets: [
+          { Name: 'keep-bucket', BucketRegion: 'us-west-2' },
+          { Name: 'drop-bucket', BucketRegion: 'ap-northeast-1' },
+        ],
+        ContinuationToken: 'next-page',
+      })
+      .mockResolvedValueOnce({
+        Buckets: [{ Name: 'keep-later', BucketRegion: 'eu-west-1' }],
+      });
     client.s3Client = {
-      send: jest.fn().mockResolvedValue({
-        Buckets: [{ Name: 'keep-bucket' }, { Name: 'drop-bucket' }],
-      }),
+      send,
     } as any;
 
     const db = await client.getInfomationSchemas();
 
-    expect(db.children.map((it) => it.name)).toEqual(['keep-bucket']);
-    expect(db.comment).toBe('1 buckets');
+    expect(db.children.map((it) => it.name)).toEqual([
+      'keep-bucket',
+      'keep-later',
+    ]);
+    expect((db.children[0] as DbS3Bucket).attr).toMatchObject({
+      region: 'us-west-2',
+    });
+    expect((db.children[1] as DbS3Bucket).attr).toMatchObject({
+      region: 'eu-west-1',
+    });
+    expect(db.comment).toBe('2 buckets');
+    expect(send.mock.calls[1][0].input.ContinuationToken).toBe('next-page');
   });
 
   it('filters CloudWatch log groups', async () => {

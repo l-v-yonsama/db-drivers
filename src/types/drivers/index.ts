@@ -2,6 +2,7 @@ export * from './EstimatedBindParameter';
 export * from './GeneralResult';
 export * from './Keycloak';
 export * from './MemcachedParams';
+export * from './metrics';
 export * from './performance';
 export * from './QueryParams';
 export * from './ScanParams';

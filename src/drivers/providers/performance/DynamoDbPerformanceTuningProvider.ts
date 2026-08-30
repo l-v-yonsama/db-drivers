@@ -36,6 +36,7 @@ import {
   analyzeDynamoPartiqlAccessPattern,
   extractDynamoPartiqlTarget,
 } from './dynamoPartiqlAccessPattern';
+import { resolveDynamoDbBillingMode } from '../../../helpers/dynamoDbBillingMode';
 
 // DynamoDB has one provider for static collection and optional observed reads.
 
@@ -192,21 +193,6 @@ function mapWarmThroughput(
   };
 }
 
-// Legacy provisioned tables may omit BillingModeSummary while still reporting throughput.
-function resolveBillingMode(
-  table: TableDescription,
-): 'PROVISIONED' | 'PAY_PER_REQUEST' | 'unknown' {
-  const billingMode = table.BillingModeSummary?.BillingMode;
-  if (billingMode === 'PROVISIONED' || billingMode === 'PAY_PER_REQUEST')
-    return billingMode;
-  if (
-    billingMode === undefined &&
-    table.ProvisionedThroughput?.ReadCapacityUnits !== undefined
-  )
-    return 'PROVISIONED';
-  return 'unknown';
-}
-
 function mapIndex(
   index: GlobalSecondaryIndexDescription | LocalSecondaryIndexDescription,
   indexType: 'LSI' | 'GSI',
@@ -276,7 +262,11 @@ function mapTableContext(
   return {
     tableName: table.TableName ?? '',
     status: table.TableStatus,
-    billingMode: resolveBillingMode(table),
+    billingMode: resolveDynamoDbBillingMode({
+      billingMode: table.BillingModeSummary?.BillingMode,
+      readCapacityUnits: table.ProvisionedThroughput?.ReadCapacityUnits,
+      writeCapacityUnits: table.ProvisionedThroughput?.WriteCapacityUnits,
+    }),
     keySchema,
     attributeDefinitions: (table.AttributeDefinitions ?? [])
       .filter(

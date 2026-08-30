@@ -27,6 +27,43 @@ export class AwsDatabase extends DbResource<
 > {
   constructor(name: string, public readonly serviceType: AwsServiceType) {
     super(ResourceType.AwsDatabase, name);
+    if (serviceType === AwsServiceType.SES) {
+      this.capabilities = {
+        dashboards: [
+          {
+            dashboardId: 'aws-cloudwatch-metrics',
+            providerId: 'aws.ses.account-region',
+          },
+        ],
+      };
+    } else if (serviceType === AwsServiceType.SQS) {
+      this.capabilities = {
+        dashboards: [
+          {
+            dashboardId: 'aws-cloudwatch-metrics-overview',
+            providerId: 'aws.sqs.overview',
+          },
+        ],
+      };
+    } else if (serviceType === AwsServiceType.DynamoDB) {
+      this.capabilities = {
+        dashboards: [
+          {
+            dashboardId: 'aws-cloudwatch-metrics-overview',
+            providerId: 'aws.dynamodb.overview',
+          },
+        ],
+      };
+    } else if (serviceType === AwsServiceType.S3) {
+      this.capabilities = {
+        dashboards: [
+          {
+            dashboardId: 'aws-cloudwatch-metrics-overview',
+            providerId: 'aws.s3.overview',
+          },
+        ],
+      };
+    }
   }
 }
 
@@ -79,6 +116,14 @@ export class DbDynamoTable
 {
   constructor(name: string, attr: AwsDynamoTableAttributes) {
     super(ResourceType.DynamoTable, name, attr);
+    this.capabilities = {
+      dashboards: [
+        {
+          dashboardId: 'aws-cloudwatch-metrics',
+          providerId: 'aws.dynamodb.table',
+        },
+      ],
+    };
     this.setPropertyFormat({
       dates: ['CreationDateTime'],
       bytes: ['TableSizeBytes'],
@@ -197,11 +242,21 @@ export class DbDynamoTableColumn extends DbResource {
 
 export class DbS3Bucket extends AwsDbResource<{
   CreationDate?: Date;
+  region?: string;
 }> {
-  constructor(name?: string, CreationDate?: Date) {
+  constructor(name?: string, CreationDate?: Date, region?: string) {
     super(ResourceType.Bucket, name === undefined ? '' : name, {
       CreationDate,
+      region,
     });
+    this.capabilities = {
+      dashboards: [
+        {
+          dashboardId: 'aws-cloudwatch-metrics',
+          providerId: 'aws.s3.bucket',
+        },
+      ],
+    };
     this.setPropertyFormat({ dates: ['CreationDate'] });
   }
 }
@@ -213,6 +268,15 @@ export class DbSQSQueue extends AwsDbResource<AwsSQSAttributes> {
     attr: AwsSQSAttributes,
   ) {
     super(ResourceType.Queue, name, attr);
+    this.capabilities = {
+      dashboards: [
+        {
+          dashboardId: 'aws-cloudwatch-metrics',
+          providerId: 'aws.sqs.queue',
+          variant: attr.FifoQueue ? 'fifo' : 'standard',
+        },
+      ],
+    };
     this.setPropertyFormat({
       dates: ['CreatedTimestamp', 'LastModifiedTimestamp'],
     });
@@ -242,6 +306,14 @@ export class DbLogGroup extends AwsDbResource<{
     },
   ) {
     super(ResourceType.LogGroup, name, attr);
+    this.capabilities = {
+      dashboards: [
+        {
+          dashboardId: 'aws-cloudwatch-metrics',
+          providerId: 'aws.logs.log-group',
+        },
+      ],
+    };
     this.setPropertyFormat({ dates: ['creationTime'], bytes: ['storedBytes'] });
   }
 }
