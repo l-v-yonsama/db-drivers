@@ -26,6 +26,13 @@ import {
   PerformanceTuningContext,
   PerformanceTuningContextParams,
   PerformanceTuningDiagnostic,
+  RdbDashboardCallOptions,
+  RdbDashboardCapabilities,
+  RdbDashboardSelection,
+  RdbDashboardTarget,
+  RdbRawSampleBatch,
+  RdbSampleRequest,
+  ResolvedRdbDashboard,
   QStatement,
   QueryParams,
   SQLLang,
@@ -46,6 +53,7 @@ import {
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 import {
   PerformanceTuningContextProvider,
+  RdbDashboardProvider,
   VendorColumnStatistics,
   VendorPhysicalHealth,
   VendorTableDefinition,
@@ -53,6 +61,11 @@ import {
   computePredicateFilterSelectivity,
   computeTableAccessFraction,
   findDominantCostPlanNode,
+  RDB_DASHBOARD_CANCELLED_MESSAGE,
+  RDB_DASHBOARD_UNEXPECTED_ERROR_MESSAGE,
+  rdbDashboardTimeoutMessage,
+  validateRdbDashboardCapabilities,
+  validateResolvedRdbDashboard,
 } from './providers';
 
 export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
@@ -251,6 +264,216 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
   abstract getStatementStatistics(
     params: StatementStatisticsParams,
   ): Promise<ResultSetData>;
+
+  protected getRdbDashboardProvider(): RdbDashboardProvider | undefined {
+    return undefined;
+  }
+
+  supportsRdbDashboard(): boolean {
+    return this.getRdbDashboardProvider() !== undefined;
+  }
+
+  async checkRdbDashboardAvailability(
+    target: RdbDashboardTarget,
+    options?: RdbDashboardCallOptions,
+  ): Promise<GeneralResult<RdbDashboardCapabilities>> {
+    const provider = this.getRdbDashboardProvider();
+    const effectiveOptions = this.normalizeRdbDashboardCallOptions(options);
+    const invalid = this.validateRdbDashboardTarget(target);
+    if (!provider) {
+      return { ok: false, message: 'RDB dashboard is not supported for this database.' };
+    }
+    if (invalid) {
+      return { ok: false, message: invalid };
+    }
+    const result = await this.callRdbDashboardProvider(
+      () => provider.checkCapabilities(target, effectiveOptions),
+      effectiveOptions,
+      'capability check',
+    );
+    if (result.ok && result.result) {
+      const validationError = validateRdbDashboardCapabilities(result.result, provider.providerId);
+      if (validationError) {
+        return { ok: false, message: validationError };
+      }
+    }
+    return result;
+  }
+
+  async resolveRdbDashboard(
+    target: RdbDashboardTarget,
+    selection: RdbDashboardSelection,
+    options?: RdbDashboardCallOptions,
+  ): Promise<GeneralResult<ResolvedRdbDashboard>> {
+    const provider = this.getRdbDashboardProvider();
+    const effectiveOptions = this.normalizeRdbDashboardCallOptions(options);
+    const invalid = this.validateRdbDashboardTarget(target);
+    if (!provider) {
+      return { ok: false, message: 'RDB dashboard is not supported for this database.' };
+    }
+    if (invalid) {
+      return { ok: false, message: invalid };
+    }
+    if (!this.isValidRdbDashboardSelection(selection)) {
+      return { ok: false, message: 'RDB dashboard selection is invalid.' };
+    }
+    const result = await this.callRdbDashboardProvider(
+      () => provider.resolveDashboard(target, selection, effectiveOptions),
+      effectiveOptions,
+      'definition resolution',
+    );
+    if (result.ok && result.result) {
+      const validationError = validateResolvedRdbDashboard(result.result, provider.providerId);
+      if (validationError) {
+        return { ok: false, message: validationError };
+      }
+    }
+    return result;
+  }
+
+  async collectRdbDashboardSample(
+    request: RdbSampleRequest,
+    options?: RdbDashboardCallOptions,
+  ): Promise<GeneralResult<RdbRawSampleBatch>> {
+    const provider = this.getRdbDashboardProvider();
+    const effectiveOptions = this.normalizeRdbDashboardCallOptions(options);
+    const invalid = this.validateRdbDashboardTarget(request?.target);
+    if (!provider) {
+      return { ok: false, message: 'RDB dashboard is not supported for this database.' };
+    }
+    if (
+      invalid ||
+      !request?.sampleSessionId ||
+      !Number.isInteger(request.definitionVersion) ||
+      request.definitionVersion < 0 ||
+      !Number.isInteger(request.sequence) ||
+      request.sequence < 0 ||
+      !this.isValidRdbDashboardSelection(request.selection) ||
+      !Array.isArray(request.metricIds) ||
+      request.metricIds.length === 0 ||
+      request.metricIds.length > 200 ||
+      request.metricIds.some((id) => typeof id !== 'string' || !id || id.length > 128) ||
+      new Set(request.metricIds).size !== request.metricIds.length
+    ) {
+      return { ok: false, message: invalid ?? 'RDB dashboard sample request is invalid.' };
+    }
+    const result = await this.callRdbDashboardProvider(
+      () => provider.collectSample(request, effectiveOptions),
+      effectiveOptions,
+      'sample collection',
+    );
+    if (!result.ok || !result.result) {
+      return result;
+    }
+    const batch = result.result;
+    const allowedMetrics = new Set(request.metricIds);
+    if (
+      batch.sampleSessionId !== request.sampleSessionId ||
+      batch.definitionVersion !== request.definitionVersion ||
+      batch.sequence !== request.sequence ||
+      !Array.isArray(batch.observations) ||
+      batch.observations.some((it) => !allowedMetrics.has(it.metricId))
+    ) {
+      return { ok: false, message: 'RDB dashboard provider returned a mismatched sample.' };
+    }
+    this.enforceRdbDashboardSampleBudget(batch, 2_000_000);
+    return result;
+  }
+
+  private validateRdbDashboardTarget(target?: RdbDashboardTarget): string | undefined {
+    if (!target?.resourceKey || target.resourceKey.length > 256) {
+      return 'RDB dashboard resourceKey is required.';
+    }
+    if (!target.databaseName || target.databaseName.length > 256) {
+      return 'RDB dashboard databaseName is required.';
+    }
+    if (target.dbType !== this.conRes.dbType) {
+      return 'RDB dashboard target database type does not match this driver.';
+    }
+    return undefined;
+  }
+
+  private isValidRdbDashboardSelection(selection: RdbDashboardSelection): boolean {
+    if (!selection || typeof selection !== 'object' || Array.isArray(selection)) {
+      return false;
+    }
+    const entries = Object.entries(selection);
+    return (
+      entries.length <= 20 &&
+      entries.every(
+        ([key, value]) =>
+          key.length > 0 && key.length <= 128 && typeof value === 'string' && value.length <= 256,
+      )
+    );
+  }
+
+  private normalizeRdbDashboardCallOptions(
+    options?: RdbDashboardCallOptions,
+  ): RdbDashboardCallOptions {
+    return {
+      signal: options?.signal,
+      timeoutMs: Math.max(100, Math.min(options?.timeoutMs ?? 3_000, 30_000)),
+    };
+  }
+
+  private async callRdbDashboardProvider<T>(
+    fn: () => Promise<GeneralResult<T>>,
+    options: RdbDashboardCallOptions | undefined,
+    stage: string,
+  ): Promise<GeneralResult<T>> {
+    if (options?.signal?.aborted) {
+      return { ok: false, message: RDB_DASHBOARD_CANCELLED_MESSAGE };
+    }
+    const timeoutMs = options?.timeoutMs ?? 3_000;
+    return new Promise<GeneralResult<T>>((resolve) => {
+      let settled = false;
+      const settle = (value: GeneralResult<T>): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        options?.signal?.removeEventListener('abort', onAbort);
+        resolve(value);
+      };
+      const onAbort = (): void => settle({ ok: false, message: RDB_DASHBOARD_CANCELLED_MESSAGE });
+      const timer = setTimeout(
+        () => settle({ ok: false, message: rdbDashboardTimeoutMessage(stage, timeoutMs) }),
+        timeoutMs,
+      );
+      options?.signal?.addEventListener('abort', onAbort);
+      Promise.resolve()
+        .then(fn)
+        .then((result) => {
+          if (!result || typeof result.ok !== 'boolean') {
+            settle({ ok: false, message: RDB_DASHBOARD_UNEXPECTED_ERROR_MESSAGE });
+            return;
+          }
+          settle(result);
+        })
+        .catch((error) => {
+          // SQL, bind values, hosts and credentials can be present in driver errors.
+          // eslint-disable-next-line no-console
+          console.error(`[rdbDashboard:${stage}] Provider failed:`, error);
+          settle({ ok: false, message: RDB_DASHBOARD_UNEXPECTED_ERROR_MESSAGE });
+        });
+    });
+  }
+
+  private enforceRdbDashboardSampleBudget(batch: RdbRawSampleBatch, maxBytes: number): void {
+    const size = (): number => Buffer.byteLength(JSON.stringify(batch), 'utf8');
+    let truncated = false;
+    while (batch.observations.length > 0 && size() > maxBytes) {
+      batch.observations.pop();
+      truncated = true;
+    }
+    if (truncated) {
+      batch.diagnostics.push({
+        sectionId: 'dashboard',
+        severity: 'warning',
+        code: 'payload-truncated',
+        message: 'Some observations were omitted to stay within the payload limit.',
+      });
+    }
+  }
 
   // Vendor Drivers that implement performance tuning context collection
   // override this hook to return their PerformanceTuningContextProvider.

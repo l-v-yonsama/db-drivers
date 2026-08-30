@@ -22,7 +22,12 @@ import {
 import { OracleColumnType } from '../types/resource/OracleColumnType';
 import { QuoteChar } from '../helpers';
 import { RDSBaseDriver } from './RDSBaseDriver';
-import { OraclePerformanceTuningProvider, PerformanceTuningContextProvider } from './providers';
+import {
+  OraclePerformanceTuningProvider,
+  OracleRdbDashboardProvider,
+  PerformanceTuningContextProvider,
+  RdbDashboardProvider,
+} from './providers';
 import {
   getStatementStatisticsOrderByColumn,
   isSingleSelectStatement,
@@ -42,9 +47,17 @@ export class OracleDriver extends RDSBaseDriver {
   private con: oracledb.Connection | undefined;
   private autoCommitEnabled = true;
   private currentIsolationLevel: TransactionIsolationLevel = 'READ COMMITTED';
+  private rdbDashboardProvider?: RdbDashboardProvider;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
+  }
+
+  protected getRdbDashboardProvider(): RdbDashboardProvider {
+    if (!this.rdbDashboardProvider) {
+      this.rdbDashboardProvider = new OracleRdbDashboardProvider(this);
+    }
+    return this.rdbDashboardProvider;
   }
 
   async begin(): Promise<void> {
@@ -612,6 +625,18 @@ ORDER BY s.SID DESC`;
     const dbDatabase = new RdsDatabase(
       this.conRes.database ?? this.conRes.name,
     );
+    dbDatabase.capabilities = {
+      ...(dbDatabase.capabilities ?? {}),
+      dashboards: [
+        ...(dbDatabase.capabilities?.dashboards ?? []),
+        {
+          dashboardId: 'rdb-database',
+          providerId: 'rdb.oracle.database',
+          variant: 'oracle',
+          hints: { databaseName: dbDatabase.name },
+        },
+      ],
+    };
     dbResources.push(dbDatabase);
 
     const currentSchemaName = await this.getCurrentSchema();

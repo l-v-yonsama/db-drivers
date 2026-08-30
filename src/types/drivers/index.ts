@@ -1,5 +1,6 @@
 export * from './EstimatedBindParameter';
 export * from './GeneralResult';
+export * from './rdbDashboard';
 export * from './Keycloak';
 export * from './MemcachedParams';
 export * from './metrics';

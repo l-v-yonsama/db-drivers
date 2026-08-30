@@ -23,7 +23,9 @@ import {
 import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 import {
   PerformanceTuningContextProvider,
+  PostgresRdbDashboardProvider,
   PostgresPerformanceTuningProvider,
+  RdbDashboardProvider,
 } from './providers';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar } from '../helpers';
@@ -341,6 +343,14 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   private performanceTuningContextProvider?: PerformanceTuningContextProvider;
+  private rdbDashboardProvider?: RdbDashboardProvider;
+
+  protected getRdbDashboardProvider(): RdbDashboardProvider {
+    if (!this.rdbDashboardProvider) {
+      this.rdbDashboardProvider = new PostgresRdbDashboardProvider(this);
+    }
+    return this.rdbDashboardProvider;
+  }
 
   // Typed to the interface (not the concrete PostgresPerformanceTuningProvider)
   // so it stays override-compatible with RDSBaseDriver's declared return
@@ -507,6 +517,18 @@ ORDER BY A.pid DESC
     const list = rdh.rows.map((r) => {
       const res = new RdsDatabase(r.values.name);
       res.comment = r.values.comment;
+      res.capabilities = {
+        ...(res.capabilities ?? {}),
+        dashboards: [
+          ...(res.capabilities?.dashboards ?? []),
+          {
+            dashboardId: 'rdb-database',
+            providerId: 'rdb.postgres.database',
+            variant: 'postgres',
+            hints: { databaseName: String(r.values.name) },
+          },
+        ],
+      };
       return res;
     });
     return list;

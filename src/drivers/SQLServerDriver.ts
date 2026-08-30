@@ -31,7 +31,12 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
-import { PerformanceTuningContextProvider, SQLServerPerformanceTuningProvider } from './providers';
+import {
+  PerformanceTuningContextProvider,
+  RdbDashboardProvider,
+  SQLServerPerformanceTuningProvider,
+  SQLServerRdbDashboardProvider,
+} from './providers';
 import { QuoteChar } from '../helpers';
 import {
   getStatementStatisticsOrderByColumn,
@@ -118,9 +123,17 @@ export class SQLServerDriver extends RDSBaseDriver {
   private con: ConnectionPool | undefined;
   private req: Request | undefined;
   private tran: Transaction | undefined;
+  private rdbDashboardProvider?: RdbDashboardProvider;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
+  }
+
+  protected getRdbDashboardProvider(): RdbDashboardProvider {
+    if (!this.rdbDashboardProvider) {
+      this.rdbDashboardProvider = new SQLServerRdbDashboardProvider(this);
+    }
+    return this.rdbDashboardProvider;
   }
 
   async begin(): Promise<void> {
@@ -859,6 +872,18 @@ ORDER BY s.session_id DESC
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
     const dbResources = new Array<RdsDatabase>();
     const dbDatabase = new RdsDatabase(this.conRes.database);
+    dbDatabase.capabilities = {
+      ...(dbDatabase.capabilities ?? {}),
+      dashboards: [
+        ...(dbDatabase.capabilities?.dashboards ?? []),
+        {
+          dashboardId: 'rdb-database',
+          providerId: 'rdb.sqlserver.database',
+          variant: 'sqlserver',
+          hints: { databaseName: this.conRes.database },
+        },
+      ],
+    };
     dbResources.push(dbDatabase);
 
     const currentSchemaName = await this.getCurrentSchema();

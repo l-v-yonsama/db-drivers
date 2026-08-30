@@ -21,7 +21,12 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
-import { MySQLPerformanceTuningProvider, PerformanceTuningContextProvider } from './providers';
+import {
+  MySQLPerformanceTuningProvider,
+  MySQLRdbDashboardProvider,
+  PerformanceTuningContextProvider,
+  RdbDashboardProvider,
+} from './providers';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar } from '../helpers';
 import {
@@ -346,6 +351,14 @@ export class MySQLDriver extends RDSBaseDriver {
   }
 
   private performanceTuningContextProvider?: PerformanceTuningContextProvider;
+  private rdbDashboardProvider?: RdbDashboardProvider;
+
+  protected getRdbDashboardProvider(): RdbDashboardProvider {
+    if (!this.rdbDashboardProvider) {
+      this.rdbDashboardProvider = new MySQLRdbDashboardProvider(this);
+    }
+    return this.rdbDashboardProvider;
+  }
 
   // Typed to the interface (not the concrete MySQLPerformanceTuningProvider),
   // same rationale as PostgresDriver's override of this hook: stays
@@ -569,6 +582,18 @@ ORDER BY ID DESC`;
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
     const dbResources = new Array<RdsDatabase>();
     const dbDatabase = new RdsDatabase(this.conRes.database);
+    dbDatabase.capabilities = {
+      ...(dbDatabase.capabilities ?? {}),
+      dashboards: [
+        ...(dbDatabase.capabilities?.dashboards ?? []),
+        {
+          dashboardId: 'rdb-database',
+          providerId: 'rdb.mysql.database',
+          variant: 'mysql',
+          hints: { databaseName: this.conRes.database },
+        },
+      ],
+    };
     dbResources.push(dbDatabase);
 
     const dbSchemas = this.filterSchemas(await this.getSchemas(dbDatabase));
