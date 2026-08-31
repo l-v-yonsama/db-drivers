@@ -234,7 +234,7 @@ export class DbDynamoTableColumn extends DbResource {
     return {
       ...super.getProperties(),
       'attribute type': this.attrType,
-      'partial key': this.pk,
+      'partition key': this.pk,
       'sort key': this.sk,
     };
   }

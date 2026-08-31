@@ -1,6 +1,7 @@
 // Formats observed DynamoDB summary values without estimating missing fields.
 
 import pluralize from 'pluralize';
+import type { RdhDynamoDbAccessPath } from '@l-v-yonsama/rdh';
 
 export type DynamoDbRdhSummaryInfoParams = {
   // Unknown operations use read wording rather than being assumed to be writes.
@@ -16,6 +17,7 @@ export type DynamoDbRdhSummaryInfoParams = {
   readCapacityUnits?: number;
   writeCapacityUnits?: number;
   hasMoreRows?: boolean;
+  accessPath?: RdhDynamoDbAccessPath;
 };
 
 const WRITE_OPERATIONS = new Set(['insert', 'update', 'delete']);
@@ -125,6 +127,11 @@ export function buildDynamoDbRdhSummaryInfo(
 
   if (params.hasMoreRows === true) {
     segments.push('Result limited; additional items exist');
+  }
+
+  if (params.accessPath?.type === 'index') {
+    const indexType = params.accessPath.indexType ?? 'index';
+    segments.push(`via ${indexType} "${params.accessPath.indexName}"`);
   }
 
   return segments.join(' • ');

@@ -976,6 +976,53 @@ describe('AwsDynamoDBDriver', () => {
   });
 
   describe('queryItemsAtClient (native Query)', () => {
+    it('distinguishes table identity keys from GSI access keys', async () => {
+      const rs = await driver.dynamoClient.queryItemsAtClient({
+        TableName: 'Food',
+        IndexName: 'iCountry',
+        KeyConditionExpression: '#country = :country',
+        ExpressionAttributeNames: { '#country': 'Country' },
+        ExpressionAttributeValues: { ':country': { S: 'Jp' } },
+      });
+      expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+        '(table pk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Color')?.comment).toBe(
+        '(table sk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Country')?.comment).toBe(
+        '(access pk)',
+      );
+      expect(rs.summary.dynamoDb?.accessPath).toEqual({
+        type: 'index',
+        indexName: 'iCountry',
+        indexType: 'GSI',
+      });
+      expect(rs.summary.info).toContain('via GSI "iCountry"');
+    });
+
+    it('shows shared table/access roles for an LSI partition key', async () => {
+      const rs = await driver.dynamoClient.queryItemsAtClient({
+        TableName: 'Food',
+        IndexName: 'iKind',
+        KeyConditionExpression: '#name = :name',
+        ExpressionAttributeNames: { '#name': 'Name' },
+        ExpressionAttributeValues: { ':name': { S: 'Apple' } },
+      });
+      expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+        '(table pk, access pk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Kind')?.comment).toBe(
+        '(access sk)',
+      );
+      expect(rs.summary.dynamoDb?.accessPath).toEqual({
+        type: 'index',
+        indexName: 'iKind',
+        indexType: 'LSI',
+      });
+      expect(rs.summary.info).toContain('via LSI "iKind"');
+    });
+
     it('reports returned/evaluated and a filter pass rate when a FilterExpression narrows results', async () => {
       // Food has 2 items under Name = 'Apple' (Color Green/Nz and
       // Color Red/Jp) - the KeyCondition alone would return both; a
@@ -1012,12 +1059,36 @@ describe('AwsDynamoDBDriver', () => {
       });
       expect(rs.summary.selectedRows).toBe(2);
       expect(rs.summary.dynamoDb?.evaluatedItemCount).toBe(2);
+      expect(rs.summary.dynamoDb?.accessPath).toEqual({ type: 'table' });
       expect(rs.summary.info).toContain('2 returned / 2 evaluated');
       expect(rs.summary.info).toContain('100% pass');
     });
   });
 
   describe('scanItemsAtClient (native Scan)', () => {
+    it('propagates a GSI access path into key roles and the summary', async () => {
+      const rs = await driver.dynamoClient.scanItemsAtClient({
+        TableName: 'Food',
+        IndexName: 'iCountry',
+        Limit: 10,
+      });
+      expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+        '(table pk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Color')?.comment).toBe(
+        '(table sk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Country')?.comment).toBe(
+        '(access pk)',
+      );
+      expect(rs.summary.dynamoDb?.accessPath).toEqual({
+        type: 'index',
+        indexName: 'iCountry',
+        indexType: 'GSI',
+      });
+      expect(rs.summary.info).toContain('via GSI "iCountry"');
+    });
+
     it('returns at most the requested number of items as ResultSetData', async () => {
       const rs = await driver.dynamoClient.scanItemsAtClient({
         TableName: 'MassiveRecords',
@@ -1261,6 +1332,17 @@ describe('AwsDynamoDBDriver', () => {
 
         expect(rs.summary.selectedRows).toBe(6);
         expect(rs.meta.tableName).toBe('Food');
+        expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+          '(table pk)',
+        );
+        expect(rs.keys.find((key) => key.name === 'Country')?.comment).toBe(
+          '(access pk)',
+        );
+        expect(rs.summary.dynamoDb?.accessPath).toEqual({
+          type: 'index',
+          indexName: 'iCountry',
+          indexType: 'GSI',
+        });
       });
       it('using lsi', async () => {
         await driver.getInfomationSchemas();
@@ -1279,6 +1361,17 @@ describe('AwsDynamoDBDriver', () => {
         );
         expect(rs.summary.selectedRows).toBe(6);
         expect(rs.meta.tableName).toBe('Food');
+        expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+          '(table pk, access pk)',
+        );
+        expect(rs.keys.find((key) => key.name === 'Kind')?.comment).toBe(
+          '(access sk)',
+        );
+        expect(rs.summary.dynamoDb?.accessPath).toEqual({
+          type: 'index',
+          indexName: 'iKind',
+          indexType: 'LSI',
+        });
       });
     });
     describe('INSERT', () => {

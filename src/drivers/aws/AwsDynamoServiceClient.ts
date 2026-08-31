@@ -78,6 +78,12 @@ import {
 } from '../providers/performance/dynamoDbCapacity';
 import { DynamoDbCapacityBreakdown } from '../../types/drivers/performance/DynamoDbPerformanceTuningContext';
 import { buildDynamoDbRdhSummaryInfo } from './dynamoDbRdhSummary';
+import {
+  compareDynamoDbResultKeys,
+  describeDynamoDbResultKey,
+  getDynamoDbResultKeyNames,
+  resolveDynamoDbAccessPath,
+} from './dynamoDbResultMetadata';
 
 export type QueryItemsAtClientInputParams = OriginalQueryCommandInput;
 export type ScanItemsAtClientInputParams = OriginalScanCommandInput;
@@ -554,7 +560,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       undefined;
     const qst: QStatement = {
       ast: { type: 'select' },
-      names: { tableName: TableName },
+      names: { tableName: TableName, indexName: IndexName },
     };
     const dbTable = this.getDbTable(qst);
 
@@ -623,10 +629,10 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
   async scanItemsAtClient(
     params: OriginalScanCommandInput,
   ): Promise<ResultSetData> {
-    const { TableName } = params;
+    const { TableName, IndexName } = params;
     const qst: QStatement = {
       ast: { type: 'select' },
-      names: { tableName: TableName },
+      names: { tableName: TableName, indexName: IndexName },
     };
     const dbTable = this.getDbTable(qst);
     const startTime = new Date().getTime();
@@ -1143,23 +1149,19 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
   }): ResultSetData {
     const materializedItems = Items ?? [];
     const record = Count === 0 ? {} : materializedItems[0] ?? {};
-    const pkAndSk = dbTable?.getPkAndSkByIndex(qst?.names?.indexName);
+    const indexName = qst?.names?.indexName;
+    const accessPath = resolveDynamoDbAccessPath(dbTable, indexName);
 
     const createRdhKeyFromName = (name: string): RdhKey => {
       const col = dbTable?.getChildByName(name);
       const type = col?.attrType
         ? parseDynamoAttrType(col.attrType)
         : allAttributeTypes.get(name);
-      let comment = '';
-      let required = false;
-      if (col?.name === pkAndSk?.pk) {
-        comment = '(pk)';
-        required = true;
-      }
-      if (col?.name === pkAndSk?.sk) {
-        comment = '(sk)';
-        required = true;
-      }
+      const { comment, required } = describeDynamoDbResultKey(
+        dbTable,
+        indexName,
+        name,
+      );
       return createRdhKey({
         name,
         type,
@@ -1191,28 +1193,14 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       const { expr } = qst.ast.columns[0];
       if (expr.type === 'ref' && expr.name === '*') {
         if (Count === 0 && keys.length === 0) {
-          if (pkAndSk?.pk) {
-            keys.push(createRdhKeyFromName(pkAndSk?.pk));
-          }
-          if (pkAndSk?.sk) {
-            keys.push(createRdhKeyFromName(pkAndSk?.sk));
+          for (const keyName of getDynamoDbResultKeyNames(dbTable, indexName)) {
+            keys.push(createRdhKeyFromName(keyName));
           }
         }
 
-        keys.sort((a, b) => {
-          const n = (it): number =>
-            it.name === pkAndSk?.pk ? -2 : it.name === pkAndSk?.sk ? -1 : 0;
-          const an = n(a);
-          const bn = n(b);
-          if (an < bn) {
-            return -1;
-          }
-          if (an > bn) {
-            return 1;
-          }
-
-          return a.name.localeCompare(b.name);
-        });
+        keys.sort((a, b) =>
+          compareDynamoDbResultKeys(dbTable, indexName, a.name, b.name),
+        );
       }
     }
 
@@ -1272,6 +1260,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     const dynamoDb: RdhDynamoDbSummary | undefined = meta
       ? {
           apiOperation,
+          accessPath,
           returnedItemCount: selectedRows,
           evaluatedItemCount: meta.scannedCount,
           successfulResponseCount: meta.requestCount,
@@ -1307,6 +1296,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         readCapacityUnits: meta?.capacityBreakdown?.readCapacityUnits,
         writeCapacityUnits: meta?.capacityBreakdown?.writeCapacityUnits,
         hasMoreRows: meta?.hasMorePages,
+        accessPath,
       }),
       elapsedTimeMilli,
       selectedRows,

@@ -42,7 +42,36 @@ describe('buildDynamoDbRdhSummaryInfo', () => {
       scannedRows: 100,
       readCapacityUnits: 1.5,
     });
-    expect(info).toBe('25 returned / 100 evaluated • 42 ms • 1.5 RCU • 25% pass');
+    expect(info).toBe(
+      '25 returned / 100 evaluated • 42 ms • 1.5 RCU • 25% pass',
+    );
+  });
+
+  it('appends a named GSI access path', () => {
+    const info = buildDynamoDbRdhSummaryInfo({
+      operation: 'select',
+      elapsedTimeMilli: 42,
+      selectedRows: 25,
+      readCapacityUnits: 1.5,
+      accessPath: {
+        type: 'index',
+        indexName: 'tenant-status-gsi',
+        indexType: 'GSI',
+      },
+    });
+    expect(info).toBe(
+      '25 items returned • 42 ms • 1.5 RCU • via GSI "tenant-status-gsi"',
+    );
+  });
+
+  it('uses a neutral index label when DescribeTable metadata is incomplete', () => {
+    const info = buildDynamoDbRdhSummaryInfo({
+      operation: 'select',
+      elapsedTimeMilli: 42,
+      selectedRows: 25,
+      accessPath: { type: 'index', indexName: 'custom-index' },
+    });
+    expect(info).toContain('via index "custom-index"');
   });
 
   it('omits pass rate when scannedRows is 0', () => {
@@ -52,7 +81,9 @@ describe('buildDynamoDbRdhSummaryInfo', () => {
       selectedRows: 0,
       scannedRows: 0,
     });
-    expect(info).toBe('0 returned / 0 evaluated • 10 ms • Capacity not reported');
+    expect(info).toBe(
+      '0 returned / 0 evaluated • 10 ms • Capacity not reported',
+    );
   });
 
   it('falls back to a plain CU when no read/write split is available', () => {
@@ -167,7 +198,9 @@ describe('buildDynamoDbRdhSummaryInfo', () => {
       selectedRows: 5,
       retryCount: 1,
     });
-    expect(single).toBe('5 items returned • 10 ms • Capacity not reported • 1 retry');
+    expect(single).toBe(
+      '5 items returned • 10 ms • Capacity not reported • 1 retry',
+    );
 
     const multiple = buildDynamoDbRdhSummaryInfo({
       operation: 'select',
@@ -175,7 +208,9 @@ describe('buildDynamoDbRdhSummaryInfo', () => {
       selectedRows: 5,
       retryCount: 2,
     });
-    expect(multiple).toBe('5 items returned • 10 ms • Capacity not reported • 2 retries');
+    expect(multiple).toBe(
+      '5 items returned • 10 ms • Capacity not reported • 2 retries',
+    );
   });
 
   it('rounds elapsed time in seconds at the 1000ms boundary', () => {
@@ -184,14 +219,18 @@ describe('buildDynamoDbRdhSummaryInfo', () => {
       elapsedTimeMilli: 999,
       selectedRows: 1,
     });
-    expect(underBoundary).toBe('1 item returned • 999 ms • Capacity not reported');
+    expect(underBoundary).toBe(
+      '1 item returned • 999 ms • Capacity not reported',
+    );
 
     const atBoundary = buildDynamoDbRdhSummaryInfo({
       operation: 'select',
       elapsedTimeMilli: 1000,
       selectedRows: 1,
     });
-    expect(atBoundary).toBe('1 item returned • 1.00 sec • Capacity not reported');
+    expect(atBoundary).toBe(
+      '1 item returned • 1.00 sec • Capacity not reported',
+    );
   });
 
   it('trims floating-point noise in a fractional Capacity value', () => {
