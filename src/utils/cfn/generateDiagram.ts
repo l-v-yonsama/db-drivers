@@ -3,12 +3,6 @@ import { generateDiagramMultiAzDeploymentTrafficPathsAndProtection } from './mul
 import { generateDiagramApplicationDiagram } from './applicationDiagram';
 import { generateDiagramCfnDependencyGraph } from './cfnDependencyGraphDiagram';
 
-/**
- * The one entry point for turning one or more parsed CloudFormation templates into a
- * Mermaid diagram (an `architecture-beta` block, fenced in ` ```mermaid `) - entirely
- * deterministic, no AI involved, so there's nothing here to hallucinate a relationship
- * that isn't actually in the template.
- */
 export const generateDiagram = (params: GenerateDiagramParams): string => {
   switch (params.mode) {
     case 'ApplicationDiagram':

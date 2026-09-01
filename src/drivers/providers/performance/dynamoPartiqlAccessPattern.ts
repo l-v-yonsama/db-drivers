@@ -34,19 +34,7 @@ const PUNCT_1 = new Set([
   ';',
 ]);
 
-// Returns undefined on any lexical error (unterminated string/identifier) -
-// callers must treat that identically to a parse failure (accessPath:
-// 'unknown'), never fall back to a partial token list.
-//
-// `allowNamedParam` gates `:name` value-placeholder tokens. PartiQL
-// (ExecuteStatement) only ever accepts `?` positional parameters - a literal
-// `:name` in PartiQL statement text is not valid DynamoDB PartiQL syntax at
-// all, so the WHERE-clause tokenizer leaves `:` unrecognized (a genuine
-// parse failure, correctly reported as 'unknown'). Native Query/Scan's
-// KeyConditionExpression/FilterExpression is a different expression
-// language that exclusively uses `:name` (paired with ExpressionAttributeValues),
-// never `?` - analyzeDynamoNativeQueryAccessPattern passes true here for
-// exactly that reason.
+// Returns undefined on any lexical error (unterminated string/identifier) - callers must treat that identically to a parse failure (accessPath: 'unknown'), never fall back to a partial token list.
 function tokenize(sql: string, allowNamedParam = false): Token[] | undefined {
   const tokens: Token[] = [];
   const n = sql.length;
@@ -98,11 +86,7 @@ function tokenize(sql: string, allowNamedParam = false): Token[] | undefined {
       i += m[0].length;
       continue;
     }
-    // `#name` ExpressionAttributeNames placeholder - native Query/Scan only
-    // (same gate as `:name` above). Tokenized as an ordinary identifier
-    // carrying its `#` prefix; resolveAttributeNames() substitutes the real
-    // attribute name from expressionAttributeNames before classification
-    // ever compares it against the table's key schema.
+    // `#name` ExpressionAttributeNames placeholder - native Query/Scan only (same gate as `:name` above).
     if (ch === '#' && allowNamedParam) {
       const m = /^#[A-Za-z_][A-Za-z0-9_]*/.exec(sql.slice(i));
       if (!m) return undefined;
@@ -133,9 +117,7 @@ function tokenize(sql: string, allowNamedParam = false): Token[] | undefined {
       i++;
       continue;
     }
-    // Any other character (e.g. `:`, `@`, `%`, unsupported operators) means
-    // this file does not understand the statement well enough to guarantee
-    // meaning-preserving classification - bail out rather than guess.
+    // Any other character (e.g. `:`, `@`, `%`, unsupported operators) means this file does not understand the statement well enough to guarantee meaning-preserving classification - bail out rather than guess.
     return undefined;
   }
   tokens.push({ type: 'eof', value: '' });
@@ -166,11 +148,7 @@ function unescapeQuoted(raw: string, quoteChar: string): string {
   return raw.split(quoteChar + quoteChar).join(quoteChar);
 }
 
-// ---------------------------------------------------------------------------
-// Internal boolean-tree AST. Never exported - nothing outside this file
-// needs it, and keeping it private means the public API can never leak a
-// shape that accidentally starts carrying literal values later.
-// ---------------------------------------------------------------------------
+// --------------------------------------------------------------------------- Internal boolean-tree AST.
 
 type CompareOp =
   | '='
@@ -189,14 +167,9 @@ type BoolNode =
   | { kind: 'and'; children: BoolNode[] }
   | { kind: 'or'; children: BoolNode[] }
   | { kind: 'not'; child: BoolNode }
-  // `attribute` is the bare top-level attribute name (first path segment)
-  // only when the compared side was a direct attribute path - undefined
-  // when the left-hand side was itself a function call (e.g. `size(x) > 5`),
-  // which can never be a key condition.
+  // `attribute` is the bare top-level attribute name (first path segment) only when the compared side was a direct attribute path - undefined when the left-hand side was itself a function call (e.g. `size(x) > 5`), which can never be a key condition.
   | { kind: 'compare'; attribute?: string; op: CompareOp }
-  // Successfully parsed but structurally never a key predicate - a bare
-  // boolean function call used standalone (`attribute_exists(x)`), or a
-  // function call this parser recognizes without special-casing.
+  // Successfully parsed but structurally never a key predicate - a bare boolean function call used standalone (`attribute_exists(x)`), or a function call this parser recognizes without special-casing.
   | { kind: 'other' };
 
 class ParseError extends Error {}
@@ -244,11 +217,6 @@ class TokenCursor {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Attribute path (`a`, `"a"`, `a.b`, `a[0].b`) - only the first segment is
-// ever treated as "the attribute this predicate touches" for classification;
-// the full dotted form is kept only for the projection list's display text.
-// ---------------------------------------------------------------------------
 
 function parsePath(c: TokenCursor): string[] | undefined {
   const t = c.peek();
@@ -270,9 +238,7 @@ function parsePath(c: TokenCursor): string[] | undefined {
     }
     if (c.isPunct('[')) {
       c.next();
-      // Index expression - only a bare integer literal is supported (the
-      // only form DynamoDB PartiQL document paths actually use); anything
-      // else is treated as unparseable rather than guessed at.
+      // Index expression - only a bare integer literal is supported (the only form DynamoDB PartiQL document paths actually use); anything else is treated as unparseable rather than guessed at.
       if (c.peek().type !== 'number') {
         throw new ParseError('expected numeric array index');
       }
@@ -285,9 +251,7 @@ function parsePath(c: TokenCursor): string[] | undefined {
   return segments;
 }
 
-// Consumes a single value (literal, `?` param, or a nested value like a
-// document-path reference or PartiQL array literal `[v1, v2]`) without
-// capturing its content anywhere. Never returns text.
+// Consumes a single value (literal, `?` param, or a nested value like a document-path reference or PartiQL array literal `[v1, v2]`) without capturing its content anywhere.
 function skipValue(c: TokenCursor): void {
   const t = c.peek();
   if (t.type === 'string' || t.type === 'number' || t.type === 'param') {
@@ -307,9 +271,7 @@ function skipValue(c: TokenCursor): void {
     return;
   }
   if (t.type === 'ident' || t.type === 'qident') {
-    // A bare identifier used as a value position (an attribute-to-attribute
-    // comparison, or the start of a function call) - consume it as a path,
-    // then optionally a function-call argument list, without keeping either.
+    // A bare identifier used as a value position (an attribute-to-attribute comparison, or the start of a function call) - consume it as a path, then optionally a function-call argument list, without keeping either.
     parsePath(c);
     if (c.isPunct('(')) {
       c.next();
@@ -344,11 +306,6 @@ const COMPARE_PUNCT: Record<string, CompareOp> = {
   '>=': '>=',
 };
 
-// A single WHERE-clause / KeyConditionExpression / FilterExpression
-// predicate: `path <op> value`, `path [NOT] BETWEEN value AND value`,
-// `path [NOT] IN (values)` / `path [NOT] IN [values]`, a `begins_with(path,
-// value)` call, or any other function call (kept as 'other' / with
-// `attribute: undefined` when it appears on the left of a comparison).
 function parsePredicate(c: TokenCursor): BoolNode {
   const startsWithPath =
     c.peek().type === 'ident' || c.peek().type === 'qident';
@@ -362,10 +319,7 @@ function parsePredicate(c: TokenCursor): BoolNode {
   }
   const attribute = path.length === 1 ? path[0] : path[0]; // top-level segment either way
 
-  // Function call: `name(args)`. begins_with(path, value) is the one
-  // function DynamoDB treats as a key-condition-capable predicate; every
-  // other function (contains/attribute_exists/attribute_not_exists/
-  // attribute_type/size/anything unrecognized) is never a key predicate.
+  // Function call: `name(args)`.
   if (c.isPunct('(')) {
     const fnName = path.length === 1 ? path[0].toLowerCase() : undefined;
     c.next();
@@ -376,10 +330,7 @@ function parsePredicate(c: TokenCursor): BoolNode {
       c.expectPunct(')');
       return { kind: 'compare', attribute: argPath[0], op: 'begins_with' };
     }
-    // Any other function call: consume its argument list without
-    // interpreting it, then check whether it's used as a comparison LHS
-    // (`size(x) > 5`) or a standalone boolean predicate
-    // (`attribute_exists(x)`).
+    // Any other function call: consume its argument list without interpreting it, then check whether it's used as a comparison LHS (`size(x) > 5`) or a standalone boolean predicate (`attribute_exists(x)`).
     if (!c.isPunct(')')) {
       skipValue(c);
       while (c.isPunct(',')) {
@@ -402,9 +353,7 @@ function parsePathOrThrow(c: TokenCursor): string[] {
   return path;
 }
 
-// After a bare path or a function call, look for BETWEEN / IN / a
-// comparison operator; if none follows, the path/call was itself the whole
-// (boolean-valued) predicate.
+// After a bare path or a function call, look for BETWEEN / IN / a comparison operator; if none follows, the path/call was itself the whole (boolean-valued) predicate.
 function maybeTrailingComparison(
   c: TokenCursor,
   attribute: string | undefined,
@@ -437,8 +386,7 @@ function maybeTrailingComparison(
     return { kind: 'compare', attribute, op: negated ? 'NOT_IN' : 'IN' };
   }
   if (negated) {
-    // A bare `NOT <path>` / `NOT <call>` with no BETWEEN/IN following is not
-    // a shape this file assigns any meaning to.
+    // A bare `NOT <path>` / `NOT <call>` with no BETWEEN/IN following is not a shape this file assigns any meaning to.
     throw new ParseError('unsupported NOT predicate');
   }
 
@@ -449,10 +397,7 @@ function maybeTrailingComparison(
     return { kind: 'compare', attribute, op: COMPARE_PUNCT[opToken.value] };
   }
 
-  // No trailing operator at all: only valid when the predicate was itself a
-  // function call used as a standalone boolean (attribute !== a bare path
-  // that was never given a comparison - a lone attribute path is not valid
-  // PartiQL/KeyCondition boolean syntax and is rejected).
+  // No trailing operator at all: only valid when the predicate was itself a function call used as a standalone boolean (attribute !== a bare path that was never given a comparison - a lone attribute path is not valid PartiQL/KeyCondition boolean syntax and is rejected).
   if (attribute === undefined) {
     return { kind: 'other' };
   }
@@ -491,9 +436,6 @@ function parseOr(c: TokenCursor): BoolNode {
   return children.length === 1 ? children[0] : { kind: 'or', children };
 }
 
-// ---------------------------------------------------------------------------
-// SELECT statement (§7.2's FROM / projection / WHERE / ORDER BY / LIMIT)
-// ---------------------------------------------------------------------------
 
 type ParsedSelect = {
   tableName: string;
@@ -504,12 +446,6 @@ type ParsedSelect = {
   scanForward?: boolean;
 };
 
-// Deliberately does not reuse parsePath(): that helper greedily consumes
-// every `.`-separated segment as one document-path attribute reference
-// (correct for a WHERE-clause predicate), which would swallow `"table"."index"`
-// as a single length-2 path before this function ever saw the `.` - exactly
-// the bug caught by this file's own test suite. A FROM-clause ref is at most
-// one `.` between exactly two identifiers, parsed directly here instead.
 function parseTableRef(c: TokenCursor): {
   tableName: string;
   indexName?: string;
@@ -604,8 +540,7 @@ function parseDynamoPartiqlSelect(sql: string): ParsedSelect | undefined {
       c.next();
     }
     if (!c.atEnd()) {
-      // Trailing content this grammar doesn't recognize (a second
-      // statement, an unsupported clause, ...) - refuse to guess.
+      // Trailing content this grammar doesn't recognize (a second statement, an unsupported clause, ...) - refuse to guess.
       throw new ParseError('unexpected trailing content');
     }
 
@@ -615,22 +550,8 @@ function parseDynamoPartiqlSelect(sql: string): ParsedSelect | undefined {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Classification (the decision table at the top of this file)
-// ---------------------------------------------------------------------------
+// --------------------------------------------------------------------------- Classification (the decision table at the top of this file)
 
-// True iff `node` being true structurally GUARANTEES that `attrName` was
-// compared with `=`/`IN` - the single recursive rule that captures both
-// "Query" rows of the decision table at once: an AND-conjunct guarantees it
-// for the whole AND (only one branch needs to hold), while an OR only
-// guarantees it when EVERY branch independently guarantees it (any other
-// branch could be the one that actually held).
-//
-// Matches `node.attribute` against `attrName` case-sensitively: DynamoDB
-// attribute names are case-sensitive (AWS naming rules), so a schema key
-// named `tenantId` must never match a statement's `tenantid` - that would
-// misclassify a full scan as a key-condition Query and silently drop the
-// DYNAMODB_FULL_TABLE_SCAN/DYNAMODB_FULL_INDEX_SCAN warning.
 function guaranteesKeyEquality(node: BoolNode, attrName: string): boolean {
   switch (node.kind) {
     case 'and':
@@ -671,10 +592,7 @@ function toReportableOp(
     : undefined;
 }
 
-// First direct comparison found anywhere in the tree for `attrName` -
-// descriptive metadata only (partitionKey/sortKey reporting), never used to
-// decide accessPath itself. Case-sensitive for the same reason as
-// guaranteesKeyEquality above.
+// First direct comparison found anywhere in the tree for `attrName` - descriptive metadata only (partitionKey/sortKey reporting), never used to decide accessPath itself.
 function findFirstComparison(
   node: BoolNode,
   attrName: string,
@@ -713,15 +631,7 @@ function collectAttributes(node: BoolNode, into: Set<string>): void {
   }
 }
 
-// Native Query/Scan's KeyConditionExpression/FilterExpression may reference
-// attributes through a `#name` ExpressionAttributeNames placeholder instead
-// of the bare attribute name (required for reserved words, common
-// practice otherwise). Classification must compare against real attribute
-// names, so this rewrites every `#xxx` a parsed tree captured back to its
-// real name before guaranteesKeyEquality/findFirstComparison/
-// collectAttributes ever run. A `#xxx` with no entry in `names` is left as
-// the literal placeholder string, which safely never matches any real key
-// attribute name (under-classifies toward Scan rather than guessing).
+// Native Query/Scan's KeyConditionExpression/FilterExpression may reference attributes through a `#name` ExpressionAttributeNames placeholder instead of the bare attribute name (required for reserved words, common practice otherwise).
 function resolveAttributeNames(
   node: BoolNode,
   names: Record<string, string> | undefined,
@@ -785,11 +695,6 @@ function classify(params: {
   const pkAttr = keySchema.partitionKey.attributeName;
   const skAttr = keySchema.sortKey?.attributeName;
 
-  // Exact, case-sensitive match against the schema's own key attribute
-  // names - DynamoDB attribute names are case-sensitive, so e.g. a
-  // `tenantid = ?` predicate must never be treated as satisfying a
-  // `tenantId` partition key (AWS naming rules; see this function's own
-  // doc comment above for the classification impact).
   const isQuery = where !== undefined && guaranteesKeyEquality(where, pkAttr);
 
   const accessPath: DynamoDbAccessPath = isQuery
@@ -878,16 +783,7 @@ function unknownAccessPattern(params: {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
 
-// Step 3 of §7.1's static collection sequence: table/index extraction only,
-// before the DescribeTable call that resolves a real key schema. Returns
-// undefined when the statement cannot be parsed at all (not a single
-// well-formed SELECT) - callers must treat that as a hard failure for static
-// collection, per §7.2's last decision-table row / §9's "usable context な
-// し" rule, not silently fall back to Scan.
 export function extractDynamoPartiqlTarget(
   sql: string,
 ): { tableName: string; indexName?: string } | undefined {
@@ -896,13 +792,7 @@ export function extractDynamoPartiqlTarget(
   return { tableName: parsed.tableName, indexName: parsed.indexName };
 }
 
-// Step 5: full parse + classify against the table/index's actual key schema
-// (from DescribeTable). Always returns a DynamoDbAccessPattern - a
-// re-parsing failure at this stage (which should be rare, since
-// extractDynamoPartiqlTarget already succeeded on the same text) degrades to
-// accessPath: 'unknown' / confidence: 'unknown' rather than throwing, so a
-// Provider can always attach it to the Context and let
-// DYNAMODB_ACCESS_PATTERN_UNRESOLVED communicate the gap.
+// Step 5: full parse + classify against the table/index's actual key schema (from DescribeTable).
 export function analyzeDynamoPartiqlAccessPattern(params: {
   sql: string;
   keySchema: DynamoDbKeySchema;
@@ -936,22 +826,13 @@ export function analyzeDynamoPartiqlAccessPattern(params: {
   });
 }
 
-// Native Query's KeyConditionExpression/FilterExpression grammar is a strict
-// subset of PartiQL WHERE (the AWS Query API itself rejects anything else
-// for KeyConditionExpression - OR, non-key attributes, and nested
-// parentheses are not valid there), so both are parsed with the same
-// predicate/boolean-tree grammar as the WHERE clause above. Every attribute
-// referenced by filterExpression is unconditionally a post-read filter
-// attribute, by definition - unlike PartiQL's single WHERE clause, there is
-// no ambiguity to resolve here.
 export function analyzeDynamoNativeQueryAccessPattern(params: {
   input: DynamoDbQueryAnalysisInput;
   keySchema: DynamoDbKeySchema;
   indexType?: 'LSI' | 'GSI';
 }): DynamoDbAccessPattern {
   const { input, keySchema, indexType } = params;
-  // Query's documented default is eventual consistency when ConsistentRead
-  // is omitted. This is known execution semantics, not missing evidence.
+  // Query's documented default is eventual consistency when ConsistentRead is omitted.
   const consistentRead: 'eventual' | 'strong' = input.consistentRead
     ? 'strong'
     : 'eventual';
@@ -1016,9 +897,7 @@ export function analyzeDynamoNativeQueryAccessPattern(params: {
     scanForward: input.scanIndexForward,
   });
 
-  // filterExpression attributes are always post-read filter attributes for
-  // a native Query, regardless of what classify() inferred from
-  // keyConditionExpression alone.
+  // filterExpression attributes are always post-read filter attributes for a native Query, regardless of what classify() inferred from keyConditionExpression alone.
   if (input.filterExpression) {
     const filterTokens = tokenize(input.filterExpression, true);
     const filterAttrs = new Set(classified.postReadFilter.attributes);
@@ -1033,8 +912,7 @@ export function analyzeDynamoNativeQueryAccessPattern(params: {
           collectAttributes(filterWhere, filterAttrs);
         }
       } catch {
-        // Leave filterAttrs as-is; filterExpression's presence is still
-        // meaningful even if we couldn't enumerate its attribute names.
+        // Leave filterAttrs as-is; filterExpression's presence is still meaningful even if we couldn't enumerate its attribute names.
       }
     }
     return {

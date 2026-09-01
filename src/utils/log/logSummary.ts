@@ -5,9 +5,6 @@ import {
   LogParseConfig,
 } from '../../types';
 
-/**
- * Human-readable descriptions for event types
- */
 export const EVENT_TYPE_DESCRIPTIONS: Record<LogEventType, string> = {
   DATA_SOURCE: 'Data source connection',
   CONN_AUTOCOMMIT: 'Auto-commit connection',
@@ -89,9 +86,6 @@ export function summarizeExtractors(
     .join('\n');
 }
 
-/**
- * Debug summary for UI
- */
 export function summarizeExtractorsOneLine(
   extractors: LogParseConfig['extractors'],
   maxLen = 120,

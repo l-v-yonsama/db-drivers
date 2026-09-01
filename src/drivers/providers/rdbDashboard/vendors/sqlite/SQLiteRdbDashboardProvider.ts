@@ -187,9 +187,7 @@ export class SQLiteRdbDashboardProvider implements RdbDashboardProvider {
     return result.rows.map((item) => {
       const name = String(rowValue(item.values as Row, 'name') ?? '');
       const reportedFile = String(rowValue(item.values as Row, 'file') ?? '');
-      // sql.js exposes a virtual-filesystem path for main. The connection
-      // setting is the authoritative host path used for the non-destructive
-      // WAL sidecar stat.
+      // sql.js exposes a virtual-filesystem path for main.
       const file =
         name === 'main' && connectionDatabase && connectionDatabase !== ':memory:'
           ? connectionDatabase

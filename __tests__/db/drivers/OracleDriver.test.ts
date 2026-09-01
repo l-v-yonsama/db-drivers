@@ -86,15 +86,11 @@ describe('OracleDriver', () => {
       const d4Res = testTableRes.getChildByName('D4') as DbColumn;
       expect(d4Res.colType).toBe(GeneralColumnType.TIMESTAMP_WITH_TIME_ZONE);
 
-      // J1: native JSON type (Oracle 21c+) -- ALL_TAB_COLUMNS.DATA_TYPE is
-      // already "JSON", so this works without any extra lookup.
+      // J1: native JSON type (Oracle 21c+) -- ALL_TAB_COLUMNS.DATA_TYPE is already "JSON", so this works without any extra lookup.
       const j1Res = testTableRes.getChildByName('J1') as DbColumn;
       expect(j1Res.colType).toBe(GeneralColumnType.JSON);
 
-      // J2: pre-21c style storage -- a CLOB with an "IS JSON" check
-      // constraint. DATA_TYPE alone reports "CLOB"; only cross-referencing
-      // ALL_JSON_COLUMNS reveals this is really a JSON column, which is what
-      // makes JSON detection correct back to Oracle 12.1.
+      // J2: pre-21c style storage -- a CLOB with an "IS JSON" check constraint.
       const j2Res = testTableRes.getChildByName('J2') as DbColumn;
       expect(j2Res.colType).toBe(GeneralColumnType.JSON);
     });
@@ -494,15 +490,8 @@ describe('OracleDriver', () => {
       expect(rdh.keys.map((k) => k.name)).toEqual(REQUIRED_COLUMNS);
     });
 
-    it('returns SQL_FULLTEXT (not truncated at 1000 chars like SQL_TEXT) as the query column (§3.3)', async () => {
-      // This Oracle container accumulates thousands of unrelated
-      // V$SQLSTATS entries over its lifetime (background/maintenance
-      // statements), so a fast trivial query has no reliable way to rank
-      // into a small ORDER-BY-elapsed-time/LIMIT slice. Instead, this pads
-      // the query past SQL_TEXT's 1000-char truncation point *and* makes
-      // it slow enough (~2.5s, via a cross join - a plain CONNECT BY that
-      // size hits this container's ORA-30009 memory cap) that filtering
-      // on minimumAverageElapsedTimeMs reliably isolates it from the noise.
+    it('returns SQL_FULLTEXT (not truncated at 1000 chars like SQL_TEXT) as the query column', async () => {
+      // This Oracle container accumulates thousands of unrelated V$SQLSTATS entries over its lifetime (background/maintenance statements), so a fast trivial query has no reliable way to rank into a small ORDER-BY-elapsed-time/LIMIT slice.
       const marker = `ORACLE_FULLTEXT_TEST_${Date.now()}`;
       const padding = 'x'.repeat(1100);
       const sql = `SELECT /*+ NO_MERGE(a) NO_MERGE(b) USE_NL(b) */ COUNT(*) AS CNT

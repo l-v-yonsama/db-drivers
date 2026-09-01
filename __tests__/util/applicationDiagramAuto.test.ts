@@ -7,10 +7,6 @@ import { disposeAutoLayoutEngine } from '../../src/utils/diagramLayout';
 import testApiLambdaStackTemplate from '../data/cfn/templates/db-drivers-test-api-lambda-stack.json';
 import testOrderStackTemplate from '../data/cfn/templates/db-drivers-test-order-stack.json';
 
-// Phase 4 (misc/automatic-diagram-layout-and-er-migration-plan.md 5.2 / 8.2): the auto-layout
-// renderer must keep the same node/relation semantics as the legacy staircase renderer, must
-// keep the Ingress -> Compute -> Messaging -> Data ordering as a hard left-to-right constraint,
-// and must not regress into overlapping cells.
 
 afterAll(() => {
   disposeAutoLayoutEngine();
@@ -110,8 +106,7 @@ describe('generateDrawioApplicationDiagramAsync', () => {
   });
 
   it('still nests a DB Cluster member card instead of drawing a separate top-level card', async () => {
-    // Reuses the same membership shape the legacy renderer test fixture exercises: a DBInstance
-    // whose DBClusterIdentifier points at a DBCluster in the same stack.
+    // Reuses the same membership shape the legacy renderer test fixture exercises: a DBInstance whose DBClusterIdentifier points at a DBCluster in the same stack.
     const clusterParams: GenerateDiagramParams = {
       mode: 'ApplicationDiagram',
       list: [

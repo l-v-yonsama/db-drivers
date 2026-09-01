@@ -1,10 +1,6 @@
 export type DynamoDbBillingMode = 'PROVISIONED' | 'PAY_PER_REQUEST' | 'unknown';
 
-/**
- * Normalizes both DescribeTable and serialized resource-tree capacity data.
- * Legacy provisioned tables can omit BillingModeSummary while still reporting
- * provisioned read/write capacity.
- */
+/** Normalizes both DescribeTable and serialized resource-tree capacity data. */
 export function resolveDynamoDbBillingMode(input: {
   billingMode?: string;
   readCapacityUnits?: number;

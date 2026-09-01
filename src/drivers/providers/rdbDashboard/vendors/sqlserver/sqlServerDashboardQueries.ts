@@ -39,8 +39,7 @@ SELECT
 FROM sys.dm_exec_requests AS r
 WHERE r.database_id = DB_ID()`;
 
-// Keep this list explicit and versioned with the provider. These waits represent
-// background/idle workers and would otherwise dominate a top-N database view.
+// Keep this list explicit and versioned with the provider.
 export const SQLSERVER_DASHBOARD_WAIT_STATS_SQL = `
 SELECT
   CASE

@@ -302,11 +302,7 @@ function isNumericLiteral(value: string): boolean {
 export function splitMyBatisParams(body: string): string[] {
   const result: string[] = [];
 
-  // Matches "<value>(<JavaType>)" pairs. The type is any Java type token
-  // (simple, qualified, or array e.g. "byte[]") rather than a fixed list,
-  // so unrecognized types (LocalDateTime, UUID, custom TypeHandlers, ...)
-  // don't stop the split. Unknown, non-numeric types still get quoted as
-  // strings by formatTypedParam, which is a known limitation.
+  // Matches "<value>(<JavaType>)" pairs.
   const regex = /(null|[\s\S]*?\([A-Za-z_$][\w.$]*(?:\[\])?\))(?:,\s*)?/g;
 
   let match: RegExpExecArray | null;

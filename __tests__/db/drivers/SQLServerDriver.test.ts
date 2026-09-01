@@ -572,10 +572,7 @@ describe('SQLServerDriver', () => {
       await driver.disconnect();
     });
 
-    // readOnlyIntent (ApplicationIntent=ReadOnly) is only an Always-On
-    // Availability-Group read-only-routing hint. This test's standalone
-    // instance has no read-only routing configured, so it is a no-op and
-    // writes still succeed — see isReadOnlyEnforcementReliable(DBType.SQLServer).
+    // readOnlyIntent (ApplicationIntent=ReadOnly) is only an Always-On Availability-Group read-only-routing hint.
     it('failure: does not block writes on a standalone instance (known limitation)', async () => {
       const driver = createRDSDriver({ readOnly: true });
       await driver.connect();
@@ -590,11 +587,6 @@ describe('SQLServerDriver', () => {
   });
 
   describe('getStatementStatistics', () => {
-    // A dedicated, freshly-connected driver rather than the shared `driver`
-    // above - several sibling describe blocks in this file (locks,
-    // readOnly, kill) already avoid reusing the shared connection this late
-    // in the file for the same reason, each with their own
-    // createRDSDriver() instance.
     let statsDriver: SQLServerDriver;
 
     beforeAll(async () => {
@@ -626,8 +618,7 @@ describe('SQLServerDriver', () => {
 
     it('includes the 15 required columns plus query_parameterization_type appended after them', async () => {
       await statsDriver.requestSql({ sql: 'SELECT TOP 1 * FROM testdb.perf_orders' });
-      // Query Store's runtime stats are interval-buffered; force them to
-      // disk so this test doesn't race the flush interval.
+      // Query Store's runtime stats are interval-buffered; force them to disk so this test doesn't race the flush interval.
       await statsDriver.requestSql({ sql: 'EXEC sys.sp_query_store_flush_db' });
 
       const rdh = await statsDriver.getStatementStatistics({
@@ -638,7 +629,6 @@ describe('SQLServerDriver', () => {
       const columnNames = rdh.keys.map((k) => k.name);
 
       expect(columnNames.slice(0, REQUIRED_COLUMNS.length)).toEqual(REQUIRED_COLUMNS);
-      // §3.4/§6.4: appended after the 15 required columns, never interleaved.
       expect(columnNames.slice(REQUIRED_COLUMNS.length)).toEqual(['query_parameterization_type']);
     });
   });

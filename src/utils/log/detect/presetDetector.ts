@@ -13,9 +13,6 @@ import {
 } from '../../../types';
 import { LogParser } from '../LogParser';
 
-/* ======================================================
-   split preset detection
-====================================================== */
 
 export function detectLogSplitPreset(
   logText: string,
@@ -63,16 +60,10 @@ export function detectLogSplitPreset(
     }
   }
 
-  /**
-   * 同率トップを取得
-   */
   const presetNames = Object.entries(scores)
     .filter(([, score]) => score === bestScore)
     .map(([name]) => name);
 
-  /**
-   * confidence
-   */
   const scoreValues = Object.values(scores).sort((a, b) => b - a);
 
   const best = scoreValues[0] ?? 0;
@@ -87,9 +78,6 @@ export function detectLogSplitPreset(
   };
 }
 
-/* ======================================================
-   SQL parse preset detection
-====================================================== */
 
 export async function detectSqlParsePresetByText(
   logText: string,
@@ -179,9 +167,6 @@ export function detectSqlParsePreset(
     scores,
   };
 }
-/* ======================================================
-   helper message formatter
-====================================================== */
 
 export function formatLogDetectionMessage(
   result: LogFormatDetectionResult,

@@ -9,10 +9,6 @@ import {
   DbTable,
 } from '../../src';
 
-// Phase 6 (misc/automatic-diagram-layout-and-er-migration-plan.md): ported from db-notebook's
-// __tests__/utilities/erDiagramDrawioGenerator.test.ts and erDiagramGenerator's own (informal)
-// coverage. Now that DbTable/DbColumn live in the same package, fixtures use the real classes
-// instead of the migration source's `as any`-cast plain objects.
 
 const buildOrdersCustomersSchema = (): { schema: DbSchema; orders: DbTable; customers: DbTable } => {
   const schema = new DbSchema('public');
@@ -78,15 +74,11 @@ describe('createERDiagramParams / createErDiagram (Mermaid)', () => {
         { tableName: 'customers', columnNames: ['id'] },
       ],
     });
-    // Both orders.foreignKeys.referenceTo and customers.foreignKeys.referencedFrom describe the
-    // same constraint - it must appear exactly once, not twice.
+    // Both orders.foreignKeys.referenceTo and customers.foreignKeys.referencedFrom describe the same constraint - it must appear exactly once, not twice.
     expect(params.relations.filter((r) => r.name === 'orders_customer_fk')).toHaveLength(1);
   });
 
-  // Regression test (found via review): dedup used to key off `constraintName` alone, which
-  // silently dropped a composite FK's second+ column pair (they all share one constraint name)
-  // and could drop an unrelated FK that happens to reuse the same generic constraint name in a
-  // different table. relationKey() now includes both tables and both columns on each end.
+  // Regression test (found via review): dedup used to key off `constraintName` alone, which silently dropped a composite FK's second+ column pair (they all share one constraint name)
   it('keeps every column pair of a composite FK, not just the first one sharing its constraint name', () => {
     const orderItems = new DbTable('order_items', 'TABLE');
     orderItems.addChild(new DbColumn('order_id', 'integer', { nullable: false }));

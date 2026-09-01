@@ -412,10 +412,7 @@ FROM performance_lab.orders o`;
 
 describe('resolveTargetTables', () => {
   it('resolves an aliased FROM/JOIN even when the SQL has no placeholders at all', () => {
-    // The exact shape that motivated this function: a fully-literal query
-    // (no bind rows for estimateBindParameters() to ever touch) whose
-    // MySQL EXPLAIN output would only ever report the aliases "o"/"c" as
-    // table_name, never the real table names.
+    // The exact shape that motivated this function: a fully-literal query (no bind rows for estimateBindParameters() to ever touch) whose MySQL EXPLAIN output would only ever report the aliases "o"/"c" as table_name, never the real table names.
     const sql = `SELECT c.region, COUNT(*) AS order_count
 FROM performance_lab.orders o
 JOIN performance_lab.customers c ON c.id = o.customer_id

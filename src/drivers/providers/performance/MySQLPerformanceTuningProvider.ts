@@ -36,22 +36,12 @@ import {
   VendorTableStatistics,
 } from './PerformanceTuningContextProvider';
 
-// Narrow, structural view of MySQLDriver - just enough for this Provider
-// (run a read-only SQL statement, and reuse the driver's existing
-// SHOW CREATE TABLE-based getTableDDL()) - same rationale as
-// PostgresPerformanceTuningDriverAccess: unit-testable with a stub, and
-// can't reach past this into connect/disconnect/transactions/UI.
 export interface MySQLPerformanceTuningDriverAccess {
   requestSql(params: QueryParams): Promise<ResultSetData>;
   getTableDDL(params: { tableName: string; schemaName?: string }): Promise<string>;
 }
 
-// MySQL has no separate schema-vs-database concept the way Postgres does -
-// a "database" *is* the schema information_schema queries key on
-// (TABLE_SCHEMA). PerformanceTuningTableTarget.schemaName is honored if a
-// caller ever sets it (kept for shape-compatibility with the other
-// vendors), otherwise this falls back to databaseName, which is what every
-// real MySQL caller will actually have.
+// MySQL has no separate schema-vs-database concept the way Postgres does - a "database" *is* the schema information_schema queries key on (TABLE_SCHEMA).
 const targetSchemaOf = (target: { databaseName: string; schemaName?: string }): string =>
   target.schemaName ?? target.databaseName;
 
@@ -62,18 +52,11 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     params: PerformanceTuningAvailabilityParams,
   ): Promise<GeneralResult<PerformanceTuningCapabilities>> {
-    // Read-only, static capability report - same contract as
-    // PostgresPerformanceTuningProvider.checkCapabilities() (§7: this never
-    // touches the DB, a per-table permission gap still surfaces later as
-    // that table's own unavailableSections entry, not here).
     const capabilities: PerformanceTuningCapabilities = {
       executionPlan: { available: true, source: 'EXPLAIN FORMAT=JSON' },
       analyzedExecutionPlan: {
         available: true,
-        // MySQL has no EXPLAIN ANALYZE FORMAT=JSON, so this is the real
-        // EXPLAIN ANALYZE tree text, unparsed, alongside the (always
-        // collected) EXPLAIN FORMAT=JSON plan the rest of this Provider
-        // resolves tables/diagnostics from.
+        // MySQL has no EXPLAIN ANALYZE FORMAT=JSON, so this is the real EXPLAIN ANALYZE tree text, unparsed, alongside the (always collected) EXPLAIN FORMAT=JSON plan the rest of this Provider resolves tables/diagnostics from.
         source: 'EXPLAIN ANALYZE (tree text, unparsed)',
       },
       tableDefinition: { available: true, source: 'information_schema / SHOW CREATE TABLE' },
@@ -93,8 +76,6 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: PerformanceTuningCallOptions & { timeoutMs: number },
   ): Promise<GeneralResult<VendorExecutionPlan>> {
-    // binds are used only to obtain a parameter-specific plan (§4.1); they
-    // are never placed anywhere in the returned VendorExecutionPlan.
     const binds = params.plan?.binds?.map((v) => String(v));
 
     let rdh: ResultSetData;
@@ -105,8 +86,7 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
         meta: { type: 'performanceTuningContext' },
       });
     } catch (e) {
-      // Same precedent as PostgresPerformanceTuningProvider: a failed
-      // EXPLAIN is an expected, actionable failure, surfaced with detail.
+      // Same precedent as PostgresPerformanceTuningProvider: a failed EXPLAIN is an expected, actionable failure, surfaced with detail.
       const detail = e instanceof Error ? e.message : String(e);
       return {
         ok: false,
@@ -126,10 +106,7 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
       return { ok: false, message: 'Failed to parse the EXPLAIN JSON output.' };
     }
 
-    // Unlike Postgres's `EXPLAIN (FORMAT JSON)` (which wraps its single
-    // result in an array), MySQL's `EXPLAIN FORMAT=JSON` returns the
-    // `{ query_block: {...} }` object directly - `parsed` already *is* the
-    // explain root, no unwrapping needed.
+    // Unlike Postgres's `EXPLAIN (FORMAT JSON)` (which wraps its single result in an array), MySQL's `EXPLAIN FORMAT=JSON` returns the `{ query_block: {...} }` object directly - `parsed` already *is* the explain root, no unwrapping needed.
     const diagnostics: NonNullable<VendorExecutionPlan['diagnostics']> = [];
     let planNode: VendorExecutionPlan['normalizedPlan'];
     let planTableMappings: VendorExecutionPlan['planTableMappings'] = [];
@@ -142,14 +119,7 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
       diagnostics.push(planUnresolvedDiagnostic());
     }
 
-    // Analyze mode: MySQL has no EXPLAIN ANALYZE FORMAT=JSON (confirmed
-    // empirically - it errors with "doesn't yet support 'EXPLAIN ANALYZE
-    // with JSON format'"), so a second, separate query captures the real
-    // EXPLAIN ANALYZE tree text as-is rather than normalizing it into
-    // PlanNode. table/index resolution and diagnostics above already come
-    // from the EXPLAIN FORMAT=JSON plan just parsed - MySQL's optimizer
-    // computes that same plan regardless of ANALYZE, which only executes
-    // it - so none of that needs to be re-derived from the analyze text.
+    // Analyze mode: MySQL has no EXPLAIN ANALYZE FORMAT=JSON (confirmed empirically - it errors with "doesn't yet support 'EXPLAIN ANALYZE with JSON format'"), so a second, separate query captures the real EXPLAIN ANALYZE tree text as-is rather than normalizing it into PlanNode.
     let actualPlanText: string | undefined;
     if (params.plan?.mode === 'analyze') {
       let analyzeRdh: ResultSetData;
@@ -170,8 +140,7 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
       actualPlanText = typeof analyzeValue === 'string' ? analyzeValue : undefined;
     }
 
-    // Match text-plan runtime evidence to estimate mappings by table identity,
-    // never by the independent trees' positions.
+    // Match text-plan runtime evidence to estimate mappings by table identity, never by the independent trees' positions.
     const actualPlanTableStats = actualPlanText
       ? resolveMysqlActualPlanTableStats(actualPlanText, planTableMappings)
       : undefined;
@@ -205,16 +174,13 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
       result: {
         raw: parsed,
         normalizedPlan: planNode,
-        // MySQL's EXPLAIN FORMAT=JSON never includes timing - it doesn't
-        // execute the query. Real timing for analyze mode lives in
-        // actualPlanText instead (unparsed - see the comment above).
+        // MySQL's EXPLAIN FORMAT=JSON never includes timing - it doesn't execute the query.
         planningTimeMs: undefined,
         executionTimeMs: undefined,
         actualPlan: actualPlanText
           ? { source: 'EXPLAIN ANALYZE', format: 'text', content: actualPlanText }
           : undefined,
-        // `undefined` when nothing resolves - RDSBaseDriver falls back to
-        // the generic, estimated-cost-based walk in that case.
+        // `undefined` when nothing resolves - RDSBaseDriver falls back to the generic, estimated-cost-based walk in that case.
         dominantCostPlanNode: actualPlanTableStats?.dominantCostPlanNode,
         diagnostics,
         planTableMappings: planTableMappingsWithActualRows,
@@ -222,10 +188,6 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
     };
   }
 
-  // Same rationale as PostgresPerformanceTuningProvider.runCatalogQuery():
-  // an ordinary information_schema error (permission denied, ...) gets a
-  // *detailed* message, since it's an expected/actionable failure, not the
-  // generic message RDSBaseDriver's exception boundary uses for genuine bugs.
   private async runCatalogQuery(
     sql: string,
     binds: string[],
@@ -247,27 +209,9 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
     }
   }
 
-  // getTableDDL() throws rather than returning a GeneralResult - wrapped
-  // into one here (rather than a bespoke ok/text-or-message union) so its
-  // failure can be downgraded to a warning in collectTableDefinition()
-  // instead of failing the whole call. Uses GeneralResult<string> (message
-  // always present, `ok` a plain boolean) rather than a discriminated union
-  // of differently-shaped branches: this project's tsconfig has
-  // strictNullChecks off, under which `if (!x.ok)` does not narrow a custom
-  // `{ok:true,...} | {ok:false,...}` union the way it does everywhere else
-  // TypeScript's docs assume - GeneralResult<T>'s flat shape sidesteps that
-  // entirely, matching how every other Provider method already reports
-  // success/failure.
+  // getTableDDL() throws rather than returning a GeneralResult - wrapped into one here (rather than a bespoke ok/text-or-message union) so its failure can be downgraded to a warning in collectTableDefinition() instead of failing the whole call.
   private async collectDdl(target: PerformanceTuningTableTarget): Promise<GeneralResult<string>> {
     try {
-      // targetSchemaOf(target), not the raw (possibly-undefined)
-      // target.schemaName: getTableDDL() with no schemaName qualifies
-      // against the connection's *current* database, which can silently
-      // diverge from target.databaseName (the one every catalog query
-      // above is actually scoped to) if the connection's active database
-      // has changed since - always passing the resolved schema keeps the
-      // DDL and the rest of this table's collected data pointed at the
-      // same database.
       const text = await this.driver.getTableDDL({
         tableName: target.tableName,
         schemaName: targetSchemaOf(target),
@@ -292,9 +236,7 @@ export class MySQLPerformanceTuningProvider implements PerformanceTuningContextP
         this.runCatalogQuery(CONSTRAINTS_SQL, binds, 'constraints'),
         this.runCatalogQuery(CHECK_CONSTRAINTS_SQL, binds, 'check constraints'),
         this.runCatalogQuery(INDEXES_SQL, binds, 'indexes'),
-        // getTableDDL() throws rather than returning a GeneralResult - a
-        // failure here is downgraded to a warning below, same as the other
-        // secondary sections, rather than failing the whole call.
+        // getTableDDL() throws rather than returning a GeneralResult - a failure here is downgraded to a warning below, same as the other secondary sections, rather than failing the whole call.
         this.collectDdl(target),
       ]);
 
@@ -475,9 +417,7 @@ WHERE tc.TABLE_SCHEMA = ? AND tc.TABLE_NAME = ?
   AND tc.CONSTRAINT_TYPE IN ('PRIMARY KEY', 'UNIQUE', 'FOREIGN KEY')
 ORDER BY tc.CONSTRAINT_NAME, kcu.ORDINAL_POSITION`;
 
-// A separate query: CHECK_CONSTRAINTS carries no column list at all (MySQL
-// enforces a CHECK as a single boolean expression, not a column-scoped
-// object the way PK/UK/FK are).
+// A separate query: CHECK_CONSTRAINTS carries no column list at all (MySQL enforces a CHECK as a single boolean expression, not a column-scoped object the way PK/UK/FK are).
 const CHECK_CONSTRAINTS_SQL = `
 SELECT cc.CONSTRAINT_NAME AS constraint_name, cc.CHECK_CLAUSE AS check_clause
 FROM information_schema.CHECK_CONSTRAINTS cc
@@ -505,11 +445,7 @@ SELECT TABLE_ROWS AS table_rows, DATA_LENGTH AS data_length, INDEX_LENGTH AS ind
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?`;
 
-// Only SEQ_IN_INDEX = 1: a column's cardinality is only meaningful as
-// "distinct values of this column alone" when it's the leading key part of
-// some index - see mapMysqlColumnStatisticsRow()'s doc comment.
-// `$COLUMN_PLACEHOLDERS` is substituted with `?, ?, ...` (one per requested
-// column) before this is sent - see collectColumnStatistics().
+// Only SEQ_IN_INDEX = 1: a column's cardinality is only meaningful as "distinct values of this column alone" when it's the leading key part of some index - see mapMysqlColumnStatisticsRow()'s doc comment.
 const CARDINALITY_SQL = `
 SELECT COLUMN_NAME AS column_name, CARDINALITY AS cardinality
 FROM information_schema.STATISTICS

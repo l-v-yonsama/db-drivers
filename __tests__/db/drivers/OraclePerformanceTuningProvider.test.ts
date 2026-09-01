@@ -89,8 +89,7 @@ describe('parseOraclePlan', () => {
         filterColumns: ['STATUS'],
       }),
     ]);
-    // Only one mapping - the INDEX child is not double-counted as its own
-    // separate table access.
+    // Only one mapping - the INDEX child is not double-counted as its own separate table access.
     expect(mappings).toHaveLength(1);
 
     const tableNode = planNode.children[0];
@@ -131,8 +130,6 @@ describe('parseOraclePlan', () => {
         affectsCompleteness: true,
         message: expect.stringContaining('Could not resolve a table for plan node'),
         node: expect.objectContaining({ objectKind: 'index', objectName: 'IDX_PERF_ORDERS_STATUS' }),
-        // owner is kept as technical detail (§4.4) even though it never
-        // resolved to a real table.
         schemaName: 'TESTUSER',
       }),
     ]);
@@ -458,10 +455,7 @@ Predicate Information (identified by operation id):
       if (sql.includes('FROM ALL_CONSTRAINTS ac')) {
         return { rows: (rowsBySection.constraints ?? []).map((values) => ({ values })) };
       }
-      // Checked before the general "FROM ALL_INDEXES i" test below - Oracle's
-      // TABLE_SIZE_SQL has an ALL_INDEXES i subquery of its own
-      // (`... FROM ALL_INDEXES i WHERE i.OWNER = t.OWNER ...`) whose text
-      // would otherwise also match that check.
+      // Checked before the general "FROM ALL_INDEXES i" test below - Oracle's TABLE_SIZE_SQL has an ALL_INDEXES i subquery of its own (`...
       if (sql.includes('FROM ALL_TABLES t')) {
         return { rows: (rowsBySection.tableSize ?? []).map((values) => ({ values })) };
       }
@@ -648,9 +642,7 @@ Predicate Information (identified by operation id):
   });
 });
 
-// Runs the actual catalog SQL against a live Oracle (the same Docker
-// fixture __tests__/db/drivers/OracleDriver.test.ts uses), not stubbed
-// rows - same rationale as the other three vendors' live suites.
+// Runs the actual catalog SQL against a live Oracle (the same Docker fixture __tests__/db/drivers/OracleDriver.test.ts uses), not stubbed rows - same rationale as the other three vendors' live suites.
 describe('OraclePerformanceTuningProvider (live Oracle)', () => {
   const connectOption: ConnectionSetting = {
     host: 'localhost',
@@ -747,8 +739,7 @@ describe('OraclePerformanceTuningProvider (live Oracle)', () => {
     expect(result.result!.map((c) => c.columnName)).toEqual(['STATUS']);
     // perf_orders has exactly 2 distinct status values ('new'/'shipped').
     expect(result.result![0].distinctCount?.value).toBe(2);
-    // status is NOT NULL - divided by the real table row count (not
-    // SAMPLE_SIZE), this must be exactly 0, never a value above 1.
+    // status is NOT NULL - divided by the real table row count (not SAMPLE_SIZE), this must be exactly 0, never a value above 1.
     expect(result.result![0].nullFraction?.value).toBe(0);
   });
 

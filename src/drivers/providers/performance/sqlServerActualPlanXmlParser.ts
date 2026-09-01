@@ -1,12 +1,6 @@
 import type { PlanTableMapping, RuntimeObservation } from '../../../types/drivers/performance/PerformanceTuningContext';
 
-// SET STATISTICS XML returns ShowPlan XML rather than a documented
-// row-oriented runtime API.  The parser below intentionally recognizes only
-// the small, stable subset needed to enrich an already-resolved SHOWPLAN_ALL
-// table mapping.  In particular, it matches by the database-reported
-// {schema, table, alias, index} identity, never by the two plans' NodeId:
-// recompilation, adaptive choices, and extra internal operators mean those
-// independently generated trees must not be positionally aligned.
+// SET STATISTICS XML returns ShowPlan XML rather than a documented row-oriented runtime API.
 
 type ActualPlanNode = {
   physicalOp?: string;
@@ -47,9 +41,7 @@ const unbracket = (value: string | undefined): string | undefined => {
 
 function attributesOf(tag: string): XmlAttributes {
   const attributes: XmlAttributes = {};
-  // SQL Server's ShowPlan XML consistently double-quotes attributes.  This
-  // tokenizer is deliberately narrow: malformed/unfamiliar XML simply
-  // yields fewer facts rather than attempting a lossy general XML parse.
+  // SQL Server's ShowPlan XML consistently double-quotes attributes.
   for (const match of tag.matchAll(/([\w:-]+)="([^"]*)"/g)) {
     attributes[match[1]] = match[2];
   }
@@ -65,19 +57,14 @@ function finiteNumber(value: string | undefined): number | undefined {
 }
 
 function rowsPerExecution(node: ActualPlanNode, value: number): number | undefined {
-  // ActualRows is cumulative for repeated inner-side executions.  For a
-  // parallel operator, each worker normally reports ActualExecutions=1, so
-  // using the maximum (not the sum) preserves the plan-wide row count while
-  // still normalizing an ordinary nested-loop re-execution.
+  // ActualRows is cumulative for repeated inner-side executions.
   return node.actualExecutionsMax > 0 ? value / node.actualExecutionsMax : value;
 }
 
 function parseActualPlanTree(xml: string): ActualPlanNode[] {
   const roots: ActualPlanNode[] = [];
   const stack: ActualPlanNode[] = [];
-  // A ShowPlan value may be formatted across lines or supplied as one line;
-  // tags are all that matter here. XML entities keep literal '<'/'>' out of
-  // attribute values, so this deliberately small tokenizer remains safe.
+  // A ShowPlan value may be formatted across lines or supplied as one line; tags are all that matter here.
   const tags = xml.match(/<[^>]+>/g) ?? [];
   for (const tag of tags) {
     const closing = /^<\//.test(tag);
@@ -186,14 +173,7 @@ function tableNodes(nodes: ActualPlanNode[]): ActualPlanNode[] {
   return found;
 }
 
-/**
- * Resolves only a unique actual XML relation to one SHOWPLAN_ALL mapping.
- * `ActualRowsRead` is SQL Server's measured access candidate count, where
- * available; a local `<Predicate>` then gives the measured pass rate via
- * `ActualRowsRead -> ActualRows`.  Without RowsRead, we expose an access
- * count only when there is no local predicate, rather than pretending that
- * post-filter output was the pre-filter candidate set.
- */
+/** Resolves only a unique actual XML relation to one SHOWPLAN_ALL mapping. */
 export function resolveSqlServerActualPlanTableStats(
   actualPlanXml: string,
   planTableMappings: PlanTableMapping[],
@@ -237,11 +217,7 @@ const columnNames = (xml: string): string[] =>
     .map((match) => unbracket(match[1]))
     .filter((value): value is string => Boolean(value));
 
-/**
- * Keeps high-signal SQL Server runtime facts when the full STATISTICS XML is
- * omitted from a compact AI request.  These observations are deliberately
- * independent of SHOWPLAN_ALL node IDs and table mappings.
- */
+/** Keeps high-signal SQL Server runtime facts when the full STATISTICS XML is omitted from a compact AI request. */
 export function extractSqlServerRuntimeObservations(actualPlanXml: string): RuntimeObservation[] {
   const observations: RuntimeObservation[] = [];
   for (const group of actualPlanXml.matchAll(/<MissingIndexGroup\b([^>]*)>([\s\S]*?)<\/MissingIndexGroup>/g)) {

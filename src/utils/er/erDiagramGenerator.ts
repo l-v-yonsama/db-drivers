@@ -1,9 +1,3 @@
-// Migrated from db-notebook's src/utilities/erDiagramGenerator.ts (see
-// misc/automatic-diagram-layout-and-er-migration-plan.md, Phase 6). Behavior is unchanged from
-// the migration source - only the import paths moved, per plan 6.4 "可能な限り現在の関数名とER図
-// 中間モデルを維持する". Mermaid ER diagrams take no node coordinates (the Mermaid renderer
-// decides layout itself), so this file has no dependency on the ELK-backed common layout layer -
-// see plan 4.3.
 import { DbColumn, DbSchema, DbTable } from '../../resource';
 import { displayGeneralColumnType } from '@l-v-yonsama/rdh';
 import {
@@ -21,16 +15,7 @@ export {
   createSimpleERDiagramParams,
 };
 
-/** Identity of one column-pair direction of a relation: same constraint name *and* the same
- * table/column on both ends. A composite FK's constraint name repeats once per column it covers
- * (e.g. a 2-column key produces two `ForeignKeyConstraintDetail` entries sharing one
- * `constraintName`), and unrelated FKs in different tables can legitimately share a generic
- * constraint name (many migration tools default to names like `fk_1`) - deduping on
- * `constraintName` alone silently drops the composite key's second column and can drop a
- * same-named FK belonging to a different table entirely. Including every column/table on both
- * ends is what actually pins down "this is the same relation, just discovered from the other
- * table's own foreignKeys map" (the real thing this dedup exists to catch - see the "dedupes a
- * foreign key relation proven from both sides" test). */
+/** Identity of one column-pair direction of a relation: same constraint name *and* the same table/column on both ends. */
 const relationKey = (
   constraintName: string,
   fromTable: string,
@@ -274,9 +259,7 @@ function createSimpleERDiagramParams(
   };
 }
 
-/** Whole-schema counterpart to createSimpleERDiagramParams(): every table in the schema, every
- * column, every relation - the one-click diagram entry point from a schema node, where there's
- * no single "center" table to seed a relation walk from. */
+/** Whole-schema counterpart to createSimpleERDiagramParams(): every table in the schema, every column, every relation - the one-click diagram entry point from a schema node, where there's no single "center" table to seed a relation walk from. */
 function createFullSchemaERDiagramParams(schema: DbSchema): ERDiagramParams {
   const tables = schema.children;
   return createERDiagramParams(tables, {
@@ -307,7 +290,6 @@ function createErDiagram(params: ERDiagramParams): string {
         }
 
         // Mermaid supports PK/FK as key markers, but not a custom NN marker.
-        // Keep NOT NULL visible as an annotation instead of emitting invalid ER syntax.
         const notNullNote = !columnRes.primaryKey && !columnRes.nullable ? 'NN' : '';
         const comment = [columnRes.comment, notNullNote]
           .filter(Boolean)
@@ -363,14 +345,7 @@ function createErDiagram(params: ERDiagramParams): string {
     }
     text += ` ${escapeQuot(referenceTo.tableName)}: "${escapeQuot(name)}"\n`;
   });
-  // --	直線
-  // ..	破線
-  //  ER1 |o--o| ER2: "0 or 1"
-  //  ER3 ||--|| ER4: "1"
-  //  ER5 }o--o{ ER6: "0以上"
-  //  ER7 }|--|{ ER8: "1以上"
-  // 受注.顧客番号(FK) }o..|| 顧客.顧客番号(PK)
-  // 受注明細.受注番号(PKの一部,FK) }o--|| 受注.受注番号(PK)
+  // -- 直線 ..
 
   text += '```\n';
   return text;

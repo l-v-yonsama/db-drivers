@@ -113,12 +113,7 @@ describe('DbResource', () => {
       });
     });
 
-    // Covers every ResourceType that fromJson() is expected to restore (all
-    // of them except IamSession - see the dedicated "IamSession" test below).
-    // This is the regression net for splitting DbResource.ts into per-domain
-    // modules (readability-maintenance-plan-2026-08-14.md, Phase 6): every
-    // concrete Resource class must still round-trip through fromJson()
-    // afterwards exactly as it does here.
+    // Covers every ResourceType that fromJson() is expected to restore (all of them except IamSession - see the dedicated "IamSession" test below).
     describe.each([
       {
         className: 'DbConnection',
@@ -269,10 +264,7 @@ describe('DbResource', () => {
     });
 
     it('throws for IamSession, which is a scan-target discriminant with no backing DbResource', () => {
-      // IamSession has no DbResource subclass (see ScanParams.ts / the
-      // comment in fromJson()), so there is nothing a real instance's
-      // resourceType could ever be - a plain object stands in for what
-      // fromJson() would receive if this ever happened.
+      // IamSession has no DbResource subclass (see ScanParams.ts / the comment in fromJson()), so there is nothing a real instance's resourceType could ever be - a plain object stands in for what fromJson() would receive if this ever happened.
       const fakeJson = { resourceType: 'IamSession', name: 'session' } as any;
 
       expect(() => fromJson(fakeJson)).toThrow(

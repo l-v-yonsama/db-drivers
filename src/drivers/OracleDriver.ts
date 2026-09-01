@@ -34,11 +34,6 @@ import {
   normalizeStatementStatisticsParams,
 } from '../utils';
 
-// Recommended once-per-process setup (node-oracledb's own docs suggest this
-// application-startup pattern): rows as plain objects, and CLOB/BLOB values
-// materialized directly to string/Buffer instead of Lob stream objects, so
-// callers (getTableDDL(), generic column values) never need to special-case
-// Lob.getData().
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 oracledb.fetchAsString = [oracledb.CLOB];
 oracledb.fetchAsBuffer = [oracledb.BLOB];
@@ -68,15 +63,11 @@ export class OracleDriver extends RDSBaseDriver {
       transactionIsolationLevel === 'SERIALIZABLE' ||
       transactionIsolationLevel === 'REPEATABLE READ'
     ) {
-      // Oracle has no distinct REPEATABLE READ; SERIALIZABLE is the closest
-      // (and strictest) match, same convention SQL Server's own docs use.
+      // Oracle has no distinct REPEATABLE READ; SERIALIZABLE is the closest (and strictest) match, same convention SQL Server's own docs use.
       await this.con?.execute('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
       this.currentIsolationLevel = 'SERIALIZABLE';
     } else {
-      // Oracle has no READ UNCOMMITTED (its MVCC model makes dirty reads
-      // impossible); UNSPECIFIED/SNAPSHOT are SQL-Server-only values. Leave
-      // the session at Oracle's real default rather than issuing a
-      // statement for an unsupported level.
+      // Oracle has no READ UNCOMMITTED (its MVCC model makes dirty reads impossible); UNSPECIFIED/SNAPSHOT are SQL-Server-only values.
       this.currentIsolationLevel = 'READ COMMITTED';
     }
   }
@@ -95,9 +86,7 @@ export class OracleDriver extends RDSBaseDriver {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async setAutoCommit(value: boolean): Promise<void> {
-    // Oracle has no session-level autocommit statement — node-oracledb
-    // takes autoCommit per execute() call instead, so this just updates
-    // the flag requestSqlSub() reads on every call.
+    // Oracle has no session-level autocommit statement — node-oracledb takes autoCommit per execute() call instead, so this just updates the flag requestSqlSub() reads on every call.
     this.autoCommitEnabled = value;
   }
 
@@ -121,9 +110,7 @@ export class OracleDriver extends RDSBaseDriver {
 
     const key = createRdhKey({
       name: fieldInfo.name,
-      // fieldInfo.isJson also covers legacy LOB/VARCHAR2 columns carrying an
-      // enabled "IS JSON" constraint (Oracle's only JSON storage before 21c),
-      // which report their real dbTypeName (e.g. "CLOB") here, not "JSON".
+      // fieldInfo.isJson also covers legacy LOB/VARCHAR2 columns carrying an enabled "IS JSON" constraint (Oracle's only JSON storage before 21c), which report their real dbTypeName (e.g. "CLOB") here, not "JSON".
       type: fieldInfo.isJson ? GeneralColumnType.JSON : parseColumnType(name),
       comment: tableColumn?.comment ?? '',
       required: tableColumn?.nullable === false,
@@ -140,10 +127,7 @@ export class OracleDriver extends RDSBaseDriver {
   }
 
   async useDatabase(database: string): Promise<void> {
-    // Oracle has no session-level "switch database" — schema (owner) is
-    // bound to the connecting user, and cross-schema queries just qualify
-    // table references with `schema.table` instead (already handled by
-    // the shared schema-qualification logic in SQLHelper.ts).
+    // Oracle has no session-level "switch database" — schema (owner) is bound to the connecting user, and cross-schema queries just qualify table references with `schema.table` instead (already handled by the shared schema-qualification logic in SQLHelper.ts).
     console.log(`Ignore "USE DATABASE(${database})"`);
   }
 
@@ -192,11 +176,6 @@ export class OracleDriver extends RDSBaseDriver {
           return `Session ${sesssionOrPid} not found`;
         }
         const serial = rows[0].SERIAL_NUM;
-        // ALTER SYSTEM KILL SESSION doesn't accept bind variables for its
-        // session-id literal; sesssionOrPid/serial are both numbers looked
-        // up from V$SESSION just above, so string interpolation here can't
-        // carry an injection payload (same reasoning SQLServerDriver.kill()
-        // already relies on for its own KILL statement).
         await extraCon.execute(
           `ALTER SYSTEM KILL SESSION '${sesssionOrPid},${serial}'`,
           [],
@@ -278,8 +257,7 @@ export class OracleDriver extends RDSBaseDriver {
       throw new Error('No connection');
     }
     const binds = params.conditions?.binds ?? [];
-    // Unique per call so concurrent/repeated explains never collide on the
-    // same (session-private, auto-cleared-at-disconnect) PLAN_TABLE rows.
+    // Unique per call so concurrent/repeated explains never collide on the same (session-private, auto-cleared-at-disconnect) PLAN_TABLE rows.
     const statementId = `dbn_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
     await this.con.execute(
@@ -317,11 +295,7 @@ export class OracleDriver extends RDSBaseDriver {
 
   private performanceTuningContextProvider?: PerformanceTuningContextProvider;
 
-  // Typed to the interface (not the concrete OraclePerformanceTuningProvider),
-  // same rationale as the other three vendor drivers' override of this hook:
-  // stays override-compatible with RDSBaseDriver's declared return type, and
-  // test doubles overriding this hook with a fake Provider remain valid
-  // overrides.
+  // Typed to the interface (not the concrete OraclePerformanceTuningProvider), same rationale as the other three vendor drivers' override of this hook:
   protected getPerformanceTuningContextProvider(): PerformanceTuningContextProvider {
     if (!this.performanceTuningContextProvider) {
       this.performanceTuningContextProvider = new OraclePerformanceTuningProvider(this);
@@ -329,16 +303,6 @@ export class OracleDriver extends RDSBaseDriver {
     return this.performanceTuningContextProvider;
   }
 
-  // Used only by OraclePerformanceTuningProvider (§13 step 8) - kept
-  // separate from explainSqlSub() above (the general "Explain" feature,
-  // which returns DBMS_XPLAN.DISPLAY's curated *text* output) rather than
-  // adding a flag to it, per [[avoid-boolean-opt-in-flags]]: a wider-
-  // capability caller gets its own function instead of a flag on the shared
-  // one. PLAN_TABLE's ID/PARENT_ID/OBJECT_OWNER/OBJECT_NAME/OBJECT_ALIAS/
-  // ACCESS_PREDICATES/FILTER_PREDICATES columns are exactly what
-  // oraclePlanParser.ts needs to reconstruct the plan's tree and resolve
-  // tables - DBMS_XPLAN.DISPLAY's rendering discards that structure into a
-  // single formatted text column.
   async collectPerformanceTuningPlanRows(
     params: QueryParams,
   ): Promise<ResultSetData> {
@@ -347,10 +311,7 @@ export class OracleDriver extends RDSBaseDriver {
       throw new Error('No connection');
     }
     const binds = params.conditions?.binds ?? [];
-    // Unique per call so concurrent/repeated calls never collide on the
-    // same (session-private) PLAN_TABLE rows - same scheme explainSqlSub()
-    // already uses, distinct prefix so a stray row is identifiable as
-    // coming from this method rather than the general Explain feature.
+    // Unique per call so concurrent/repeated calls never collide on the same (session-private) PLAN_TABLE rows - same scheme explainSqlSub() already uses, distinct prefix so a stray row is identifiable as coming from this method rather than the general Explain feature.
     const statementId = `dbnpt_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
     await this.con.execute(
@@ -369,17 +330,7 @@ FROM PLAN_TABLE WHERE STATEMENT_ID = :1 ORDER BY ID`,
       });
       return rdb.rs;
     } finally {
-      // PLAN_TABLE is session-private but not auto-cleared between calls -
-      // best-effort delete so repeated performance-tuning-context calls
-      // within one long-lived connection don't accumulate stale rows.
-      // Never lets a cleanup failure fail the caller, who already has (or
-      // has failed to get) their actual result by this point.
-      //
-      // autoCommit follows this.autoCommitEnabled (never hardcoded true):
-      // Oracle's autoCommit commits the *entire session*, not just this
-      // statement, so hardcoding it here would silently commit whatever
-      // DML a caller had pending in an explicit transaction on this same
-      // connection - a read-only diagnostics call must never do that.
+      // PLAN_TABLE is session-private but not auto-cleared between calls - best-effort delete so repeated performance-tuning-context calls within one long-lived connection don't accumulate stale rows.
       try {
         await this.con.execute(
           `DELETE FROM PLAN_TABLE WHERE STATEMENT_ID = :1`,
@@ -392,8 +343,7 @@ FROM PLAN_TABLE WHERE STATEMENT_ID = :1 ORDER BY ID`,
     }
   }
 
-  /** Executes a SELECT and retrieves its cursor statistics without relying on
-   * SQL-text hint injection. Session settings are restored before returning. */
+  /** Executes a SELECT and retrieves its cursor statistics without relying on SQL-text hint injection. */
   async collectPerformanceTuningActualPlan(
     params: QueryParams,
     options?: { timeoutMs?: number; signal?: AbortSignal },
@@ -478,8 +428,7 @@ WHERE AUDSID = SYS_CONTEXT('USERENV', 'SESSIONID')`,
       releaseSessionState();
     }
     if (cleanupError) {
-      // If STATISTICS_LEVEL cannot be restored, retaining this session could
-      // silently alter later user queries. Close it rather than leaking state.
+      // If STATISTICS_LEVEL cannot be restored, retaining this session could silently alter later user queries.
       const disconnectError = await this.disconnect();
       if (disconnectError) {
         throw new Error(`Failed to restore Oracle actual-plan session state; connection was closed. ${disconnectError}`);
@@ -533,7 +482,7 @@ FROM (
     SQL_ID AS "statement_id",
     SYS_CONTEXT('USERENV', 'DB_NAME') AS "database_name",
     -- SQL_TEXT truncates at 1000 chars; SQL_FULLTEXT (CLOB) returns the
-    -- whole statement (§3.3). The self-referential exclusion filter below
+    -- whole statement. The self-referential exclusion filter below
     -- intentionally keeps using SQL_TEXT - it only needs to detect the
     -- string's presence, and comparing a CLOB there gains nothing.
     SQL_FULLTEXT AS "query",
@@ -577,8 +526,7 @@ WHERE ROWNUM <= ${normalized.limit}`;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     dbName: string,
   ): Promise<ResultSetData> {
-    // Oracle has no per-database filter analogous to MySQL/Postgres — a
-    // single instance/PDB is already what the connection is scoped to.
+    // Oracle has no per-database filter analogous to MySQL/Postgres — a single instance/PDB is already what the connection is scoped to.
     const sql = `SELECT
     s.SID,
     s.SERIAL# AS SERIAL_NUM,
@@ -765,15 +713,7 @@ ORDER BY s.SID DESC`;
     });
   }
 
-  /**
-   * Prior to Oracle 21c's native JSON type, JSON was only ever VARCHAR2/CLOB/BLOB
-   * storage guarded by an `IS JSON` check constraint, so ALL_TAB_COLUMNS.DATA_TYPE
-   * alone (used above) reports those columns as their storage type, not JSON.
-   * ALL_JSON_COLUMNS (the JSON Data Guide catalog view) lists both that legacy
-   * constraint style and the native 21c+ type uniformly, but only exists from
-   * Oracle 12.2 onward -- on 12.1 it falls back to no JSON overrides, i.e.
-   * DATA_TYPE-only detection (still correct once the native type exists).
-   */
+  /** Prior to Oracle 21c's native JSON type, JSON was only ever VARCHAR2/CLOB/BLOB storage guarded by an `IS JSON` check constraint, so ALL_TAB_COLUMNS.DATA_TYPE alone (used above) reports those columns as their storage type, not JSON. */
   private async getJsonColumnNames(schemaName: string): Promise<Set<string>> {
     try {
       const rdh = await this.requestSql({
@@ -860,8 +800,6 @@ ORDER BY s.SID DESC`;
       const referencedColumnName = row.values['REFERENCED_COLUMN_NAME'];
       const constraintName = row.values['CONSTRAINT_NAME'];
 
-      // FROM order.customer_no -> TO customer.customer_no
-      // FROM order_detail.order_no -> TO order.order_no
       const tableRes = dbSchema.getChildByName(tableName);
       if (tableRes) {
         if (tableRes.getChildByName(columnName)) {
@@ -879,8 +817,6 @@ ORDER BY s.SID DESC`;
         }
       }
 
-      // TO customer.customer_no <- FROM order.customer_no
-      // TO order.order_no <- FROM order_detail.order_no
       const tableRes2 = dbSchema.getChildByName(referencedTableName);
       if (tableRes2) {
         if (tableRes2.getChildByName(referencedColumnName)) {

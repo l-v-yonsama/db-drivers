@@ -43,10 +43,7 @@ function cloneSeries(series: RdbProcessedSeries): RdbProcessedSeries {
   return { ...series, points: [...series.points] };
 }
 
-/**
- * Vendor-neutral state machine for RDB samples. It deliberately retains nulls,
- * breaks counter lines on reset, and never guesses a rollover.
- */
+/** Vendor-neutral state machine for RDB samples. */
 export class RdbSampleAccumulator {
   private readonly metrics = new Map<string, ResolvedRdbMetric>();
   private readonly previous = new Map<string, PreviousObservation>();

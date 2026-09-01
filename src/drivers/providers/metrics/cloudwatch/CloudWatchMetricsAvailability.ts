@@ -21,10 +21,7 @@ export type DiscoverCloudWatchMetricNamesInput = {
   signal?: AbortSignal;
 };
 
-/**
- * Discovers recently known metric identities. An empty result is never proof
- * that a service feature is disabled; authoritative probes remain adapter work.
- */
+/** Discovers recently known metric identities. */
 export class CloudWatchMetricsAvailability {
   constructor(private readonly client: CloudWatchSender) {}
 

@@ -15,11 +15,7 @@ type SqlReplacementRule = {
   apply: (sql: string) => string;
 };
 
-/**
- * Applies a transformation only to SQL code. String literals and quoted
- * identifiers are retained verbatim, while comments become whitespace so
- * that they cannot affect parsing or replacement rules.
- */
+/** Applies a transformation only to SQL code. */
 const transformSqlCode = (
   sql: string,
   transform: (code: string) => string,
@@ -235,11 +231,7 @@ const SQL_REPLACEMENT_RULES: SqlReplacementRule[] = [
   },
 ];
 
-/**
- * Replace query for postgres query parser.
- * select * from table where id > ? => select * from table where id > $1
- * set global general_log = on; => set general_log TO 1;
- */
+/** Replace query for postgres query parser. */
 export const toSafeQueryForPgsqlAst = (query: string): string => {
   let replacedSql = transformSqlCode(query, (code) => code);
   for (const rule of SQL_REPLACEMENT_RULES) {
@@ -307,10 +299,7 @@ export const parseQuery = (sql: string): QStatement | undefined => {
       };
     }
 
-    // console.log('sql=', sql);
-    // console.log('replacedSql=', replacedSql);
-    // console.error(_);
-    // do nothing.
+    // console.log('sql=', sql); console.log('replacedSql=', replacedSql); console.error(_); do nothing.
   }
   return undefined;
 };

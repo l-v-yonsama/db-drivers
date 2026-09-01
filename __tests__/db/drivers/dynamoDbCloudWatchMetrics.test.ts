@@ -1,10 +1,6 @@
 import { CloudWatchClient, GetMetricDataCommand } from '@aws-sdk/client-cloudwatch';
 import { DynamoDbCloudWatchMetricsCollector } from '../../../src';
 
-// Mocks @aws-sdk/client-cloudwatch's send() directly - per the design doc's
-// §15.3, LocalStack's CloudWatch/DynamoDB metric compatibility is not
-// trusted for this area at all; these mock-based unit tests are the
-// authoritative coverage for dimension/stat/period/no-data behavior.
 
 type FakeSend = jest.Mock;
 

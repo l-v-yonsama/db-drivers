@@ -1,10 +1,4 @@
-/**
- * Value returned from memcached.
- *
- * - string  : UTF-8 text value
- * - Buffer  : binary value (compressed, encrypted, etc.)
- * - null    : key not found
- */
+/** Value returned from memcached. */
 export type MemcachedValue = string | Buffer | null;
 
 export type ListOption = {

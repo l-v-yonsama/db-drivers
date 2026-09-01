@@ -62,10 +62,7 @@ describe('AwsDriver', () => {
       } as ConnectionSetting;
 
       const driver = new AwsDriver(conRes);
-      // Never connected - dynamoClient is still undefined, matching how
-      // db-notebook's createSQLSupportDriver()/createRDSDriver() callers
-      // use this exact "quick check before opening progress" pattern
-      // (see startPerformanceTuningPreview()'s own RDB precedent).
+      // Never connected - dynamoClient is still undefined, matching how db-notebook's createSQLSupportDriver()/createRDSDriver() callers use this exact "quick check before opening progress" pattern (see startPerformanceTuningPreview()'s own RDB precedent).
       expect(driver.dynamoClient).toBeUndefined();
       expect(driver.supportsGetDynamoDbPerformanceTuningContext()).toBe(true);
     });
@@ -100,8 +97,7 @@ describe('AwsDriver', () => {
 
       const driver = new AwsDriver(conRes);
 
-      // Only S3 was connected; the other 4 clients remain undefined,
-      // as they would after a real connectSub() that only enabled S3.
+      // Only S3 was connected; the other 4 clients remain undefined, as they would after a real connectSub() that only enabled S3.
       driver.s3Client = {
         disconnect: jest.fn().mockResolvedValue(''),
       } as any;

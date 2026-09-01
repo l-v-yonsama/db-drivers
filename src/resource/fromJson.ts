@@ -190,9 +190,7 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
       res = Object.assign(new IamRole(name), json);
       break;
     case ResourceType.IamSession:
-      // IamSession is only a scan-target discriminant for KeycloakScanParams
-      // (see ScanParams.ts); no DbResource subtype backs it, so it can never
-      // legitimately reach fromJson().
+      // IamSession is only a scan-target discriminant for KeycloakScanParams (see ScanParams.ts); no DbResource subtype backs it, so it can never legitimately reach fromJson().
       throw new Error(
         'IamSession is not a DbResource node and cannot be restored via fromJson.',
       );

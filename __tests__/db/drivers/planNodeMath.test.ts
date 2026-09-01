@@ -7,8 +7,7 @@ import {
   findDominantCostPlanNode,
 } from '../../../src';
 
-// Minimal PlanNode fixture builder - only the fields each test actually
-// needs are set, `children` always required (matches the real type).
+// Minimal PlanNode fixture builder - only the fields each test actually needs are set, `children` always required (matches the real type).
 function node(overrides: Partial<PlanNode> & { id: string }): PlanNode {
   return {
     depth: 0,
@@ -45,11 +44,6 @@ describe('findDominantCostPlanNode', () => {
   });
 
   it('picks the deep leaf with the highest EXCLUSIVE estimated cost, not the root (which always has the highest inclusive cost)', () => {
-    // n0 (totalCost=100) -> n1 (totalCost=90) -> n2 (totalCost=85, leaf)
-    // n0's own exclusive cost is only 100-90=10; n1's is 90-85=5; n2's
-    // (leaf, no children) is its full inclusive value, 85 - the true
-    // bottleneck, even though n0's cost is nominally "the highest number in
-    // the plan" as an inclusive/cumulative figure.
     const leaf = node({ id: 'n2', depth: 2, estimated: { totalCost: 85 } });
     const mid = node({ id: 'n1', depth: 1, estimated: { totalCost: 90 }, children: [leaf] });
     const root = node({ id: 'n0', depth: 0, estimated: { totalCost: 100 }, children: [mid] });
@@ -74,10 +68,7 @@ describe('findDominantCostPlanNode', () => {
   });
 
   it('multiplies actual.totalMs by actual.loops (Postgres reports a per-loop average, not a total)', () => {
-    // A leaf executed 150 times at ~0.01ms/loop (typical inner-side-of-a-
-    // nested-loop index lookup) ends up with more real total-time
-    // contribution than a once-executed 1ms sibling once loops are
-    // accounted for.
+    // A leaf executed 150 times at ~0.01ms/loop (typical inner-side-of-a- nested-loop index lookup) ends up with more real total-time contribution than a once-executed 1ms sibling once loops are accounted for.
     const cheapButLooped = node({ id: 'n1', depth: 1, actual: { totalMs: 0.01, loops: 150 } });
     const expensiveOnce = node({ id: 'n2', depth: 1, actual: { totalMs: 1, loops: 1 } });
     const root = node({ id: 'n0', depth: 0, actual: { totalMs: 2.5, loops: 1 }, children: [cheapButLooped, expensiveOnce] });
@@ -91,15 +82,11 @@ describe('findDominantCostPlanNode', () => {
   it('clamps a negative exclusive cost to 0 rather than crashing or picking a nonsensical winner (children summing to more than the parent reports - real-world vendor rounding)', () => {
     const child1 = node({ id: 'n1', depth: 1, estimated: { totalCost: 60 } });
     const child2 = node({ id: 'n2', depth: 1, estimated: { totalCost: 60 } });
-    // Root's own reported cost (100) is less than its children's sum (120) -
-    // a rounding artifact that should never happen in theory but is not
-    // something this function should trust blindly.
+    // Root's own reported cost (100) is less than its children's sum (120) - a rounding artifact that should never happen in theory but is not something this function should trust blindly.
     const root = node({ id: 'n0', depth: 0, estimated: { totalCost: 100 }, children: [child1, child2] });
 
     const result = findDominantCostPlanNode(root);
-    // Both children have exclusive cost 60 (leaves); root's own exclusive
-    // is clamped to 0, not a negative number - so a child wins, and nothing
-    // throws.
+    // Both children have exclusive cost 60 (leaves); root's own exclusive is clamped to 0, not a negative number - so a child wins, and nothing throws.
     expect(result?.exclusiveValue).toBe(60);
     expect(['n1', 'n2']).toContain(result?.planNodeId);
   });

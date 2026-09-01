@@ -1,12 +1,5 @@
 import { aggregateConsumedCapacity, DynamoDbExecutionMetaTracker } from '../../../src';
 
-// The live AwsDynamoDriver.test.ts suite against LocalStack exercises
-// aggregateConsumedCapacity()'s `table` path for real (Scan/Query with
-// ReturnConsumedCapacity: 'INDEXES'), but this LocalStack version never
-// populates a LocalSecondaryIndexes/GlobalSecondaryIndexes breakdown even
-// when queried via an index, and never populates ConsumedCapacity at all for
-// PartiQL ExecuteStatement. These unit tests cover that unexercised ground
-// with synthetic SDK-shaped responses instead.
 
 describe('aggregateConsumedCapacity', () => {
   it('returns undefined when every response is undefined', () => {

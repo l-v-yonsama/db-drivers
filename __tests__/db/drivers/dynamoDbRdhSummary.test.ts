@@ -1,7 +1,7 @@
 import { buildDynamoDbRdhSummaryInfo } from '../../../src/drivers/aws/dynamoDbRdhSummary';
 
 describe('buildDynamoDbRdhSummaryInfo', () => {
-  it('formats a SELECT with no Capacity reported (design doc §11.1)', () => {
+  it('formats a SELECT with no Capacity reported', () => {
     const info = buildDynamoDbRdhSummaryInfo({
       operation: 'select',
       elapsedTimeMilli: 90,
@@ -118,10 +118,7 @@ describe('buildDynamoDbRdhSummaryInfo', () => {
   });
 
   it('treats an undetermined operation (undefined) as select-like, not a write (2026-08-25 review)', () => {
-    // requestPartiql() reaches the formatter with operation: undefined when
-    // conditions.rawQueries is true or the statement failed to parse - this
-    // must not be silently treated as a write, since it's also the only
-    // case where selectedRows can legitimately be reported.
+    // requestPartiql() reaches the formatter with operation: undefined when conditions.rawQueries is true or the statement failed to parse - this must not be silently treated as a write, since it's also the only case where selectedRows can legitimately be reported.
     const info = buildDynamoDbRdhSummaryInfo({
       operation: undefined,
       elapsedTimeMilli: 90,

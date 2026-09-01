@@ -319,11 +319,6 @@ describe('analyzeDynamoPartiqlAccessPattern', () => {
         keySchema: pkOnly,
         tableName: 'orders',
       });
-      // tenantId.sub is a nested path; guaranteesKeyEquality still matches on
-      // the top-level segment name today (attribute stores only the first
-      // segment) - documented here as the current, conservative behavior:
-      // a nested reference under the pk's own name is vanishingly unlikely
-      // in practice since pk is always a top-level scalar attribute.
       expect(['tableQuery', 'tableScan']).toContain(r.accessPath);
     });
 

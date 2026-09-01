@@ -34,9 +34,7 @@ async function ensureTestAdmin(): Promise<void> {
     if (!(existing.rows ?? []).length) {
       await sysCon.execute(`CREATE USER testadmin IDENTIFIED BY testpass`);
     }
-    // DBA covers CREATE SESSION plus the ALTER SYSTEM privilege
-    // kill(sessionOrPid) needs for ALTER SYSTEM KILL SESSION on another
-    // session; re-granting an already-held role is a harmless no-op.
+    // DBA covers CREATE SESSION plus the ALTER SYSTEM privilege kill(sessionOrPid) needs for ALTER SYSTEM KILL SESSION on another session; re-granting an already-held role is a harmless no-op.
     await sysCon.execute(`GRANT DBA TO testadmin`);
   } finally {
     await sysCon.close();
@@ -44,10 +42,7 @@ async function ensureTestAdmin(): Promise<void> {
 }
 
 async function grantCatalogAccess(): Promise<void> {
-  // getLocks()/getSessions() query V$SESSION/V$SQL/V$LOCKED_OBJECT, which a
-  // bare APP_USER (as gvenzl/oracle-free creates it) has no privilege to
-  // read by default. Grant it once via a SYSTEM connection so the driver's
-  // real behavior is exercised, not just its privilege-error path.
+  // getLocks()/getSessions() query V$SESSION/V$SQL/V$LOCKED_OBJECT, which a bare APP_USER (as gvenzl/oracle-free creates it) has no privilege to read by default.
   const sysCon = await oracledb.getConnection({
     user: 'system',
     password: 'testpass',
@@ -145,10 +140,7 @@ export async function init(): Promise<void> {
     }
     await con.commit();
 
-    // performance-tuning-context fixture (composite/unique/function-based
-    // indexes, a CHECK constraint, 50 rows + DBMS_STATS.GATHER_TABLE_STATS)
-    // - kept independent of the tables above, same rationale as the other
-    // three vendors' own perf_orders fixtures.
+    // performance-tuning-context fixture (composite/unique/function-based indexes, a CHECK constraint, 50 rows + DBMS_STATS.GATHER_TABLE_STATS) - kept independent of the tables above, same rationale as the other three vendors' own perf_orders fixtures.
     await dropIfExists(con, 'TABLE', 'perf_orders');
     await con.execute(CREATE_PERF_ORDERS_TABLE_STATEMENT);
     await con.execute(`CREATE INDEX idx_perf_orders_status ON perf_orders(status)`);

@@ -1,21 +1,7 @@
 import yaml from 'js-yaml';
 import { CloudFormationTemplate } from '../../types';
 
-// CloudFormation YAML's own shorthand tags (`!Ref` etc.) - not standard YAML, so a plain
-// js-yaml parse fails on them outright. Each is registered below as a custom type that wraps
-// the tagged value in a `{ [tag]: data }` object instead of resolving it, mirroring the long
-// `Fn::*`/`Ref` form's own shape so downstream code (parseRefValue, walkIntrinsicRefs - see
-// intrinsics.ts) can treat both forms uniformly.
-//
-// js-yaml dispatches a tag by the exact (tag, node kind) pair, so a tag only parses under the
-// kind(s) it was registered for. CFN's own grammar doesn't restrict which kind a given tag can
-// wrap, though - e.g. `!Sub` is usually a scalar but also has a 2-element sequence form
-// (`!Sub [template, variables]`), and `!Base64` commonly wraps a nested long-form intrinsic
-// written as a mapping (`!Base64 { Fn::Sub: ... }`, typical for EC2 UserData). Two real-world
-// templates in a row have hit a (tag, kind) combination that wasn't registered, so every tag
-// below is registered for all three kinds rather than trying to enumerate which kinds each
-// individual tag can legitimately take - a kind that's never actually authored under a given
-// tag is simply never exercised.
+// CloudFormation YAML's own shorthand tags (`!Ref` etc.) - not standard YAML, so a plain js-yaml parse fails on them outright.
 const CFN_INTRINSIC_TAGS = [
   '!And',
   '!If',
@@ -37,12 +23,7 @@ const CFN_INTRINSIC_TAGS = [
 
 const CFN_TAG_KINDS = ['scalar', 'sequence', 'mapping'] as const;
 
-/**
- * Parses a CloudFormation template authored in YAML, including its `!Ref`/`!GetAtt`/etc.
- * shorthand intrinsic-function tags that a plain `js-yaml` parse can't handle on its own -
- * see CFN_INTRINSIC_TAGS/CFN_TAG_KINDS above. `js-yaml` is pinned to v4 (not the current v5)
- * because this custom-schema API (`yaml.Type`, `DEFAULT_SCHEMA.extend`) was rewritten in v5.
- */
+/** Parses a CloudFormation template authored in YAML, including its `!Ref`/`!GetAtt`/etc. shorthand intrinsic-function tags that a plain `js-yaml` parse can't handle on its own - see CFN_INTRINSIC_TAGS/CFN_TAG_KINDS above. */
 export const parseCfnYamlTemplate = (
   yamlText: string,
 ): CloudFormationTemplate => {

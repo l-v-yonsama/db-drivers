@@ -56,11 +56,7 @@ export function limitMetricSeriesForDisplay(
     .slice(0, Math.max(0, display.limit));
 }
 
-/**
- * Collects a resolved dashboard even when individual queries use different
- * regional CloudWatch endpoints. Results with the same panel id are merged
- * before the declarative display limit is applied.
- */
+/** Collects a resolved dashboard even when individual queries use different regional CloudWatch endpoints. */
 export async function collectAcrossMetricEndpoints(
   resolveCollector: CollectorResolver,
   defaultEndpoint: MetricEndpoint,

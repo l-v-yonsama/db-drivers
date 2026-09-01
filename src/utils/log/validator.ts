@@ -333,10 +333,6 @@ function validateExtractors(
     }
 
     if (hasCaptureSql) {
-      // =========================
-      // ✔ 順序チェック
-      // =========================
-      // ① captureSql は最初に近い位置にあるべき
       if (captureSqlIndex > 1) {
         return `Extractor row ${rowNo}: captureSql should appear early in steps.`;
       }

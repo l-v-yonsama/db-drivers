@@ -54,23 +54,18 @@ const nodeTop = 40;
 const nodeLeft = 15;
 const nodeWidth = 200;
 const nodeHeight = 65;
-// Edge labels are rendered between vertically adjacent nodes. Keep at least four draw.io
-// grid rows free so the label and arrowhead do not overlap either node.
+// Edge labels are rendered between vertically adjacent nodes.
 const nodeVerticalGap = 50;
 const nodePitch = nodeHeight + nodeVerticalGap;
 const layerTop = 40;
 const layerWidth = 230;
-// A small offset makes corresponding rows form a staircase while preserving a common
-// horizontal routing corridor inside each 50px row gap.
+// A small offset makes corresponding rows form a staircase while preserving a common horizontal routing corridor inside each 50px row gap.
 const layerStairStep = 10;
 const layerBottomPadding = 35;
-// Mirrors drawioInfrastructureDiagrams.ts's containment geometry: a header-height reserved
-// for the parent's own label, then members stacked with a consistent row gap. Shared by the
-// model's individualHeight() and both renderers' member placement.
+// Mirrors drawioInfrastructureDiagrams.ts's containment geometry: a header-height reserved for the parent's own label, then members stacked with a consistent row gap.
 const memberRowGap = 15;
 const memberBottomInset = 15;
-// itemHeight is a single card's fixed height for most nodes, but a DBCluster-style container
-// that nests member cards inside itself needs its own taller contribution to the layer's height.
+// itemHeight is a single card's fixed height for most nodes, but a DBCluster-style container that nests member cards inside itself needs its own taller contribution to the layer's height.
 const layerHeight = (
   items: ApplicationNode[],
   layerIndex: number,
@@ -86,8 +81,7 @@ const layerHeight = (
 
 type NodeCardBox = { x: number; y: number; width: number; height: number };
 
-/** A layer's own swimlane cell - identical between the legacy staircase renderer and the
- * ELK-backed one (previously duplicated identically in both; only the resulting `box` differs). */
+/** A layer's own swimlane cell - identical between the legacy staircase renderer and the ELK-backed one (previously duplicated identically in both; only the resulting `box` differs). */
 const renderLayerGroupCell = (
   groupId: string,
   title: (typeof layerTitles)[number],
@@ -95,8 +89,7 @@ const renderLayerGroupCell = (
 ): string =>
   `<mxCell id="${groupId}" value="${title}" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=${layerColors[title]};strokeColor=#94a3b8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" as="geometry"/></mxCell>`;
 
-/** An application node's own card - identical between renderers (previously duplicated
- * identically in both; only `box` and `templateLink` come from a different layout source). */
+/** An application node's own card - identical between renderers (previously duplicated identically in both; only `box` and `templateLink` come from a different layout source). */
 const renderApplicationNodeCell = (
   cellId: string,
   label: string,
@@ -107,8 +100,7 @@ const renderApplicationNodeCell = (
 ): string =>
   `<mxCell id="${cellId}" value="${xmlEscape(label)}"${templateLink} style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;spacing=8;${hasMembers ? 'verticalAlign=top;align=left;' : ''}" vertex="1" parent="${groupId}"><mxGeometry x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" as="geometry"/></mxCell>`;
 
-/** A DBCluster-style member card nested inside its parent's own card - identical between
- * renderers (previously duplicated identically in both). */
+/** A DBCluster-style member card nested inside its parent's own card - identical between renderers (previously duplicated identically in both). */
 const renderApplicationMemberCell = (
   memberCellId: string,
   label: string,
@@ -120,8 +112,7 @@ const renderApplicationMemberCell = (
 
 const nodeCenterY = (layout: NodeLayout): number => layout.top + nodeHeight / 2;
 
-/** Returns explicit global waypoints that keep connectors out of component rectangles.
- * Line-to-line crossings are intentionally allowed and made visible with draw.io line jumps. */
+/** Returns explicit global waypoints that keep connectors out of component rectangles. */
 const edgeWaypoints = (
   source: NodeLayout,
   target: NodeLayout,
@@ -146,9 +137,7 @@ const edgeWaypoints = (
     ];
   }
 
-  // All four layers share a clear horizontal band because the maximum staircase offset
-  // (30px) is smaller than nodeVerticalGap (50px). Route long edges through the band after
-  // the upper of the source/target rows so intermediate-layer nodes are not crossed.
+  // All four layers share a clear horizontal band because the maximum staircase offset (30px) is smaller than nodeVerticalGap (50px).
   const corridorRow = Math.min(source.rowIndex, target.rowIndex);
   const maximumLayerOffset = (layerTitles.length - 1) * layerStairStep;
   const corridorY = layerTop
@@ -176,8 +165,7 @@ const visibleNodeTypes = new Set([
   'AWS::ApiGatewayV2::Integration',
 ]);
 
-/** Orders nodes within one layer by semantic flow while preserving template order whenever
- * relations do not constrain the result. Cycles fall back to their original order. */
+/** Orders nodes within one layer by semantic flow while preserving template order whenever relations do not constrain the result. */
 const orderLayerNodes = (
   nodes: ApplicationNode[],
   relations: ApplicationRelation[],
@@ -234,11 +222,6 @@ type ApplicationDiagramModel = {
   layerNodes: Map<(typeof layerTitles)[number], ApplicationNode[]>;
 };
 
-/** Shared node/relation/containment preparation for both the legacy and auto-layout
- * Application Diagram renderers - dedup by alias, membership absorption, and per-layer
- * ordering are placement-independent, so both renderers must see identical results before
- * plugging in their own layout strategy (fixed grid vs. ELK; plan 4.2's compat rule: the
- * placement is what changes, not the dependency/containment extraction). */
 const buildApplicationDiagramModel = (
   params: GenerateDiagramParams,
 ): ApplicationDiagramModel => {
@@ -271,10 +254,7 @@ const buildApplicationDiagramModel = (
   const labelCounts = new Map<string, number>();
   nodes.forEach((node) => labelCounts.set(node.label, (labelCounts.get(node.label) ?? 0) + 1));
 
-  // A DBInstance's DBClusterIdentifier proves membership in a DBCluster. Rather than a
-  // separate "member of" edge, that containment is drawn directly by nesting the member's
-  // card inside its parent's own box, matching the Multi-AZ diagram's representation. The
-  // relation is still fully absorbed - no top-level card and no edge remain for it.
+  // A DBInstance's DBClusterIdentifier proves membership in a DBCluster.
   const containedMemberIds = new Set(
     relations
       .filter((relation) => relation.kind === 'resource-membership')
@@ -331,9 +311,7 @@ const buildApplicationDiagramModel = (
   };
 };
 
-/** Generates an editable, uncompressed diagrams.net XML document for the simplified
- * application view. This intentionally targets ApplicationDiagram only; network topology
- * and raw CloudFormation dependency graphs remain Mermaid outputs for now. */
+/** Generates an editable, uncompressed diagrams.net XML document for the simplified application view. */
 export const generateDrawioApplicationDiagram = (
   params: GenerateDiagramParams,
 ): string => {
@@ -476,15 +454,6 @@ const layerPartitionIndex: Record<(typeof layerTitles)[number], number> = {
 const layerSwimlanePadding = 20;
 const layerSwimlaneHeaderHeight = 30;
 
-/** Automatic-layout counterpart of {@link generateDrawioApplicationDiagram} (plan Phase 4,
- * section 5.2). Keeps the same node/relation/containment model - see
- * {@link buildApplicationDiagramModel} - and keeps the `Ingress → Compute → Messaging → Data`
- * ordering as a hard constraint (ELK `elk.partitioning`, not just a hope that edge direction
- * happens to agree), but hands node placement within and around that constraint to ELK instead
- * of the legacy renderer's hand-rolled staircase/waypoint math. A DBCluster-style member card is
- * still nested by hand exactly as in the legacy renderer (see plan 5.2 "グループ内部のノード配置
- * とグループ間隔はELKへ任せる" - membership containment is a fixed 1-level nesting the caller
- * already knows the size of, not something that benefits from being laid out). */
 export const generateDrawioApplicationDiagramAsync = async (
   params: GenerateDiagramParams,
 ): Promise<string> => {
@@ -515,8 +484,7 @@ export const generateDrawioApplicationDiagramAsync = async (
     });
   });
 
-  // Keep the renderableRelations index as the stable edge id. Assigning ids after this filter
-  // shifts every later id when an endpoint is a nested member that ELK does not lay out itself.
+  // Keep the renderableRelations index as the stable edge id.
   const layoutEdges: LayoutEdge[] = renderableRelations
     .map((relation, index) => ({ relation, index }))
     .filter(({ relation }) => nodeCellIds.has(relation.from) && nodeCellIds.has(relation.to))
@@ -525,9 +493,7 @@ export const generateDrawioApplicationDiagramAsync = async (
       source: { nodeId: relation.from },
       target: { nodeId: relation.to },
       label: relation.label,
-      // Without this ELK reserves zero room for the label - see estimateLabelSize's doc comment
-      // (found via a real overlap bug in the ER diagram's longer labels; applied here too since
-      // the same shared mechanism underlies both).
+      // Without this ELK reserves zero room for the label - see estimateLabelSize's doc comment (found via a real overlap bug in the ER diagram's longer labels; applied here too since the same shared mechanism underlies both).
       labelSize: estimateLabelSize(relation.label),
     }));
 
@@ -639,10 +605,7 @@ export const generateDrawioApplicationDiagramAsync = async (
     const edge = layout.edges.get(`edge_${index}`);
     if (!source || !target) return;
     const style = relationStyles[relation.kind];
-    // A fallback (`layout.usedAutoLayout === false`) only has node centers to offer, not real
-    // routing (see gridFallbackLayout's doc comment). A relation to a nested member also has no
-    // ELK edge because that member is placed inside its parent by this renderer. In both cases,
-    // draw.io's own connector routing between the two shapes is the appropriate fallback.
+    // A fallback (`layout.usedAutoLayout === false`) only has node centers to offer, not real routing (see gridFallbackLayout's doc comment).
     const geometry = layout.usedAutoLayout && edge && edge.bendPoints.length > 0
       ? `<mxGeometry relative="1" as="geometry"><Array as="points">${edge.bendPoints.map((point) => `<mxPoint x="${point.x}" y="${point.y}"/>`).join('')}</Array></mxGeometry>`
       : '<mxGeometry relative="1" as="geometry"/>';

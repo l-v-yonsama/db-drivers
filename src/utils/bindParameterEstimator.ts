@@ -5,17 +5,8 @@ import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import { DBType } from '../types';
 import { EstimatedBindParameter, EstimatedBindParameterLocation } from '../types/drivers/EstimatedBindParameter';
 
-// See misc/design/performance-tuning-query-statistics-parameter-input-plan.ja.md
-// (db-notebook repo) §6 for the full design. Everything below is
-// deliberately best-effort: a Scanner that finds *a* placeholder and, if
-// lucky, *a* nearby column - never a guarantee. Callers must be able to add
-// or remove rows to correct whatever this gets wrong; nothing here may throw.
 
-/**
- * Finds bind placeholders in `sql` and, where possible, the DB Resource
- * column they most likely bind to. Never throws: on any internal failure it
- * degrades to an empty array rather than blocking the caller's UI.
- */
+/** Finds bind placeholders in `sql` and, where possible, the DB Resource column they most likely bind to. */
 export function estimateBindParameters(params: {
   dbType: DBType;
   sql: string;
@@ -50,36 +41,10 @@ export function estimateBindParameters(params: {
       };
     });
   } catch {
-    // Scanner is best-effort only (§6.2/§6.3) - never propagate a parsing
-    // failure into the caller's UI. An empty result just means the user
-    // starts from a blank Bind Parameters table and adds rows manually.
     return [];
   }
 }
 
-/**
- * Resolves the tables/aliases `sql`'s FROM/JOIN clauses reference, for use
- * as `PerformanceTuningContextParams.targetTables` (§6.5 of the design doc
- * above). Exists because MySQL's `EXPLAIN FORMAT=JSON` reports an aliased
- * table's *alias* as `table_name` with no field carrying the real table
- * name (see mysqlPlanParser.ts's own doc comment) - `planTableMappings`
- * alone can't resolve `FROM orders o` back to `orders`, so a caller needs
- * this as the sanctioned `targetTables` workaround
- * (RDSBaseDriver.getPerformanceTuningContext() already unions those in).
- *
- * A separate function rather than a new field on estimateBindParameters()'s
- * existing return value: unlike that function, this has nothing to do with
- * bind placeholders and needs to run even for a fully-literal SQL with zero
- * of them (exactly the case that triggered writing this - see §6.5's
- * example). Deliberately thin: it's the exact same alias resolution §6.3
- * already does internally for column resolution (buildAliasMap() +
- * uniqueTables()), just returned to the caller instead of being consumed
- * internally. Like estimateBindParameters(), never throws and degrades to
- * an empty array; does not consult a DB Resource (buildAliasMap() is pure
- * SQL-text structure parsing, so results aren't checked to actually exist -
- * getPerformanceTuningContext()'s own catalog lookup is the source of
- * truth for that, same as it already is for a bogus alias entry today).
- */
 export function resolveTargetTables(params: {
   dbType: DBType;
   sql: string;
@@ -95,22 +60,6 @@ export function resolveTargetTables(params: {
   }
 }
 
-/**
- * Resolves `sql`'s FROM/JOIN aliases to their real `{schemaName?, tableName}`,
- * keyed by the lowercased alias (or bare table name, for an unaliased
- * reference). For use as `PerformanceTuningContextParams.tableAliasMap`
- * (§6.6 of the design doc above): unlike resolveTargetTables() (which only
- * *adds* tables the plan failed to find at all), this lets a caller
- * *correct* a table name the plan already found but got wrong - exactly
- * MySQL's `EXPLAIN FORMAT=JSON`, which reports an aliased table's alias
- * (`"o"`) as `table_name` with no field carrying the real name anywhere in
- * the JSON.
- *
- * A thin public wrapper around the same buildAliasMap() §6.3 already uses
- * internally for column resolution - no new parsing. Never throws; SQL that
- * is empty or fails to parse yields an empty object, same as
- * resolveTargetTables().
- */
 export function resolveTableAliasMap(params: {
   dbType: DBType;
   sql: string;
@@ -131,9 +80,6 @@ export function resolveTableAliasMap(params: {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Marker scanning (§6.2)
-// ---------------------------------------------------------------------------
 
 type RawMarkerOccurrence = {
   /** Exact marker text, e.g. `?`, `$1`, `:B1`, `@name`. */
@@ -142,13 +88,6 @@ type RawMarkerOccurrence = {
   offset: number;
 };
 
-// A single left-to-right pass over the SQL text that skips quoted strings,
-// quoted identifiers, and comments before ever looking for a marker. Kept
-// as our own tokenizer rather than reusing helpers/sql/queryParser.ts: that
-// parser normalizes `?` -> `$1` (shifting every later char offset, which
-// would corrupt the `location` this function reports) and has no notion of
-// Oracle `:name` / SQL Server `@name` syntax at all. See the design doc's
-// §6.2 note for the full rationale.
 function scanRawMarkers(sql: string, dbType: DBType): RawMarkerOccurrence[] {
   const occurrences: RawMarkerOccurrence[] = [];
   const n = sql.length;
@@ -203,10 +142,7 @@ function scanRawMarkers(sql: string, dbType: DBType): RawMarkerOccurrence[] {
       continue;
     }
 
-    // PostgreSQL dollar-quoted strings (`$$...$$` or `$tag$...$tag$`) may
-    // contain text that looks like numbered bind markers. Skip the complete
-    // literal before considering `$N` markers. `$1` itself is not a valid
-    // dollar-quote delimiter, so normal bind detection remains unchanged.
+    // PostgreSQL dollar-quoted strings (`$$...$$` or `$tag$...$tag$`) may contain text that looks like numbered bind markers.
     if (dbType === DBType.Postgres && ch === '$') {
       const delimiter = /^\$[A-Za-z_][A-Za-z0-9_]*\$|^\$\$/.exec(sql.slice(i))?.[0];
       if (delimiter) {
@@ -216,16 +152,6 @@ function scanRawMarkers(sql: string, dbType: DBType): RawMarkerOccurrence[] {
       }
     }
 
-    // -- markers -----------------------------------------------------------
-    // DynamoDB PartiQL (ExecuteStatement) uses the same `?` positional
-    // marker style as MySQL/JDBC - each `?` binds to the next entry in a
-    // flat Parameters array, in appearance order, with no dedup. See
-    // db-notebook repo's misc/specs/dynamodb-performance-tuning-
-    // implementation-plan.ja.md §6.2/§7.1 for why this is needed:
-    // statement.observationEligibility is set to `allowed: false` whenever
-    // this scanner finds at least one unresolved marker in stored PartiQL
-    // text, since v1 has no DynamoDB Bind Parameters Panel to collect fresh
-    // values for Run Observed Read.
     if ((dbType === DBType.MySQL || dbType === DBType.Aws) && ch === '?') {
       occurrences.push({ marker: '?', offset: i });
       i++;
@@ -233,8 +159,7 @@ function scanRawMarkers(sql: string, dbType: DBType): RawMarkerOccurrence[] {
     }
 
     if (dbType === DBType.Postgres && ch === '$') {
-      // `::` cast and PostgreSQL are unrelated (Postgres binds are `$N`,
-      // never `:`), so no separate `::` exclusion is needed here.
+      // `::` cast and PostgreSQL are unrelated (Postgres binds are `$N`, never `:`), so no separate `::` exclusion is needed here.
       const m = /^\$\d+/.exec(sql.slice(i));
       if (m) {
         occurrences.push({ marker: m[0], offset: i });
@@ -278,9 +203,7 @@ function scanRawMarkers(sql: string, dbType: DBType): RawMarkerOccurrence[] {
   return occurrences;
 }
 
-// Advances past a `quoteChar`-delimited token starting at `start` (which
-// must point at the opening quote), honoring the SQL convention of a
-// doubled quote char as an escaped literal quote (e.g. `''`, `""`).
+// Advances past a `quoteChar`-delimited token starting at `start` (which must point at the opening quote), honoring the SQL convention of a doubled quote char as an escaped literal quote (e.g. `''`, `""`).
 function skipQuoted(sql: string, start: number, quoteChar: string): number {
   let i = start + 1;
   const n = sql.length;
@@ -297,9 +220,6 @@ function skipQuoted(sql: string, start: number, quoteChar: string): number {
   return i;
 }
 
-// ---------------------------------------------------------------------------
-// Ordering / dedup (§6.2's per-Vendor table)
-// ---------------------------------------------------------------------------
 
 function orderMarkers(raw: RawMarkerOccurrence[], dbType: DBType): RawMarkerOccurrence[] {
   switch (dbType) {
@@ -315,10 +235,7 @@ function orderMarkers(raw: RawMarkerOccurrence[], dbType: DBType): RawMarkerOccu
       const numeric = deduped
         .filter((it) => isNumericMarker(it.marker))
         .sort((a, b) => numericMarkerValue(a.marker) - numericMarkerValue(b.marker));
-      // Named markers keep first-occurrence order (dedupeFirst already
-      // preserves insertion order); numbered markers sort ahead of them -
-      // mixing `:1`/`:name` (or `@1`/`@name`) styles in one statement is
-      // not a realistic case this needs to order more precisely than that.
+      // Named markers keep first-occurrence order (dedupeFirst already preserves insertion order); numbered markers sort ahead of them - mixing `:1`/`:name` (or `@1`/`@name`) styles in one statement is not a realistic case this needs to order more precisely than that.
       const named = deduped.filter((it) => !isNumericMarker(it.marker));
       return [...numeric, ...named];
     }
@@ -345,9 +262,6 @@ function numericMarkerValue(marker: string): number {
   return Number(marker.slice(1));
 }
 
-// ---------------------------------------------------------------------------
-// location (§5.1)
-// ---------------------------------------------------------------------------
 
 function buildLineStartOffsets(sql: string): number[] {
   const offsets = [0];
@@ -373,9 +287,6 @@ function offsetToLocation(offset: number, lineStartOffsets: number[]): Estimated
   return { line: lo + 1, column: offset - lineStartOffsets[lo] + 1 };
 }
 
-// ---------------------------------------------------------------------------
-// Column metadata resolution (§6.3)
-// ---------------------------------------------------------------------------
 
 type ColumnCandidate = {
   schemaName?: string;
@@ -388,12 +299,6 @@ type ResolvedColumn = { qualifiedName: string; colType: GeneralColumnType };
 
 type AliasEntry = { schemaName?: string; tableName: string };
 
-// Matches a single, possibly quoted, unqualified identifier. Quoting
-// support is intentionally limited to what helpers/sql/quote.ts's
-// unwrapQuote() already strips (double quotes) - see §6.3's note that
-// identifier quoting here only covers what the existing quote helper
-// handles; backtick/bracket-quoted identifiers simply won't match and the
-// placeholder is left unresolved, which is an acceptable Scanner miss.
 const IDENT_SOURCE = `(?:[A-Za-z_][\\w$#]*|"[^"]*")`;
 const QUALIFIED_SOURCE = `${IDENT_SOURCE}(?:\\s*\\.\\s*${IDENT_SOURCE}){0,2}`;
 const OP_SOURCE = `=|<>|!=|>=|<=|>|<`;
@@ -459,8 +364,7 @@ function resolveColumn(params: {
     return findColumn(databaseResource, undefined, candidate.aliasOrTableName, candidate.columnName);
   }
 
-  // Bare column name: only resolve if exactly one FROM/JOIN table (from the
-  // alias map) has a matching column.
+  // Bare column name: only resolve if exactly one FROM/JOIN table (from the alias map) has a matching column.
   const referencedTables = uniqueTables(aliasMap);
   const matches = referencedTables
     .map((table) => findColumn(databaseResource, table.schemaName, table.tableName, candidate.columnName))
@@ -468,8 +372,6 @@ function resolveColumn(params: {
   return matches.length === 1 ? matches[0] : undefined;
 }
 
-// Resolves `schemaName.tableName.columnName` (schemaName omitted searches
-// every schema, requiring a unique match, per §6.3 rule 2).
 function findColumn(
   databaseResource: RdsDatabase,
   schemaName: string | undefined,
@@ -507,9 +409,6 @@ function uniqueTables(aliasMap: Map<string, AliasEntry>): AliasEntry[] {
   return result;
 }
 
-// ---------------------------------------------------------------------------
-// FROM/JOIN alias map (§6.3 step 2)
-// ---------------------------------------------------------------------------
 
 function buildAliasMap(params: {
   sql: string;
@@ -518,15 +417,6 @@ function buildAliasMap(params: {
 }): Map<string, AliasEntry> {
   const { sql, dbType } = params;
 
-  // MySQL/PostgreSQL: prefer helpers/sql/queryParser.ts's AST (already used
-  // package-wide for table detection) over a hand-rolled FROM/JOIN regex -
-  // it already understands quoting/aliasing correctly for these two
-  // dialects. Oracle (`:name`) and SQL Server (`@name`) bind syntax isn't
-  // normalized by that parser's Postgres-flavored grammar and routinely
-  // fails to parse, so they always use the regex fallback below. This is
-  // purely an opportunistic assist, never a hard dependency: any parse
-  // failure falls through to the same regex fallback every other Vendor
-  // uses (see design doc §6.3's note on this).
   if (dbType === DBType.MySQL || dbType === DBType.Postgres) {
     const viaParser = buildAliasMapViaParser(sql);
     if (viaParser && viaParser.size > 0) {

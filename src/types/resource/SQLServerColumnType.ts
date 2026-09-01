@@ -88,9 +88,7 @@ export namespace SQLServerColumnType {
       colTypeWrapper = fieldInfo.type as ISqlType;
     }
 
-    // console.log(fieldInfo.name, 'colTypeWrapper=', colTypeWrapper);
-    // console.log('colTypeWrapper typeof =', typeof colTypeWrapper);
-    // console.log('colTypeWrapper isArray =', Array.isArray(colTypeWrapper));
+    // console.log(fieldInfo.name, 'colTypeWrapper=', colTypeWrapper); console.log('colTypeWrapper typeof =', typeof colTypeWrapper);
 
     switch (colTypeWrapper.type) {
       case VarChar:
@@ -176,9 +174,7 @@ export namespace SQLServerColumnType {
     }
     s = s.toUpperCase();
 
-    // if ('TIMESTAMP' === s) {
-    //   return SQLServerColumnType.DATETIME;
-    // }
+    // if ('TIMESTAMP' === s) { return SQLServerColumnType.DATETIME;
 
     const e = EnumValues.getNamesAndValues(SQLServerColumnType).find(
       (a) => a.name === s,

@@ -8,10 +8,6 @@ import {
 } from '../../src';
 import { disposeAutoLayoutEngine } from '../../src/utils/diagramLayout';
 
-// Phase 5 (misc/automatic-diagram-layout-and-er-migration-plan.md 5.3 / 8.2): the hybrid
-// renderer must keep every VPC/AZ/Subnet boundary, path (source/target/kind), and legend exactly
-// as the legacy renderer computes them - only the placement of a subnet's own directly-nested
-// resources may move, and even then must stay inside that subnet's (unchanged) box.
 
 afterAll(() => {
   disposeAutoLayoutEngine();
@@ -61,10 +57,6 @@ describe('generateDrawioMultiAzDeploymentTrafficPathsAndProtectionAsync', () => 
     expect(drawio).toContain('Protection');
   });
 
-  // groupCell() is the sole producer of every VPC/AZ/Subnet/regional/standalone box, always with
-  // a style starting "swimlane;..." - Phase 5 leaves every one of those boxes' id, title, and
-  // geometry untouched (only a subnet's own resource placement may move), so the complete set of
-  // group boxes should be byte-identical between the legacy and auto renderers.
   const extractGroupCells = (drawio: string): string[] =>
     [...drawio.matchAll(/<mxCell id="([^"]+)" value="([^"]+)" style="swimlane;[^"]*"[^>]*><mxGeometry x="([-\d.]+)" y="([-\d.]+)" width="([-\d.]+)" height="([-\d.]+)"/g)]
       .map((m) => m.slice(1).join('|'))

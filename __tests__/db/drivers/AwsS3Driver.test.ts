@@ -43,8 +43,7 @@ describe('AwsS3Driver', () => {
     try {
       await driver.s3Client.removeBucket({ bucket });
     } catch {
-      // The specified bucket does not exist
-      // console.error('error:' + e.message);
+      // The specified bucket does not exist console.error('error:' + e.message);
     }
     await driver.s3Client.createBucket({ bucket });
     await driver.s3Client.putObject({

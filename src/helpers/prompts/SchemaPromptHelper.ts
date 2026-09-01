@@ -16,15 +16,7 @@ import { createMqttSchemaDefinitionsForPrompt } from './MqttPromptHelper';
 import { createRdsSchemaDefinitionsForPrompt } from './RdsPromptHelper';
 import { createRedisSchemaDefinitionsForPrompt } from './RedisPromptHelper';
 
-/**
- * Single entry point for MCP tools: dispatches to the vendor-specific
- * schema-prompt renderer based on the runtime type of each element of
- * `db`, so callers don't need to branch on dbType themselves. Elements are
- * grouped by vendor before calling (rather than one call per element) so
- * each vendor's own "0 count" heading etc. stays aggregated across all of
- * that vendor's entries, same as e.g. `createAwsSchemaDefinitionsForPrompt`
- * already does internally for a mixed-`AwsServiceType` array.
- */
+/** Single entry point for MCP tools: dispatches to the vendor-specific schema-prompt renderer based on the runtime type of each element of `db`, so callers don't need to branch on dbType themselves. */
 export const createSchemaDefinitionsForPrompt = async (
   params: CreateSchemaDefinitionsForPromptParams,
 ): Promise<string | undefined> => {

@@ -1,25 +1,13 @@
-// Migrated from db-notebook's src/utilities/erDiagramDrawioGenerator.ts (see
-// misc/automatic-diagram-layout-and-er-migration-plan.md, Phase 6). Kept as the synchronous
-// legacy 3-column grid layout per plan 4.2's compat rule; `createDrawioErDiagramAsync` in
-// erDiagramDrawioGeneratorAuto.ts (Phase 7) is the ELK-backed column-port replacement.
 import { displayGeneralColumnType } from '@l-v-yonsama/rdh';
 import { drawioPage, wrapDrawioPages, xmlEscape } from '../drawio';
 import { ERDiagramParams, TableRelation } from './types';
 
 export { xmlEscape };
 
-/** Same text both when telling ELK how much space to reserve for a relation's label
- * (`erDiagramDrawioGeneratorAuto.ts`'s `estimateLabelSize`/`labelSize`) and when actually
- * rendering it here - the two must always agree, or the reserved gap and the rendered text
- * drift apart again. Shared between the legacy and ELK-backed renderers (previously duplicated
- * identically in both). */
+/** Same text both when telling ELK how much space to reserve for a relation's label (`erDiagramDrawioGeneratorAuto.ts`'s `estimateLabelSize`/`labelSize`) and when actually rendering it here - the two must always agree, or the reserved gap and the rendered text drift apart again. */
 export const relationLabel = (relation: TableRelation): string =>
   `${relation.name}: ${relation.referencedFrom.columnName} ${relation.referencedFrom.cardinality} → ${relation.referenceTo.columnName} ${relation.referenceTo.cardinality}`;
 
-/** The fixed 2-item (solid=identifying, dashed=non-identifying) relationship legend, identical
- * between the legacy and ELK-backed renderers (previously duplicated identically in both) -
- * simple and fixed enough that it does not reuse `drawioLineLegendCells` (../drawio), which is
- * built for a variable-length, swimlane-boxed set of items and would change this legend's look. */
 export const erRelationshipLegendCells = (legendY: number): string[] => [
   `<mxCell id="legend_title" value="Relationship legend" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#475569;" vertex="1" parent="1"><mxGeometry x="40" y="${legendY}" width="180" height="22" as="geometry"/></mxCell>`,
   `<mxCell id="legend_solid_line" style="shape=line;html=1;rounded=0;strokeColor=#64748b;strokeWidth=2;" vertex="1" parent="1"><mxGeometry x="40" y="${legendY + 30}" width="42" height="2" as="geometry"/></mxCell>`,
@@ -28,10 +16,7 @@ export const erRelationshipLegendCells = (legendY: number): string[] => [
   `<mxCell id="legend_dashed_text" value="Dashed: non-identifying relationship" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#64748b;" vertex="1" parent="1"><mxGeometry x="92" y="${legendY + 49}" width="260" height="22" as="geometry"/></mxCell>`,
 ];
 
-/** The single-page draw.io document wrapper both ER renderers use (fixed `er-diagram`/"ER
- * Diagram" page id/name - unlike the CFN generators, an ER diagram never needs more than one
- * page or a dynamic title). Previously each renderer built this `<?xml ...><mxfile>...` wrapper
- * by hand instead of reusing `../drawio`'s `drawioPage`/`wrapDrawioPages`. */
+/** The single-page draw.io document wrapper both ER renderers use (fixed `er-diagram`/"ER Diagram" page id/name - unlike the CFN generators, an ER diagram never needs more than one page or a dynamic title). */
 export const wrapErDiagramPage = (cells: string[]): string =>
   wrapDrawioPages([drawioPage('er-diagram', 'ER Diagram', cells)]);
 
@@ -74,10 +59,6 @@ export type ErTableLayout = {
   height: number;
 };
 
-/** Derives each table's PK/FK/NOT NULL key markers, display column types, and card height from
- * `params` - shared between the legacy 3-column-grid renderer and the ELK-backed
- * {@link createDrawioErDiagramAsync} (erDiagramDrawioGeneratorAuto.ts) so both agree on what a
- * table card looks like and only differ in where it gets placed. */
 export const buildTableLayouts = (params: ERDiagramParams): ErTableLayout[] =>
   params.tableItems.map((item, index) => {
     const selectedColumns = item.tableRes.children.filter((column) => item.columnNames.includes(column.name));

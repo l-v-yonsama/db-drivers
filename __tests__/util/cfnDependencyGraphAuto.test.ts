@@ -7,9 +7,6 @@ import { disposeAutoLayoutEngine } from '../../src/utils/diagramLayout';
 import testApiLambdaStackTemplate from '../data/cfn/templates/db-drivers-test-api-lambda-stack.json';
 import testOrderStackTemplate from '../data/cfn/templates/db-drivers-test-order-stack.json';
 
-// Phase 3 (misc/automatic-diagram-layout-and-er-migration-plan.md 5.1 / 8.2): the auto-layout
-// renderer must keep the same resource/edge semantics as the legacy grid renderer and must not
-// regress into overlapping or out-of-bounds cells, without asserting on exact coordinates.
 
 afterAll(() => {
   disposeAutoLayoutEngine();
@@ -82,8 +79,7 @@ describe('generateDrawioCfnDependencyGraphAsync', () => {
       expect(resource.y + resource.height).toBeLessThanOrEqual(group!.height + 0.5);
     });
 
-    // No two resources within the same stack overlap (compared in the stack's own local space,
-    // since that's the space their geometry is expressed in).
+    // No two resources within the same stack overlap (compared in the stack's own local space, since that's the space their geometry is expressed in).
     const byParent = new Map<string, typeof resources>();
     resources.forEach((r) => byParent.set(r.parent, [...(byParent.get(r.parent) ?? []), r]));
     byParent.forEach((siblings) => {

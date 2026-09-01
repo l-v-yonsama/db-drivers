@@ -9,12 +9,7 @@ import {
 import { VendorPhysicalHealth, VendorTableStatistics } from './PerformanceTuningContextProvider';
 import { asIsoDateString, asNumber, asRecord, asString } from './vendorRowCoercion';
 
-// Row-mapping for MySQLPerformanceTuningProvider.ts's information_schema
-// queries. Pure functions (no I/O), same rationale as
-// postgresCatalogMapper.ts: catalog output is DB data this driver doesn't
-// fully control the shape of, so every access is guarded and nothing here
-// throws - an unmappable row is dropped, not a reason to fail the whole
-// collection.
+// Row-mapping for MySQLPerformanceTuningProvider.ts's information_schema queries.
 
 function metric<T>(
   value: T | undefined,
@@ -27,10 +22,6 @@ function metric<T>(
 
 // --- columns -----------------------------------------------------------
 
-// COLUMN_TYPE (e.g. "decimal(10,2)", "varchar(20)", "enum('a','b','c')") is
-// MySQL's own "as declared" type text, more informative for an AI than the
-// bare DATA_TYPE ("decimal", "varchar", "enum") information_schema also
-// exposes - kept as-is rather than re-deriving length/precision by hand.
 export function mapMysqlColumnRow(row: unknown): ColumnDefinition | undefined {
   const r = asRecord(row);
   const columnName = asString(r?.name);
@@ -53,10 +44,7 @@ export function mapMysqlColumnRows(rows: unknown[]): ColumnDefinition[] {
 
 // --- constraints ---------------------------------------------------------
 
-// One row per (constraint, column) - the same shape TABLE_CONSTRAINTS JOIN
-// KEY_COLUMN_USAGE naturally produces, so this groups in JS rather than
-// fighting MySQL's JSON_ARRAYAGG() (which, unlike Postgres's array_agg(...
-// ORDER BY ...), has no built-in per-group ordering clause).
+// One row per (constraint, column) - the same shape TABLE_CONSTRAINTS JOIN KEY_COLUMN_USAGE naturally produces, so this groups in JS rather than fighting MySQL's JSON_ARRAYAGG() (which, unlike Postgres's array_agg(...
 const CONSTRAINT_TYPE_BY_RAW: Record<string, ConstraintDefinition['type']> = {
   'PRIMARY KEY': 'primaryKey',
   UNIQUE: 'uniqueKey',
@@ -118,10 +106,7 @@ export function mapMysqlConstraintRows(rows: unknown[]): ConstraintDefinition[] 
   }));
 }
 
-// CHECK constraints are a separate query (CHECK_CONSTRAINTS has no column
-// list at all - MySQL's CHECK_CLAUSE is the raw boolean expression, already
-// unwrapped, unlike Postgres's pg_get_constraintdef() which needs the
-// "CHECK (...)" prefix stripped).
+// CHECK constraints are a separate query (CHECK_CONSTRAINTS has no column list at all - MySQL's CHECK_CLAUSE is the raw boolean expression, already unwrapped, unlike Postgres's pg_get_constraintdef() which needs the "CHECK (...)" prefix stripped).
 export function mapMysqlCheckConstraintRows(rows: unknown[]): ConstraintDefinition[] {
   return rows
     .map((raw): ConstraintDefinition | undefined => {
@@ -138,11 +123,7 @@ export function mapMysqlCheckConstraintRows(rows: unknown[]): ConstraintDefiniti
 
 // --- indexes ---------------------------------------------------------
 
-// One row per (index, column) from information_schema.STATISTICS - grouped
-// in JS for the same reason as constraints above. COLUMN_NAME is NULL for a
-// functional/expression key part (MySQL 8.0.13+); EXPRESSION carries the
-// expression text instead, mirroring how postgresCatalogMapper.mapIndexRow
-// splits `name` vs `expression`.
+// One row per (index, column) from information_schema.STATISTICS - grouped in JS for the same reason as constraints above.
 export function mapMysqlIndexRows(rows: unknown[]): IndexDefinition[] {
   type Entry = {
     indexName: string;
@@ -176,9 +157,7 @@ export function mapMysqlIndexRows(rows: unknown[]): IndexDefinition[] {
       column: {
         columnName,
         expression: columnName ? undefined : expression,
-        // MySQL 8.0+ supports DESC index key parts; COLLATION is 'A'
-        // (ascending), 'D' (descending), or NULL (not sorted, e.g. a
-        // FULLTEXT/SPATIAL index component).
+        // MySQL 8.0+ supports DESC index key parts; COLLATION is 'A' (ascending), 'D' (descending), or NULL (not sorted, e.g. a FULLTEXT/SPATIAL index component).
         direction: asString(r.collation) === 'D' ? 'desc' : 'asc',
       },
     });
@@ -191,8 +170,7 @@ export function mapMysqlIndexRows(rows: unknown[]): IndexDefinition[] {
     columns: entry.columns
       .sort((a, b) => a.position - b.position)
       .map((c) => c.column),
-    // MySQL has neither INCLUDE columns nor partial/filtered indexes - both
-    // permanently undefined for this vendor, not just "not observed yet".
+    // MySQL has neither INCLUDE columns nor partial/filtered indexes - both permanently undefined for this vendor, not just "not observed yet".
     includedColumns: undefined,
     predicate: undefined,
     indexType: entry.indexType,
@@ -201,10 +179,6 @@ export function mapMysqlIndexRows(rows: unknown[]): IndexDefinition[] {
 
 // --- table statistics ---------------------------------------------------------
 
-// information_schema.TABLES is InnoDB's persistent (periodically refreshed,
-// not live) statistics cache - TABLE_ROWS/DATA_LENGTH/INDEX_LENGTH/
-// DATA_FREE are all approximate for that reason (§8 注意事項: "MySQL InnoDB
-// の TABLE_ROWS、cardinality、DATA_FREE は推定または cached 値である").
 export function mapMysqlTableStatisticsRow(row: unknown): VendorTableStatistics | undefined {
   const r = asRecord(row);
   if (!r) {
@@ -225,32 +199,12 @@ export function mapMysqlTableStatisticsRow(row: unknown): VendorTableStatistics 
       true,
       'bytes',
     ),
-    // statisticsUpdatedAt/modificationsSinceAnalyze intentionally omitted:
-    // MySQL has no information_schema equivalent of Postgres's
-    // pg_stat_user_tables.last_analyze/n_mod_since_analyze. UPDATE_TIME
-    // reflects the last DML modification, not when statistics were last
-    // (re)computed, so using it here would misrepresent what it means.
+    // statisticsUpdatedAt/modificationsSinceAnalyze intentionally omitted: MySQL has no information_schema equivalent of Postgres's pg_stat_user_tables.last_analyze/n_mod_since_analyze.
   };
 }
 
 // --- column statistics ---------------------------------------------------------
 
-// Best-effort, read-only fallback (2026-08-21 follow-up, summary.md's Full
-// Context improvement item 2) for the common case CARDINALITY_SQL can never
-// cover: a column that isn't the leading key part of any index. No new
-// query - HISTOGRAM_SQL is already fetched for every requested column
-// unconditionally (MySQLPerformanceTuningProvider.collectColumnStatistics()),
-// so this is purely a richer read of data already in hand, still strictly
-// read-only (no `ANALYZE TABLE ... UPDATE HISTOGRAM`, matching this
-// feature's existing collection-load policy - implementation plan §9.3).
-// Two of MySQL 8.0's histogram types carry enough information to derive a
-// distinct-value count from:
-//  - 'singleton': one bucket per distinct value (bucket = [value,
-//    cumulative_freq]) - buckets.length *is* the distinct count.
-//  - 'equi-height': each bucket covers a range of values (bucket = [min,
-//    max, cumulative_freq, num_distinct_in_bucket]) - summing the 4th
-//    element across buckets gives the (approximate) total distinct count.
-// Any other/unrecognized shape degrades to undefined rather than guessing.
 export function estimateDistinctCountFromMysqlHistogram(
   histogram: Record<string, unknown> | undefined,
 ): number | undefined {
@@ -274,21 +228,6 @@ export function estimateDistinctCountFromMysqlHistogram(
   return undefined;
 }
 
-// Two independent, optional sources, combined per column:
-//  - information_schema.STATISTICS.CARDINALITY: an approximate distinct-
-//    value count, but only meaningful for a column used as the *first* key
-//    part of some index (a later key part's cardinality reflects the
-//    combined prefix, not that column alone) - the query below already
-//    filters to SEQ_IN_INDEX = 1.
-//  - information_schema.COLUMN_STATISTICS.HISTOGRAM: only populated after
-//    an explicit `ANALYZE TABLE ... UPDATE HISTOGRAM ON col` (not run by
-//    default), so this is commonly absent - null_frac/statisticsUpdatedAt/
-//    histogram shape come from here when it exists. `distinctCount` prefers
-//    CARDINALITY_SQL (more precise, index-statistics-based) when available;
-//    when a column isn't index-backed at all, it falls back to deriving a
-//    count from the histogram buckets themselves (see
-//    estimateDistinctCountFromMysqlHistogram() above) - still only when a
-//    histogram happens to already exist, best-effort either way.
 export function mapMysqlColumnStatisticsRow(
   columnName: string,
   cardinalityRow: unknown,
@@ -334,10 +273,7 @@ export function mapMysqlColumnStatisticsRow(
   };
 }
 
-// MySQL's histogram JSON stores "last-updated" as "YYYY-MM-DD
-// HH:MM:SS.ffffff" (space-separated, no timezone; recorded in UTC) rather
-// than an ISO 8601 string or a native temporal value - reformat it into
-// something Date.parse()/an AI can read unambiguously.
+// MySQL's histogram JSON stores "last-updated" as "YYYY-MM-DD HH:MM:SS.ffffff" (space-separated, no timezone; recorded in UTC) rather than an ISO 8601 string or a native temporal value - reformat it into something Date.parse()/an AI can read unambiguously.
 function asIsoDateStringFromMysql(value: string | undefined): string | undefined {
   if (!value) {
     return undefined;
@@ -364,10 +300,6 @@ export function mapMysqlPhysicalHealthRow(row: unknown): VendorPhysicalHealth {
     metrics.push({ name, value, unit, estimated, description });
   };
 
-  // DATA_FREE is InnoDB's free-space-within-the-tablespace figure - the
-  // closest MySQL analog to Postgres's dead-tuple/bloat metrics, but with
-  // the same caveat §8 注意事項 calls out: for a table sharing a general
-  // tablespace, this may not reflect that table's own free space at all.
   push('dataFreeBytes', asNumber(r.data_free), 'bytes', true, 'information_schema.TABLES.DATA_FREE');
   push(
     'lastUpdatedAt',

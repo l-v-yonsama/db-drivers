@@ -820,10 +820,7 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         CapacityUnits: expect.any(Number),
         LastEvaluatedKey: undefined,
-        // 1003 records exceed one page's 1MB response limit even with no
-        // caller Limit, so this is 2 requests - and the loop's own
-        // `while (LastEvaluatedKey)` condition means it only stops once
-        // AWS itself reports no more data, so hasMorePages is false.
+        // 1003 records exceed one page's 1MB response limit even with no caller Limit, so this is 2 requests - and the loop's own `while (LastEvaluatedKey)` condition means it only stops once AWS itself reports no more data, so hasMorePages is false.
         meta: {
           requestCount: 2,
           retryCount: 0,
@@ -1024,12 +1021,6 @@ describe('AwsDynamoDBDriver', () => {
     });
 
     it('reports returned/evaluated and a filter pass rate when a FilterExpression narrows results', async () => {
-      // Food has 2 items under Name = 'Apple' (Color Green/Nz and
-      // Color Red/Jp) - the KeyCondition alone would return both; a
-      // FilterExpression on the non-key Country attribute narrows the
-      // *returned* set to 1 without changing how many items DynamoDB
-      // evaluated (design doc §4.3/§11.4). (FilterExpression cannot
-      // reference a primary key attribute like Color, hence Country.)
       const rs = await driver.dynamoClient.queryItemsAtClient({
         TableName: 'Food',
         KeyConditionExpression: '#n = :n',
@@ -1121,15 +1112,7 @@ describe('AwsDynamoDBDriver', () => {
         extra: {
           allAttributeNames: expect.any(Array),
         },
-        // PartiQL's ExecuteStatement response has no Count/ScannedCount
-        // field at all (confirmed against this LocalStack instance too),
-        // so scannedCount/reportedCount stay undefined - never estimated
-        // from Items.length. This LocalStack version also does not surface
-        // a Table/Index Consumed Capacity breakdown for ExecuteStatement,
-        // unlike native Query/Scan above - capacityBreakdown is undefined
-        // as a result (a LocalStack fidelity gap, not a bug: see
-        // aggregateConsumedCapacity's dedicated unit tests with synthetic
-        // data in dynamoDbCapacity.test.ts for the breakdown path itself).
+        // PartiQL's ExecuteStatement response has no Count/ScannedCount field at all (confirmed against this LocalStack instance too), so scannedCount/reportedCount stay undefined - never estimated from Items.length.
         meta: {
           requestCount: 2,
           retryCount: 0,
@@ -1251,10 +1234,6 @@ describe('AwsDynamoDBDriver', () => {
           expect.arrayContaining(['Id', 'Title', 's1']),
         );
         expect(rs.summary.selectedRows).toBe(1003);
-        // PartiQL's ExecuteStatement never returns Count/ScannedCount or (on
-        // this LocalStack version) a Consumed Capacity breakdown - design
-        // doc §11.1: capacityUnits stays undefined (never 0) and info says
-        // so explicitly instead of showing a misleading "CU (0)".
         expect(rs.summary.capacityUnits).toBeUndefined();
         expect(rs.summary.dynamoDb?.apiOperation).toBe('ExecuteStatement');
         expect(rs.summary.dynamoDb?.evaluatedItemCount).toBeUndefined();
@@ -1280,10 +1259,6 @@ describe('AwsDynamoDBDriver', () => {
           expect.arrayContaining(['Id', 'Title', 's1']),
         );
         expect(rs.summary.selectedRows).toBe(1000);
-        // 1000 rows over the 1MB-per-response limit takes 2+ requests
-        // (design doc §11.2), and the caller's Limit was reached while a
-        // token still remained, so the result is explicitly flagged as
-        // truncated (design doc §11.3) rather than silently incomplete.
         expect(rs.summary.dynamoDb?.successfulResponseCount).toBeGreaterThanOrEqual(2);
         expect(rs.summary.dynamoDb?.continuationTokenPresent).toBe(true);
         expect(rs.summary.info).toContain('requests');
@@ -1376,12 +1351,6 @@ describe('AwsDynamoDBDriver', () => {
     });
     describe('INSERT', () => {
       it('conditions.rawQueries does not misclassify a raw INSERT as a SELECT (2026-08-25 review, round 2)', async () => {
-        // rawQueries:true means qst stays unset (same as the raw SELECT
-        // test above), so operation has to come from a text-based fallback
-        // classification rather than parseQuery()/qst - this covers the
-        // write-specific case that fallback exists for: a raw DML must not
-        // fall into the SELECT summary branch just because it wasn't
-        // parsed.
         const rs = await driver.dynamoClient.requestPartiql({
           sql: `INSERT INTO NoRecords VALUE {'Id': 'raw-1', 'CreatedAt': 1}`,
           conditions: { rawQueries: true },
@@ -1395,9 +1364,7 @@ describe('AwsDynamoDBDriver', () => {
       });
 
       it('conditions.rawQueries does not misclassify a raw INSERT opening with a /* block comment */ (2026-08-25 review, round 3)', async () => {
-        // The repo's own query parser treats both `--` line comments and
-        // `/* ... */` block comments as comments - the text-based fallback
-        // classifier has to strip both the same way, not just `--`.
+        // The repo's own query parser treats both `--` line comments and `/* ...
         const rs = await driver.dynamoClient.requestPartiql({
           sql: `/* seed */ INSERT INTO NoRecords VALUE {'Id': 'raw-2', 'CreatedAt': 1}`,
           conditions: { rawQueries: true },
@@ -1423,10 +1390,7 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('insert');
         expect(rs.meta.tableName).toBe('Music');
-        // A write must not fall into the SELECT summary branch (2026-08-25
-        // review): selectedRows stays undefined (not 0) and DynamoDB's
-        // PartiQL response never reports an affected-item count, so
-        // affectedRows also stays undefined rather than being invented.
+        // A write must not fall into the SELECT summary branch (2026-08-25 review): selectedRows stays undefined (not 0) and DynamoDB's PartiQL response never reports an affected-item count, so affectedRows also stays undefined rather than being invented.
         expect(rs.summary.selectedRows).toBeUndefined();
         expect(rs.summary.affectedRows).toBeUndefined();
         expect(rs.summary.info).not.toContain('items returned');
@@ -1552,9 +1516,6 @@ describe('AwsDynamoDBDriver', () => {
       describe('variable attribute types', () => {
         it('testtable No returning', async () => {
           await driver.getInfomationSchemas();
-          // const rs0 = await driver.dynamoClient.requestPartiql({
-          //   sql: 'SELECT * FROM testtable',
-          // });
 
           const rs = await driver.dynamoClient.requestPartiql({
             sql: `UPDATE
@@ -1666,19 +1627,12 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs2.rows).toHaveLength(0);
         expect(rs2.meta.type).toBe('select');
         expect(rs2.meta.tableName).toBe('Escape-Test');
-        // A SELECT with zero matching rows still takes the select branch:
-        // selectedRows is a real, reported 0 (not undefined).
+        // A SELECT with zero matching rows still takes the select branch: selectedRows is a real, reported 0 (not undefined).
         expect(rs2.summary.selectedRows).toBe(0);
       });
     });
   });
 
-  // §15.3 of db-notebook repo's misc/specs/dynamodb-performance-tuning-
-  // implementation-plan.ja.md: table Query, GSI Query, full table scan
-  // static judgment, and Consumed Capacity against real LocalStack. The
-  // connection above was created with only AwsServiceType.DynamoDB
-  // selected (no AwsServiceType.Cloudwatch), so CloudWatch metrics and
-  // Contributor Insights are intentionally skipped.
   describe('getDynamoDbPerformanceTuningContext', () => {
     it('classifies a table Query, does not warn about a full scan, and validates as a well-formed Context', async () => {
       const result = await driver.getDynamoDbPerformanceTuningContext({
@@ -1711,10 +1665,7 @@ describe('AwsDynamoDBDriver', () => {
       expect(result.result?.accessPattern.indexType).toBe('GSI');
       expect(result.result?.table.globalSecondaryIndexes.map((i) => i.indexName)).toContain('iCountry');
       expect(result.result?.table.localSecondaryIndexes.map((i) => i.indexName)).toContain('iKind');
-      // Contributor Insights is queried for table + iCountry (GSI) only,
-      // never for iKind (LSI) - see DynamoDbPerformanceTuningProvider's own
-      // mocked test of this same rule; this confirms it against the real
-      // DescribeTable-derived GSI list too.
+      // Contributor Insights is queried for table + iCountry (GSI) only, never for iKind (LSI) - see DynamoDbPerformanceTuningProvider's own mocked test of this same rule; this confirms it against the real DescribeTable-derived GSI list too.
       expect(result.result?.table.contributorInsights.map((c) => c.indexName)).not.toContain('iKind');
       expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
     });
@@ -1724,19 +1675,7 @@ describe('AwsDynamoDBDriver', () => {
         statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food WHERE Name = ?` } },
       });
       const billingMode = result.result?.table.billingMode;
-      // LocalStack's own BillingModeSummary fidelity is not guaranteed
-      // (see the note in AwsDynamoDriver.test.ts's other meta assertions
-      // about LocalStack gaps) - only assert what's structurally
-      // guaranteed: billingMode is one of the type's valid values, and if
-      // it does resolve to PROVISIONED the throughput numbers this table
-      // was actually created with come through unmodified.
       expect(['PROVISIONED', 'PAY_PER_REQUEST', 'unknown']).toContain(billingMode);
-      // jest/no-conditional-expect forbids branching around expect() itself,
-      // so the "if PROVISIONED then equals {10,5}" check is expressed as one
-      // unconditional equality instead: the expected value is only {10,5}
-      // when billingMode resolved to PROVISIONED, otherwise it's set to
-      // whatever actually came back (a no-op comparison, same as skipping
-      // the assertion did before).
       const expectedProvisionedThroughput =
         billingMode === 'PROVISIONED' ? { readCapacityUnits: 10, writeCapacityUnits: 5 } : result.result?.table.provisionedThroughput;
       expect(result.result?.table.provisionedThroughput).toEqual(expectedProvisionedThroughput);
@@ -1747,10 +1686,7 @@ describe('AwsDynamoDBDriver', () => {
         statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food WHERE Name = ?` } },
       });
       expect(result.ok).toBe(true);
-      // The type system + validateDynamoDbPerformanceTuningContext's own
-      // forbidden-key scan (Item/Items/ExpressionAttributeValues/...) are
-      // the structural proof that no item body could have been attached
-      // anywhere in this Context.
+      // The type system + validateDynamoDbPerformanceTuningContext's own forbidden-key scan (Item/Items/ExpressionAttributeValues/...) are the structural proof that no item body could have been attached anywhere in this Context.
       expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
     });
 

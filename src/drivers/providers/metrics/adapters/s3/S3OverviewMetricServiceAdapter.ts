@@ -58,8 +58,7 @@ function resourceRegion(
   resource: MetricResourceSnapshot,
   input: ResolveMetricTargetInput,
 ): string | undefined {
-  // A custom endpoint is one logical deployment; bucket metadata from a real
-  // AWS ListBuckets response must not redirect requests away from it.
+  // A custom endpoint is one logical deployment; bucket metadata from a real AWS ListBuckets response must not redirect requests away from it.
   if (input.endpoint) return input.region;
   const region = resource.attributes?.region;
   return typeof region === 'string' && region ? region : undefined;

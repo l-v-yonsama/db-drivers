@@ -49,17 +49,14 @@ describe('cfn', () => {
       expect(drawio).not.toContain('id="legend_runtime" value="Blue solid:');
       expect(drawio).toContain('value="invokes"');
       expect(drawio).toContain('GET /greeting');
-      // Nodes are 65px tall and vertically separated by 50px (five draw.io grid rows),
-      // leaving enough room for an edge label and arrowhead between adjacent nodes. Each
-      // successive layer adds a 10px staircase offset.
+      // Nodes are 65px tall and vertically separated by 50px (five draw.io grid rows), leaving enough room for an edge label and arrowhead between adjacent nodes.
       expect(drawio).toMatch(
         /id="node_f1_OrderHandler"[\s\S]*?<mxGeometry x="15" y="165" width="200" height="65"/,
       );
       expect(drawio).toMatch(
         /id="node_f1_OrderEventRule"[\s\S]*?<mxGeometry x="15" y="290" width="200" height="65"/,
       );
-      // The Lambda-to-DynamoDB edge skips the Messaging layer, so it is explicitly routed
-      // through the first shared horizontal gap instead of across a Messaging component.
+      // The Lambda-to-DynamoDB edge skips the Messaging layer, so it is explicitly routed through the first shared horizontal gap instead of across a Messaging component.
       expect(drawio).toMatch(
         /value="accesses"[^>]*source="node_f0_GreetingFunction" target="node_f0_GreetingTable"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="565" y="185"\/><mxPoint x="905" y="185"\/><\/Array>/,
       );
@@ -185,9 +182,7 @@ describe('cfn', () => {
       expect(architecture).toContain('Client request / response');
       expect(architecture).toContain('Outbound / return route');
       expect(architecture).toContain('Explicit data access');
-      // vpc-foundation.yaml + api-application.yaml never prove an event-delivery (no
-      // EventSourceMapping/SNS/EventBridge), resource-membership, or security-protection
-      // relationship, so the legend must not list rows with zero matching edges.
+      // vpc-foundation.yaml + api-application.yaml never prove an event-delivery (no EventSourceMapping/SNS/EventBridge), resource-membership, or security-protection relationship, so the legend must not list rows with zero matching edges.
       expect(architecture).not.toContain('Asynchronous event');
       expect(architecture).not.toContain('Resource membership');
       expect(architecture).not.toContain('Security-group permission');
@@ -257,19 +252,12 @@ describe('cfn', () => {
         };
       };
 
-      // "AWS::EC2::VPCGatewayAttachment" is the longest type name in this fixture (the exact
-      // resource whose label overflowed its neighbors in the reported screenshot). The card
-      // must be wide/tall enough that its wrapped label has real room, not just barely fit a
-      // short type name like "AWS::EC2::VPC".
+      // "AWS::EC2::VPCGatewayAttachment" is the longest type name in this fixture (the exact resource whose label overflowed its neighbors in the reported screenshot).
       const attachment = geometryOf('stack_0_InternetGatewayAttachment');
       expect(attachment.width).toBeGreaterThanOrEqual(150);
       expect(attachment.height).toBeGreaterThanOrEqual(70);
 
-      // CfnDiagramVpc (column 0, row 0) and InternetGateway (column 1, row 0) are
-      // horizontally adjacent in the 3-column grid; PublicSubnetA (column 0, row 1) is
-      // directly below CfnDiagramVpc. Both gaps must be wide enough to leave a real routing
-      // corridor for edges/labels instead of the near-zero gaps that caused lines to run
-      // directly across neighboring card interiors.
+      // CfnDiagramVpc (column 0, row 0) and InternetGateway (column 1, row 0) are horizontally adjacent in the 3-column grid; PublicSubnetA (column 0, row 1) is directly below CfnDiagramVpc.
       const vpc = geometryOf('stack_0_CfnDiagramVpc');
       const internetGateway = geometryOf('stack_0_InternetGateway');
       const publicSubnetA = geometryOf('stack_0_PublicSubnetA');
@@ -304,11 +292,6 @@ describe('cfn', () => {
         };
       };
 
-      // DatabaseCluster/DatabaseInstance1/DatabaseInstance2 are declared consecutively in this
-      // fixture and land on consecutive column slots of the same declaration-order grid row
-      // (a plain 3-column grid, not a relationship-derived hub/member cluster centered on
-      // DatabaseCluster) - simply because 3 consecutive resources fill exactly one row of the
-      // 3-column grid, the same as any other unrelated triple of resources would.
       const cluster = geometryOf('stack_0_DatabaseCluster');
       const instance1 = geometryOf('stack_0_DatabaseInstance1');
       const instance2 = geometryOf('stack_0_DatabaseInstance2');
@@ -333,9 +316,7 @@ describe('cfn', () => {
         ],
       });
 
-      // Each CFN template file is itself an intentional, meaningful grouping the author chose,
-      // so every resource stays enclosed in a swimlane titled with its own source file name -
-      // not re-clustered by any relationship across or within files.
+      // Each CFN template file is itself an intentional, meaningful grouping the author chose, so every resource stays enclosed in a swimlane titled with its own source file name - not re-clustered by any relationship across or within files.
       expect(drawio).toMatch(
         /id="stack_0" value="vpc-foundation\.yaml"[^>]*style="swimlane;/,
       );
@@ -355,12 +336,6 @@ describe('cfn', () => {
       const template = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
       const diagram = generateDiagram({
         mode: 'CfnDependencyGraph',
-        // This test is about the raw per-resource rendering (icon selection, the VPC/Subnet
-        // CIDR-in-label special cases) rather than viewpoint filtering, so it pins
-        // 'CloudFormationView' to see every resource unfiltered - none of these VPC/Subnet/
-        // RouteTable resources are "focus" under the default ApplicationView (see
-        // viewpoints.ts), which would otherwise fold or drop them before this test's
-        // assertions ever get to see them.
         viewpoint: 'CloudFormationView',
         list: [
           {
@@ -389,17 +364,7 @@ describe('cfn', () => {
     });
 
     it('renders preview-stable type labels for AWS services without external icons', () => {
-      // Each icon name below was independently confirmed to exist in the
-      // real registry (https://api.iconify.design/logos.json?icons=<name>)
-      // - iconMap entries look "plausible" by naming convention alone, so a
-      // typo'd or made-up name (like the old 'aws-iam-role'/'aws-iam-policy'
-      // - IAM only has one generic icon, no role/policy variants) silently
-      // renders as a blank box instead of failing anywhere in this test
-      // suite. That's how 'AWS::SQS::Queue' went unmapped for a while, and
-      // how the whole AWS::ApiGateway::* family (RestApi/Resource/Method/
-      // Deployment) plus Lambda::Permission went unmapped too - none of
-      // them are one of db-notebook's own scanned AWS services, but they're
-      // exactly what a real "API Gateway calls Lambda" stack is made of.
+      // Each icon name below was independently confirmed to exist in the real registry (https://api.iconify.design/logos.json?icons=<name>)
       const template = parseCfnJsonTemplate(
         JSON.stringify({
           Resources: {
@@ -425,9 +390,7 @@ describe('cfn', () => {
       );
       const diagram = generateDiagram({
         mode: 'CfnDependencyGraph',
-        // Icon-coverage test, not a viewpoint test - pin 'CloudFormationView' so every
-        // resource above (including the ones ApplicationView's default would classify
-        // auxiliary, like MyRole/MyLambdaPermission) still gets its own node to assert on.
+        // Icon-coverage test, not a viewpoint test - pin 'CloudFormationView' so every resource above (including the ones ApplicationView's default would classify auxiliary, like MyRole/MyLambdaPermission) still gets its own node to assert on.
         viewpoint: 'CloudFormationView',
         list: [
           {
@@ -461,12 +424,7 @@ describe('cfn', () => {
     });
 
     it('keeps a safe stack id while preserving a hyphenated display label', () => {
-      // Real CloudFormation stack names routinely contain hyphens (unlike
-      // logical ids, which the AWS spec restricts to alnum) - using one
-      // directly as fileName used to break `architecture-beta` parsing. A
-      // "-" isn't just invalid in a bare id token there - its tokenizer
-      // reserves "-" for arrow syntax ("--"/"-->") in label text too, so
-      // both positions need sanitizing, not only the id.
+      // Real CloudFormation stack names routinely contain hyphens (unlike logical ids, which the AWS spec restricts to alnum) - using one directly as fileName used to break `architecture-beta` parsing.
       const template = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
       const diagram = generateDiagram({
         mode: 'CfnDependencyGraph',
@@ -482,8 +440,7 @@ describe('cfn', () => {
         '  subgraph db_drivers_test_order_stack["db-drivers-test-order-stack"]',
       );
       expect(diagram).toContain('    subgraph f0_resources["Resources"]');
-      // The raw name is now safe in a quoted graphical label, while the subgraph id remains
-      // normalized for Mermaid.
+      // The raw name is now safe in a quoted graphical label, while the subgraph id remains normalized for Mermaid.
       expect(diagram).not.toContain('subgraph db-drivers-test-order-stack');
     });
 
@@ -502,10 +459,7 @@ describe('cfn', () => {
       });
       const withExtras = generateDiagram({
         mode: 'CfnDependencyGraph',
-        // Parameters/Outputs are auxiliary (hence hidden, under the default
-        // MergeIntoLabel treatment) for every viewpoint except CloudFormationView - see the
-        // dedicated 'viewpoint' describe block below. Pinned here so this test keeps
-        // isolating the includeParameters/includeOutputs toggle itself.
+        // Parameters/Outputs are auxiliary (hence hidden, under the default MergeIntoLabel treatment) for every viewpoint except CloudFormationView - see the dedicated 'viewpoint' describe block below.
         viewpoint: 'CloudFormationView',
         list: [
           {

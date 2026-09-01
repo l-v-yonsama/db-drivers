@@ -10,12 +10,6 @@ import {
   renderSqlServerTableDdl,
 } from '../../../src';
 
-// Row shapes below are copied from what `mssql` actually returns against a
-// live SQL Server 2022 instance (see SQLServerPerformanceTuningProvider.test.ts's
-// live suite), not idealized fixtures - e.g. is_nullable/is_unique/is_primary/
-// is_included/is_descending as native JS booleans (mssql maps BIT that
-// way), last_updated as a native JS `Date`, and SUM()'d bigint columns
-// (row_count/table_bytes/...) coming back as strings.
 
 describe('mapSqlServerColumnRow(s)', () => {
   it('prefers column_type (the fuller "as declared" type built from sys.types/max_length/precision/scale)', () => {
@@ -255,8 +249,7 @@ describe('renderSqlServerTableDdl', () => {
     expect(ddl).toContain('CREATE TABLE [testdb].[perf_orders]');
     expect(ddl).toContain('CONSTRAINT [PK__perf_orders] PRIMARY KEY ([id])');
     expect(ddl).toContain('CREATE INDEX [idx_status] ON [testdb].[perf_orders] ([status]);');
-    // The PK's own backing index must not be restated as a separate
-    // CREATE INDEX line.
+    // The PK's own backing index must not be restated as a separate CREATE INDEX line.
     expect(ddl.match(/PK__perf_orders/g)).toHaveLength(1);
   });
 });
@@ -317,8 +310,7 @@ describe('mapSqlServerColumnStatisticsRow', () => {
       ],
       propsRow: undefined,
     });
-    // 2 steps whose own value occurs (equal_rows > 0) + 1 distinct value
-    // strictly between them = 3.
+    // 2 steps whose own value occurs (equal_rows > 0) + 1 distinct value strictly between them = 3.
     expect(stats.distinctCount?.value).toBe(3);
   });
 

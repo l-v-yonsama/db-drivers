@@ -141,9 +141,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         SupplyCredentialType.sharedCredentialsFile &&
       awsSetting.profile
     ) {
-      // Keep the SDK's region/config resolution on the same named profile as
-      // the explicitly selected credential provider. Passing the profile only
-      // to fromIni() would not make it part of every service client's config.
+      // Keep the SDK's region/config resolution on the same named profile as the explicitly selected credential provider.
       config.profile = awsSetting.profile;
     }
     if (url) {
@@ -152,12 +150,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     return config;
   }
 
-  /**
-   * Returns the base region selected by the AWS SDK after applying the
-   * connection's explicit region, named profile, environment, and shared
-   * config provider chain. Resource-specific adapters may still override it
-   * (for example, an S3 bucket discovered in another region).
-   */
+  /** Returns the base region selected by the AWS SDK after applying the connection's explicit region, named profile, environment, and shared config provider chain. */
   async getEffectiveRegion(): Promise<string | undefined> {
     if (this.effectiveRegion) {
       return this.effectiveRegion;
@@ -255,10 +248,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     return this.metricServiceAdapterRegistry;
   }
 
-  /**
-   * Lazily creates a CloudWatch metrics collector for the resolved endpoint.
-   * The caller owns only the workflow; AwsDriver destroys all cached clients.
-   */
+  /** Lazily creates a CloudWatch metrics collector for the resolved endpoint. */
   getCloudWatchMetricsCollector(
     endpoint: MetricEndpoint,
   ): CloudWatchMetricsCollector {

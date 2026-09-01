@@ -16,21 +16,14 @@ function threadKeyOf(event: ClassifiedEvent): string {
   return event.thread?.trim() || DEFAULT_THREAD_KEY;
 }
 
-/**
- * Extract SQL related fragments from classified log events.
- *
- * Robust against noisy logs and broken sequences.
- */
+/** Extract SQL related fragments from classified log events. */
 export function runExtractors(
   events: ClassifiedEvent[],
   extractors: readonly ExtractorConfig[],
 ): SqlFragment[] {
   const results: SqlFragment[] = [];
 
-  // Extractor state and DAO context are kept per thread so that
-  // interleaved logs from concurrent threads don't flush/overwrite each
-  // other's in-progress SQL capture or DAO context. Logs without thread
-  // info collapse onto a single default key, preserving prior behavior.
+  // Extractor state and DAO context are kept per thread so that interleaved logs from concurrent threads don't flush/overwrite each other's in-progress SQL capture or DAO context.
   const statesByThread = new Map<string, ExtractorState[]>();
   const daoContextByThread = new Map<string, DaoContext>();
 
@@ -60,9 +53,6 @@ export function runExtractors(
     const states = getStates(threadKey);
     const daoContext = getDaoContext(threadKey);
 
-    /**
-     * DAO context capture
-     */
     if (event.eventContext?.daoClass) {
       daoContext.daoClass = event.eventContext.daoClass;
     }
@@ -75,9 +65,6 @@ export function runExtractors(
       const state = states[i];
       let idx = state.stepIndex;
 
-      /**
-       * START detection
-       */
       if (idx === -1) {
         if (event.eventType !== extractor.start) {
           return;
@@ -86,16 +73,7 @@ export function runExtractors(
         idx = 0;
         state.buffer = [];
       } else if (event.eventType === extractor.start) {
-        /**
-         * START while collecting
-         *
-         * Example (Hibernate DDL):
-         *
-         *   SQL_START drop table
-         *   SQL_START create table
-         *
-         * Previous SQL must be flushed.
-         */
+        /** START while collecting Example (Hibernate DDL): SQL_START drop table SQL_START create table Previous SQL must be flushed. */
         if (state.buffer.length > 0) {
           results.push(...state.buffer);
         }
@@ -104,9 +82,6 @@ export function runExtractors(
         idx = 0;
       }
 
-      /**
-       * Step machine
-       */
       while (idx !== -1 && idx < extractor.steps.length) {
         const step = extractor.steps[idx];
 
@@ -175,9 +150,6 @@ export function runExtractors(
 
           idx++;
 
-          /**
-           * Steps finished
-           */
           if (idx >= extractor.steps.length) {
             results.push(...state.buffer);
             state.buffer = [];
@@ -187,9 +159,6 @@ export function runExtractors(
           break;
         }
 
-        /**
-         * optional step
-         */
         if (step.optional) {
           idx++;
           continue;
@@ -202,15 +171,7 @@ export function runExtractors(
     });
   }
 
-  /**
-   * EOF flush
-   *
-   * Handles cases like:
-   *
-   *   SQL_START
-   *   SQL_PARAMS
-   *   (log end)
-   */
+  /** EOF flush Handles cases like: */
   statesByThread.forEach((states) => {
     states.forEach((state) => {
       if (state.buffer.length > 0) {
@@ -219,9 +180,6 @@ export function runExtractors(
     });
   });
 
-  /**
-   * sort fragments
-   */
   return results.sort((a, b) => {
     if (a.lineNo !== b.lineNo) {
       return a.lineNo - b.lineNo;

@@ -2,8 +2,7 @@ import * as SQLHelperExports from '../../../src';
 
 describe('SQLHelper', () => {
   describe('module exports', () => {
-    // Guard against the package barrel (src/index.ts) silently dropping a
-    // re-export of a function this file's describe blocks exercise below.
+    // Guard against the package barrel (src/index.ts) silently dropping a re-export of a function this file's describe blocks exercise below.
     it('still exposes every function tested in this file', () => {
       const exportedFunctionNames = [
         'normalizeQuery',

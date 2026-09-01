@@ -11,21 +11,13 @@ import { parseDiagramFiles } from '../diagramFileModel';
 import { drawioTemplatePage } from '../drawioXml';
 import { addDependencyLegend, edgeCell, groupCell, nodeCell } from './commonCells';
 
-/** Generates an editable draw.io dependency graph. Unlike MultiAzDeploymentTrafficPathsAndProtection, this keeps all
- * resources and preserves the dependency kind used to color each connector. Resources are laid
- * out mechanically in template declaration order, one flat 3-column grid per template file - a
- * CFN template file is itself already an intentional, meaningful grouping the author chose, so
- * that grouping (rendered as one labeled box per file, titled with the file name) is the only
- * structure this raw view imposes; it does not try to re-derive additional relationship-based
- * groupings on top of it. */
+/** Generates an editable draw.io dependency graph. */
 export const generateDrawioCfnDependencyGraph = (params: GenerateDiagramParams): string => {
   const files = parseDiagramFiles({ ...params, mode: 'CfnDependencyGraph', viewpoint: 'CloudFormationView', options: { ...params.options, includeOutputs: true, includeParameters: true } });
   const cells: string[] = [];
   const nodeIds = new Map<string, string>();
   let maxHeight = 200;
-  // Wide enough for the longest real AWS type name (e.g. "AWS::EC2::VPCGatewayAttachment")
-  // to wrap onto two lines instead of overflowing into neighboring cards, with a real routing
-  // corridor between adjacent cards so edges/labels do not run across card interiors.
+  // Wide enough for the longest real AWS type name (e.g. "AWS::EC2::VPCGatewayAttachment") to wrap onto two lines instead of overflowing into neighboring cards, with a real routing corridor between adjacent cards so edges/labels do not run across card interiors.
   const columns = 3;
   const nodeWidth = 160;
   const nodeHeight = 80;
@@ -55,9 +47,7 @@ export const generateDrawioCfnDependencyGraph = (params: GenerateDiagramParams):
       220,
       groupTopInset + rows * nodeHeight + Math.max(0, rows - 1) * rowGap + groupBottomInset,
     );
-    // The group's own title bar is the file name (file.fileName) - every resource in this
-    // stack is enclosed inside it, so which template file a resource came from is always
-    // visible at a glance without reading logical IDs.
+    // The group's own title bar is the file name (file.fileName) - every resource in this stack is enclosed inside it, so which template file a resource came from is always visible at a glance without reading logical IDs.
     cells.push(groupCell(groupId, file.fileName, cursorX, cursorY, groupWidth, groupHeight, '1', '#f8fafc'));
     file.resouces.forEach((logicalId, index) => {
       const id = `stack_${fileIndex}_${logicalId}`;
@@ -101,12 +91,6 @@ export const generateDrawioCfnDependencyGraph = (params: GenerateDiagramParams):
   return wrapDrawioPages(pages);
 };
 
-/** Automatic-layout counterpart of {@link generateDrawioCfnDependencyGraph} (plan Phase 3,
- * section 5.1). Keeps the exact same dependency extraction, node/edge identity, and per-file
- * grouping as the legacy renderer - only the placement (previously a fixed 3-column grid, one
- * declaration-order row per file) is replaced, by feeding a compound graph (one group per
- * template file, one node per resource) through the common ELK-backed layout layer. Declared
- * `async` because {@link computeAutoLayout} is - see plan 4.2 "APIの非同期化". */
 export const generateDrawioCfnDependencyGraphAsync = async (
   params: GenerateDiagramParams,
 ): Promise<string> => {
@@ -120,14 +104,12 @@ export const generateDrawioCfnDependencyGraphAsync = async (
 
   files.forEach((file, fileIndex) => {
     const groupId = `stack_${fileIndex}`;
-    // Width/height are placeholders: any LayoutNode with at least one child is sized by ELK from
-    // its children, not from these values (see diagramLayout/types.ts).
+    // Width/height are placeholders: any LayoutNode with at least one child is sized by ELK from its children, not from these values (see diagramLayout/types.ts).
     layoutNodes.push({
       id: groupId,
       width: 0,
       height: 0,
-      // Padding leaves room for the swimlane title bar (groupTopInset=45 in the legacy layout)
-      // plus a routing margin that matches the legacy grid's columnGap/rowGap=40.
+      // Padding leaves room for the swimlane title bar (groupTopInset=45 in the legacy layout) plus a routing margin that matches the legacy grid's columnGap/rowGap=40.
       layoutOptions: { 'elk.padding': '[top=45,left=20,bottom=20,right=20]' },
     });
     file.resouces.forEach((logicalId) => {
@@ -148,8 +130,7 @@ export const generateDrawioCfnDependencyGraphAsync = async (
           source: { nodeId: source },
           target: { nodeId: target },
           label,
-          // See estimateLabelSize's doc comment (drawioApplicationDiagram.ts / erDiagramDrawioGeneratorAuto.ts
-          // apply the same fix) - without this ELK reserves zero room for the label.
+          // See estimateLabelSize's doc comment (drawioApplicationDiagram.ts / erDiagramDrawioGeneratorAuto.ts apply the same fix) - without this ELK reserves zero room for the label.
           labelSize: estimateLabelSize(label),
         });
       }
@@ -176,8 +157,7 @@ export const generateDrawioCfnDependencyGraphAsync = async (
       const box = layout.nodes.get(id);
       if (!box) return;
       const resource = file.cfnTemplate.Resources[logicalId];
-      // draw.io node geometry is parent-relative once the cell's `parent` is the group, unlike
-      // the edges below (whose `parent` stays "1", the root layer, so their points are absolute).
+      // draw.io node geometry is parent-relative once the cell's `parent` is the group, unlike the edges below (whose `parent` stays "1", the root layer, so their points are absolute).
       cells.push(nodeCell(
         id,
         `${logicalId}<br/><font color="#64748b">${resource.Type}</font>`,
@@ -203,11 +183,6 @@ export const generateDrawioCfnDependencyGraphAsync = async (
       const sourceBox = layout.nodes.get(source);
       const targetBox = layout.nodes.get(target);
       const kind = dependency.to.via ?? 'Ref';
-      // A fallback (`layout.usedAutoLayout === false`) only has node centers to offer, not real
-      // routing (see gridFallbackLayout's doc comment) - anchoring at a fraction derived from a
-      // center point would force the connector into the middle of the shape instead of its
-      // perimeter, so this leaves anchors/bend points unset and lets draw.io's own connector
-      // routing pick the perimeter point instead.
       cells.push(edgeCell(
         edgeId,
         source,

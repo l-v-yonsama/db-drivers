@@ -307,23 +307,6 @@ export class AwsS3ServiceClient
     return rdb.build();
   }
 
-  // async putObject(
-  //   bucket: string,
-  //   key: string,
-  //   file_path: string,
-  // ): Promise<string | undefined> {
-  //   const params: any = {
-  //     Bucket: bucket,
-  //     Key: key,
-  //   };
-  //   const v = fs.readFileSync(file_path);
-  //   params.Body = v;
-  //   return new Promise<string | undefined>((resolve, reject) => {
-  //     this.s3.putObject(params, (err, data) => {
-  //       resolve(data.ETag);
-  //     });
-  //   });
-  // }
 
   async getInfomationSchemas(): Promise<AwsDatabase> {
     if (!this.conRes) {

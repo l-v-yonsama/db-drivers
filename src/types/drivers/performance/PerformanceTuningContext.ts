@@ -1,34 +1,7 @@
 import { PerformanceTuningDiagnostic } from './PerformanceTuningDiagnostic';
 import { PlanNode } from './PlanNode';
 
-// See misc/design/performance-tuning-context-implementation-plan.ja.md for
-// the full rationale behind every field below. In short: this is a
-// vendor-neutral snapshot of "why is this one SQL statement slow", built
-// from the execution plan outward to only the tables/columns/indexes that
-// plan touches. Driver implementations report observed facts and their
-// provenance (source, unit, estimated vs. actual); they never return
-// conclusions ("run VACUUM") or AI output - that is strictly an upper-layer
-// responsibility.
-//
-// Text fields here (DDL, DEFAULT/CHECK expressions, index predicates, plan
-// predicates, the SQL text itself) are exactly what the driver read from the
-// database, with no literal-masking step - this matches every other
-// AI-facing path already shipped in db-notebook (schema/DDL prompts, "Annotate
-// SQL with AI", the RunQueryTool's row results), none of which redact
-// literals either. An earlier version of this file added a type-enforced
-// masking boundary (`Unsanitized<T>`) specific to this one feature; it was
-// removed for being inconsistent with that existing, already-shipped
-// posture and for gating on a redactor that didn't exist. If per-field
-// literal redaction is ever wanted, it should be designed once, for all
-// AI-facing paths, not bolted onto this feature alone.
 
-// Second, optional argument accepted by getPerformanceTuningContext() and
-// checkPerformanceTuningContextAvailability(), kept separate from the params
-// object itself (mirroring fetch()'s `{ signal }`) since cancellation is a
-// call-scoped control concern, not request data that belongs in a saved
-// Notebook or an AI payload. Threaded down into
-// PerformanceTuningContextProvider so a caller can actually cancel
-// in-flight collection once Phase 1 wires in real Provider calls.
 export type PerformanceTuningCallOptions = {
   signal?: AbortSignal;
 };
@@ -47,12 +20,6 @@ export type PerformanceTuningContextParams = {
   plan: {
     mode?: 'estimate' | 'analyze'; // default: 'estimate'
     binds?: unknown[]; // used only to obtain a parameter-specific plan; never echoed back
-    // Call-scoped only, same rule as `binds`: never copied into
-    // PerformanceTuningContext, Full Context JSON, StateStorage, SQL
-    // History, telemetry, or logs (misc/design/performance-tuning-query-
-    // statistics-parameter-input-plan.ja.md §7.4/§8.1, db-notebook repo).
-    // Parallel array to `binds`, same order/length; only SQL Server's
-    // named-parameter SHOWPLAN substitution consumes it today.
     bindMarkers?: string[];
     bindMetadata?: Array<{
       type?: string;
@@ -67,16 +34,6 @@ export type PerformanceTuningContextParams = {
     tableName: string;
   }>;
 
-  // Corrects a plan-reported table name that's actually an alias, keyed by
-  // the lowercased alias (or bare table name for an unaliased reference) -
-  // see resolveTableAliasMap() (§6.6 of performance-tuning-query-
-  // statistics-parameter-input-plan.ja.md, db-notebook repo). Complements
-  // targetTables above rather than replacing it: this corrects a table the
-  // plan *did* resolve but under the wrong name (MySQL's aliased-table
-  // EXPLAIN gap); targetTables adds a table the plan *didn't* resolve at
-  // all. Applied uniformly regardless of dbType - a miss here just means
-  // the plan's own tableName is used unchanged, which is the common case
-  // for every Vendor besides MySQL's aliased queries.
   tableAliasMap?: Record<string, { schemaName?: string; tableName: string }>;
 
   limits?: {
@@ -98,9 +55,7 @@ export type DatabaseContext = {
 export type StatementContext = {
   sql: string;
   source: 'statementStatistics' | 'sqlHistory' | 'editor';
-  // The driver classifies the statement once, before plan collection.  UI
-  // clients must use this rather than trying to infer executability from
-  // SQL text: an analyze-mode plan is deliberately limited to one SELECT.
+  // The driver classifies the statement once, before plan collection.
   kind?: 'select' | 'insert' | 'update' | 'delete' | 'other';
   analyzeEligibility?: {
     allowed: boolean;
@@ -112,10 +67,7 @@ export type StatementContext = {
   }>;
 };
 
-// Copied verbatim from the caller-selected getStatementStatistics() /
-// SQL History row at selection time. This API never re-queries the source
-// to refresh it, and never substitutes 0 for a metric the source did not
-// have - that would misrepresent SQL History rows as having DB-side stats.
+// Copied verbatim from the caller-selected getStatementStatistics() / SQL History row at selection time.
 export type WorkloadContext = {
   statementId?: string;
   executionCount?: number;
@@ -132,16 +84,10 @@ export type WorkloadContext = {
   source?: string;
 };
 
-// What the caller passes in via `statement.statistics`; identical shape to
-// what ends up in `PerformanceTuningContext.workload` after the API copies it.
+// What the caller passes in via `statement.statistics`; identical shape to what ends up in `PerformanceTuningContext.workload` after the API copies it.
 export type SelectedStatementStatistics = WorkloadContext;
 
-// A deliberately-triggered, short benchmark is different evidence from the
-// rolling workload above. Every sample is retained so callers can show the
-// spread and audit the median instead of receiving only a pre-aggregated
-// number. EXPLAIN ANALYZE is collected immediately before these ordinary
-// SELECT executions, but its instrumented execution time is never mixed into
-// this client-observed series.
+// A deliberately-triggered, short benchmark is different evidence from the rolling workload above.
 export type PerformanceTuningBenchmarkSample = {
   run: number;
   clientElapsedTimeMs: number;
@@ -162,19 +108,6 @@ export type PerformanceTuningBenchmarkSession = {
   source: 'performanceTuningBenchmark';
 };
 
-// A purely factual, computed pointer at the one PlanNode that accounts for
-// the most cost/time in a plan - never a verdict ("this is the problem"),
-// just "this is where the numbers concentrate" (2026-08-21 follow-up, see
-// scripts/performance-lab/aiResults/summary.md's "追加検証(2nd-0821)" /
-// Full Context improvement item 5). Motivated by a concrete regression: an
-// AI given a real EXPLAIN ANALYZE plan anchored on a secondary
-// PLAN_OBSERVATION diagnostic (temp table/filesort - a GROUP BY/ORDER BY
-// symptom) instead of the WHERE-clause filtering step that was actually
-// dominant. `exclusiveValue` is this node's own contribution with its
-// children's contributions subtracted out (see planNodeMath.ts's
-// computeExclusiveCost()) - inclusive/cumulative cost trivially always
-// maximizes at the plan root in every vendor's plan representation, so it
-// would be useless for this purpose.
 export type DominantCostPlanNodeRef = {
   planNodeId: string; // cross-references PlanNode.id somewhere in executionPlan.normalizedPlan
   metric: 'actual' | 'estimated'; // which figure decided this
@@ -182,20 +115,13 @@ export type DominantCostPlanNodeRef = {
 };
 
 // A database-native plan captured while the target SELECT really executed.
-// This stays separate from normalizedPlan: PostgreSQL can normalize its
-// ANALYZE JSON directly, but MySQL, Oracle, and SQL Server expose their
-// runtime evidence as text or XML. Consumers must not infer planNodeId
-// correspondence from the artifact's visual/tree order alone.
 export type ActualPlanArtifact = {
   source: string;
   format: 'json' | 'text' | 'xml';
   content: string;
 };
 
-// A small, vendor-neutral summary extracted from a native actual-plan
-// artifact.  It remains available even when the AI input must omit a large
-// XML/text artifact, and intentionally has no planNodeId: a native runtime
-// plan must not be matched to estimate-plan topology by visual position.
+// A small, vendor-neutral summary extracted from a native actual-plan artifact.
 export type RuntimeObservation = {
   kind: 'runtimeOperation' | 'missingIndex' | 'memoryGrant' | 'timing' | 'wait';
   source: string;
@@ -219,21 +145,11 @@ export type ExecutionPlanContext = {
   normalizedPlan?: PlanNode;
   planningTimeMs?: number;
   executionTimeMs?: number;
-  // Database-native runtime evidence. `normalizedPlan`/planTableMappings
-  // may still be estimate-mode topology (MySQL/Oracle/SQL Server); this
-  // artifact must therefore never be positionally matched to planNodeIds.
+  // Database-native runtime evidence.
   actualPlan?: ActualPlanArtifact;
-  // Runtime facts extracted conservatively from actualPlan.  These are not
-  // table-mapping metrics and never imply a node correspondence.
+  // Runtime facts extracted conservatively from actualPlan.
   runtimeObservations?: RuntimeObservation[];
-  // See DominantCostPlanNodeRef above. Computed by RDSBaseDriver for every
-  // vendor from normalizedPlan's estimated/actual costs
-  // (planNodeMath.ts's findDominantCostPlanNode()); MySQL additionally
-  // resolves this from its actual-plan artifact when analyze mode is on
-  // (mysqlActualPlanTextParser.ts), since MySQL's normalizedPlan tree never
-  // carries real per-node actual timing the way Postgres's does.
-  // `undefined` only when no node in the plan has any usable cost/time data
-  // at all.
+  // See DominantCostPlanNodeRef above.
   dominantCostPlanNode?: DominantCostPlanNodeRef;
 };
 
@@ -289,12 +205,6 @@ export type TableDefinitionContext = {
   partitioning?: PartitioningDefinition;
 };
 
-// Every observed value carries its own provenance instead of one
-// estimated/source pair per section: an estimated row count, an exact size
-// read via a size function, and an updated-at timestamp from yet another
-// catalog view are three different degrees of trust, and collapsing them
-// into a single container-level flag would tell the AI they're all equally
-// reliable when they are not.
 export type MetricValue<T> = {
   value: T;
   estimated: boolean;
@@ -325,10 +235,7 @@ export type TableStatisticsContext = {
   columns: ColumnStatisticsContext[];
 };
 
-// Deliberately not named "garbage"/vacuum-need in any language: Providers
-// report observations only (dead tuples, fragmentation, free space, stale
-// statistics, ...), never a maintenance verdict. Thresholding against table
-// size / workload / vendor quirks is a deterministic upper-layer rule.
+// Deliberately not named "garbage"/vacuum-need in any language: Providers report observations only (dead tuples, fragmentation, free space, stale statistics, ...), never a maintenance verdict.
 export type PhysicalHealthContext = {
   provider: string;
   metrics: Array<{
@@ -357,26 +264,16 @@ export type PlanTableMapping = {
   estimatedRows?: number;
   actualRows?: number;
   rowEstimateRatio?: number;
-  // Rows entering the table-local filtering stage, per execution when the
-  // vendor reports it. This is intentionally separate from actualRows:
-  // actualRows is the node's output, while tableAccessRows is the scanned /
-  // index-accessed candidate set before a local Filter removes rows.
+  // Rows entering the table-local filtering stage, per execution when the vendor reports it.
   tableAccessRows?: MetricValue<number>;
-  // Explicit local Filter input/output counts. Omitted unless one vendor
-  // reports both counts for this exact table access; never inferred by
-  // aligning visual nodes from an independent actual-plan artifact.
+  // Explicit local Filter input/output counts.
   predicateFilterInputRows?: MetricValue<number>;
   predicateFilterOutputRows?: MetricValue<number>;
   filterColumns?: string[];
   joinColumns?: string[];
   groupColumns?: string[];
   sortColumns?: string[];
-  // The independently meaningful selectivity measures are deliberately
-  // separate. Both are fractions in [0,1], never percentages.
-  // `tableAccessFraction` is the candidate set reached by the table access
-  // relative to total table rows. `predicateFilterSelectivity` is the
-  // fraction that a local Filter passed (output / input). Either is absent
-  // when the vendor did not provide the required count(s).
+  // The independently meaningful selectivity measures are deliberately separate.
   tableAccessFraction?: MetricValue<number>;
   predicateFilterSelectivity?: MetricValue<number>;
 };
@@ -411,13 +308,6 @@ export type PerformanceTuningContext = {
   collection: {
     collectedAt: string;
     status: 'complete' | 'partial';
-    // Every structured diagnostic collection produced, in provenance order
-    // (plan-level diagnostics first, then per-table ones) - the single home
-    // that replaced the four separate warning-string arrays this type used
-    // to have (ExecutionPlanContext.warnings, TableTuningContext.warnings,
-    // this field itself, and PlanNode.warnings). `status` is derived only
-    // from this and unavailableSections below (§2.2) - an `info` diagnostic
-    // never affects it.
     diagnostics: PerformanceTuningDiagnostic[];
     unavailableSections: UnavailableSection[];
   };

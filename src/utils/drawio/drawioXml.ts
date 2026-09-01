@@ -1,9 +1,3 @@
-// Generic draw.io XML building blocks shared by every diagram generator in this package
-// (`cfn/` and `er/`). None of this knows anything about CloudFormation or database metadata -
-// it only knows the shape of a draw.io `.drawio` document (mxfile > diagram > mxGraphModel >
-// root > mxCell*). Originally lived under `cfn/drawioXml.ts`; moved here once the ER draw.io
-// generators turned out to need the exact same `xmlEscape`/page-wrapping code (found during a
-// cross-cutting duplication review - see misc/automatic-diagram-layout-and-er-migration-plan.md).
 export const xmlEscape = (value: string): string => value
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -48,9 +42,7 @@ type DrawioLineLegendParams = {
   jumpSize?: number;
 };
 
-/** Renders relationship legends as real edge samples followed by plain text labels.
- * A styled vertex looks like a node category, so all draw.io relationship diagrams use
- * this shared representation instead. */
+/** Renders relationship legends as real edge samples followed by plain text labels. */
 export const drawioLineLegendCells = ({
   id = 'legend',
   title,

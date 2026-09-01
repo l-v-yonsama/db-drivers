@@ -42,12 +42,7 @@ export type BindOptions = {
 
 export type SQLLang = 'sql' | 'partiql';
 
-/**
- * How a driver's dialect expresses "limit the number of rows returned":
- *  - 'top': a leading `TOP n` in the SELECT clause (SQL Server)
- *  - 'trailing': a trailing `LIMIT n` (MySQL / Postgres / SQLite / Aws PartiQL)
- *  - 'fetchFirst': a trailing `FETCH FIRST n ROWS ONLY` (Oracle)
- */
+/** How a driver's dialect expresses "limit the number of rows returned": - 'top': a leading `TOP n` in the SELECT clause (SQL Server) */
 export type LimitClauseStyle = 'top' | 'trailing' | 'fetchFirst';
 
 export type ViewRecordsParams = {
@@ -64,8 +59,7 @@ export type ToViewDataQueryParams = {
   quote?: boolean;
   idQuoteCharacter?: string;
   sqlLang?: SQLLang;
-  // toPositionedParameter?: boolean;
-  // toPositionalCharacter?: string;
+  // toPositionedParameter?: boolean; toPositionalCharacter?: string;
   limit?: number;
   limitClauseStyle?: LimitClauseStyle;
 };
@@ -166,8 +160,6 @@ export type BindParamPosition = {
   kind: 'single' | 'multiple';
 };
 
-/**
- * Supported SQL languages for formatter (source of truth)
- */
+/** Supported SQL languages for formatter (source of truth) */
 export const FORMATTER_SQL_LANGUAGES: readonly SqlLanguage[] =
   supportedDialects as SqlLanguage[];

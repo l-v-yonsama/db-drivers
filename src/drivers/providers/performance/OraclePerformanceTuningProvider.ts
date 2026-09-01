@@ -37,17 +37,7 @@ import {
   VendorTableStatistics,
 } from './PerformanceTuningContextProvider';
 
-// Narrow, structural view of OracleDriver - just what this Provider needs,
-// same rationale as the other three vendors' Providers: unit-testable with
-// a stub, and can't reach past this into connect/disconnect/transactions/UI.
-// collectPerformanceTuningPlanRows() is a dedicated method (not the general
-// "Explain" feature's explainSqlSub(), which returns DBMS_XPLAN.DISPLAY's
-// curated text output, not PLAN_TABLE's raw structured rows this Provider
-// needs) - see OracleDriver.ts's doc comment on it. getCurrentSchema() is
-// reused as-is (already implemented for the resource-tree feature) rather
-// than duplicated, since Oracle has no equivalent of MySQL's "database IS
-// the schema" or SQL Server's "'dbo' is almost always right" - the real
-// default is genuinely per-connection.
+// Narrow, structural view of OracleDriver - just what this Provider needs, same rationale as the other three vendors' Providers: unit-testable with a stub, and can't reach past this into connect/disconnect/transactions/UI.
 export interface OraclePerformanceTuningDriverAccess {
   requestSql(params: QueryParams): Promise<ResultSetData>;
   getTableDDL(params: { tableName: string; schemaName?: string }): Promise<string>;
@@ -70,10 +60,6 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     params: PerformanceTuningAvailabilityParams,
   ): Promise<GeneralResult<PerformanceTuningCapabilities>> {
-    // Read-only, static capability report - same contract as the other
-    // three vendors' Providers (§7: never touches the DB; a per-table
-    // permission gap still surfaces later as that table's own
-    // unavailableSections entry, not here).
     const capabilities: PerformanceTuningCapabilities = {
       executionPlan: { available: true, source: 'EXPLAIN PLAN / PLAN_TABLE' },
       analyzedExecutionPlan: {
@@ -96,13 +82,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
     return { ok: true, message: '', result: capabilities };
   }
 
-  // Resolves {owner, indexName} pairs findUnresolvedIndexOnlyAccessKeys()
-  // found in the raw plan rows to their real {schemaName, tableName} via
-  // ALL_INDEXES, batched into one query per distinct owner (almost always
-  // exactly one - a plan touching indexes across several schemas is rare).
-  // Never throws: a lookup failure just means those keys stay unresolved,
-  // which parseOraclePlan() already turns into an honest per-node warning
-  // rather than a fabricated table name.
+  // Resolves {owner, indexName} pairs findUnresolvedIndexOnlyAccessKeys() found in the raw plan rows to their real {schemaName, tableName} via ALL_INDEXES, batched into one query per distinct owner (almost always exactly one - a plan touching indexes across several schemas is rare).
   private async resolveIndexOnlyAccessTables(
     keys: OracleIndexTableKey[],
   ): Promise<Map<string, { schemaName: string; tableName: string }>> {
@@ -125,8 +105,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
             meta: { type: 'performanceTuningContext' },
           });
           for (const row of rdh.rows) {
-            // Oracle folds every unquoted `AS alias` to uppercase - see
-            // oracleCatalogMapper.ts's module doc comment.
+            // Oracle folds every unquoted `AS alias` to uppercase - see oracleCatalogMapper.ts's module doc comment.
             const indexName = row.values.INDEX_NAME as string | undefined;
             const tableName = row.values.TABLE_NAME as string | undefined;
             const tableOwner = row.values.TABLE_OWNER as string | undefined;
@@ -135,8 +114,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
             }
           }
         } catch {
-          // Best-effort only - unresolved keys fall through to
-          // parseOraclePlan()'s own "could not resolve" warning.
+          // Best-effort only - unresolved keys fall through to parseOraclePlan()'s own "could not resolve" warning.
         }
       }),
     );
@@ -147,8 +125,6 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
     params: PerformanceTuningContextParams,
     options: PerformanceTuningCallOptions & { timeoutMs: number },
   ): Promise<GeneralResult<VendorExecutionPlan>> {
-    // binds are used only to obtain a parameter-specific plan (§4.1); they
-    // are never placed anywhere in the returned VendorExecutionPlan.
     const binds = params.plan?.binds?.map((v) => String(v));
 
     let rdh: ResultSetData;
@@ -159,8 +135,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
         meta: { type: 'performanceTuningContext' },
       });
     } catch (e) {
-      // Same precedent as the other three vendors: a failed EXPLAIN PLAN is
-      // an expected, actionable failure, surfaced with detail.
+      // Same precedent as the other three vendors: a failed EXPLAIN PLAN is an expected, actionable failure, surfaced with detail.
       const detail = e instanceof Error ? e.message : String(e);
       return {
         ok: false,
@@ -204,12 +179,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
       }
     }
 
-    // DISPLAY_CURSOR can show a runtime topology different from EXPLAIN
-    // PLAN (adaptive choices, bind peeking, and reoptimization). Resolve
-    // only a unique table-name match from the actual artifact; never align
-    // the two independent plan ID sequences by position. This mirrors
-    // MySQL's semantic actual-plan-to-mapping resolution, while preserving
-    // Oracle's structured PLAN_TABLE result as the estimate/fallback source.
+    // DISPLAY_CURSOR can show a runtime topology different from EXPLAIN PLAN (adaptive choices, bind peeking, and reoptimization).
     const actualPlanTableStats = actualPlan
       ? resolveOracleActualPlanTableStats(actualPlan.content, planTableMappings)
       : undefined;
@@ -225,13 +195,9 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
       ok: true,
       message: '',
       result: {
-        // PLAN_TABLE has no single JSON document the way Postgres/MySQL's
-        // EXPLAIN does - the flat row list itself is the closest equivalent
-        // of "the vendor's own plan output" (§5.2), same as SQL Server's raw.
         raw: rawRows,
         normalizedPlan: planNode,
-        // EXPLAIN PLAN never executes the query - no timing available
-        // (estimate mode only, same as the other three vendors).
+        // EXPLAIN PLAN never executes the query - no timing available (estimate mode only, same as the other three vendors).
         planningTimeMs: undefined,
         executionTimeMs: undefined,
         actualPlan,
@@ -242,10 +208,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
     };
   }
 
-  // Same rationale as the other three Providers' runCatalogQuery(): an
-  // ordinary ALL_*-view error (permission denied, ...) gets a *detailed*
-  // message, since it's an expected/actionable failure, not the generic
-  // message RDSBaseDriver's exception boundary uses for genuine bugs.
+  // Same rationale as the other three Providers' runCatalogQuery(): an ordinary ALL_*-view error (permission denied, ...) gets a *detailed* message, since it's an expected/actionable failure, not the generic message RDSBaseDriver's exception boundary uses for genuine bugs.
   private async runCatalogQuery(
     sql: string,
     binds: string[],
@@ -267,13 +230,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
     }
   }
 
-  // getTableDDL() throws rather than returning a GeneralResult - wrapped
-  // into GeneralResult<string> here (never a bespoke ok/text-or-message
-  // union) so its failure can be downgraded to a warning in
-  // collectTableDefinition() instead of failing the whole call. See
-  // MySQLPerformanceTuningProvider.collectDdl()'s comment for why
-  // GeneralResult<T> specifically (this project's strictNullChecks:false
-  // breaks control-flow narrowing on ad-hoc discriminated unions).
+  // getTableDDL() throws rather than returning a GeneralResult - wrapped into GeneralResult<string> here (never a bespoke ok/text-or-message union) so its failure can be downgraded to a warning in collectTableDefinition() instead of failing the whole call.
   private async collectDdl(target: PerformanceTuningTableTarget): Promise<GeneralResult<string>> {
     try {
       const text = await this.driver.getTableDDL({
@@ -317,12 +274,6 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
         ? mapOracleCheckConstraintRows(checkConstraintsResult.result?.rows.map((r) => r.values) ?? [])
         : []),
     ];
-    // ALL_INDEXES carries no "is this the PK's backing index" flag of its
-    // own - Oracle always names a PK's backing index identically to the PK
-    // constraint itself, so that's cross-referenced here from the
-    // constraint list this same call already collected, rather than
-    // guessed at inside mapOracleIndexRows() (which has no constraint data
-    // to work from).
     const pkIndexNames = new Set(
       constraints
         .filter((c) => c.type === 'primaryKey')
@@ -445,13 +396,7 @@ export class OraclePerformanceTuningProvider implements PerformanceTuningContext
   }
 }
 
-// Every `AS` alias below is UPPERCASE, and every already-bare column
-// reference (MODIFICATIONS_SQL/PHYSICAL_HEALTH_SQL/INDEX_TABLE_LOOKUP_SQL)
-// relies on Oracle's real catalog column names already being uppercase -
-// node-oracledb (and Oracle itself) folds every unquoted identifier,
-// aliases included, to uppercase regardless of how this SQL text is
-// written, so oracleCatalogMapper.ts's row access must match (see its own
-// module doc comment for the live-verified detail).
+// Every `AS` alias below is UPPERCASE, and every already-bare column reference (MODIFICATIONS_SQL/PHYSICAL_HEALTH_SQL/INDEX_TABLE_LOOKUP_SQL)
 const COLUMNS_SQL = `
 SELECT
   col.COLUMN_NAME AS NAME,
@@ -470,10 +415,6 @@ WHERE col.OWNER = :1 AND col.TABLE_NAME = :2
 ORDER BY col.COLUMN_ID`;
 
 // One row per (constraint, column); grouped in JS by mapOracleConstraintRows().
-// Self-joined against ALL_CONSTRAINTS/ALL_CONS_COLUMNS a second time
-// (aliased rc/rcc) to resolve a FOREIGN KEY's referenced table/column - the
-// same pattern OracleDriver.setForinKeys() already uses elsewhere in this
-// driver for the resource tree.
 const CONSTRAINTS_SQL = `
 SELECT
   ac.CONSTRAINT_NAME AS CONSTRAINT_NAME,
@@ -491,17 +432,13 @@ LEFT JOIN ALL_CONS_COLUMNS rcc
 WHERE ac.OWNER = :1 AND ac.TABLE_NAME = :2 AND ac.CONSTRAINT_TYPE IN ('P','U','R')
 ORDER BY ac.CONSTRAINT_NAME, acc.POSITION`;
 
-// A separate query: CHECK constraints (including the auto-generated NOT
-// NULL ones mapOracleCheckConstraintRows() filters back out) carry no
-// column list of their own in ALL_CONSTRAINTS.
+// A separate query: CHECK constraints (including the auto-generated NOT NULL ones mapOracleCheckConstraintRows() filters back out) carry no column list of their own in ALL_CONSTRAINTS.
 const CHECK_CONSTRAINTS_SQL = `
 SELECT CONSTRAINT_NAME AS CONSTRAINT_NAME, SEARCH_CONDITION_VC AS CHECK_CLAUSE
 FROM ALL_CONSTRAINTS
 WHERE OWNER = :1 AND TABLE_NAME = :2 AND CONSTRAINT_TYPE = 'C'`;
 
-// One row per (index, column); grouped in JS by mapOracleIndexRows(), which
-// also splits a function-based index's hidden-system-column key part
-// (COLUMN_EXPRESSION from ALL_IND_EXPRESSIONS) from a plain one.
+// One row per (index, column); grouped in JS by mapOracleIndexRows(), which also splits a function-based index's hidden-system-column key part (COLUMN_EXPRESSION from ALL_IND_EXPRESSIONS) from a plain one.
 const INDEXES_SQL = `
 SELECT
   i.INDEX_NAME AS INDEX_NAME,
@@ -518,11 +455,6 @@ LEFT JOIN ALL_IND_EXPRESSIONS ie
 WHERE i.OWNER = :1 AND i.TABLE_NAME = :2
 ORDER BY i.INDEX_NAME, ic.COLUMN_POSITION`;
 
-// BLOCK_SIZE comes from USER_TABLESPACES (ALL_TABLESPACES/DBA_TABLESPACES
-// are not guaranteed readable even with SELECT_CATALOG_ROLE - confirmed
-// against a live Oracle 23c Free instance where only USER_TABLESPACES was
-// accessible) rather than assumed to be the 8192-byte default; NVL(...,
-// 8192) is only a last-resort fallback when even that join misses.
 const TABLE_SIZE_SQL = `
 SELECT
   t.NUM_ROWS AS NUM_ROWS,
@@ -540,13 +472,7 @@ SELECT INSERTS, UPDATES, DELETES
 FROM ALL_TAB_MODIFICATIONS
 WHERE TABLE_OWNER = :1 AND TABLE_NAME = :2`;
 
-// `$COLUMN_PLACEHOLDERS` is substituted with `:3, :4, ...` (one per
-// requested column) before this is sent - see collectColumnStatistics().
-// Joined against ALL_TABLES for NUM_ROWS (aliased TABLE_NUM_ROWS): NUM_NULLS
-// is the whole column's null count, not scaled to whatever sample
-// DBMS_STATS analyzed, so mapOracleColumnStatisticsRow() divides by the
-// table's real row count rather than ALL_TAB_COL_STATISTICS' own
-// SAMPLE_SIZE (which can be smaller and would then overstate the fraction).
+// `$COLUMN_PLACEHOLDERS` is substituted with `:3, :4, ...` (one per requested column) before this is sent - see collectColumnStatistics().
 const COLUMN_STATISTICS_SQL = `
 SELECT
   s.COLUMN_NAME, s.NUM_DISTINCT, s.NUM_NULLS,
@@ -561,8 +487,7 @@ const PHYSICAL_HEALTH_SQL = `
 SELECT CHAIN_CNT, LAST_ANALYZED
 FROM ALL_TABLES WHERE OWNER = :1 AND TABLE_NAME = :2`;
 
-// `$INDEX_NAME_PLACEHOLDERS` is substituted with `:2, :3, ...` (one per
-// index name, after the fixed owner bind) - see resolveIndexOnlyAccessTables().
+// `$INDEX_NAME_PLACEHOLDERS` is substituted with `:2, :3, ...` (one per index name, after the fixed owner bind) - see resolveIndexOnlyAccessTables().
 const INDEX_TABLE_LOOKUP_SQL = `
 SELECT INDEX_NAME, TABLE_NAME, TABLE_OWNER
 FROM ALL_INDEXES

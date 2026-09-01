@@ -2,18 +2,7 @@ import { spawn } from 'child_process';
 
 export type MermaidParseResult = { ok: true } | { ok: false; message: string };
 
-// @mermaid-js/parser ships ESM-only (its package.json "exports" defines only
-// an "import" condition - no "require"/"main"). This project's Jest config
-// has module: 'commonjs' (see tsconfig.json/jest.config.js), so an in-process
-// `await import('@mermaid-js/parser')` can't resolve it: jest-resolve throws
-// "Cannot find module" before a transform even runs, and even bypassing
-// TypeScript's import-to-require downleveling via `new Function(...)` still
-// hits Jest's own vm sandbox ("You need to run with a version of node that
-// supports ES Modules in the VM API") unless the whole suite is switched to
-// --experimental-vm-modules - too invasive a change to a shared config just
-// for one syntax check. Spawning a plain `node --input-type=module` child
-// process sidesteps Jest's module system entirely and lets Node's own,
-// unmodified ESM loader resolve the package normally.
+// @mermaid-js/parser ships ESM-only (its package.json "exports" defines only an "import" condition - no "require"/"main").
 const WORKER_SCRIPT = `
 import { parse } from '@mermaid-js/parser';
 let input = '';
@@ -40,11 +29,7 @@ process.stdin.on('end', async () => {
 });
 `;
 
-/**
- * Confirms generated Mermaid bodies have a supported root and balanced flowchart structure.
- * The installed parser package validates architecture-beta bodies; flowchart output receives
- * deterministic structural checks here and is additionally rendered in the browser QA step.
- */
+/** Confirms generated Mermaid bodies have a supported root and balanced flowchart structure. */
 export const verifyMermaidArchitectureSyntax = (
   bodies: string[],
 ): Promise<MermaidParseResult[]> => {
@@ -85,7 +70,6 @@ export const verifyMermaidArchitectureSyntax = (
   });
 };
 
-/** Strips generateDiagram()'s ```mermaid fence, leaving the raw diagram
- * source @mermaid-js/parser expects. */
+/** Strips generateDiagram()'s ```mermaid fence, leaving the raw diagram source @mermaid-js/parser expects. */
 export const stripMermaidFence = (diagram: string): string =>
   diagram.replace(/^```mermaid\n/, '').replace(/```\s*$/, '');

@@ -70,10 +70,7 @@ function uniqueMessages(
   return messages;
 }
 
-/**
- * Aligns raw data before deriving values. Missing inputs remain null and are
- * never zero-filled. Input-only queries are removed after derivation.
- */
+/** Aligns raw data before deriving values. */
 export function deriveMetricPanelSeries(
   rawSeries: readonly MetricSeries[],
   panel: ResolvedMetricPanel,

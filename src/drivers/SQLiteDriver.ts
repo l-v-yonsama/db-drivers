@@ -360,8 +360,6 @@ export class SQLiteDriver extends RDSBaseDriver {
       const columnName = it['column_name'];
       const referencedTableName = it['referenced_table_name']; // order
       const referencedColumnName = it['referenced_column_name'];
-      // FROM order.customer_no -> TO customer.customer_no
-      // FROM order_detail.order_no -> TO order.order_no
       const tableRes = dbSchema.getChildByName(tableName);
       if (tableRes) {
         if (tableRes.getChildByName(columnName)) {
@@ -379,8 +377,6 @@ export class SQLiteDriver extends RDSBaseDriver {
         }
       }
 
-      // TO customer.customer_no <- FROM order.customer_no
-      // TO order.order_no <- FROM order_detail.order_no
       const tableRes2 = dbSchema.getChildByName(referencedTableName);
       if (tableRes2) {
         if (tableRes2.getChildByName(referencedColumnName)) {
@@ -497,14 +493,7 @@ export class SQLiteDriver extends RDSBaseDriver {
     return true;
   }
 
-  /**
-   * `schemaName` is intentionally unused: this codebase models SQLite as
-   * single-schema (`isSchemaSpecificationSvailable()` is false above), so
-   * cross-schema duplicate table names can't occur. The returned DDL is the
-   * verbatim `CREATE TABLE` text as originally authored by the user (stored
-   * in `sqlite_master.sql`), so it's left unrewritten rather than risking
-   * corruption of arbitrary user-written SQL.
-   */
+  /** `schemaName` is intentionally unused: this codebase models SQLite as single-schema (`isSchemaSpecificationSvailable()` is false above), so cross-schema duplicate table names can't occur. */
   async getTableDDL({
     tableName,
   }: {

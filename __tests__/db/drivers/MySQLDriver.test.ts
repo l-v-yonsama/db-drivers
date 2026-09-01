@@ -389,8 +389,7 @@ describe('MySQLDriver', () => {
         schemaName: 'test-db',
         tableName: 'EMP',
       });
-      // `SHOW CREATE TABLE` never qualifies its own output with the schema,
-      // so the driver must prepend it when `schemaName` is given.
+      // `SHOW CREATE TABLE` never qualifies its own output with the schema, so the driver must prepend it when `schemaName` is given.
       const qualifiedEmpDDL = empDDL.replace(
         'CREATE TABLE `EMP`',
         'CREATE TABLE `test-db`.`EMP`',
@@ -1149,11 +1148,6 @@ describe('MySQLDriver', () => {
   });
 
   describe('getStatementStatistics', () => {
-    // A dedicated driver, not the shared `driver` above: describe('kill')
-    // deliberately kills `driver`'s own session earlier in this file, and
-    // every describe block after it already avoids reusing `driver` for
-    // exactly that reason (see locks/transaction isolation above, each
-    // with their own createRDSDriver() instance).
     let statsDriver: RDSBaseDriver;
 
     beforeAll(async () => {
@@ -1184,9 +1178,7 @@ describe('MySQLDriver', () => {
     ];
 
     it('returns the 15 required columns plus MySQL 8.0 sample columns appended after them', async () => {
-      // Guarantees at least one digest entry exists for this database,
-      // independent of whatever earlier tests in this file already left
-      // behind in performance_schema.
+      // Guarantees at least one digest entry exists for this database, independent of whatever earlier tests in this file already left behind in performance_schema.
       await statsDriver.requestSql({ sql: 'SELECT 1' });
 
       const rdh = await statsDriver.getStatementStatistics({
@@ -1197,8 +1189,6 @@ describe('MySQLDriver', () => {
       const columnNames = rdh.keys.map((k) => k.name);
 
       expect(columnNames.slice(0, REQUIRED_COLUMNS.length)).toEqual(REQUIRED_COLUMNS);
-      // Optional MySQL 8.0 sample columns (§3.1/§6.4) are appended after
-      // the 15 required ones, never interleaved (§11 completion criteria).
       expect(columnNames.slice(REQUIRED_COLUMNS.length)).toEqual([
         'query_sample_text',
         'query_sample_seen_at',

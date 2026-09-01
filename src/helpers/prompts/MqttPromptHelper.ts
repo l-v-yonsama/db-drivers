@@ -2,11 +2,7 @@ import { DbSubscription, MqttDatabase } from '../../resource';
 import { CreateMqttSchemaDefinitionsForPromptParams } from '../../types';
 import { formatResourceGroupHeading } from './promptFormatUtils';
 
-/**
- * Lists the topic filters of a target Mqtt resource tree. `MqttDatabase.children`
- * reflects the connection's statically-configured subscription list (not
- * dynamically-discovered topics), so no live driver call is needed here.
- */
+/** Lists the topic filters of a target Mqtt resource tree. */
 export const createMqttSchemaDefinitionsForPrompt = async (
   params: CreateMqttSchemaDefinitionsForPromptParams,
 ): Promise<string | undefined> => {

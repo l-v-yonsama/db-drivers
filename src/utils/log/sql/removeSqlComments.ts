@@ -3,11 +3,7 @@ export type SqlSegment = {
   inString: boolean;
 };
 
-/**
- * Splits SQL into segments, marking which parts sit inside a quoted string
- * literal ('...', "...", `...`). Doubled quotes (e.g. '' inside '...') are
- * treated as an escaped quote rather than the end of the literal.
- */
+/** Splits SQL into segments, marking which parts sit inside a quoted string literal ('...', "...", `...`). */
 export function splitByStringLiterals(sql: string): SqlSegment[] {
   const segments: SqlSegment[] = [];
   let current = '';

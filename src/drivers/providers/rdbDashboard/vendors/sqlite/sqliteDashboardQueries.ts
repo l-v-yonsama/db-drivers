@@ -4,10 +4,7 @@ SELECT sqlite_version() AS server_version,
 
 export const SQLITE_DASHBOARD_DATABASE_LIST_SQL = 'PRAGMA database_list';
 
-/**
- * SQLite PRAGMA schema names cannot be bound as values. The names passed here
- * come exclusively from PRAGMA database_list and are quoted as identifiers.
- */
+/** SQLite PRAGMA schema names cannot be bound as values. */
 export function sqliteDashboardPragmaSql(
   databaseName: string,
   pragma:

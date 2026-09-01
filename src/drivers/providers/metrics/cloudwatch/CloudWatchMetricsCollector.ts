@@ -40,10 +40,7 @@ export type CloudWatchMetricPanelsResult = {
   panels: CollectedCloudWatchMetricPanel[];
 };
 
-/**
- * Collects already-resolved metric panels. Service-specific metric names,
- * dimensions, prerequisites, and selectors remain adapter responsibilities.
- */
+/** Collects already-resolved metric panels. */
 export class CloudWatchMetricsCollector {
   constructor(private readonly transport: CloudWatchMetricsTransport) {}
 

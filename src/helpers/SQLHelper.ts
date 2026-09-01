@@ -1,7 +1,3 @@
-// This file is a re-export barrel: SQLHelper.ts's implementation lives in
-// ./sql/*.ts, split by responsibility (see readability-maintenance-plan-
-// 2026-08-14.md, Phase 3). It exists so existing imports of
-// '../helpers/SQLHelper' / './SQLHelper' keep working unchanged.
 export { formatQuery, getSqlLanguage } from './sql/formatQuery';
 export {
   createUndoChangeSQL,

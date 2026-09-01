@@ -5,13 +5,6 @@ import {
   resolveMysqlActualPlanTableStats,
 } from '../../../src';
 
-// Verbatim from scripts/performance-lab/aiResults/2nd-0821-with-analyze/
-// mysql/slow-01-missing-composite-index.dbn's "Actual execution plan
-// (EXPLAIN ANALYZE)" section - the real regression case that motivated
-// this whole file (see mysqlActualPlanTextParser.ts's own header comment
-// and summary.md's "追加検証(2nd-0821)"). 7 lines - 2 more than the
-// corresponding JSON estimate-plan's 5 nodes, confirming the positional-
-// alignment approach was correctly rejected.
 const SLOW_01_ACTUAL_PLAN_TEXT = `-> Sort: revenue DESC  (actual time=99.9..99.9 rows=1 loops=1)
     -> Table scan on <temporary>  (actual time=99.8..99.8 rows=1 loops=1)
         -> Aggregate using temporary table  (actual time=99.8..99.8 rows=1 loops=1)
@@ -20,9 +13,7 @@ const SLOW_01_ACTUAL_PLAN_TEXT = `-> Sort: revenue DESC  (actual time=99.9..99.9
                     -> Index lookup on o using idx_orders_status (status='PENDING')  (cost=4579 rows=65098) (actual time=7.4..97 rows=32100 loops=1)
                 -> Single-row index lookup on c using PRIMARY (id=performance_lab.o.customer_id)  (cost=0.844 rows=1) (actual time=0.00635..0.00637 rows=1 loops=150)`;
 
-// planTableMappings as the corresponding EXPLAIN FORMAT=JSON pass would
-// have resolved them for the same query (table alias "o"/"c" as
-// table_name, per mysqlPlanParser.ts's own documented alias behavior).
+// planTableMappings as the corresponding EXPLAIN FORMAT=JSON pass would have resolved them for the same query (table alias "o"/"c" as table_name, per mysqlPlanParser.ts's own documented alias behavior).
 const SLOW_01_PLAN_TABLE_MAPPINGS: PlanTableMapping[] = [
   { planNodeId: 'n3', tableName: 'o', indexName: 'idx_orders_status', estimatedRows: 3254 },
   { planNodeId: 'n4', tableName: 'c', indexName: 'PRIMARY', estimatedRows: 3254 },
@@ -111,11 +102,6 @@ describe('parseMysqlActualPlanText', () => {
 describe('resolveDominantCostFromMysqlActualPlanText', () => {
   it('identifies the real regression case correctly: the low-selectivity index lookup, not the Filter/Aggregate/Sort ancestors above it', () => {
     const result = resolveDominantCostFromMysqlActualPlanText(SLOW_01_ACTUAL_PLAN_TEXT, SLOW_01_PLAN_TABLE_MAPPINGS);
-    // By hand: "Index lookup on o using idx_orders_status" has inclusive
-    // 97ms (leaf, loops=1) - by far the largest exclusive contributor once
-    // every ancestor's own exclusive cost is computed (Filter's exclusive
-    // is only 98.5-97=1.5ms once its child is subtracted, NestedLoop's is
-    // ~0.04ms, etc.) - see planNodeMath.ts's computeExclusiveCost().
     expect(result).toEqual({ planNodeId: 'n3', metric: 'actual', exclusiveValue: 97 });
   });
 
@@ -142,20 +128,13 @@ describe('resolveDominantCostFromMysqlActualPlanText', () => {
   });
 });
 
-// 2026-08-21 follow-up (found while manually verifying the feature in the
-// Extension Development Host): dominantCostPlanNode resolution alone never
-// fed real actualRows back into planTableMappings, so the rendered plan
-// table's "Actual rows"/"Est./actual ratio" columns stayed blank even after
-// a fully successful EXPLAIN ANALYZE.
 describe('resolveMysqlActualPlanTableStats', () => {
   it('backfills actualRowsByPlanNodeId for every resolvable tableAccess line, not just the dominant one', () => {
     const { actualRowsByPlanNodeId } = resolveMysqlActualPlanTableStats(
       SLOW_01_ACTUAL_PLAN_TEXT,
       SLOW_01_PLAN_TABLE_MAPPINGS,
     );
-    // "Index lookup on o using idx_orders_status ... rows=32100" and
-    // "Single-row index lookup on c using PRIMARY ... rows=1", verbatim
-    // from the real sample.
+    // "Index lookup on o using idx_orders_status ...
     expect(actualRowsByPlanNodeId.get('n3')).toBe(32100);
     expect(actualRowsByPlanNodeId.get('n4')).toBe(1);
   });

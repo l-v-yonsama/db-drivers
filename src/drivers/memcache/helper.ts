@@ -1,9 +1,6 @@
 import Memcached, { StatusData } from 'memcached';
 import { MemcachedValue } from '../../types';
 
-/* =========================
- * stats 系
- * ========================= */
 
 
 export function statsAsync(client: Memcached): Promise<StatusData[]> {
@@ -33,9 +30,6 @@ export function versionAsync(client: Memcached): Promise<StatusData[]> {
   });
 }
 
-/* =========================
- * items / dump 系
- * ========================= */
 
 export function itemsAsync(
   client: Memcached,
@@ -78,9 +72,6 @@ export async function getKeysFromSlab(
   return dumps.map((d) => d.key).sort();
 }
 
-/* =========================
- * data 操作系
- * ========================= */
 
 export function getMultiAsync(
   client: Memcached,

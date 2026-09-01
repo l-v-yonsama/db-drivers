@@ -73,10 +73,7 @@ const nodeFromResource = (
 const applicationEndpoint = (node: ApplicationNode): TrafficProtectionPathEndpoint =>
   resourceEndpoint(node.fileIndex, node.logicalId);
 
-/**
- * Builds the semantic paths consumed by both Mermaid and draw.io. The renderers decide where
- * nodes are placed, but they do not independently infer network or application relationships.
- */
+/** Builds the semantic paths consumed by both Mermaid and draw.io. */
 export const buildMultiAzDeploymentTrafficPathsAndProtection = (
   files: DiagramFile[],
   structure = new CfnDeploymentTopologyStructure(files),
@@ -263,8 +260,7 @@ export const buildMultiAzDeploymentTrafficPathsAndProtection = (
     const services = originalFrom.type === 'AWS::ECS::TaskDefinition'
       ? servicesByTaskDefinition.get(`${originalFrom.fileIndex}:${originalFrom.logicalId}`)
       : undefined;
-    // A TaskDefinition used by a Service is rendered through that runtime Service. Standalone
-    // TaskDefinitions (for example Step Functions RunTask) must retain their own data path.
+    // A TaskDefinition used by a Service is rendered through that runtime Service.
     const sources = services && services.length > 0 ? services : [originalFrom];
     sources.forEach((from) => addPath(
       applicationEndpoint(from),
@@ -550,11 +546,6 @@ const addEgressPaths = (
     );
   };
 
-  // Every VPC-level resource (ECS Service, RDS DBInstance/DBCluster, ElastiCache
-  // ReplicationGroup, Auto Scaling Group, ...) is considered here rather than hand-maintaining a
-  // resource-type allowlist; connectResourceToNat() already only emits a path when a candidate
-  // subnet's own default route is a NAT Gateway, so RDS/ElastiCache candidates (which resolve to
-  // isolated subnets with no NAT default route) are naturally excluded without listing types.
   vpc.resources
     .forEach((resource) => resource.candidateSubnets
       .forEach((subnet) => connectResourceToNat(resource, subnet)));

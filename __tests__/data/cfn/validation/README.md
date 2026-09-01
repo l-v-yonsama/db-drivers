@@ -68,32 +68,7 @@ npm run diagram:cfn:localstack
 
 同じコマンドで、ApplicationDiagramの編集可能なdraw.io XMLも出力します。draw.io側では、レイヤー、関係種別の色・線種、英語の凡例を確認できます。
 
-LocalStack上の5 Stackは次のファイルへ出力されます。
-
-- `misc/localstack-cfn-validation/application.md`
-- `misc/localstack-cfn-validation/multi-az-deployment-traffic-paths-and-protection.md`
-- `misc/localstack-cfn-validation/dependency-graph.md`
-- `misc/localstack-cfn-validation/application.drawio`
-- `misc/localstack-cfn-validation/multi-az-deployment-traffic-paths-and-protection.drawio`
-- `misc/localstack-cfn-validation/dependency-graph.drawio`
-
-標準Webテンプレート単独の構成図は次のファイルへ出力されます。
-
-- `misc/standard-web-application-cfn-validation/application.md`
-- `misc/standard-web-application-cfn-validation/multi-az-deployment-traffic-paths-and-protection.md`
-- `misc/standard-web-application-cfn-validation/dependency-graph.md`
-- `misc/standard-web-application-cfn-validation/application.drawio`
-- `misc/standard-web-application-cfn-validation/multi-az-deployment-traffic-paths-and-protection.drawio`
-- `misc/standard-web-application-cfn-validation/dependency-graph.drawio`
-
-WAF・ALBテンプレート単独の構成図は次のファイルへ出力されます。
-
-- `misc/waf-alb-application-cfn-validation/application.md`
-- `misc/waf-alb-application-cfn-validation/multi-az-deployment-traffic-paths-and-protection.md`
-- `misc/waf-alb-application-cfn-validation/dependency-graph.md`
-- `misc/waf-alb-application-cfn-validation/application.drawio`
-- `misc/waf-alb-application-cfn-validation/multi-az-deployment-traffic-paths-and-protection.drawio`
-- `misc/waf-alb-application-cfn-validation/dependency-graph.drawio`
+各テンプレートの構成図は、設定済みの出力先にMarkdownとdraw.io形式で生成されます。
 
 ### 既にStackが存在する場合
 

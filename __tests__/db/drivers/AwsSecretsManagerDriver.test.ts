@@ -30,15 +30,6 @@ const connectOption = {
   region: AwsRegion.apNortheast1,
 };
 
-// A minimal, self-contained "stored" (uncompressed) ZIP archive builder --
-// avoids depending on a system `zip` binary being present just to satisfy
-// CreateFunctionCommand's Code.ZipFile, since this fixture Lambda is never
-// actually invoked (RotateSecretCommand only needs the function to exist).
-// TypeScript 5.7+ made the built-in Uint8Array generic over its backing
-// ArrayBuffer type, but the pinned @types/node@18 line predates the
-// corresponding Buffer typings update, so `Buffer.concat(Buffer[])` no
-// longer type-checks even though it's fine at runtime. Route through this
-// helper instead of casting at every call site.
 function concatBuffers(list: readonly Buffer[]): Buffer {
   return Buffer.concat(list as unknown as Uint8Array[]);
 }
@@ -164,9 +155,7 @@ describe('AwsSecretsManagerDriver', () => {
       }),
     );
 
-    // RotateSecretCommand requires the target Lambda to actually exist (LocalStack
-    // validates this) even though it's never invoked for real in this test -- only
-    // its ARN is needed to make ListSecrets report RotationEnabled: true.
+    // RotateSecretCommand requires the target Lambda to actually exist (LocalStack validates this) even though it's never invoked for real in this test -- only its ARN is needed to make ListSecrets report RotationEnabled: true.
     const lambdaClient = new LambdaClient({
       region: connectOption.region,
       endpoint: connectOption.url,
@@ -183,8 +172,7 @@ describe('AwsSecretsManagerDriver', () => {
           Role: 'arn:aws:iam::000000000000:role/lambda-role',
           Handler: 'index.handler',
           Code: {
-            // Same Buffer/Uint8Array<ArrayBufferLike> typing gap as
-            // concatBuffers() above.
+            // Same Buffer/Uint8Array<ArrayBufferLike> typing gap as concatBuffers() above.
             ZipFile: buildMinimalZip(
               'index.js',
               'exports.handler = async () => ({ statusCode: 200 });',

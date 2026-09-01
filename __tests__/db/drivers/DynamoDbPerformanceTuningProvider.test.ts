@@ -269,8 +269,7 @@ describe('DynamoDbPerformanceTuningProvider.collect (static mode, PartiQL)', () 
     const driver = createMockDriver({
       describeTable: jest.fn().mockResolvedValue({
         ...baseTable,
-        // createdAt is the GSI's sort key; give it a numeric type here to
-        // prove mapIndex() doesn't hardcode 'S'.
+        // createdAt is the GSI's sort key; give it a numeric type here to prove mapIndex() doesn't hardcode 'S'.
         AttributeDefinitions: baseTable.AttributeDefinitions!.map((a) =>
           a.AttributeName === 'createdAt' ? { ...a, AttributeType: 'N' as const } : a,
         ),
@@ -287,8 +286,7 @@ describe('DynamoDbPerformanceTuningProvider.collect (static mode, PartiQL)', () 
     const driver = createMockDriver({
       describeTable: jest.fn().mockResolvedValue({
         ...baseTable,
-        // tenantStatus is the GSI's partition key; give it a binary type
-        // here to prove mapIndex() doesn't hardcode 'S'.
+        // tenantStatus is the GSI's partition key; give it a binary type here to prove mapIndex() doesn't hardcode 'S'.
         AttributeDefinitions: baseTable.AttributeDefinitions!.map((a) =>
           a.AttributeName === 'tenantStatus' ? { ...a, AttributeType: 'B' as const } : a,
         ),

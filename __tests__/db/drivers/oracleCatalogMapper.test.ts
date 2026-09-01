@@ -9,12 +9,6 @@ import {
   mapOracleTableStatisticsRow,
 } from '../../../src';
 
-// Row shapes below are copied from what `oracledb` actually returns against
-// a live Oracle 23c instance (see OraclePerformanceTuningProvider.test.ts's
-// live suite) - crucially every key is UPPERCASE, since Oracle folds every
-// unquoted identifier (including a query's own `AS alias`) to uppercase,
-// unlike Postgres/MySQL/SQL Server. LAST_ANALYZED comes back as a native JS
-// `Date`; NUM_ROWS/BLOCKS/etc. as plain JS numbers.
 
 describe('mapOracleColumnRow(s)', () => {
   it('builds NUMBER(p,s)/VARCHAR2(n) from DATA_TYPE + precision/scale/length', () => {
@@ -168,8 +162,7 @@ describe('mapOracleIndexRows', () => {
       },
     ]);
 
-    // primary is always false here - the Provider cross-references the
-    // constraint list to set it, mapOracleIndexRows() has no such data.
+    // primary is always false here - the Provider cross-references the constraint list to set it, mapOracleIndexRows() has no such data.
     const composite = indexes.find((i) => i.indexName === 'IDX_PERF_ORDERS_CUSTOMER_STATUS')!;
     expect(composite.primary).toBe(false);
     expect(composite.columns.map((c) => c.columnName)).toEqual(['CUSTOMER_ID', 'STATUS']);
@@ -239,10 +232,7 @@ describe('mapOracleColumnStatisticsRow', () => {
   });
 
   it('divides NUM_NULLS by the table row count, not SAMPLE_SIZE (a sampled gather can have SAMPLE_SIZE < row count)', () => {
-    // A sampled (not FULLSCAN) DBMS_STATS gather can analyze a smaller
-    // SAMPLE_SIZE than the table's real row count - NUM_NULLS/SAMPLE_SIZE
-    // would come out above 1 here (10/4); NUM_NULLS/TABLE_NUM_ROWS is the
-    // correct fraction.
+    // A sampled (not FULLSCAN) DBMS_STATS gather can analyze a smaller SAMPLE_SIZE than the table's real row count - NUM_NULLS/SAMPLE_SIZE would come out above 1 here (10/4); NUM_NULLS/TABLE_NUM_ROWS is the correct fraction.
     const stats = mapOracleColumnStatisticsRow({
       COLUMN_NAME: 'STATUS',
       NUM_NULLS: 10,

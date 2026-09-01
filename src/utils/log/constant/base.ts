@@ -4,19 +4,14 @@ import {
   LogParseConfig,
 } from '../../../types';
 
-/* ======================================================
-   Timestamp patterns
-====================================================== */
 
 // 日付（YYYY-MM-DD）
 const ISO_DATE = '\\d{4}-\\d{2}-\\d{2}';
 
-// STRICT
-// HH:mm[:ss][.fraction]
+// STRICT HH:mm[:ss][.fraction]
 const ISO_TIME_STRICT = '\\d{2}:\\d{2}' + '(:\\d{2})?' + '(\\.\\d+)?';
 
-// LENIENT
-// HH:mm[:ss][.fraction] or [,fraction]
+// LENIENT HH:mm[:ss][.fraction] or [,fraction]
 const ISO_TIME_LENIENT = '\\d{2}:\\d{2}' + '(:\\d{2})?' + '([.,]\\d+)?';
 
 // タイムゾーン（Z or +09:00 or +0900）
@@ -32,9 +27,6 @@ const ISO_DATE_TIME_LENIENT = ISO_DATE + '[T ]' + ISO_TIME_LENIENT + ISO_TZ;
 const ISO_TIME_ONLY_STRICT = ISO_TIME_STRICT;
 const ISO_TIME_ONLY_LENIENT = ISO_TIME_LENIENT;
 
-/* ======================================================
-   LOG LEVEL
-====================================================== */
 
 export const LOG_LEVELS = [
   'trace',
@@ -49,9 +41,6 @@ export const LOG_LEVELS = [
 
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
-/* ======================================================
-   Built-in field patterns
-====================================================== */
 
 export const LOG_FIELD_PATTERNS = {
   LEVEL: {
@@ -157,9 +146,6 @@ export const LOG_FIELD_PATTERNS = {
   },
 } satisfies Record<string, LogFieldPatternDefinition>;
 
-/* ======================================================
-   Default split configs
-====================================================== */
 const DEFAULT_SIMPLE_LOG_SPLIT_CONFIG: LogEventSplitConfig = {
   fields: [
     {

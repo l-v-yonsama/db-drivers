@@ -27,31 +27,14 @@ export type AwsDynamoTableAttributes = {
   CreationDateTime?: Date;
   /** The current state of the table */
   TableStatus?: TableStatusType;
-  /**
-   * <p>The maximum number of strongly consistent reads consumed per second before DynamoDB
-   *             returns a <code>ThrottlingException</code>. Eventually consistent reads require less
-   *             effort than strongly consistent reads, so a setting of 50 <code>ReadCapacityUnits</code>
-   *             per second provides 100 eventually consistent <code>ReadCapacityUnits</code> per
-   *             second.</p>
-   */
+  /** <p>The maximum number of strongly consistent reads consumed per second before DynamoDB returns a <code>ThrottlingException</code>. */
   ReadCapacityUnits?: number;
-  /**
-   * <p>The maximum number of writes consumed per second before DynamoDB returns a
-   *                 <code>ThrottlingException</code>.</p>
-   */
   WriteCapacityUnits?: number;
 
-  /**
-   * The total size of the specified table
-   */
   TableSizeBytes?: number;
-  /**
-   *  The number of items in the specified table.
-   */
+  /** The number of items in the specified table. */
   ItemCount?: number;
-  /**
-   *  The Amazon Resource Name (ARN) that uniquely identifies the table.
-   */
+  /** The Amazon Resource Name (ARN) that uniquely identifies the table. */
   TableArn?: string;
 
   /** PROVISIONED or PAY_PER_REQUEST, from DescribeTable's BillingModeSummary. */

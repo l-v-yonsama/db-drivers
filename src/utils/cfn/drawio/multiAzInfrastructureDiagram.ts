@@ -32,9 +32,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
   const nodePositions = new Map<string, NodePosition>();
   const subnetPositions = new Map<string, NodePosition>();
   const templatePageByLogicalId = new Map<string, string>();
-  // Endpoint ids absorbed into a parent's containment box (see resource-membership handling
-  // below), across all VPCs - their "member of" edge is dropped from the drawn path list since
-  // containment already shows the relationship.
+  // Endpoint ids absorbed into a parent's containment box (see resource-membership handling below), across all VPCs - their "member of" edge is dropped from the drawn path list since containment already shows the relationship.
   const containedMemberIds = new Set<string>();
   files.forEach((file) => file.resouces.forEach((logicalId) => {
     const identity = `${file.fileIndex}:${logicalId}`;
@@ -51,9 +49,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
     nodePositions.set(endpointId, position);
   };
   const vpcTop = 100;
-  // The height a VPC box needs when no subnet tier has to stack more than one VPC-level
-  // resource - matches the previous fixed layout exactly. A VPC whose isolated/private tier
-  // needs to stack several resources (see azHeight below) grows taller than this.
+  // The height a VPC box needs when no subnet tier has to stack more than one VPC-level resource - matches the previous fixed layout exactly.
   const defaultVpcHeight = 1420;
   const azTop = 720;
   const azWidth = 340;
@@ -92,13 +88,6 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
     const vpcId = `vpc_${vpc.fileIndex}_${vpc.logicalId}`;
     const vpcWidth = vpcWidths[vpcIndex];
 
-    // A resource-membership relation proven between two resources both placed at VPC level (for
-    // example an Aurora DB Instance's DBClusterIdentifier pointing at its DB Cluster) is rendered
-    // as containment rather than as a separate dashed edge: the member is drawn as a child card
-    // nested inside its parent's own box instead of as an independent top-level card. This is a
-    // rendering choice about an already-proven relationship, not a new inference - the underlying
-    // path still comes from buildMultiAzDeploymentTrafficPathsAndProtection() and is filtered out
-    // of the edge list below once it has been absorbed into containment.
     const vpcResourceEndpointIds = new Set(vpc.resources.map((resource) =>
       `f${resource.fileIndex}_${resource.logicalId}`));
     const memberParentId = new Map<string, string>();
@@ -116,16 +105,11 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       parentMembers.set(parentId, [...parentMembers.get(parentId) ?? [], resource]);
       containedMemberIds.add(`f${resource.fileIndex}_${resource.logicalId}`);
     });
-    // Only resources that are not themselves a member of another VPC-level resource take part in
-    // the top-level candidate-subnet layout below; a member is instead nested inside its parent.
+    // Only resources that are not themselves a member of another VPC-level resource take part in the top-level candidate-subnet layout below; a member is instead nested inside its parent.
     const topLevelResources = vpc.resources.filter((resource) =>
       !memberParentId.has(`f${resource.fileIndex}_${resource.logicalId}`));
 
-    // VPC-level resources (an ASG, DB cluster, an ElastiCache replication group, ...) that resolve
-    // to the exact same set of candidate subnets are grouped so they can be stacked vertically -
-    // one full-width card per resource - instead of overlapping. This has to be computed before
-    // the VPC/AZ/subnet cells below so the VPC box, the AZ boxes, and the private/isolated subnet
-    // tiers can all reserve enough height for the tallest stack that will be drawn across them.
+    // VPC-level resources (an ASG, DB cluster, an ElastiCache replication group, ...) that resolve to the exact same set of candidate subnets are grouped so they can be stacked vertically - one full-width card per resource - instead of overlapping.
     const resourceLayoutGroups = new Map<string, typeof vpc.resources>();
     topLevelResources.forEach((resource) => {
       const candidateKey = resource.candidateSubnets
@@ -140,9 +124,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
     const verticalTopInset = 50;
     const verticalBottomInset = 15;
     const rowGap = 15;
-    // A resource that contains member cards needs room for its own header text (the same height
-    // as an ordinary card) plus one stacked row per member; a resource with no members is just an
-    // ordinary card.
+    // A resource that contains member cards needs room for its own header text (the same height as an ordinary card) plus one stacked row per member; a resource with no members is just an ordinary card.
     const individualHeight = (resource: typeof vpc.resources[number]): number => {
       const members = parentMembers.get(`f${resource.fileIndex}_${resource.logicalId}`);
       if (!members || members.length === 0) return resourceHeight;
@@ -166,9 +148,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       maxGroupHeightByConnectivity[connectivity] =
         Math.max(maxGroupHeightByConnectivity[connectivity], stackedGroupHeight(group));
     });
-    // Defaults (140/195/195, rows starting at 45/245/445, AZ height 650, VPC height 1420) exactly
-    // match the previous fixed layout when no tier needs to stack more than one resource, so a
-    // template with no shared candidate-subnet set renders pixel-identical diagrams to before.
+    // Defaults (140/195/195, rows starting at 45/245/445, AZ height 650, VPC height 1420) exactly match the previous fixed layout when no tier needs to stack more than one resource, so a template with no shared candidate-subnet set renders pixel-identical diagrams to before.
     const tierHeight = {
       public: 140,
       private: Math.max(195, maxGroupHeightByConnectivity.private),
@@ -250,9 +230,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       const layoutGroup = resourceLayoutGroups.get(layoutGroupKey) ?? [resource];
       const resourceIndex = layoutGroup.indexOf(resource);
       const ownHeight = individualHeight(resource);
-      // Heights vary once a resource with member cards sits beside an ordinary one-row resource
-      // in the same group, so each row's offset is the cumulative height of the rows above it
-      // rather than a fixed multiple of resourceHeight.
+      // Heights vary once a resource with member cards sits beside an ordinary one-row resource in the same group, so each row's offset is the cumulative height of the rows above it rather than a fixed multiple of resourceHeight.
       const cumulativeOffset = layoutGroup
         .slice(0, resourceIndex)
         .reduce((offset, prior) => offset + individualHeight(prior) + rowGap, 0);
@@ -271,13 +249,6 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       const candidateBottom = candidatePositions.length > 0
         ? Math.min(...candidatePositions.map((position) => position.y + position.height))
         : undefined;
-      // Every resource sharing this exact candidate-subnet set is stacked vertically, one row
-      // per resource, each still spanning the full left-to-right width of those candidate
-      // subnets - so a DB Cluster (or ElastiCache Replication Group, ...) with a subnet group
-      // spanning both AZs keeps visually spanning both AZs even when a sibling resource without
-      // member cards (or its own member cards nested inside it - see below) is drawn alongside
-      // it. Stacking (instead of a grid that divides the width) keeps that "this candidate set
-      // covers both AZs" impression intact for every card in the group, not just the first one.
       const stackedHeight = stackedGroupHeight(layoutGroup);
       const fitsCandidateRow = candidateTop !== undefined && candidateBottom !== undefined &&
         candidateBottom - candidateTop >= stackedHeight;
@@ -303,10 +274,6 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
       cells.push(nodeCell(resourceId, `${resource.logicalId}<br/><font color="#64748b">${resource.placement}${details}</font>`, localPosition.x, localPosition.y, localPosition.width, localPosition.height, vpcId, '#ffffff', templatePageByLogicalId.get(`${resource.fileIndex}:${resource.logicalId}`) ?? '', members.length > 0));
       registerNode(endpointId, resourceId, { ...localPosition, x: vpcX + localPosition.x, y: vpcTop + localPosition.y });
 
-      // Members proven by a resource-membership relation (for example an Aurora DB Instance's
-      // DBClusterIdentifier) are nested inside their parent's own box as child cards, stacked
-      // vertically below the parent's header text, instead of getting an independent top-level
-      // card connected by a dashed "member of" edge.
       members.forEach((member, memberIndex) => {
         const memberEndpointId = `f${member.fileIndex}_${member.logicalId}`;
         const memberCellId = `node_${memberEndpointId}`;
@@ -426,9 +393,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
   }
 
   const drawablePaths = trafficPathsAndProtection.paths.flatMap((path) => {
-    // A "member of" path already absorbed into containment (the member is nested inside its
-    // parent's own box - see the resource-membership handling above) would otherwise draw a
-    // redundant dashed edge pointing into the box that already visually contains it.
+    // A "member of" path already absorbed into containment (the member is nested inside its parent's own box - see the resource-membership handling above) would otherwise draw a redundant dashed edge pointing into the box that already visually contains it.
     if (path.kind === 'resource-membership' && containedMemberIds.has(path.from.id)) return [];
     const source = nodeIds.get(path.from.id);
     const target = nodeIds.get(path.to.id);
@@ -505,19 +470,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtection = (params:
 const subnetResourceCardWidth = 135;
 const subnetResourceCardHeight = 55;
 
-/** Packs `resources` (plain EC2/RDS/ElastiCache instances that live directly inside one subnet -
- * not the VPC-level candidate-subnet-spanning stack handled separately by `topLevelResources`
- * above) into the fixed `availableWidth`x`availableHeight` content area of that subnet's box,
- * using ELK's `box` packing algorithm instead of the legacy renderer's fixed 2-column formula.
- * Plan 5.3: "同一Subnet内のEC2、RDS、ElastiCacheなどの配置と間隔をELKで計算する" - the *subnet's own*
- * boundary stays exactly the fixed size/position the caller already computed (see
- * `defaultVpcHeight`/`tierHeight`/`azHeight` above); only what happens *inside* that fixed box is
- * delegated to ELK, each subnet laid out independently of every other subnet and of the VPC/AZ
- * containment itself - the "per-Subnetごとに独立したレイアウト問題として個別に呼び出す" decision
- * recorded in the plan's Multi-AZ section, so a subnet in one AZ can never end up nudging a
- * sibling AZ's boundary. Falls back to the legacy 2-column formula for a subnet whose resources
- * do not fit ELK's packed size within the available box - a real fallback, not just a formality,
- * since `box` packing has no hard size constraint to enforce. */
+/** Packs `resources` (plain EC2/RDS/ElastiCache instances that live directly inside one subnet - not the VPC-level candidate-subnet-spanning stack handled separately by `topLevelResources` */
 const placeSubnetResources = async (
   resources: { fileIndex: number; logicalId: string }[],
   availableWidth: number,
@@ -583,17 +536,6 @@ const placeSubnetResources = async (
   return positions;
 };
 
-/** Automatic-layout counterpart of
- * {@link generateDrawioMultiAzDeploymentTrafficPathsAndProtection} (plan Phase 5, section 5.3).
- * Region/VPC/AZ/Subnet containment, sizing, and the VPC-level candidate-subnet-spanning stack
- * (DB Cluster, ElastiCache Replication Group, ...) are all identical to the legacy renderer and
- * kept fully synchronous below - the plan is explicit that the AWS-meaningful boundaries must
- * not move. Only the placement of a subnet's own directly-nested resources (`subnet.resources`)
- * is delegated to ELK, via {@link placeSubnetResources}; that is the one `await` this renderer
- * needs, which is why only the VPC/AZ/Subnet loops (not the rest of the function) had to become
- * `for`/`of` instead of `.forEach`. This function is intentionally near-identical to the legacy
- * one otherwise - see plan 4.2's compat rule for why both are kept side by side during the
- * migration window instead of collapsing into one. */
 export const generateDrawioMultiAzDeploymentTrafficPathsAndProtectionAsync = async (
   params: GenerateDiagramParams,
 ): Promise<string> => {
@@ -764,8 +706,7 @@ export const generateDrawioMultiAzDeploymentTrafficPathsAndProtectionAsync = asy
           width: 320,
           height: subnetHeight,
         });
-        // Content area below the subnet's own title bar (matches the legacy renderer's
-        // nodeY starting at 50) with a small bottom margin.
+        // Content area below the subnet's own title bar (matches the legacy renderer's nodeY starting at 50) with a small bottom margin.
         const resourcePositions = await placeSubnetResources(
           subnet.resources,
           320 - horizontalInset * 2,

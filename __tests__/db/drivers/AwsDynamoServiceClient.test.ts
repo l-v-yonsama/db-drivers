@@ -71,9 +71,6 @@ describe('AwsDynamoServiceClient scan pagination', () => {
     expect(rs.summary.dynamoDb?.returnedItemCount).toBe(3);
     expect(rs.summary.dynamoDb?.evaluatedItemCount).toBe(3);
     expect(rs.summary.dynamoDb?.continuationTokenPresent).toBe(true);
-    // Capacity breakdown lives only under summary.dynamoDb - never
-    // duplicated into rs.meta.dynamoDb (query panel history/performance
-    // plan §5.4/§12.3).
     expect(rs.meta.dynamoDb).toBeUndefined();
     expect(rs.meta.tableName).toBe('Orders');
 

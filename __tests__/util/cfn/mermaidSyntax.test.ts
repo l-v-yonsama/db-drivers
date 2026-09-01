@@ -11,10 +11,6 @@ describe('cfn', () => {
   describe('generateDiagram output is valid mermaid syntax', () => {
     it('accepts CfnDependencyGraph, MultiAzDeploymentTrafficPathsAndProtection, and a hyphenated real-world stack name', async () => {
       const vpcTemplate = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
-      // Both CfnDependencyGraph diagrams below pin 'CloudFormationView' so they stay
-      // fully-populated (VPC/Subnet/RouteTable aren't ApplicationView focus resources) - the
-      // syntax bugs this test exists to catch (see the comment above this describe block)
-      // only ever showed up in a real, non-empty diagram.
       const cfnDependencyGraph = generateDiagram({
         mode: 'CfnDependencyGraph',
         viewpoint: 'CloudFormationView',
@@ -65,8 +61,7 @@ describe('cfn', () => {
           },
         ],
       });
-      // The "Standalone" group (see architectureDiagram.ts) is a new-enough diagram shape of
-      // its own to be worth syntax-checking independently of the rest of this test.
+      // The "Standalone" group (see architectureDiagram.ts) is a new-enough diagram shape of its own to be worth syntax-checking independently of the rest of this test.
       const standaloneResourcesDiagram = generateDiagram({
         mode: 'MultiAzDeploymentTrafficPathsAndProtection',
         list: crossRefFiles.filter((f) => f.fileName !== 'vpc.yaml'),
@@ -106,12 +101,6 @@ describe('cfn', () => {
           },
         ],
       });
-      // NOTE: `diagram` is passed in with its ```mermaid fence still on (unlike every other
-      // use of verifyMermaidArchitectureSyntax in this file, which strips it first) - the
-      // fence lines themselves are what's invalid here, not the diagram content, so this
-      // documents that behavior rather than exercising a real syntax check. Pre-existing;
-      // left as-is since fixing it is unrelated to the viewpoint feature this file was
-      // updated for.
       const [result] = await verifyMermaidArchitectureSyntax([diagram]);
       expect(result.ok).toBe(false);
     }, 10000);
@@ -127,8 +116,7 @@ describe('cfn', () => {
           },
         ],
       });
-      // See the NOTE in 'verify testOrderStackTemplate' above - same pre-existing
-      // un-stripped-fence situation, not something this change is fixing.
+      // See the NOTE in 'verify testOrderStackTemplate' above - same pre-existing un-stripped-fence situation, not something this change is fixing.
       const [result] = await verifyMermaidArchitectureSyntax([diagram]);
       expect(result.ok).toBe(false);
     }, 10000);

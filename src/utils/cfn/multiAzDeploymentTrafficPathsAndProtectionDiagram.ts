@@ -69,10 +69,7 @@ const displayAvailabilityZone = (value: string): string =>
     ? value.replace(/_/g, ' ')
     : value.replace(/_/g, '-');
 
-/**
- * Renders the deployment topology and proven runtime paths as a preview-stable flowchart.
- * Quoted labels retain CIDRs/AZ names and text cards deliberately avoid external icon packs.
- */
+/** Renders the deployment topology and proven runtime paths as a preview-stable flowchart. */
 export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
   params: GenerateDiagramParams,
 ): string => {
@@ -93,9 +90,7 @@ export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
     contents.push('  internet(["Internet"])');
   }
 
-  // Endpoint ids absorbed into a parent's containment subgraph (see resource-membership
-  // handling inside renderVpc), across all VPCs - their "member of" edge is dropped from the
-  // drawn path list below since containment already shows the relationship.
+  // Endpoint ids absorbed into a parent's containment subgraph (see resource-membership handling inside renderVpc), across all VPCs - their "member of" edge is dropped from the drawn path list below since containment already shows the relationship.
   const containedMemberIds = new Set<string>();
   structure.vpcs.forEach((vpc) => renderVpc(contents, vpc, trafficPathsAndProtection, containedMemberIds));
   if (structure.standaloneResources.length > 0) {
@@ -103,8 +98,7 @@ export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
   }
   renderRegionalServices(contents, trafficPathsAndProtection.regionalNodes);
 
-  // A "member of" path already absorbed into containment would otherwise draw a redundant
-  // dashed edge pointing into the subgraph that already visually contains it.
+  // A "member of" path already absorbed into containment would otherwise draw a redundant dashed edge pointing into the subgraph that already visually contains it.
   const renderedPaths = trafficPathsAndProtection.paths.filter((path) =>
     !(path.kind === 'resource-membership' && containedMemberIds.has(path.from.id)));
 
@@ -138,10 +132,6 @@ export const generateDiagramMultiAzDeploymentTrafficPathsAndProtection = (
   });
   contents.push(...edgeStyles);
 
-  // Only list a legend row for a relationship kind that actually occurs among the generated
-  // paths for this specific diagram - a row with zero matching edges (for example "Asynchronous
-  // event" when the supplied templates never prove an event-delivery relationship) sends a
-  // reader unfamiliar with the notation hunting for an arrow that was never drawn.
   const legendEntries: [TrafficProtectionPathKind, string][] = [
     ['client-request-response', 'Blue: client request / response'],
     ['egress-return', 'Teal: egress / return'],
@@ -204,13 +194,6 @@ const renderVpc = (
   );
 
   if (vpc.resources.length > 0) {
-    // A resource-membership relation proven between two resources both placed at VPC level (for
-    // example an Aurora DB Instance's DBClusterIdentifier pointing at its DB Cluster) is rendered
-    // as a nested subgraph rather than as a separate dashed edge: the member becomes a child node
-    // inside its parent's own subgraph instead of an independent card. This is a rendering choice
-    // about an already-proven relationship, not a new inference - the underlying path still comes
-    // from buildMultiAzDeploymentTrafficPathsAndProtection() and is filtered out of the edge list
-    // once it has been absorbed into the subgraph (see containedMemberIds above).
     const vpcResourceEndpointIds = new Set(vpc.resources.map((resource) =>
       `f${resource.fileIndex}_${resource.logicalId}`));
     const memberParentId = new Map<string, string>();

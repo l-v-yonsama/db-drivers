@@ -1,9 +1,7 @@
 import type { PlanTableMapping } from '../../../src';
 import { extractOracleRuntimeObservations, resolveOracleActualPlanTableStats } from '../../../src';
 
-// Captured from the supplied Oracle 23c ALLSTATS LAST context. Its EXPLAIN
-// PLAN had full scans, while execution used index access, proving a parser
-// must resolve by relation rather than by PLAN_TABLE/DBMS_XPLAN row ID.
+// Captured from the supplied Oracle 23c ALLSTATS LAST context.
 const ACTUAL_PLAN = `Plan hash value: 3751868445
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -56,8 +54,7 @@ describe('resolveOracleActualPlanTableStats', () => {
       predicateFilterOutputRows: 150,
       indexName: 'IDX_ORDERS_STATUS',
     });
-    // A-Rows is cumulative for this nested-loop inner operation: compare
-    // 150 / 150 starts = 1 against the optimizer's per-start E-Rows=30000.
+    // A-Rows is cumulative for this nested-loop inner operation: compare 150 / 150 starts = 1 against the optimizer's per-start E-Rows=30000.
     expect(stats.get('n5')).toEqual({ actualRows: 1, tableAccessRows: 1, indexName: undefined });
   });
 

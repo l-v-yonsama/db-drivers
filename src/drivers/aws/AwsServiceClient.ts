@@ -23,9 +23,7 @@ export abstract class AwsServiceClient {
     try {
       this.initBaseStatus();
       if (this.conRes) {
-        // if (this.isNeedsSsh()) {
-        //   await this.connectToSshServer();
-        // }
+        // if (this.isNeedsSsh()) { await this.connectToSshServer();
         errorReason = await this.connectSub();
       } else {
         errorReason = 'Connection property is nothing';
@@ -75,19 +73,13 @@ export abstract class AwsServiceClient {
     } catch (e) {
       errorReason = e.message;
     } finally {
-      // if (this.sshServer) {
-      //   this.sshServer.close();
-      //   this.sshServer = undefined;
-      // }
+      // if (this.sshServer) { this.sshServer.close();
       this.initBaseStatus();
     }
     return errorReason;
   }
 
-  /**
-   * Returns whether an AWS resource should be included in the information
-   * schema.
-   */
+  /** Returns whether an AWS resource should be included in the information schema. */
   protected acceptResource(resourceName: string | undefined): boolean {
     if (resourceName === undefined) {
       return false;

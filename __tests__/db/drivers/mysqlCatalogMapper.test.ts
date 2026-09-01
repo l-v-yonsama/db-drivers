@@ -9,11 +9,6 @@ import {
   mapMysqlTableStatisticsRow,
 } from '../../../src';
 
-// Row shapes below are copied from what `mysql2` actually returns against a
-// live MySQL 8.0 instance (see MySQLPerformanceTuningProvider.test.ts's live
-// suite), not idealized fixtures - e.g. UPDATE_TIME as a native JS `Date`
-// (mysql2 parses TIMESTAMP/DATETIME columns that way), TABLE_ROWS as a
-// plain JS number (unlike Postgres's bigint-as-string quirk).
 
 describe('mapMysqlColumnRow(s)', () => {
   it('prefers COLUMN_TYPE (the fuller "as declared" type) over bare DATA_TYPE', () => {
@@ -207,8 +202,7 @@ describe('mapMysqlColumnStatisticsRow', () => {
     expect(stats.nullFraction?.value).toBe(0);
     expect(stats.histogramType?.value).toBe('singleton');
     expect(stats.histogramBucketCount?.value).toBe(2);
-    // MySQL's "YYYY-MM-DD HH:MM:SS.ffffff" (space-separated, UTC, no
-    // timezone) reformatted into a value Date.parse() accepts unambiguously.
+    // MySQL's "YYYY-MM-DD HH:MM:SS.ffffff" (space-separated, UTC, no timezone) reformatted into a value Date.parse() accepts unambiguously.
     expect(stats.statisticsUpdatedAt?.value).toBe('2026-08-16T07:54:12.889384Z');
   });
 
@@ -224,8 +218,7 @@ describe('mapMysqlColumnStatisticsRow', () => {
     });
   });
 
-  // 2026-08-21 follow-up (summary.md's Full Context improvement item 2):
-  // non-index-backed column histogram fallback for distinctCount.
+  // Histogram fallback for non-indexed column distinctCount.
   describe('distinctCount histogram fallback (no CARDINALITY row - column is not the leading key part of any index)', () => {
     it('derives distinctCount from a singleton histogram (one bucket per distinct value)', () => {
       const stats = mapMysqlColumnStatisticsRow('channel', undefined, {

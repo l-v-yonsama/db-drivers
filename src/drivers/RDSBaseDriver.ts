@@ -69,11 +69,7 @@ import {
 } from './providers';
 
 export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
-  // Actual-plan capture temporarily changes connection/session state on
-  // Oracle and SQL Server.  A caller-facing deadline can return before the
-  // vendor operation has finished its finally-based restoration, so reject
-  // new work during that narrow interval instead of letting it observe or
-  // overwrite the temporary state.
+  // Actual-plan capture temporarily changes connection/session state on Oracle and SQL Server.
   private exclusiveSessionStateOperation: string | undefined;
 
   constructor(conRes: ConnectionSetting) {
@@ -475,12 +471,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     }
   }
 
-  // Vendor Drivers that implement performance tuning context collection
-  // override this hook to return their PerformanceTuningContextProvider.
-  // Leaving it undefined (the default for every RDS driver until its Phase
-  // lands) makes supports/check/get below report "not supported" for free,
-  // so adding a vendor here never requires touching every other driver.
-  // See misc/design/performance-tuning-context-implementation-plan.ja.md §6.
   protected getPerformanceTuningContextProvider():
     | PerformanceTuningContextProvider
     | undefined {
@@ -509,10 +499,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       return { ok: false, message: 'Performance tuning context collection was cancelled.' };
     }
 
-    // Expected setup/permission gaps must come back as GeneralResult
-    // (§4.3), but a Provider is arbitrary vendor code and can still throw
-    // (a bug, a connection drop mid-probe, ...). Catch here at the public
-    // API boundary rather than letting it reject past this method.
     try {
       return await provider.checkCapabilities(params, options);
     } catch (e) {
@@ -520,15 +506,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     }
   }
 
-  // Converts an unexpected Provider exception into a GeneralResult instead
-  // of letting it reject across the public API boundary (§4.3: "予期しない
-  // 例外も公開メソッド境界で GeneralResult へ変換し、秘密情報を含む接続エラー
-  // 全文は返さない"). Unlike e.g. PostgresDriver.checkStatementStatisticsAvailability()
-  // (which appends `e.message` to its GeneralResult), the public message here
-  // is a fixed string - a DB driver exception can carry SQL text, a
-  // connection string, or a bind value, and this API's whole purpose is to
-  // hand data to an external AI, not just render it in a local UI. The
-  // detail goes to the local console only.
   private toPerformanceTuningContextErrorResult<T>(
     e: unknown,
     stage: string,
@@ -542,14 +519,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     };
   }
 
-  // Wraps a single Provider call so it can never reject or throw past this
-  // point - covers both an async Provider method's rejected promise *and*
-  // a non-async/misbehaving one that throws synchronously the moment it's
-  // called (a bare `.catch()` on the call site only catches the former;
-  // the synchronous case throws before `.catch()` is ever attached). Used
-  // per section/table (§6.3) rather than relying on the outer try/catch,
-  // which would otherwise discard every other section/table's already-collected
-  // result over one Provider bug.
   private async safeCollect<T>(
     fn: () => Promise<GeneralResult<T>>,
     stage: string,
@@ -561,18 +530,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     }
   }
 
-  // Bounds a single Provider call by both a timeout and a cancellation
-  // signal (§6.3: "timeout と cancel signal を全収集処理へ伝搬する"), on top
-  // of safeCollect()'s throw/rejection safety. This races the call against a
-  // timer and an `abort` listener: whichever settles first wins. A Provider
-  // is not required to implement real server-side query cancellation for
-  // this to work - the caller of getPerformanceTuningContext() always gets a
-  // bounded, cancellable result regardless, even though the underlying
-  // vendor query may keep running server-side in the background until it
-  // finishes or the connection itself is torn down. A Provider that *can*
-  // cancel its own in-flight query (future work, vendor-specific) should use
-  // options.signal/timeoutMs itself for that; this wrapper's guarantee is
-  // about the caller-facing contract, not about stopping DB-side work.
   private async withDeadline<T>(
     fn: () => Promise<GeneralResult<T>>,
     deadline: { signal?: AbortSignal; timeoutMs: number },
@@ -608,22 +565,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     });
   }
 
-  // Truncates an already-assembled context to fit `maxPayloadBytes` (§4.1:
-  // "上限値は Driver 側の安全な最大値で clamp し、切り詰めた場合は warning を
-  // 返す"; §6.3: "table 数、列数、index 数、payload bytes に上限を設ける").
-  // table/column/index counts are already clamped per-table before this
-  // runs; this is the final backstop for whatever still doesn't fit (a
-  // large DDL, a very deep plan, ...). Drops whole tables from the end
-  // first - each drop is recorded as an unavailableSections entry, never
-  // silently discarded - and only as a last resort (every table already
-  // dropped and still over budget) omits the raw/normalized plan, since
-  // that is usually the single largest remaining blob. Mutates `context` in
-  // place; returns whether the result is still over budget after every
-  // truncation this function knows how to do (statement text/database
-  // metadata/collection bookkeeping have no further fallback) - the caller
-  // turns that into a hard `ok: false` rather than silently handing back an
-  // oversized "success", so maxPayloadBytes is an actual upper bound a
-  // caller can rely on, not just a best-effort target.
   private enforcePayloadBudget(
     context: PerformanceTuningContext,
     maxPayloadBytes: number,
@@ -660,8 +601,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       truncated = true;
       context.executionPlan.vendorPlan = undefined;
       context.executionPlan.normalizedPlan = undefined;
-      // dominantCostPlanNode.planNodeId cross-references normalizedPlan -
-      // never leave it dangling with nothing left to resolve it against.
+      // dominantCostPlanNode.planNodeId cross-references normalizedPlan - never leave it dangling with nothing left to resolve it against.
       context.executionPlan.dominantCostPlanNode = undefined;
       context.collection.unavailableSections.push({
         section: 'executionPlan',
@@ -689,17 +629,9 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
     if (truncated) {
       context.collection.status = 'partial';
     }
-    // Re-measure after the bookkeeping just above: the warning string and
-    // status field are themselves part of the returned JSON, so a decision
-    // made from the pre-bookkeeping size (as this used to do) can go stale
-    // right at the boundary - a result sitting just under maxPayloadBytes
-    // before the warning is appended can end up just over it once the
-    // warning text is actually in the payload the caller receives.
     return payloadSize() > maxPayloadBytes;
   }
 
-  // Orchestration (validate -> capability -> plan -> target resolution ->
-  // table sections -> normalize -> validate schema, per §6.1).
   async getPerformanceTuningContext(
     params: PerformanceTuningContextParams,
     options?: PerformanceTuningCallOptions,
@@ -742,53 +674,23 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         'collectExecutionPlan',
       );
       if (!planResult.ok) {
-        // Plan retrieval is the one section this Phase 1 slice cannot do
-        // without: with no plan, there is nothing to resolve tables from,
-        // so unlike a missing DDL/statistics section this is not "partial",
-        // it's "no usable context at all".
+        // A plan is required to resolve tables; without one, no context is usable.
         return { ok: false, message: planResult.message || 'Failed to retrieve the execution plan.' };
       }
       const vendorPlan = planResult.result;
 
-      // Corrects a plan-reported table name that's actually an alias
-      // (§6.6 of performance-tuning-query-statistics-parameter-input-
-      // plan.ja.md, db-notebook repo) before this array is used for
-      // *anything* below - catalog lookup, dedup, relevantColumnsByTable,
-      // and the `planTableMappings` this function ultimately returns all
-      // stay in lockstep referring to the same real table name. A miss
-      // (no alias entry for that tableName) leaves the mapping unchanged -
-      // the common case for every Vendor besides MySQL's aliased queries,
-      // and for MySQL queries that don't alias their tables either.
       const rawPlanTableMappings = vendorPlan?.planTableMappings ?? [];
       const tableAliasMap = normalized.tableAliasMap ?? {};
       const planTableMappings = rawPlanTableMappings.map((mapping) => {
         const hit = tableAliasMap[mapping.tableName.toLowerCase()];
-        // 2026-08-20 fix: only apply a hit that's a genuine alias->real-name
-        // substitution (MySQL's EXPLAIN gap: mapping.tableName really is the
-        // alias text there, e.g. "o", so a hit's tableName is always a
-        // *different* string). db-notebook's resolveTableAliasMap() also -
-        // deliberately, see its own tests - keys the map by every bare
-        // (unaliased) FROM/JOIN table name pointing at itself, purely so
-        // resolveTargetTables() (a separate consumer of the same underlying
-        // map) can see unaliased tables too. For a vendor whose plan already
-        // resolves the real name correctly (Oracle, SQL Server, an unaliased
-        // Postgres/MySQL query, ...), mapping.tableName.toLowerCase() can
-        // coincidentally collide with that same bare-name self-reference
-        // key - a hit, but not a genuine correction. Applying it anyway used
-        // to silently replace an already-correct, schema-qualified,
-        // correctly-cased name (e.g. Oracle's {schemaName:"PERFLAB",
-        // tableName:"ORDERS"}) with the hint's unverified as-typed one
-        // ({schemaName:undefined, tableName:"orders"}) - breaking catalog
-        // lookup for a vendor (Oracle) that folds unquoted identifiers to
-        // uppercase, since 'orders' != 'ORDERS' there.
+        // 2026-08-20 fix: only apply a hit that's a genuine alias->real-name substitution (MySQL's EXPLAIN gap: mapping.tableName really is the alias text there, e.g. "o", so a hit's tableName is always a *different* string).
         if (!hit || hit.tableName.toLowerCase() === mapping.tableName.toLowerCase()) {
           return mapping;
         }
         return { ...mapping, schemaName: hit.schemaName, tableName: hit.tableName };
       });
 
-      // Deduplicate resolved tables (a table can appear in more than one
-      // plan node, e.g. self-joins or one table with several index scans).
+      // Deduplicate resolved tables (a table can appear in more than one plan node, e.g. self-joins or one table with several index scans).
       const tableKeyOf = (t: { schemaName?: string; tableName: string }): string =>
         `${t.schemaName ?? ''}.${t.tableName}`;
       const resolvedTables = new Map<string, { schemaName?: string; tableName: string }>();
@@ -798,33 +700,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           resolvedTables.set(key, { schemaName: mapping.schemaName, tableName: mapping.tableName });
         }
       }
-      // Union in any explicit caller-supplied targets (§4.1: "targetTables
-      // は plan / parser から対象を完全に解決できない場合の明示的な補助入力
-      // とする") - additive, never a replacement for what the plan itself
-      // resolved. Complements tableAliasMap above rather than overlapping
-      // it: tableAliasMap corrects a table the plan *did* resolve but under
-      // the wrong name (MySQL's aliased-table EXPLAIN gap - see
-      // mysqlPlanParser.ts's module doc comment); targetTables adds a table
-      // the plan didn't resolve at all.
-      //
-      // "Already resolved" is checked tolerantly, not by exact tableKeyOf()
-      // string equality, for the same reason as the tableAliasMap guard
-      // above: targetTables comes from resolveTargetTables() parsing the
-      // raw SQL text (§6.5, db-notebook), so its casing/schema-qualification
-      // reflects how the user happened to type the query, not necessarily
-      // how the vendor's own catalog stores the identifier. A target whose
-      // tableName matches an already-resolved table case-insensitively -
-      // and whose schemaName either isn't specified or also matches
-      // case-insensitively - is the same physical table the plan already
-      // found, just possibly under a different case (Oracle folding
-      // unquoted identifiers to uppercase is the case that surfaced this),
-      // not a genuinely new one to add. Without this, an Oracle table the
-      // plan already resolved correctly (e.g. {schemaName:"PERFLAB",
-      // tableName:"ORDERS"}) got a second, bogus entry added alongside it
-      // (e.g. {tableName:"orders"}, no schema) whenever the SQL also
-      // referenced it in an unqualified FROM/JOIN - and that second entry's
-      // own catalog lookup then failed ("table not found"), showing up as a
-      // spurious Collection issue even though the real table collected fine.
       const isSameTable = (
         a: { schemaName?: string; tableName: string },
         b: { schemaName?: string; tableName: string },
@@ -845,11 +720,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       const unavailableSections: PerformanceTuningContext['collection']['unavailableSections'] = [];
       const diagnostics: PerformanceTuningDiagnostic[] = [...(vendorPlan?.diagnostics ?? [])];
 
-      // Clamp to the safe maximum (§4.1: "上限値は Driver 側の安全な最大値で
-      // clamp し、切り詰めた場合は warning を返す") - a plan touching more
-      // tables than that still resolves them all for planTableMappings
-      // above, but only the first maxTables get DDL/statistics/physical
-      // health collected.
       const allResolvedTables = [...resolvedTables.values()];
       const tablesToCollect = allResolvedTables.slice(0, normalized.limits.maxTables);
       if (allResolvedTables.length > tablesToCollect.length) {
@@ -862,10 +732,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         });
       }
 
-      // Columns to fetch statistics for: whatever the plan actually showed
-      // interest in (predicate/join/group/sort columns), not every column
-      // in the table (§5.4: "列統計は plan predicate、join、group、sort に
-      // 登場する列を優先する").
       const relevantColumnsByTable = new Map<string, Set<string>>();
       for (const mapping of planTableMappings) {
         const key = tableKeyOf(mapping);
@@ -893,14 +759,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           const tableTarget = { databaseName: normalized.databaseName, schemaName, tableName };
           const columnNames = [...(relevantColumnsByTable.get(tableKeyOf(tableTarget)) ?? [])];
 
-          // Pushes into the same shared `diagnostics` array every table's
-          // callback writes into (safe: Promise.all here means concurrent
-          // async callbacks interleaved on one JS thread, not true
-          // parallelism - the same pattern `unavailableSections.push()`
-          // below already relies on). `code` is always one of the two this
-          // per-table loop ever produces: a section that returned data with
-          // a caveat (SECTION_COLLECTION_FAILED) or a column/index list cut
-          // down to the configured limit (COLLECTION_TRUNCATED).
+          // Pushes into the same shared `diagnostics` array every table's callback writes into (safe: Promise.all here means concurrent async callbacks interleaved on one JS thread, not true parallelism - the same pattern `unavailableSections.push()` below already relies on).
           const pushTableDiagnostic = (
             code: 'SECTION_COLLECTION_FAILED' | 'COLLECTION_TRUNCATED',
             section: 'tableDefinition' | 'tableStatistics' | 'columnStatistics' | 'physicalHealth',
@@ -918,12 +777,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
             });
           };
 
-          // Each call is bounded and caught individually (not just the outer
-          // try/catch) so a Provider bug, timeout, or mid-flight cancellation
-          // on one section/table can never discard every other section/
-          // table's already-collected result (§6.3: "1 table の失敗で他
-          // table の結果を破棄しない"; "timeout と cancel signal を全収集処理
-          // へ伝搬する").
           const [definitionResult, statisticsResult, columnStatsResult, physicalHealthResult] =
             await Promise.all([
               this.withDeadline<VendorTableDefinition>(
@@ -985,12 +838,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           let statistics: PerformanceTuningContext['tables'][number]['statistics'];
           if (statisticsResult.ok && statisticsResult.result) {
             statistics = { ...statisticsResult.result, columns: [] };
-            // A Provider can succeed with a caveat (e.g. SQL Server/Oracle's
-            // table statistics combine two queries and downgrade the
-            // secondary one's failure to a message instead of failing the
-            // whole call) - that message must not be silently discarded the
-            // way it was here before, same as definitionResult's own
-            // message just above.
             if (statisticsResult.message) {
               pushTableDiagnostic('SECTION_COLLECTION_FAILED', 'tableStatistics', statisticsResult.message);
             }
@@ -998,13 +845,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
             unavailable('tableStatistics', statisticsResult.message || 'Table statistics unavailable.');
           }
           if (columnStatsResult.ok) {
-            // collectColumnStatistics() and collectTableStatistics() are
-            // independent Provider calls - column stats can succeed even
-            // when table-level statistics failed. `statistics` may still be
-            // undefined at this point; TableStatisticsContext has nothing
-            // required besides `columns`, so build a minimal one rather
-            // than silently discarding already-fetched column data (and
-            // its message) just because it had nowhere to attach.
+            // collectColumnStatistics() and collectTableStatistics() are independent Provider calls - column stats can succeed even when table-level statistics failed.
             statistics ??= { columns: [] };
             statistics.columns = columnStatsResult.result ?? [];
             if (columnStatsResult.message) {
@@ -1028,11 +869,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         }),
       );
 
-      // The two selectivity measures are computed only after both plan
-      // mappings and table statistics are available. They remain absent when
-      // a vendor cannot provide the exact input rows needed for either
-      // ratio; a plausible-looking estimate would conflate access range and
-      // predicate pass rate again.
+      // The two selectivity measures are computed only after both plan mappings and table statistics are available.
       const tableStatsByKey = new Map<string, TableStatisticsContext['estimatedRowCount']>();
       for (const t of tables) {
         tableStatsByKey.set(tableKeyOf(t), t.statistics?.estimatedRowCount);
@@ -1049,10 +886,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         ),
       }));
 
-      // A material measured-vs-estimated row difference is useful evidence
-      // for a statistics/cardinality remedy, distinct from an index/access
-      // path recommendation.  Emit it only when both values are factual and
-      // the ratio is clearly large enough to avoid noisy diagnostics.
+      // A material measured-vs-estimated row difference is useful evidence for a statistics/cardinality remedy, distinct from an index/access path recommendation.
       for (const mapping of planTableMappingsWithSelectivity) {
         const ratio = mapping.rowEstimateRatio;
         if (
@@ -1084,8 +918,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
         });
       }
 
-      // Best-effort, non-fatal: a version-fetch failure should not turn an
-      // otherwise-usable plan+table-resolution result into a hard error.
+      // Best-effort, non-fatal: a version-fetch failure should not turn an otherwise-usable plan+table-resolution result into a hard error.
       let version: string | undefined;
       try {
         version = await this.getVersion();
@@ -1106,10 +939,6 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           version,
           databaseName: normalized.databaseName,
           schemaName: normalized.schemaName,
-          // §3 "含めるもの": Environment. Read straight from the connection
-          // setting the caller already configured (dev/staging/production,
-          // ...) rather than re-deriving it - `undefined` when the caller
-          // never set one, never guessed.
           environment: this.conRes.environment,
         },
         statement: {
@@ -1128,22 +957,13 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
           executionTimeMs: vendorPlan?.executionTimeMs,
           actualPlan: vendorPlan?.actualPlan,
           runtimeObservations: vendorPlan?.runtimeObservations,
-          // A Provider's own answer (MySQL, from real actual-plan evidence) wins
-          // when it has one; every vendor otherwise falls back to the
-          // generic, normalizedPlan-based walk (2026-08-21 follow-up,
-          // summary.md's Full Context improvement item 5).
+          // Prefer a provider's measured result over the generic plan-based fallback.
           dominantCostPlanNode: vendorPlan?.dominantCostPlanNode ?? findDominantCostPlanNode(vendorPlan?.normalizedPlan),
         },
         tables,
         planTableMappings: planTableMappingsWithSelectivity,
         collection: {
           collectedAt: new Date().toISOString(),
-          // status is derived only from unavailableSections and
-          // diagnostics[].affectsCompleteness (implementation plan §4.4) -
-          // an `info` diagnostic (e.g. a non-table plan source)
-          // never flips this to 'partial' on its own; only a genuine
-          // section/table failure or a `warning` diagnostic that was
-          // explicitly marked as affecting completeness does.
           status:
             unavailableSections.length > 0 || diagnostics.some((d) => d.affectsCompleteness)
               ? 'partial'
@@ -1155,11 +975,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
 
       const stillOverBudget = this.enforcePayloadBudget(context, normalized.limits.maxPayloadBytes);
       if (stillOverBudget) {
-        // Every table and the execution plan are already gone at this
-        // point (enforcePayloadBudget()'s own last resort) - a caller
-        // relying on maxPayloadBytes as a safety ceiling must see a hard
-        // failure here, not a "success" carrying an oversized payload it
-        // asked this driver not to produce.
+        // Every table and the execution plan are already gone at this point (enforcePayloadBudget()'s own last resort) - a caller relying on maxPayloadBytes as a safety ceiling must see a hard failure here, not a "success" carrying an oversized payload it asked this driver not to produce.
         return {
           ok: false,
           message: `Result exceeds maxPayloadBytes (${normalized.limits.maxPayloadBytes} bytes) even after dropping every table and the execution plan.`,
@@ -1175,10 +991,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
   async explainAnalyzeSql(params: QueryParams): Promise<ResultSetData> {
     this.assertSessionStateAvailable('run explain analyze');
     const { sql, prepare } = params;
-    // Keep this public API subject to the same fail-closed predicate as the
-    // Performance Tuning context. EXPLAIN ANALYZE actually executes its
-    // target on supported vendors, so non-SELECT statements must never reach
-    // a vendor implementation merely because they came through this older UI.
+    // Keep this public API subject to the same fail-closed predicate as the Performance Tuning context.
     if (!isSingleSelectStatement(sql)) {
       throw new Error('Explain analyze is limited to a single SELECT statement');
     }
@@ -1298,12 +1111,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       : identifier;
   }
 
-  /**
-   * When `supportsShowCreate()` is true and `schemaName` is given, the
-   * returned DDL must be schema-qualified (e.g. `CREATE TABLE schema.table`).
-   * Engines whose native DDL output is never schema-qualified (e.g. MySQL's
-   * `SHOW CREATE TABLE`) must qualify it themselves before returning.
-   */
+  /** When `supportsShowCreate()` is true and `schemaName` is given, the returned DDL must be schema-qualified (e.g. `CREATE TABLE schema.table`). */
   getTableDDL({
     tableName: _tableName,
     schemaName: _schemaName,

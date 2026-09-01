@@ -86,8 +86,7 @@ describe('ResourceHelper', () => {
           updatedColumns: 1,
           message: 'Inserted:1, Deleted:2, Updated:1 (1 column)',
         });
-        // diffは引数rdh1/rdh2を変更しない。アノテーションは返り値のクローン
-        // (diffResult.rdh1/rdh2)から読む。
+        // diffは引数rdh1/rdh2を変更しない。
         expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[3], 'Del')).toBe(true);
         expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[4], 'Del')).toBe(true);
         expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(false);
@@ -134,8 +133,7 @@ describe('ResourceHelper', () => {
           updatedColumns: 1,
           message: 'Inserted:1, Deleted:2, Updated:1 (1 column)',
         });
-        // diffは引数rdh1/rdh2を変更しない。アノテーションは返り値のクローン
-        // (diffResult.rdh1/rdh2)から読む。
+        // diffは引数rdh1/rdh2を変更しない。
         expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[3], 'Del')).toBe(true);
         expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[4], 'Del')).toBe(true);
         expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(false);
@@ -181,8 +179,7 @@ describe('ResourceHelper', () => {
           updatedColumns: 1,
           message: 'Inserted:1, Deleted:2, Updated:1 (1 column)',
         });
-        // diffは引数rdh1/rdh2を変更しない。アノテーションは返り値のクローン
-        // (diffResult.rdh1/rdh2)から読む。
+        // diffは引数rdh1/rdh2を変更しない。
         expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[3], 'Del')).toBe(true);
         expect(RowHelper.hasAnnotation(diffResult.rdh1!.rows[4], 'Del')).toBe(true);
         expect(RowHelper.hasAnnotation(rdh1.rows[3], 'Del')).toBe(false);

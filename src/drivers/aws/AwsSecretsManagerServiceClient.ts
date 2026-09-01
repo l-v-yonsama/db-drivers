@@ -23,11 +23,7 @@ import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 
-// A constant placeholder, never derived from a real value. ListSecrets never
-// returns secret values in the first place, so scan() has nothing to redact -
-// the value is simply never fetched. Only getSecretValue() performs a single,
-// on-demand GetSecretValue call, used exclusively for the "copy real value"
-// action (never for listing/scanning).
+// A constant placeholder, never derived from a real value.
 const MASKED_VALUE = '••••••••';
 
 export class AwsSecretsManagerServiceClient
@@ -106,11 +102,7 @@ export class AwsSecretsManagerServiceClient
     return rdb.build();
   }
 
-  /**
-   * Fetches a single secret's real value on demand. Used exclusively by the
-   * "copy real value" action - never called during scan()/getInfomationSchemas(),
-   * which must never see the actual value.
-   */
+  /** Fetches a single secret's real value on demand. */
   async getSecretValue(name: string): Promise<string | undefined> {
     const { SecretString } = await this.secretsManagerClient.send(
       new GetSecretValueCommand({ SecretId: name }),

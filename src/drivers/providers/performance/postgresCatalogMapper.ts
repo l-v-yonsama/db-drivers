@@ -10,15 +10,7 @@ import {
 import { VendorPhysicalHealth, VendorTableStatistics } from './PerformanceTuningContextProvider';
 import { asBoolean, asIsoDateString, asNumber, asRecord, asString, asStringArray } from './vendorRowCoercion';
 
-// Row-mapping for src/drivers/providers/performance/PostgresPerformanceTuningProvider.ts's
-// catalog queries. Kept as pure functions (no I/O) for the same reason as
-// postgresPlanParser.ts: catalog output is DB data we don't fully control
-// the shape of, so every access is guarded and nothing here throws - an
-// unmappable row is dropped, not a reason to fail the whole collection.
-// The asXxx() value coercers themselves live in vendorRowCoercion.ts,
-// shared with postgresPlanParser.ts and (eventually) the other vendors'
-// providers - see that file for the node-postgres quirks (Date-typed
-// timestamps, unparsed name[] arrays) they work around.
+// Row-mapping for src/drivers/providers/performance/PostgresPerformanceTuningProvider.ts's catalog queries.
 
 function metric<T>(
   value: T | undefined,
@@ -31,12 +23,7 @@ function metric<T>(
 
 // --- columns -----------------------------------------------------------
 
-// information_schema.columns reports generic placeholders for types it
-// doesn't have a standard SQL name for: 'USER-DEFINED' (enums, domains,
-// composite types) and 'ARRAY'. `udt_name` (Postgres' own catalog name,
-// e.g. 'moodenum', '_int4') is the only place the real type name shows up
-// for those - data_type is used as-is otherwise since it's already the
-// standard SQL type name callers expect (e.g. 'integer', 'character varying').
+// information_schema.columns reports generic placeholders for types it doesn't have a standard SQL name for: 'USER-DEFINED' (enums, domains, composite types) and 'ARRAY'.
 export function mapColumnRow(row: unknown): ColumnDefinition | undefined {
   const r = asRecord(row);
   const columnName = asString(r?.name);
@@ -73,10 +60,7 @@ const CONSTRAINT_TYPE_BY_CONTYPE: Record<string, ConstraintDefinition['type']> =
   c: 'check',
 };
 
-// pg_get_constraintdef() on a CHECK constraint returns the whole clause,
-// e.g. "CHECK ((amount >= (0)::numeric))" - this keeps just the boolean
-// expression Postgres itself already parenthesized, rather than re-deriving
-// it by hand.
+// pg_get_constraintdef() on a CHECK constraint returns the whole clause, e.g. "CHECK ((amount >= (0)::numeric))" - this keeps just the boolean expression Postgres itself already parenthesized, rather than re-deriving it by hand.
 function extractCheckExpression(definition: string | undefined): string | undefined {
   if (!definition) {
     return undefined;
@@ -141,13 +125,7 @@ function parseIndexColumnEntries(raw: unknown): IndexColumnEntry[] {
   return entries.sort((a, b) => a.position - b.position);
 }
 
-// `columns` is expected to already be a parsed JSON array (from a
-// `json_agg(...)` catalog query), one entry per index column position
-// 1..n_atts: `{ position, name?, expression?, desc }` - `name` is set for a
-// plain column, `expression` for a function-based one, never both.
-// `n_key_atts` (pg_index.indnkeyatts) splits that list into real key
-// columns (positions <= n_key_atts) and INCLUDE columns (the rest, always
-// plain columns, never carry a direction).
+// `columns` is expected to already be a parsed JSON array (from a `json_agg(...)` catalog query), one entry per index column position 1..n_atts: `{ position, name?, expression?, desc }` - `name` is set for a plain column, `expression` for a function-based one, never both.
 export function mapIndexRow(row: unknown): IndexDefinition | undefined {
   const r = asRecord(row);
   const indexName = asString(r?.index_name);
@@ -194,8 +172,7 @@ export function mapPartitioningRow(row: unknown): PartitioningDefinition | undef
   if (!r || !strategy) {
     return undefined;
   }
-  // pg_get_partkeydef() returns e.g. "RANGE (order_date)" / "LIST (status)" -
-  // the column list is everything inside the first (...).
+  // pg_get_partkeydef() returns e.g. "RANGE (order_date)" / "LIST (status)" - the column list is everything inside the first (...).
   const columnsMatch = asString(r.partition_key_def)?.match(/\(([^)]*)\)/);
   const columns = columnsMatch
     ? columnsMatch[1]
@@ -248,11 +225,7 @@ export function mapColumnStatisticsRow(row: unknown): ColumnStatisticsContext | 
 
   const nDistinct = asNumber(r.n_distinct);
   const rowCount = asNumber(r.reltuples);
-  // pg_stats.n_distinct is dual-purpose (Postgres docs, "pg_stats"): >= 0 is
-  // an absolute estimated distinct count; < 0 is -(distinct/rows), i.e. a
-  // fraction that scales with table size (e.g. -1 means "every value is
-  // unique"). Converting requires the table's own row count, so this query
-  // joins pg_class in rather than treating n_distinct as one field.
+  // pg_stats.n_distinct is dual-purpose (Postgres docs, "pg_stats"): >= 0 is an absolute estimated distinct count; < 0 is -(distinct/rows), i.e. a fraction that scales with table size (e.g. -1 means "every value is unique").
   let distinctCount: MetricValue<number> | undefined;
   let distinctFraction: MetricValue<number> | undefined;
   if (nDistinct !== undefined) {
@@ -358,10 +331,7 @@ const CONSTRAINT_DDL_KEYWORD: Record<ConstraintDefinition['type'], string> = {
   check: 'CHECK',
 };
 
-// Not a pg_dump replica: no storage parameters, no owner/grants, no
-// sequence definitions. Enough to show an AI the table's actual shape
-// (columns, constraints, indexes) without hand-parsing structured fields
-// back out of DDL text.
+// Not a pg_dump replica: no storage parameters, no owner/grants, no sequence definitions.
 export function renderPostgresTableDdl(params: {
   schemaName?: string;
   tableName: string;
@@ -400,11 +370,6 @@ export function renderPostgresTableDdl(params: {
 
   const tableDdl = `CREATE TABLE ${qualifiedName} (\n${[...columnLines, ...constraintLines].join(',\n')}\n);`;
 
-  // Postgres always names a PK/UNIQUE constraint's backing index identically
-  // to the constraint itself, so matching by name reliably dedups both -
-  // without that check, a constraint-backed index would show up twice: once
-  // as "CONSTRAINT x PRIMARY KEY (...)" above and again as a separate
-  // "CREATE UNIQUE INDEX x ON ..." below, restating the same object.
   const constraintBackedIndexNames = new Set(
     constraints
       .filter((c) => c.type === 'primaryKey' || c.type === 'uniqueKey')
