@@ -34,7 +34,7 @@
             "type": "string"
         },
         "FrameworkName": {
-            "description": "Known SQL framework names used by built-in extractors.\nCustom names are also allowed.",
+            "description": "Known SQL framework names used by built-in extractors.",
             "enum": [
                 "Doma",
                 "Hibernate",
@@ -63,7 +63,7 @@
                     "description": "Field parsed using a built-in pattern."
                 }
             ],
-            "description": "Defines a single field in a log event.\nEach field can be a regex, literal text, builtin pattern, or line-break marker."
+            "description": "Defines a single field in a log event."
         },
         "LogEventFieldBuiltin": {
             "additionalProperties": false,
@@ -210,7 +210,7 @@
             "type": "string"
         }
     },
-    "description": "Root configuration for the log parser.\nDefines how logs are split into events, classified, and converted into SQL executions.",
+    "description": "Root configuration for the log parser.",
     "properties": {
         "classify": {
             "description": "Rules used to classify log events into semantic event types.",
@@ -310,7 +310,7 @@
                 "properties": {
                     "framework": {
                         "$ref": "#/definitions/FrameworkName",
-                        "description": "Optional framework name associated with the extractor.\nKnown frameworks will appear in IDE completion."
+                        "description": "Optional framework name associated with the extractor."
                     },
                     "name": {
                         "description": "Unique name of the extractor.",
