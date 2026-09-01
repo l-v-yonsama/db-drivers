@@ -20,6 +20,13 @@ import { SQLLang } from '../../types';
 
 export type QuoteChar = '"' | '`' | "'";
 
+/** Quotes a raw SQL/PartiQL string value, even if it already looks quoted. */
+export const quoteStringLiteral = (input: string): string =>
+  quoteRaw(input, "'");
+
+/** Quotes a raw SQL/PartiQL identifier, even if it already looks quoted. */
+export const quoteIdentifier = (input: string): string => quoteRaw(input, '"');
+
 export const wrapSingleQuote = (input: string): string => wrapQuote(input, "'");
 
 export const wrapDoubleQuote = (input: string): string => wrapQuote(input, '"');
@@ -30,6 +37,10 @@ export const wrapQuote = (input: string, quoteChar: QuoteChar): string => {
   if (input.startsWith(quoteChar) && input.endsWith(quoteChar)) {
     return input; // already wrapped
   }
+  return quoteRaw(input, quoteChar);
+};
+
+const quoteRaw = (input: string, quoteChar: QuoteChar): string => {
   switch (quoteChar) {
     case '"':
       return `"${input.replace(/"/g, '""')}"`;
@@ -42,8 +53,7 @@ export const wrapQuote = (input: string, quoteChar: QuoteChar): string => {
   }
 };
 
-// Not part of SQLHelper.ts's original public API, but exported here so
-// ../sql/queryParser.ts can reuse it without duplicating it.
+// Not part of SQLHelper.ts's original public API, but exported here so ../sql/queryParser.ts can reuse it without duplicating it.
 export const unwrapQuote = (s: string): string => {
   if (s.startsWith('"') && s.endsWith('"')) {
     return s.substring(1, s.length - 1);
@@ -88,8 +98,7 @@ export const createTableNameWithSchema = ({
   return convertId(table);
 };
 
-// Not part of SQLHelper.ts's original public API, but exported here so
-// ../sql/mutationQuery.ts can reuse it without duplicating it.
+// Not part of SQLHelper.ts's original public API, but exported here so ../sql/mutationQuery.ts can reuse it without duplicating it.
 export const toBindValue = (
   colType: GeneralColumnType,
   value: string | null,
@@ -140,8 +149,7 @@ export const toBindValue = (
   return value;
 };
 
-// Not part of SQLHelper.ts's original public API, but exported here so
-// ../sql/mutationQuery.ts can reuse it without duplicating it.
+// Not part of SQLHelper.ts's original public API, but exported here so ../sql/mutationQuery.ts can reuse it without duplicating it.
 export const toEmbeddedStringValue = (
   colType: GeneralColumnType,
   value: string | null,
@@ -155,12 +163,6 @@ export const toEmbeddedStringValue = (
   }
 
   if (isJsonLike(colType)) {
-    // Despite the `string | null` signature above, callers can hand this a
-    // parsed object/array here: mysql2 and pg auto-parse native JSON/JSONB
-    // columns before the value ever reaches this function, while other
-    // paths (e.g. Oracle's pre-21c VARCHAR2/CLOB + "IS JSON" storage) hand
-    // back already-serialized JSON text. Only stringify when it isn't
-    // already a string, or a string value gets JSON-encoded a second time.
     const text = typeof value === 'string' ? value : JSON.stringify(value);
     return wrapSingleQuote(text);
   }

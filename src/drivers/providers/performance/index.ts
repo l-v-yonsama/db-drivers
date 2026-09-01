@@ -1,3 +1,7 @@
+export * from './dynamoDbCapacity';
+export * from './dynamoDbCloudWatchMetrics';
+export * from './DynamoDbPerformanceTuningProvider';
+export * from './dynamoPartiqlAccessPattern';
 export * from './mysqlActualPlanTextParser';
 export * from './mysqlCatalogMapper';
 export * from './MySQLPerformanceTuningProvider';

@@ -178,10 +178,6 @@ export interface ClientRepresentation {
   notBefore?: number;
   optionalClientScopes?: string[];
   origin?: string;
-  /**
-   * protocol(client type)
-   * openid-connect or saml
-   */
   protocol?: string;
   protocolMappers?: any[];
   publicClient?: boolean;

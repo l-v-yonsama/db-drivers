@@ -12,9 +12,7 @@ import {
 } from '../../../src';
 import { init } from '../../setup/postgres';
 
-// A realistic-shaped `EXPLAIN (FORMAT JSON) ...` root (i.e. the single
-// element of the array Postgres returns): orders joined to customers via an
-// index scan, with a Hash node in between that carries no Relation Name.
+// A realistic-shaped `EXPLAIN (FORMAT JSON) ...` root (i.e. the single element of the array Postgres returns): orders joined to customers via an index scan, with a Hash node in between that carries no Relation Name.
 const explainRoot = {
   Plan: {
     'Node Type': 'Hash Join',
@@ -311,10 +309,6 @@ describe('postgresPlanParser', () => {
     });
 
     it('reports a Function Scan as non-table-source information, not a mapping-failure warning', () => {
-      // The exact pg_stat_statements/pg_stat_statements_info scenario the
-      // The implementation plan §4.4 uses this example: a set-returning function
-      // exposed as a view expands, at plan time, into a Function Scan with
-      // no Relation Name - fully understood, not a failure (§4.4).
       const { mappings, diagnostics } = parsePostgresPlan({
         Plan: {
           'Node Type': 'Function Scan',
@@ -400,9 +394,6 @@ describe('postgresPlanParser', () => {
     });
 
     it('warns instead of silently dropping an unrecognized scan node with no relation to map', () => {
-      // Not one of the known non-table scan sources above - a genuine
-      // table-mapping gap (e.g. a future Postgres node type this driver
-      // doesn't recognize yet), so this stays a warning (§4.4).
       const { mappings, diagnostics } = parsePostgresPlan({
         Plan: { 'Node Type': 'Some Future Scan', 'Plan Rows': 1 },
       });
@@ -448,9 +439,7 @@ describe('postgresPlanParser', () => {
       expect(extractPlanningTimeMs(undefined)).toBeUndefined();
       expect(extractPlanningTimeMs({})).toBeUndefined();
       expect(extractPlanningTimeMs({ 'Planning Time': 'not a number' })).toBeUndefined();
-      // Non-string/non-number values must not reach toNum() (it would throw
-      // trying to .trim() them) - a boolean or nested object degrades to
-      // "no value", not a crash.
+      // Non-string/non-number values must not reach toNum() (it would throw trying to .trim() them) - a boolean or nested object degrades to "no value", not a crash.
       expect(extractPlanningTimeMs({ 'Planning Time': true })).toBeUndefined();
       expect(extractPlanningTimeMs({ 'Planning Time': { nested: true } })).toBeUndefined();
       expect(extractPlanningTimeMs({ 'Planning Time': NaN })).toBeUndefined();
@@ -488,8 +477,7 @@ describe('PostgresPerformanceTuningProvider', () => {
     expect(result.result!.raw).toEqual([explainRoot]);
     expect(result.result!.planningTimeMs).toBe(0.234);
     expect(result.result!.planTableMappings).toHaveLength(2);
-    // The normalized PlanNode tree lines up with planTableMappings: same
-    // node count, same "n0, n1, ..." IDs, built from the same walk.
+    // The normalized PlanNode tree lines up with planTableMappings: same node count, same "n0, n1, ..." IDs, built from the same walk.
     expect(result.result!.normalizedPlan).toMatchObject({
       id: 'n0',
       operation: 'Hash Join',
@@ -509,10 +497,8 @@ describe('PostgresPerformanceTuningProvider', () => {
     });
   });
 
-  it('reports the pg_stat_statements/pg_stat_statements_info Function Scan case as information, not warnings (implementation plan §4.4)', async () => {
-    // pg_stat_statements/pg_stat_statements_info are views backed by a
-    // set-returning function - EXPLAIN shows them as Function Scan nodes
-    // with no Relation Name once the view is expanded.
+  it('reports the pg_stat_statements/pg_stat_statements_info Function Scan case as information, not warnings', async () => {
+    // pg_stat_statements/pg_stat_statements_info are views backed by a set-returning function - EXPLAIN shows them as Function Scan nodes with no Relation Name once the view is expanded.
     const requestSql = jest.fn().mockResolvedValue({
       rows: [
         {
@@ -555,9 +541,6 @@ describe('PostgresPerformanceTuningProvider', () => {
     expect(result.ok).toBe(true);
     // Neither node resolves to a table mapping - there is no table here.
     expect(result.result!.planTableMappings).toEqual([]);
-    // Both nodes are still individually present as their own diagnostic -
-    // grouping them into one beginner-facing summary is a UI concern
-    // (§1.1), not something this driver collapses away.
     expect(result.result!.diagnostics).toEqual([
       expect.objectContaining({
         code: 'NON_TABLE_PLAN_SOURCE',
@@ -577,9 +560,7 @@ describe('PostgresPerformanceTuningProvider', () => {
         node: { id: 'n2', operation: 'Function Scan', objectKind: 'function', objectName: 'pg_stat_statements' },
       }),
     ]);
-    // No diagnostic here is a warning - a caller assembling
-    // collection.status from this alone would see 'complete', not 'partial'
-    // (full end-to-end proof of that lives in PerformanceTuningContext.test.ts).
+    // No diagnostic here is a warning - a caller assembling collection.status from this alone would see 'complete', not 'partial' (full end-to-end proof of that lives in PerformanceTuningContext.test.ts).
     expect(result.result!.diagnostics!.every((d) => d.severity === 'info')).toBe(true);
   });
 
@@ -672,9 +653,7 @@ describe('PostgresPerformanceTuningProvider', () => {
     timeoutMs: 5000,
   };
 
-  // Routes each catalog query to a fixture by inspecting the SQL text -
-  // more robust than relying on collectTableDefinition's Promise.all() call
-  // order, and reads like the actual queries being simulated.
+  // Routes each catalog query to a fixture by inspecting the SQL text - more robust than relying on collectTableDefinition's Promise.all() call order, and reads like the actual queries being simulated.
   const routedRequestSql = (rowsBySection: {
     columns?: unknown[];
     constraints?: unknown[];
@@ -760,10 +739,6 @@ describe('PostgresPerformanceTuningProvider', () => {
       expect(result.result!.partitioning).toBeUndefined();
       expect(result.result!.ddl).toContain('CREATE TABLE perf_orders (');
 
-      // Every query is scoped to exactly this one table (§9.3), not a
-      // schema-wide scan, and is tagged as internal collection so a future
-      // SQL History integration can exclude it without pattern-matching SQL
-      // text (§6.3).
       for (const call of requestSql.mock.calls) {
         expect(call[0].conditions.binds[0]).toBe('perf_orders');
         expect(call[0].meta).toEqual({ type: 'performanceTuningContext' });
@@ -929,13 +904,7 @@ describe('PostgresPerformanceTuningProvider', () => {
   });
 });
 
-// Runs the actual catalog SQL against a live PostgreSQL (the same Docker
-// fixture __tests__/db/drivers/PostgresDriver.test.ts uses), not stubbed
-// rows. The unit tests above lock in row-mapping/orchestration behavior
-// against hand-built fixtures; this is what actually caught real bugs while
-// writing this file (node-postgres returning bigint as a string and
-// timestamptz as a Date, not the "nice" JS number/string shape) - stubbed
-// tests alone would not have.
+// Runs the actual catalog SQL against a live PostgreSQL (the same Docker fixture __tests__/db/drivers/PostgresDriver.test.ts uses), not stubbed rows.
 describe('PostgresPerformanceTuningProvider (live PostgreSQL)', () => {
   const connectOption: ConnectionSetting = {
     host: '127.0.0.1',

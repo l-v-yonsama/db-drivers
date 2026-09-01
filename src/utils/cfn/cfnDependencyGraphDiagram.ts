@@ -43,10 +43,7 @@ type ResourceClassification = {
   mergedAnnotationsByFocusId: ReadonlyMap<string, string[]>;
 };
 
-/**
- * Renders CloudFormation dependencies as a styled flowchart. Text cards make resource types
- * visible without external icon-pack registration, while every edge states its dependency kind.
- */
+/** Renders CloudFormation dependencies as a styled flowchart. */
 export const generateDiagramCfnDependencyGraph = (
   params: GenerateDiagramParams,
 ): string => {

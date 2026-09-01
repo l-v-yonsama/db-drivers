@@ -21,7 +21,12 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { MySQLColumnType } from '../types/resource/MySQLColumnType';
-import { MySQLPerformanceTuningProvider, PerformanceTuningContextProvider } from './providers';
+import {
+  MySQLPerformanceTuningProvider,
+  MySQLRdbDashboardProvider,
+  PerformanceTuningContextProvider,
+  RdbDashboardProvider,
+} from './providers';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar } from '../helpers';
 import {
@@ -50,11 +55,6 @@ export class MySQLDriver extends RDSBaseDriver {
 
   async setAutoCommit(value: boolean): Promise<void> {
     await this.con?.execute(`SET AUTOCOMMIT = ${value ? 1 : 0}`);
-    // const [rows, _] = await this.con.execute('select @@session.autocommit');
-    // if (rows && (rows as any[]).length) {
-    //   const result = (rows as any[])[0]['@@session.autocommit'];
-    //   console.log('@@session.autocommit = ', result);
-    // }
   }
 
   async getLockWaitTimeout(): Promise<number> {
@@ -204,16 +204,7 @@ export class MySQLDriver extends RDSBaseDriver {
     const { sql, conditions, dbTable, meta } = params;
     let rdb: ResultSetDataBuilder;
 
-    // if (
-    //   sql.trim().match(/set\s+global\s+.+/i) &&
-    //   conditions.rawQueries !== true
-    // ) {
-    //   // This query will crash current node process.
-    //   // RangeError [ERR_OUT_OF_RANGE]: The value of "offset" is out of range. It must be >= 0 and <= 9. Received 11
-    //   throw new Error(
-    //     'Setting global system variables is not supported.\nYou want to run this query, Set raw queries=CHECKED on metadata setting.',
-    //   );
-    // }
+    // if ( sql.trim().match(/set\s+global\s+.+/i) && conditions.rawQueries !== true ) { // This query will crash current node process.
 
     if (!this.con) {
       throw new Error('No connection');
@@ -221,9 +212,7 @@ export class MySQLDriver extends RDSBaseDriver {
 
     const binds = conditions?.binds ?? [];
     const startTime = new Date().getTime();
-    // const [rows, fields] = conditions?.rawQueries
-    //   ? await this.con.query(sql)
-    //   : await this.con.execute(sql, binds);
+    // const [rows, fields] = conditions?.rawQueries ? await this.con.query(sql)
 
     const [rows, fields] = await this.con.query(sql, binds);
 
@@ -231,15 +220,6 @@ export class MySQLDriver extends RDSBaseDriver {
 
     if (fields === undefined) {
       // execute...
-      // Ok Packet {
-      //   fieldCount: 0,
-      //   affectedRows: 1,
-      //   insertId: 0,
-      //   serverStatus: 2,
-      //   warningCount: 0,
-      //   message: '',
-      //   protocol41: true,
-      //   changedRows: 0 }
       const results = rows as ResultSetHeader;
 
       rdb = new ResultSetDataBuilder([
@@ -346,11 +326,15 @@ export class MySQLDriver extends RDSBaseDriver {
   }
 
   private performanceTuningContextProvider?: PerformanceTuningContextProvider;
+  private rdbDashboardProvider?: RdbDashboardProvider;
 
-  // Typed to the interface (not the concrete MySQLPerformanceTuningProvider),
-  // same rationale as PostgresDriver's override of this hook: stays
-  // override-compatible with RDSBaseDriver's declared return type, and test
-  // doubles overriding this hook with a fake Provider remain valid overrides.
+  protected getRdbDashboardProvider(): RdbDashboardProvider {
+    if (!this.rdbDashboardProvider) {
+      this.rdbDashboardProvider = new MySQLRdbDashboardProvider(this);
+    }
+    return this.rdbDashboardProvider;
+  }
+
   protected getPerformanceTuningContextProvider(): PerformanceTuningContextProvider {
     if (!this.performanceTuningContextProvider) {
       this.performanceTuningContextProvider = new MySQLPerformanceTuningProvider(this);
@@ -384,9 +368,7 @@ export class MySQLDriver extends RDSBaseDriver {
         };
       }
 
-      // Probe the exact table used by getStatementStatistics(). Requiring
-      // setup_consumers access as well would reject otherwise-valid users
-      // that can read digest statistics but not Performance Schema settings.
+      // Probe the exact table used by getStatementStatistics().
       await this.requestSql({
         sql: `SELECT DIGEST
 FROM performance_schema.events_statements_summary_by_digest
@@ -404,17 +386,6 @@ WHERE FALSE`,
     }
   }
 
-  // Probes whether this server's performance_schema.
-  // events_statements_summary_by_digest exposes the sample-text columns
-  // added in MySQL 8.0 (misc/design/performance-tuning-query-statistics-
-  // parameter-input-plan.ja.md §3.1/§6.4, db-notebook repo). A "WHERE
-  // FALSE" probe never touches a row, matching the existing
-  // checkStatementStatisticsAvailability() precedent just above. Only an
-  // unknown-column error (this server version predates the columns, e.g.
-  // MySQL 5.7) is treated as "not supported" and swallowed; any other
-  // error (permission, connectivity, ...) propagates so a real problem is
-  // never misread as "sample columns unavailable" (§6.4: "権限エラーを
-  // sample列非対応と誤認しない").
   private async supportsStatementStatisticsSampleColumns(): Promise<boolean> {
     try {
       await this.requestSql({
@@ -445,13 +416,6 @@ WHERE FALSE`,
     const normalized = normalizeStatementStatisticsParams(params);
     const orderBy = getStatementStatisticsOrderByColumn(normalized.sortBy);
     const supportsSampleColumns = await this.supportsStatementStatisticsSampleColumns();
-    // Optional columns appended after the 15 required ones (never
-    // interleaved) so existing name/order-based consumers are unaffected
-    // (§11 completion criteria). QUERY_SAMPLE_TEXT is a representative
-    // sample for this digest, not necessarily the latest execution - see
-    // §3.1 for why the UI must label it "Representative query"/"Sampled
-    // at", not "Latest query". The truncation-suspect flag is a heuristic
-    // (length reaching the server's configured cap), not a guarantee.
     const sampleColumnsSql = supportsSampleColumns
       ? `,
   QUERY_SAMPLE_TEXT AS query_sample_text,
@@ -569,6 +533,18 @@ ORDER BY ID DESC`;
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
     const dbResources = new Array<RdsDatabase>();
     const dbDatabase = new RdsDatabase(this.conRes.database);
+    dbDatabase.capabilities = {
+      ...(dbDatabase.capabilities ?? {}),
+      dashboards: [
+        ...(dbDatabase.capabilities?.dashboards ?? []),
+        {
+          dashboardId: 'rdb-database',
+          providerId: 'rdb.mysql.database',
+          variant: 'mysql',
+          hints: { databaseName: this.conRes.database },
+        },
+      ],
+    };
     dbResources.push(dbDatabase);
 
     const dbSchemas = this.filterSchemas(await this.getSchemas(dbDatabase));
@@ -717,9 +693,6 @@ ORDER BY ID DESC`;
     });
   }
 
-  //  table_name   column_name referenced_table_name referenced_column_name constraint_name
-  //  order        customer_no customer              customer_no            order_ibfk_1
-  //  order_detail order_no    order                 order_no               order_detail_ibfk_1
   async setForinKeys(dbSchema: DbSchema): Promise<void> {
     const binds = [dbSchema.name.toLowerCase()];
 
@@ -746,8 +719,6 @@ ORDER BY ID DESC`;
       const referencedColumnName = row.values['referenced_column_name'];
       const constraintName = row.values['constraint_name'];
 
-      // FROM order.customer_no -> TO customer.customer_no
-      // FROM order_detail.order_no -> TO order.order_no
       const tableRes = dbSchema.getChildByName(tableName);
       if (tableRes) {
         if (tableRes.getChildByName(columnName)) {
@@ -765,8 +736,6 @@ ORDER BY ID DESC`;
         }
       }
 
-      // TO customer.customer_no <- FROM order.customer_no
-      // TO order.order_no <- FROM order_detail.order_no
       const tableRes2 = dbSchema.getChildByName(referencedTableName);
       if (tableRes2) {
         if (tableRes2.getChildByName(referencedColumnName)) {
@@ -823,8 +792,7 @@ ORDER BY ID DESC`;
 
     const ddl = rows.length ? (rows[0]['Create Table'] ?? '') : '';
     if (ddl && schemaName) {
-      // `SHOW CREATE TABLE` never includes the schema in its output, so
-      // qualify it ourselves to match the RDSBaseDriver.getTableDDL contract.
+      // `SHOW CREATE TABLE` never includes the schema in its output, so qualify it ourselves to match the RDSBaseDriver.getTableDDL contract.
       return ddl.replace(
         /^CREATE TABLE (`(?:[^`]|``)*`)/,
         `CREATE TABLE ${this.quoteIdentifier(schemaName)}.$1`,

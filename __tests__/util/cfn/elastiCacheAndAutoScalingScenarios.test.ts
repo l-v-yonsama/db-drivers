@@ -36,8 +36,7 @@ describe('cfn', () => {
         expect(diagram).toContain('f0_ApplicationCache["ApplicationCache"]');
         expect(diagram).not.toContain('AppLaunchTemplate');
         expect(diagram).not.toContain('CacheSubnetGroup');
-        // Two Fn::Sub references (Address and Port) into the same replication group collapse
-        // into one accesses relation, not two.
+        // Two Fn::Sub references (Address and Port) into the same replication group collapse into one accesses relation, not two.
         expect(
           (diagram.match(/f0_WebAutoScalingGroup -->\|accesses\| f0_ApplicationCache/g) ?? [])
             .length,
@@ -87,9 +86,7 @@ describe('cfn', () => {
           'Cache subnet group CacheSubnetGroup: 2 candidate subnets; Multi-AZ; automatic failover; 2 cache nodes',
         );
         expect(diagram).not.toContain('Primary');
-        // Not a plain substring check: "ReplicationGroup" (the type name itself) legitimately
-        // contains "Replica" as a prefix of "Replication" - only an actual "Replica" node/AZ
-        // label (not immediately followed by "tion") would indicate a false AZ-pinned claim.
+        // Not a plain substring check: "ReplicationGroup" (the type name itself) legitimately contains "Replica" as a prefix of "Replication" - only an actual "Replica" node/AZ label (not immediately followed by "tion") would indicate a false AZ-pinned claim.
         expect(diagram).not.toMatch(/Replica(?!tion)/);
         expect(diagram).not.toContain('Standalone');
         expect(diagram).not.toContain('Regional managed services');
@@ -126,8 +123,7 @@ describe('cfn', () => {
           if (!match) throw new Error(`no geometry found for ${id}`);
           return { x: Number(match[1]), width: Number(match[2]) };
         };
-        // A single, non-spanning VPC-level placement falls back to a fixed ~290px box; a
-        // resource that actually spans two AZ-separated candidate subnets is much wider.
+        // A single, non-spanning VPC-level placement falls back to a fixed ~290px box; a resource that actually spans two AZ-separated candidate subnets is much wider.
         expect(geometryOf('node_f0_WebAutoScalingGroup').width).toBeGreaterThan(400);
         expect(geometryOf('node_f0_ApplicationCache').width).toBeGreaterThan(400);
 
@@ -148,11 +144,9 @@ describe('cfn', () => {
         expect(diagram).toContain('f0_WebAutoScalingGroup["WebAutoScalingGroup<br/>AutoScalingGroup"]');
         expect(diagram).toContain('f0_CacheSubnetGroup["CacheSubnetGroup<br/>SubnetGroup"]');
         expect(diagram).toContain('f0_ApplicationCache["ApplicationCache<br/>ReplicationGroup"]');
-        // Fn::Sub referencing ${ApplicationCache.PrimaryEndPoint.Address}/.Port resolves as a
-        // Fn::GetAtt dependency (both collapse into the same one), same as a literal !GetAtt.
+        // Fn::Sub referencing ${ApplicationCache.PrimaryEndPoint.Address}/.Port resolves as a Fn::GetAtt dependency (both collapse into the same one), same as a literal !GetAtt.
         expect(diagram).toContain('f0_AppLaunchTemplate -.->|"GetAtt"| f0_ApplicationCache');
-        // Ref (LaunchTemplateId) and GetAtt (LatestVersionNumber) both target AppLaunchTemplate;
-        // per the documented ImportValue > GetAtt > Ref > DependsOn precedence, GetAtt wins.
+        // Ref (LaunchTemplateId) and GetAtt (LatestVersionNumber) both target AppLaunchTemplate; per the documented ImportValue > GetAtt > Ref > DependsOn precedence, GetAtt wins.
         expect(diagram).toContain('f0_WebAutoScalingGroup -.->|"GetAtt"| f0_AppLaunchTemplate');
         expect(diagram).toContain('f0_CacheSubnetGroup -->|"Ref"| f0_CacheSubnetA');
         expect(diagram).toContain('f0_CacheSubnetGroup -->|"Ref"| f0_CacheSubnetC');
@@ -249,9 +243,7 @@ describe('cfn', () => {
         expect(diagram).toContain(
           'f0_WebTargetGroup -.->|targets| f0_WebAutoScalingGroup',
         );
-        // DatabaseInstance1/2 are proven, by DBClusterIdentifier, to be members of
-        // DatabaseCluster - that containment is drawn directly as a nested subgraph instead of a
-        // separate "member of" dashed edge, matching the Multi-AZ diagram's representation.
+        // DatabaseInstance1/2 are proven, by DBClusterIdentifier, to be members of DatabaseCluster - that containment is drawn directly as a nested subgraph instead of a separate "member of" dashed edge, matching the Multi-AZ diagram's representation.
         expect(diagram).toContain('subgraph f0_DatabaseCluster[');
         expect(diagram).toContain('      f0_DatabaseInstance1["DatabaseInstance1"]');
         expect(diagram).toContain('      f0_DatabaseInstance2["DatabaseInstance2"]');
@@ -295,9 +287,7 @@ describe('cfn', () => {
         expect(diagram).toContain(
           'DB subnet group DatabaseSubnetGroup: 2 candidate subnets; Multi-AZ; 2 DB instances; writer/reader roles dynamic',
         );
-        // DatabaseInstance1/2 are proven, by DBClusterIdentifier, to be members of
-        // DatabaseCluster - that containment is drawn directly as a nested subgraph instead of a
-        // separate "member of" dashed edge.
+        // DatabaseInstance1/2 are proven, by DBClusterIdentifier, to be members of DatabaseCluster - that containment is drawn directly as a nested subgraph instead of a separate "member of" dashed edge.
         expect(diagram).toContain('subgraph f0_vpc_Vpc_f0_DatabaseCluster[');
         expect(diagram).toContain(
           '        f0_vpc_Vpc_f0_DatabaseInstance1["DatabaseInstance1<br/>DBInstance"]',
@@ -348,9 +338,7 @@ describe('cfn', () => {
           list: relationshipList(relationshipTemplate()),
         });
 
-        // DatabaseInstance1/2 are proven, by DBClusterIdentifier, to be members of
-        // DatabaseCluster - that containment is now drawn directly (member card nested inside
-        // the parent's own box) instead of as a separate "member of" dashed edge.
+        // DatabaseInstance1/2 are proven, by DBClusterIdentifier, to be members of DatabaseCluster - that containment is now drawn directly (member card nested inside the parent's own box) instead of as a separate "member of" dashed edge.
         expect(parentOf(drawio, 'node_f0_DatabaseInstance1')).toBe('node_f0_DatabaseCluster');
         expect(parentOf(drawio, 'node_f0_DatabaseInstance2')).toBe('node_f0_DatabaseCluster');
         expect(parentOf(drawio, 'node_f0_DatabaseCluster')).toBe('vpc_0_Vpc');
@@ -371,17 +359,12 @@ describe('cfn', () => {
           list: relationshipList(relationshipTemplate()),
         });
 
-        // DatabaseCluster resolves to DatabaseSubnetGroup (DatabaseSubnetA + DatabaseSubnetC), so
-        // a naming impression like "this DB Cluster only exists in one AZ" must not appear: it
-        // keeps the same full left/right span an unshared resource would get. The Auto Scaling
-        // Group is the only other resource placed across AppSubnetA/AppSubnetC, so its width is a
-        // known-good reference for "spans the full candidate-subnet range".
+        // DatabaseCluster resolves to DatabaseSubnetGroup (DatabaseSubnetA + DatabaseSubnetC), so a naming impression like "this DB Cluster only exists in one AZ" must not appear: it keeps the same full left/right span an unshared resource would get.
         const cluster = geometryOf(drawio, 'node_f0_DatabaseCluster');
         const autoScalingGroup = geometryOf(drawio, 'node_f0_WebAutoScalingGroup');
         expect(cluster.width).toBe(autoScalingGroup.width);
 
-        // Members are positioned relative to the cluster's own box, stacked below its header
-        // text with a consistent gap, and stay within the cluster's own width.
+        // Members are positioned relative to the cluster's own box, stacked below its header text with a consistent gap, and stay within the cluster's own width.
         const instance1 = geometryOf(drawio, 'node_f0_DatabaseInstance1');
         const instance2 = geometryOf(drawio, 'node_f0_DatabaseInstance2');
         expect(instance1.x).toBe(instance2.x);
@@ -389,8 +372,7 @@ describe('cfn', () => {
         expect(instance1.width).toBeLessThan(cluster.width);
         expect(instance2.y - instance1.y).toBe(instance1.height + 15);
 
-        // The AZ boxes and the VPC box itself must grow to keep containing the taller cluster
-        // box, and the legend (drawn below the VPC) must not end up overlapping it.
+        // The AZ boxes and the VPC box itself must grow to keep containing the taller cluster box, and the legend (drawn below the VPC) must not end up overlapping it.
         const az0 = geometryOf(drawio, 'vpc_0_Vpc_az_0');
         const vpc = geometryOf(drawio, 'vpc_0_Vpc');
         const legend = geometryOf(drawio, 'legend');
@@ -431,9 +413,7 @@ describe('cfn', () => {
           list,
         });
 
-        // A: AppSubnetA/AppSubnetC now have a NAT default route, so the Auto Scaling Group
-        // placed there gets the same "egress available" proof already given to ECS Service /
-        // EC2 Instance resources.
+        // A: AppSubnetA/AppSubnetC now have a NAT default route, so the Auto Scaling Group placed there gets the same "egress available" proof already given to ECS Service / EC2 Instance resources.
         expect(diagram).toContain(
           'f0_vpc_Vpc_f0_WebAutoScalingGroup <-->|"egress available"| f0_vpc_Vpc_f0_PublicSubnetA_f0_NatGatewayA',
         );
@@ -444,8 +424,7 @@ describe('cfn', () => {
           /id="path_\d+_egress-return"[\s\S]*?source="node_f0_WebAutoScalingGroup" target="node_f0_NatGatewayA"/,
         );
 
-        // B: egress-return is specified as "Teal solid" - Mermaid must match draw.io instead of
-        // rendering it as a dashed cyan line.
+        // B: egress-return is specified as "Teal solid" - Mermaid must match draw.io instead of rendering it as a dashed cyan line.
         expect(diagram).toMatch(/linkStyle \d+ stroke:#0d9488,stroke-width:2px$/m);
         expect(diagram).not.toMatch(/stroke:#0891b2/);
         expect(diagram).toContain('Teal: egress / return');
@@ -454,12 +433,7 @@ describe('cfn', () => {
           /value="egress available"[^>]*strokeColor=#0d9488;strokeWidth=2;(?!dashed=1)[^>]*startArrow=block;endArrow=block;[^>]*source="node_f0_WebAutoScalingGroup" target="node_f0_NatGatewayA"/,
         );
 
-        // D: this fixture never proves a data-access, event-delivery, or security-protection
-        // relationship, so those legend rows must not appear even though the fixed
-        // relation-kind list still defines them. DatabaseInstance1/2's resource-membership is
-        // fully absorbed into DatabaseCluster's containment (no "member of" edge is drawn), so
-        // the membership legend row must not appear either - only the kinds actually drawn as
-        // edges (client, egress, permission) appear.
+        // D: this fixture never proves a data-access, event-delivery, or security-protection relationship, so those legend rows must not appear even though the fixed relation-kind list still defines them.
         expect(diagram).toContain('Blue: client request / response');
         expect(diagram).toContain('Purple dashed: security-group permission');
         expect(diagram).not.toContain('Gray dashed: membership');

@@ -22,12 +22,6 @@ export const normalizeQuery = ({
   return normalizeSimpleParametersQuery(query, bindParams);
 };
 
-/**
- * Transform a named query to a standard positioned parameters query
- * named parameters like :name
- * to
- * positionals parameters (i.e. $1, $2, etc...)
- */
 export const normalizePositionedParametersQuery = (
   query: string,
   bindParams?: { [key: string]: any },
@@ -87,20 +81,13 @@ export const normalizePositionedParametersQuery = (
   const lines = toLines(stripComment(query));
   const newLines: string[] = [];
 
-  // /\w/	[A-Za-z0-9] すべての英数字
-  // /\s/ ユニコード空白文字(スペース, 全角スペース, タブ, 改行 等)
-  // /\S/ ユニコード空白文字以外のあらゆる文字
+  // /\w/	[A-Za-z0-9] すべての英数字 /\s/ ユニコード空白文字(スペース, 全角スペース, タブ, 改行 等)
   lines.forEach((line) => {
     const reg = /((?<!:):([a-zA-Z_$]\w*)\b)/gi;
     const normalized = line.replace(reg, (substring, g1, g2, offset) => {
-      // g1: ((?<!:):(\w+)\b) ... simple named parameter
-      // g2: (\w+)
+      // g1: ((?<!:):(\w+)\b) ...
 
-      // console.log('substring', substring);
-      // console.log('g1', g1);
-      // console.log('g2', g2);
-      // console.log('offset', offset);
-      // return substring;
+      // console.log('substring', substring); console.log('g1', g1);
 
       // Determine if inside quotes
       const before = line.slice(0, offset);
@@ -115,12 +102,6 @@ export const normalizePositionedParametersQuery = (
         const word = g2;
         const ok = checkBindParam(word);
 
-        // `bindParams &&` guard: checkBindParam() already treats a missing
-        // `bindParams` argument as "ok" (structural-only conversion, no
-        // caller-supplied values to validate against), but this line used
-        // to read `bindParams[word]` unconditionally regardless of that -
-        // crashing with "Cannot read properties of undefined" on the first
-        // named marker whenever a caller omitted `bindParams` entirely.
         if (ok && bindParams && Array.isArray(bindParams[word])) {
           return getOrCreateMultiplePosition(word);
         } else {
@@ -161,12 +142,6 @@ export const normalizePositionedParametersQuery = (
   return { query: newLines.join('\n'), binds };
 };
 
-/**
- * Transform a named query to a simple parameters query
- * named parameters like :name
- * to
- * simple parameters (i.e. ?, ?, etc...)
- */
 export const normalizeSimpleParametersQuery = (
   query: string,
   bindParams?: { [key: string]: any },
@@ -190,21 +165,13 @@ export const normalizeSimpleParametersQuery = (
   const lines = toLines(stripComment(query));
   const newLines: string[] = [];
 
-  // /\w/	[A-Za-z0-9] すべての英数字
-  // /\s/ ユニコード空白文字(スペース, 全角スペース, タブ, 改行 等)
-  // /\S/ ユニコード空白文字以外のあらゆる文字
+  // /\w/	[A-Za-z0-9] すべての英数字 /\s/ ユニコード空白文字(スペース, 全角スペース, タブ, 改行 等)
   lines.forEach((line) => {
     const reg = /((?<!:):([a-zA-Z_$]\w*)\b)/gi;
     const normalized = line.replace(reg, (substring, g1, g2, offset) => {
-      // g1: ((?<!:):(\w+)\b) ... simple named parameter
-      // g2: (\w+)
-      // offset: position
+      // g1: ((?<!:):(\w+)\b) ...
 
-      // console.log('substring', substring);
-      // console.log('g1', g1);
-      // console.log('g2', g2);
-      // console.log('offset', offset);
-      // return substring;
+      // console.log('substring', substring); console.log('g1', g1);
 
       // Determine if inside quotes
       const before = line.slice(0, offset);
@@ -218,8 +185,7 @@ export const normalizeSimpleParametersQuery = (
       if (g1) {
         const word = g2;
         const ok = checkBindParam(word);
-        // Same `bindParams &&` guard as normalizePositionedParametersQuery()
-        // above, for the same reason - see its comment.
+        // Same `bindParams &&` guard as normalizePositionedParametersQuery() above, for the same reason - see its comment.
         if (ok && bindParams && Array.isArray(bindParams[word])) {
           const numOfBinds = bindParams[word].length;
           binds.push(...bindParams[word]);
@@ -238,8 +204,7 @@ export const normalizeSimpleParametersQuery = (
   return { query: newLines.join('\n'), binds };
 };
 
-// Not part of SQLHelper.ts's original public API, but exported here so
-// ../sql/queryParser.ts can reuse it without duplicating it.
+// Not part of SQLHelper.ts's original public API, but exported here so ../sql/queryParser.ts can reuse it without duplicating it.
 export const stripComment = (query: string): string => {
   return query
     .replace(/\/\*[^*]*\*\//gm, '') // strip multiple line comment.

@@ -275,8 +275,7 @@ describe('cfn', () => {
         'f0_ProtectedWebAcl -->|protects| f0_LoadBalancer',
       );
 
-      // PublicSubnetA deliberately has MapPublicIpOnLaunch=false. Its IGW route, not that
-      // setting, makes it public. NAT-routed subnets are private; DB subnets are isolated.
+      // PublicSubnetA deliberately has MapPublicIpOnLaunch=false.
       expect(architecture).toContain('Public subnet 10.80.0.0/24');
       expect(architecture).toContain('Private subnet 10.80.10.0/24');
       expect(architecture).toContain('Isolated subnet 10.80.20.0/24');
@@ -361,8 +360,7 @@ describe('cfn', () => {
       expect(drawio).toMatch(
         /id="node_f0_NatGatewayC"[\s\S]*?<mxGeometry x="170" y="50"/,
       );
-      // Candidate-spanning resources stay vertically inside their subnet tier and extend
-      // from the left candidate subnet's inner edge to the right candidate's inner edge.
+      // Candidate-spanning resources stay vertically inside their subnet tier and extend from the left candidate subnet's inner edge to the right candidate's inner edge.
       expect(drawio).toMatch(
         /id="node_f0_WebService"[\s\S]*?<mxGeometry x="125" y="1015" width="650" height="65"/,
       );

@@ -3,12 +3,7 @@ import { IamRealm, KeycloakDatabase } from '../../resource';
 import { CreateKeycloakSchemaDefinitionsForPromptParams } from '../../types';
 import { formatResourceGroupHeading } from './promptFormatUtils';
 
-/**
- * Lists the realms of a target Keycloak resource tree, optionally narrowed
- * by an exact-match `realmName` filter. `isDefault`/`numOfUsers`/
- * `numOfGroups` are unconditionally populated on `IamRealm`, so no live
- * driver call is needed here.
- */
+/** Lists the realms of a target Keycloak resource tree, optionally narrowed by an exact-match `realmName` filter. */
 export const createKeycloakSchemaDefinitionsForPrompt = async (
   params: CreateKeycloakSchemaDefinitionsForPromptParams,
 ): Promise<string | undefined> => {

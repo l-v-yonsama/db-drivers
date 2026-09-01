@@ -18,16 +18,9 @@ describe('cfn', () => {
         list: files,
       });
 
-      // Internet -> IGW -> ALB -> target group -> EC2. RDS stays at VPC level with its DB
-      // subnet group represented as placement candidates rather than duplicated per subnet.
-      // all resolved via cross-template Fn::ImportValue/exported Output names, not guessed.
+      // Internet -> IGW -> ALB -> target group -> EC2.
       expect(diagram).toContain('internet(["Internet"])');
       expect(diagram).toContain('subgraph f0_vpc_CFnVPC["VPC 10.0.0.0/16"]');
-      // Icon-bearing service nodes get a bare-logicalId label, not "logicalId TypeName" -
-      // avoids overlapping neighboring nodes in mermaid's small fixed-size service boxes,
-      // and (for DBInstance specifically) fixes a bug where every subnet resource's label
-      // used to hardcode the literal suffix " EC2" regardless of its real type, mislabeling
-      // this RDS instance as if it were an EC2 instance.
       expect(diagram).toContain(
         'f0_vpc_CFnVPC_f0_PublicSubnet1_f1_EC2WebServer01["EC2WebServer01<br/>Instance"]',
       );
@@ -46,10 +39,6 @@ describe('cfn', () => {
     });
 
     it('places an EC2::Instance/RDS::DBInstance in a "Standalone" group instead of dropping it, when no VPC resolves for it', () => {
-      // rds.yaml/ec2.yaml on their own (no vpc.yaml) is exactly the scenario 9章/10章's
-      // The previous topology view drawing nothing at all without a VPC problem describes -
-      // both EC2WebServer01's SubnetId and DBInstance's DBSubnetGroupName are
-      // Fn::ImportValue references into vpc.yaml, which isn't part of this list.
       const files = ['ec2.yaml', 'rds.yaml'].map((f) => ({
         fileName: f,
         templateJSONString: JSON.stringify(
@@ -73,8 +62,7 @@ describe('cfn', () => {
         'f0_EC2WebServer01["EC2WebServer01<br/>Instance"]',
       );
       expect(diagram).toContain('f1_DBInstance["DBInstance<br/>DBInstance"]');
-      // No edges at all - a standalone resource has no subnet/AZ position on either end for
-      // an edge to attach to.
+      // No edges at all - a standalone resource has no subnet/AZ position on either end for an edge to attach to.
       expect(diagram).not.toContain('-->');
     });
 

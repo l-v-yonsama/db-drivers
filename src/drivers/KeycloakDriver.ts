@@ -92,9 +92,7 @@ export class KeycloakDriver
   async getAxiosClient(): Promise<AxiosInstance> {
     const { url } = this.conRes;
     const tokenSet = await this.getTokenSet();
-    // axios.create() (unlike `new Axios(...)`) already inherits axios's
-    // default transformRequest/transformResponse, so JSON (de)serialization
-    // works out of the box without patching client.defaults by hand.
+    // axios.create() (unlike `new Axios(...)`) already inherits axios's default transformRequest/transformResponse, so JSON (de)serialization works out of the box without patching client.defaults by hand.
     return axios.create({
       baseURL: url,
       headers: {

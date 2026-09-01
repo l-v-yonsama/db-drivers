@@ -40,11 +40,7 @@ import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 
-// Every StackStatus except DELETE_COMPLETE - a deleted stack no longer
-// exists and would only add noise, but everything else (including the
-// *_FAILED/*_ROLLBACK_* states) is kept so a broken stack is still visible
-// rather than silently dropped. Used as the default when listStacks() is
-// called without a filterType.
+// Every StackStatus except DELETE_COMPLETE - a deleted stack no longer exists and would only add noise, but everything else (including the *_FAILED/*_ROLLBACK_* states) is kept so a broken stack is still visible rather than silently dropped.
 const LIVE_STACK_STATUSES: StackStatus[] = Object.values(StackStatus).filter(
   (status) => status !== StackStatus.DELETE_COMPLETE,
 );
@@ -87,11 +83,7 @@ export class AwsCloudFormationServiceClient
     }
   }
 
-  /**
-   * Lists stacks, optionally narrowed to one status bucket (ACTIVE_STATUSES etc. - see
-   * AwsCfnStackAttributes.ts). Without a filterType, behaves like the plain AWS API default:
-   * every non-deleted stack.
-   */
+  /** Lists stacks, optionally narrowed to one status bucket (ACTIVE_STATUSES etc. - see AwsCfnStackAttributes.ts). */
   async listStacks(params?: ListStackParams): Promise<StackSummary[]> {
     const { filterType, limit = 100 } = params ?? {};
     let StackStatusFilter: StackStatus[] = LIVE_STACK_STATUSES;
@@ -142,10 +134,7 @@ export class AwsCloudFormationServiceClient
     }));
   }
 
-  /**
-   * Account-wide CloudFormation limits (e.g. the max number of stacks the account can have).
-   * Not called by getInfomationSchemas() - purely informational, on demand.
-   */
+  /** Account-wide CloudFormation limits (e.g. the max number of stacks the account can have). */
   async describeAccountLimits(): Promise<AccountLimits> {
     const res = await this.cfnClient.send(new DescribeAccountLimitsCommand({}));
     const others: Record<string, any> = {};
@@ -163,14 +152,7 @@ export class AwsCloudFormationServiceClient
     return { StackLimit, StackOutputsLimit, ...others };
   }
 
-  /**
-   * Fetches a stack's template body and returns it converted to the requested format.
-   * `GetTemplate` returns the template in whatever format it was originally submitted in
-   * (JSON stays JSON, YAML stays YAML) - this normalizes that so a caller doesn't have to
-   * care which one a given stack happens to be. YAML parsing goes through
-   * parseCfnYamlTemplate to handle CloudFormation's `!Ref`/`!GetAtt`/etc. shorthand tags,
-   * which a plain YAML parser can't.
-   */
+  /** Fetches a stack's template body and returns it converted to the requested format. */
   async getTemplate(params: {
     stackName: string;
     convertTo: 'yaml' | 'json';
@@ -200,15 +182,7 @@ export class AwsCloudFormationServiceClient
     return yaml.dump(jsonObj);
   }
 
-  /**
-   * L2b: fetches the stack's own resource list (same as getInfomationSchemas()) enriched
-   * with each resource's dependsOn, extracted from the stack's actual template via
-   * getTemplate()+extractResourceDependencies(). Deliberately separate from
-   * getInfomationSchemas() - that stays a plain ListStacks+DescribeStackResources listing so
-   * fetching the whole schema doesn't imply one extra GetTemplate call per stack. A caller
-   * that wants dependency edges (e.g. to feed AwsPromptHelper's renderCloudFormationSection,
-   * or generateDiagram()) asks for them explicitly, one stack at a time.
-   */
+  /** Returns stack resources enriched with template-derived dependencies. */
   async getResourcesWithDependencies(
     stackName: string,
   ): Promise<AwsCfnStackResource[]> {

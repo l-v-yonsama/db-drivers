@@ -8,16 +8,11 @@ import {
   validateLayoutResult,
 } from '../../src/utils/diagramLayout';
 
-// The cached worker-backed ELK instance (see elkLayoutEngine.ts) owns a real `worker_threads`
-// Worker; without disposing it, Jest reports "did not exit one second after the test run has
-// completed" because that thread keeps the process alive.
+// The cached worker-backed ELK instance (see elkLayoutEngine.ts) owns a real `worker_threads` Worker; without disposing it, Jest reports "did not exit one second after the test run has completed" because that thread keeps the process alive.
 afterAll(() => {
   disposeAutoLayoutEngine();
 });
 
-// Covers the common-layer test matrix from misc/automatic-diagram-layout-and-er-migration-plan.md
-// section 8.1: simple DAG, multiple sources/sinks, cycles, isolated nodes, compound nodes, ports,
-// determinism, and the timeout/error fallback.
 
 const simpleDag = (): LayoutGraph => ({
   id: 'root',
@@ -144,8 +139,7 @@ describe('diagramLayout / computeAutoLayout', () => {
     const tableA = result.nodes.get('tableA')!;
     const tableB = result.nodes.get('tableB')!;
     const edge = result.edges.get('fk')!;
-    // Within 2px of the declared port offset: ELK nudges the exact attachment point by the
-    // port's own (sub-pixel-irrelevant here) width/height, so an exact match isn't guaranteed.
+    // Within 2px of the declared port offset: ELK nudges the exact attachment point by the port's own (sub-pixel-irrelevant here) width/height, so an exact match isn't guaranteed.
     expect(Math.abs(edge.sourcePoint.x - (tableA.x + 120))).toBeLessThan(2);
     expect(Math.abs(edge.sourcePoint.y - (tableA.y + 30))).toBeLessThan(2);
     expect(Math.abs(edge.targetPoint.x - (tableB.x + 0))).toBeLessThan(2);
@@ -203,10 +197,6 @@ describe('diagramLayout / computeAutoLayout', () => {
     expect(report.siblingOverlaps).toHaveLength(0);
   });
 
-  // Regression test (found via review): a generator's edge-rendering loop keys off
-  // `layout.edges.get(id)` being present to decide whether to draw a connector at all - an empty
-  // edges map on fallback used to silently drop every dependency/relationship line in the
-  // diagram, not just degrade their routing.
   it('still returns an entry per edge when it falls back, so a caller does not silently drop every connector', async () => {
     const graph = simpleDag();
     const result = await computeAutoLayout(graph, { timeoutMs: 0 });
@@ -280,11 +270,6 @@ describe('diagramLayout / stableSortGraph', () => {
 });
 
 describe('diagramLayout / validateLayoutResult', () => {
-  // Regression test (found via review): ComputedNodeLayout coordinates are absolute
-  // (root-relative, per its own doc comment) for every node, parents included - a parent that
-  // isn't sitting at the canvas origin is the normal case (a second top-level group, a nested
-  // AZ/Subnet, ...), so containment has to be checked against the parent's own absolute origin,
-  // not against 0/0.
   const graph: LayoutGraph = {
     id: 'root',
     direction: 'DOWN',

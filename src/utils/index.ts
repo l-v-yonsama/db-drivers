@@ -5,6 +5,7 @@ export * from './csv';
 export * from './dbType';
 export * from './performanceTuningContext';
 export * from './performanceTuningContextValidator';
+export * from './dynamoDbPerformanceTuningContextValidator';
 export * from './statementStatistics';
 export * from './er';
 export * from './jwt';

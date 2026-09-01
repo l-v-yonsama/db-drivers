@@ -13,9 +13,6 @@ import {
   SqlExecutionEvent,
 } from '../../../types';
 
-/* ======================================================
-   helper
-====================================================== */
 
 function createRdhTextKey(name: string, width?: number): RdhKey {
   return createRdhKey({ name, type: GeneralColumnType.TEXT, width });
@@ -29,9 +26,6 @@ function createRdhIntKey(name: string, width?: number): RdhKey {
   return createRdhKey({ name, type: GeneralColumnType.INTEGER, width });
 }
 
-/* ======================================================
-   LOG EVENTS
-====================================================== */
 
 export function createLogResultBuilder(
   logEvents: ClassifiedEvent[],
@@ -164,9 +158,6 @@ function isErrorLikeLevel(level: string): boolean {
   return ['error', 'fatal', 'severe'].includes(level.toLocaleLowerCase());
 }
 
-/* ======================================================
-   SQL EXECUTION EVENTS
-====================================================== */
 
 export function createSqlResultBuilder(
   sqlExecutions: SqlExecutionEvent[],
@@ -242,10 +233,6 @@ type MetaParams = { rdb: ResultSetDataBuilder; title: string; type: string };
 
 function updateMetaParams({ rdb, title, type }: MetaParams): void {
   rdb.updateMeta({
-    // connectionName,
-    // useDatabase,
-    // comment,
-    // schemaName,
     tableName: title,
     // compareKeys,
     type,

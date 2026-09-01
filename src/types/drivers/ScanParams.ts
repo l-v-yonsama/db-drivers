@@ -17,21 +17,14 @@ export type RedisScanParams = ScanParamsBase & {
 
 export type MemcacheScanParams = ScanParamsBase & {
   kind: 'memcache';
-  /**
-   * 'exact': `key` is the literal key name and at most one item is returned.
-   * 'partial': `key` is matched as a substring against key names.
-   */
+  /** 'exact': `key` is the literal key name and at most one item is returned. */
   matchType: 'exact' | 'partial';
   key: string;
 };
 
 export type MqttScanParams = ScanParamsBase & {
   kind: 'mqtt';
-  /**
-   * 'exact': `topicFilter` must equal a subscription filter exactly (same as `getAll(topic)`).
-   * 'partial' (default): `topicFilter` is matched against subscription filters via MQTT
-   * wildcard matching or substring inclusion.
-   */
+  /** 'exact': `topicFilter` must equal a subscription filter exactly (same as `getAll(topic)`). */
   matchType?: 'exact' | 'partial';
   /** Subscription topic filter. Empty/omitted scans across all subscribed topics. */
   topicFilter?: string;
@@ -85,8 +78,7 @@ export type AwsSecretsManagerScanParams = ScanParamsBase & {
 
 export type AwsCloudFormationScanParams = ScanParamsBase & {
   kind: 'aws-cloudformation';
-  /** Restricts the listing to one status bucket - see ACTIVE_STATUSES etc. in
-   * AwsCfnStackAttributes.ts. Omitted/undefined lists every non-deleted stack. */
+  /** Restricts the listing to one status bucket - see ACTIVE_STATUSES etc. in AwsCfnStackAttributes.ts. */
   statusFilter?: 'active' | 'inProgress' | 'completed' | 'deleted' | 'failed';
   /** Substring match against stack names. */
   nameContains?: string;
@@ -134,12 +126,7 @@ export type Auth0ScanParams = ScanParamsBase & {
   jsonExpansion?: boolean;
 };
 
-/**
- * Input for `Scannable#scan()`. One variant per driver/resource kind — see the `kind`
- * discriminant. Each driver implements `Scannable<TheirScanParams>` and only accepts its
- * own variant; fields are named for what they actually mean for that driver instead of a
- * shared generic `target`/`keyword`/`matchType` bag.
- */
+/** Input for `Scannable#scan()`. */
 export type ScanParams =
   | RedisScanParams
   | MemcacheScanParams

@@ -20,8 +20,6 @@ const getOrCreateTestClient = async (
     dbType: DBType.Auth0,
     // database: 'master',
     host: domain, // host as domain
-    // user: 'admin',
-    // password: 'admin',
     iamSolution: {
       clientId,
       clientSecret,

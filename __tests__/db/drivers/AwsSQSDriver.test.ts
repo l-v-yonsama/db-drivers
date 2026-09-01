@@ -87,9 +87,7 @@ describe('AwsSQSDriver', () => {
       );
     }
 
-    // A DLQ + a source queue whose RedrivePolicy points at it, so
-    // getInfomationSchemas() has something real to cross-reference for
-    // attr.isDlq.
+    // A DLQ + a source queue whose RedrivePolicy points at it, so getInfomationSchemas() has something real to cross-reference for attr.isDlq.
     const { QueueUrl: dlqUrl } = await sqsClient.send(
       new CreateQueueCommand({ QueueName: dlqName }),
     );
@@ -229,9 +227,7 @@ describe('AwsSQSDriver', () => {
         }),
       );
 
-      // Scanning is meant to be a non-destructive peek: it must not hold the
-      // message under the queue's (default 30s) VisibilityTimeout, otherwise a
-      // real consumer (or a second scan) would see nothing until it expires.
+      // Scanning is meant to be a non-destructive peek: it must not hold the message under the queue's (default 30s) VisibilityTimeout, otherwise a real consumer (or a second scan) would see nothing until it expires.
       const first = await driver.flow(async () => {
         return await driver.sqsClient.scan({
           kind: 'aws-sqs',

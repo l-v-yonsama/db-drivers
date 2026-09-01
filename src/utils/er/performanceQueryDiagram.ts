@@ -60,11 +60,7 @@ function escapeQuoted(value: string): string {
   return value.replace(/"/g, '#quot;').replace(/\r?\n/g, ' ');
 }
 
-/**
- * Mermaid ER attributes accept only a word for the type. Precision/length is
- * useful in DDL but makes a compact query diagram harder to scan, so retain
- * the base database type (NUMBER, VARCHAR2, TIMESTAMP, ...).
- */
+/** Mermaid ER attributes accept only a word for the type. */
 function displayDiagramColumnType(dataType: string | undefined): string {
   const normalized = (dataType ?? 'unknown').trim().toLocaleUpperCase();
   if (/^(CHARACTER\s+VARYING|VARYING\s+CHARACTER)/.test(normalized)) {
@@ -98,8 +94,7 @@ function buildEntities(context: PerformanceTuningContext, warnings: string[]): D
     grouped.set(key, [...(grouped.get(key) ?? []), mapping]);
   }
 
-  // A provider can return table context even when a plan-to-table mapping is
-  // unavailable. Keep the query diagram useful in that partial-result case.
+  // A provider can return table context even when a plan-to-table mapping is unavailable.
   if (grouped.size === 0) {
     for (const table of context.tables) {
       grouped.set(physicalKey(table.schemaName, table.tableName), [
@@ -218,9 +213,7 @@ function renderEntity(entity: DiagramEntity): string[] {
 
   for (const column of columns) {
     const type = displayDiagramColumnType(column.dataType);
-    // Mermaid's ER grammar requires ATTR_WORD here; quoted physical names are
-    // parsed as a COMMENT token and make the whole diagram invalid. Keep
-    // normal names unchanged and make uncommon quoted/special names safe.
+    // Mermaid's ER grammar requires ATTR_WORD here; quoted physical names are parsed as a COMMENT token and make the whole diagram invalid.
     const attributeName = safeIdentifier(column.columnName);
     const keyMarkers = columnKeyMarkers(definition?.constraints ?? [], column.columnName);
     const notes = [
@@ -485,12 +478,7 @@ function collectRelevantIndexes(entities: DiagramEntity[]): PerformanceQueryRele
   return result;
 }
 
-/**
- * Builds a conservative, query-scoped ER diagram from already collected
- * facts. Declared foreign keys are preferred; simple equality JOINs are also
- * parsed from SQL when both aliased endpoints resolve uniquely. No relation
- * line is guessed from planTableMappings.joinColumns alone.
- */
+/** Builds a conservative, query-scoped ER diagram from already collected facts. */
 export function createPerformanceQueryDiagram(
   context: PerformanceTuningContext,
 ): PerformanceQueryDiagramResult | undefined {

@@ -3,19 +3,7 @@ import { Auth0Database, IamClient, IamOrganization } from '../../resource';
 import { CreateAuth0SchemaDefinitionsForPromptParams } from '../../types';
 import { formatResourceGroupHeading } from './promptFormatUtils';
 
-/**
- * Auth0 has no relational schema (it's an identity provider, not a
- * database), so this renders a summary of its IAM entities instead.
- * `numOfUsers`/`numOfOrganizations` are always populated on the resource
- * tree, but the `IamOrganization`/`IamClient` child lists themselves are
- * only present when the connection's `retrieveGroupOrOrgResOnConnection`/
- * `retrieveClientResOnConnection` flags were enabled when the tree was
- * built - the output degrades gracefully to just the notice + counts when
- * they aren't. Note `Auth0Database`'s declared child union doesn't list
- * `IamOrganization`, but the driver adds it as a child anyway (the IAM
- * resource classes are structurally identical), so it's picked up here via
- * `instanceof`, the same pattern used for AWS's mixed child arrays.
- */
+/** Auth0 has no relational schema (it's an identity provider, not a database), so this renders a summary of its IAM entities instead. */
 export const createAuth0SchemaDefinitionsForPrompt = async (
   params: CreateAuth0SchemaDefinitionsForPromptParams,
 ): Promise<string | undefined> => {

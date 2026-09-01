@@ -62,9 +62,6 @@ export function toViewRecordsQuery({
 
   let query = '';
 
-  // -------------------------
-  // SELECT clause
-  // -------------------------
   if (limitClauseStyle === 'top' && limit) {
     // SQL Server は top / last に関係なく TOP を付ける
     query = `SELECT TOP ${limit} * FROM ${tableNameWithSchema}`;
@@ -72,9 +69,7 @@ export function toViewRecordsQuery({
     query = `SELECT * FROM ${tableNameWithSchema}`;
   }
 
-  // -------------------------
-  // ORDER BY (LAST用)
-  // -------------------------
+  // ------------------------- ORDER BY (LAST用)
   if (limitMode === 'last') {
     if (!limitLastColumn) {
       throw new Error('limitLastColumn is required when limitMode is "last"');
@@ -87,9 +82,7 @@ export function toViewRecordsQuery({
     query += ` ORDER BY ${quotedColumn} DESC`;
   }
 
-  // -------------------------
-  // LIMIT (MySQL / PostgreSQL / SQLite / Aws) / FETCH FIRST (Oracle)
-  // -------------------------
+  // ------------------------- LIMIT (MySQL / PostgreSQL / SQLite / Aws) / FETCH FIRST (Oracle)
   if (limitClauseStyle === 'trailing' && limit) {
     query += ` LIMIT ${limit}`;
   } else if (limitClauseStyle === 'fetchFirst' && limit) {

@@ -1,11 +1,7 @@
 import { MemcacheDatabase } from '../../resource';
 import { CreateMemcacheSchemaDefinitionsForPromptParams } from '../../types';
 
-/**
- * Memcache has no relational schema (it's a key-value cache), so this
- * renders the segmented-LRU cache tiers ("generations") the driver already
- * summarizes on the resource tree instead.
- */
+/** Memcache has no relational schema (it's a key-value cache), so this renders the segmented-LRU cache tiers ("generations") the driver already summarizes on the resource tree instead. */
 export const createMemcacheSchemaDefinitionsForPrompt = async (
   params: CreateMemcacheSchemaDefinitionsForPromptParams,
 ): Promise<string | undefined> => {

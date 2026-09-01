@@ -15,8 +15,7 @@ import { loadMysqlDbFixture } from '../../setup/mysql';
 
 describe('SchemaPromptHelper', () => {
   describe('module exports', () => {
-    // Guard against the package barrel (src/index.ts) silently dropping a
-    // re-export of a symbol that lives under src/helpers/prompts/.
+    // Guard against the package barrel (src/index.ts) silently dropping a re-export of a symbol that lives under src/helpers/prompts/.
     it('still exposes every function defined under src/helpers/prompts/', () => {
       const exportedFunctionNames = [
         'createTableDefinitionsForPrompt',

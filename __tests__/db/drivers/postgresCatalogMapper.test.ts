@@ -9,9 +9,6 @@ import {
   renderPostgresTableDdl,
 } from '../../../src';
 
-// Row shapes below are copied verbatim from queries run against a live
-// PostgreSQL 14 (`__tests__/setup/postgres.ts`'s `perf_orders` fixture),
-// not hand-guessed - see the design doc §0 log for the validation session.
 describe('postgresCatalogMapper', () => {
   describe('mapColumnRows', () => {
     it('maps a plain column and substitutes udt_name for USER-DEFINED/ARRAY types', () => {
@@ -226,10 +223,7 @@ describe('postgresCatalogMapper', () => {
 
   describe('mapTableStatisticsRow', () => {
     it('wraps every field in a MetricValue with its own source/estimated/unit', () => {
-      // node-postgres parses timestamptz columns into Date objects, and
-      // pg_table_size()/friends return bigint as a string (precision
-      // safety) - both are exercised here, not just the "nice" JS-native
-      // number/string case.
+      // node-postgres parses timestamptz columns into Date objects, and pg_table_size()/friends return bigint as a string (precision safety) - both are exercised here, not just the "nice" JS-native number/string case.
       const result = mapTableStatisticsRow({
         estimated_row_count: 50,
         table_bytes: '8192',
@@ -372,8 +366,7 @@ describe('postgresCatalogMapper', () => {
       expect(ddl).toContain(
         "CREATE INDEX idx_perf_orders_status_partial ON public.perf_orders (status) WHERE ((status)::text = 'shipped'::text);",
       );
-      // The PK-backed index must appear exactly once (inside the CONSTRAINT
-      // clause), not a second time as its own CREATE UNIQUE INDEX.
+      // The PK-backed index must appear exactly once (inside the CONSTRAINT clause), not a second time as its own CREATE UNIQUE INDEX.
       expect(ddl.match(/perf_orders_pkey/g)).toHaveLength(1);
     });
   });

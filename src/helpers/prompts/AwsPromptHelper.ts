@@ -27,10 +27,6 @@ const DYNAMO_ATTR_TYPE_LABELS: Record<string, string> = {
   BOOL: 'Boolean',
 };
 
-// DynamoDB's own attribute-type vocabulary (String/Number/Binary/...), as
-// used in AWS's own docs - kept separate from `parseDynamoAttrType`, which
-// maps to the cross-database `GeneralColumnType` used elsewhere (SQL-ish
-// terms like "text"/"numeric" that don't match Dynamo's own type names).
 const formatDynamoAttrType = (attrType: string): string =>
   DYNAMO_ATTR_TYPE_LABELS[attrType] ?? attrType;
 
@@ -46,14 +42,7 @@ const formatDynamoKeySchemaLine = (
 
 const DYNAMO_INDENT = '    ';
 
-/**
- * Renders a DynamoDB table's schema in Dynamo's own vocabulary (attribute
- * types, PARTITION KEY/SORT KEY, one block per GSI/LSI, and a full
- * ATTRIBUTES listing) rather than as relational DDL, since DynamoDB has no
- * CREATE TABLE syntax of its own. An LSI's partition key is always
- * identical to the table's own (that's the definition of "local"), so only
- * its differentiating sort key is shown.
- */
+/** Renders a DynamoDB table's schema in Dynamo's own vocabulary (attribute types, PARTITION KEY/SORT KEY, one block per GSI/LSI, and a full ATTRIBUTES listing) rather than as relational DDL, since DynamoDB has no CREATE TABLE syntax of its own. */
 export const toDynamoTableSchemaText = ({
   dbTable,
 }: {
@@ -265,10 +254,7 @@ const renderSesSection = (
   return lines;
 };
 
-// Deliberately renders only name/type/lastModifiedDate - never the parameter's
-// actual value. Mirrors AwsSsmServiceClient#scan(), which never fetches it
-// either; only the dedicated "copy real value" action does a single on-demand
-// fetch, entirely separate from this prompt/schema rendering path.
+// Deliberately renders only name/type/lastModifiedDate - never the parameter's actual value.
 const renderSsmSection = (
   awsDb: AwsDatabase,
   resourceName?: string,
@@ -293,11 +279,7 @@ const renderSsmSection = (
   return lines;
 };
 
-// Deliberately renders only name/description/rotation status - never the
-// secret's actual value. Mirrors AwsSecretsManagerServiceClient#scan(), which
-// never fetches it either (ListSecrets cannot return values in the first
-// place); only the dedicated "copy real value" action fetches it, via a
-// single on-demand GetSecretValue call entirely separate from this path.
+// Deliberately renders only name/description/rotation status - never the secret's actual value.
 const renderSecretsManagerSection = (
   awsDb: AwsDatabase,
   resourceName?: string,
@@ -323,12 +305,7 @@ const renderSecretsManagerSection = (
   return lines;
 };
 
-// L2a scope: renders the resources DescribeStackResources returned, with no
-// dependency lines (`attr.resources[].dependsOn` is not yet populated by
-// AwsCloudFormationServiceClient). The `depends on: ...` rendering below is
-// already data-driven off that field so L2b (Ref/Fn::GetAtt/DependsOn
-// extraction from GetTemplate) needs no change here - only the client needs
-// to start populating it.
+// L2a scope: renders the resources DescribeStackResources returned, with no dependency lines (`attr.resources[].dependsOn` is not yet populated by AwsCloudFormationServiceClient).
 const renderCloudFormationSection = (
   awsDb: AwsDatabase,
   resourceName?: string,
@@ -363,18 +340,6 @@ const renderCloudFormationSection = (
   return lines;
 };
 
-/**
- * Returns a schema-like description of a target AWS resource tree, with a
- * `-- ${service} --` heading per AWS service (DynamoDB/S3/Cloudwatch/SQS/SES/SSM/SecretsManager/CloudFormation),
- * a `--- ${group} (N ${unit}) ---` heading per resource type within that
- * service, and the matching resources listed underneath. Optionally
- * narrowed by an exact-match `resourceName` and/or `serviceType` filter
- * (applied only when given). A resource-type group's heading is always
- * shown for a service that was actually queried - even with a "(0 ...)"
- * count - so the caller can tell "checked, found nothing" apart from "not
- * checked at all". A service outside the `db`/`serviceType` input contributes
- * nothing; a service with no case below (there are none currently) would too.
- */
 export const createAwsSchemaDefinitionsForPrompt = async (
   params: CreateAwsSchemaDefinitionsForPromptParams,
 ): Promise<string | undefined> => {

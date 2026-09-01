@@ -383,15 +383,6 @@ describe('SQLHelper', () => {
   });
 
   describe('toUpdateStatement', () => {
-    // toEmbeddedStringValue's isJsonLike branch must handle two different
-    // runtime shapes for the same GeneralColumnType.JSON column: mysql2 and
-    // pg auto-parse native JSON/JSONB columns into JS objects before this
-    // code ever sees them (confirmed for MySQL via live debugger: value was
-    // `{k1: 'v2'}`, an object, not a string; confirmed for Postgres by
-    // pg-types registering JSON.parse as the default text parser for OIDs
-    // 114/3802), so those need JSON.stringify(value). Drivers/paths that
-    // instead hand back already-serialized JSON text (e.g. legacy pre-21c
-    // Oracle VARCHAR2/CLOB+"IS JSON" storage) must NOT be stringified again.
     it('JSON column: object value is encoded correctly', () => {
       const { schemaName, tableName, columns } =
         createToInsertStatementParams(db);

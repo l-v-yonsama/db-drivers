@@ -66,19 +66,7 @@ describe('ResourceHelper', () => {
 
       const r = await resolveCodeLabel(rdh);
 
-      // ...   ...     <Resolved>  ...     ... ...                 ... ...  ...
-      // EMPNO ENAME   SEX         JOB     MGR HIREDATE            SAL COMM DEPTNO
-      // 1     SMITH1  1:<Male>    CLERK1  1   2023-06-20 00:00:00 1        1
-      // 2     SMITH2  2:<Female>  CLERK2  2   2023-06-20 00:00:00 2        2
-      // ...   ...     ...         ...     ... ...                 ... ...  ...
-      // 9     SMITH9  0:<Unknown> CLERK9  9   2023-06-20 00:00:00 9        9
-      // 10    SMITH10 1:<Undefined> CLERK10 10  2023-06-20 00:00:00 10       10
-      // console.log(
-      //   ResultSetDataBuilder.from(rdh).toString({
-      //     withCodeLabel: true,
-      //     maxPrintLines: 4,
-      //   }),
-      // );
+      // ...
 
       expect(r).toBe(true);
       const ann0 = RowHelper.getFirstAnnotationOf<CodeResolvedAnnotation>(

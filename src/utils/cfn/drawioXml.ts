@@ -1,6 +1,4 @@
-// CloudFormation-specific draw.io page builder. Generic draw.io XML building blocks
-// (xmlEscape, drawioPage, wrapDrawioPages, pageLink, drawioLineLegendCells) moved to
-// ../drawio/drawioXml.ts once the ER draw.io generators turned out to need the exact same code.
+// CloudFormation-specific draw.io page builder.
 import { drawioPage, xmlEscape } from '../drawio';
 
 const drawioTemplateText = (source: string): string =>

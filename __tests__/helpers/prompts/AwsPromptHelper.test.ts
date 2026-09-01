@@ -22,8 +22,7 @@ describe('AwsPromptHelper', () => {
         lsi: [
           {
             IndexName: 'AlbumTitleIndex',
-            // A real LSI's KeySchema always repeats the table's own
-            // partition key (HASH) alongside its own sort key (RANGE).
+            // A real LSI's KeySchema always repeats the table's own partition key (HASH) alongside its own sort key (RANGE).
             KeySchema: [
               { AttributeName: 'Artist', KeyType: 'HASH' },
               { AttributeName: 'AlbumTitle', KeyType: 'RANGE' },
@@ -215,8 +214,7 @@ describe('AwsPromptHelper', () => {
       expect(promptText).toContain(
         '- /prod/s3/assume-role-arn (type: SecureString, modified: 2023-02-01T00:00:00.000Z)',
       );
-      // The whole point of this render path is that it never has the actual
-      // value to leak in the first place.
+      // The whole point of this render path is that it never has the actual value to leak in the first place.
       expect(promptText).not.toContain(secureParamValue);
     });
 
@@ -271,9 +269,7 @@ describe('AwsPromptHelper', () => {
               logicalId: 'ProcessOrderFunction',
               physicalId: 'arn:aws:lambda:us-east-1:123456789012:function:ProcessOrderFunction',
               resourceType: 'AWS::Lambda::Function',
-              // L2a doesn't populate this yet (GetTemplate/Ref/GetAtt parsing
-              // is L2b) - included here only to prove the render path already
-              // supports it once a client starts populating it.
+              // Basic listings leave dependencies undefined.
               dependsOn: [
                 { logicalId: 'OrderQueue', via: 'GetAtt' },
                 { logicalId: 'OrderQueueDLQ', via: 'DependsOn' },
@@ -303,7 +299,7 @@ describe('AwsPromptHelper', () => {
       );
     });
 
-    it('renders a "depends on" line once a resource entry carries dependsOn (L2b data shape)', async () => {
+    it('renders a "depends on" line when a resource entry carries dependsOn', async () => {
       const promptText = await createAwsSchemaDefinitionsForPrompt({
         db: buildCfnDb(),
       });
@@ -361,8 +357,7 @@ describe('AwsPromptHelper', () => {
       expect(promptText).toContain('--- Buckets (1 bucket) ---');
       expect(promptText).toContain('- Bucket: bucket-a');
       expect(promptText).not.toContain('bucket-b');
-      // 'account-owner' doesn't match the 'bucket-a' filter, so the Owners
-      // group is still headed, just empty.
+      // 'account-owner' doesn't match the 'bucket-a' filter, so the Owners group is still headed, just empty.
       expect(promptText).toContain('--- Owners (0 owners) ---');
       expect(promptText).not.toContain('- Owner: account-owner');
     });

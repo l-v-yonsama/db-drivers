@@ -121,8 +121,6 @@ describe('RdsPromptHelper', () => {
 
       it('does not drop a same-named FK table from a second schema', async () => {
         // Two schemas each have their own `order` -> `customer` FK pair.
-        // Joining `sA.order` with `sB.order` must expand FKs from both
-        // schemas, even though both FK targets are named `customer`.
         const multiDb = new RdsDatabase('multidb');
         const buildSchema = (schemaName: string): void => {
           const schema = new DbSchema(schemaName);
@@ -244,8 +242,7 @@ describe('RdsPromptHelper', () => {
 
   describe('createRdsSchemaDefinitionsForPrompt', () => {
     it('filters by tableName only, matching the table in every schema that has it', async () => {
-      // DEPT exists in both the `testdb` and `oradb` schemas of the fixture --
-      // each occurrence must be schema-qualified so the two are distinguishable.
+      // DEPT exists in both the `testdb` and `oradb` schemas of the fixture -- each occurrence must be schema-qualified so the two are distinguishable.
       const promptText = await createRdsSchemaDefinitionsForPrompt({
         db,
         tableName: 'DEPT',

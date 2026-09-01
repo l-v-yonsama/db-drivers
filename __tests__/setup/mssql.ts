@@ -30,12 +30,7 @@ async function withPool<T>(
   }
 }
 
-/**
- * `sa`-only DDL (CREATE LOGIN/DATABASE) has no automatic bootstrap on this
- * image (unlike postgres/mysql's env-var-driven app user, or oracle's
- * APP_USER), so it has to be provisioned here instead of relying on the
- * container to have done it.
- */
+/** `sa`-only DDL (CREATE LOGIN/DATABASE) has no automatic bootstrap on this image (unlike postgres/mysql's env-var-driven app user, or oracle's APP_USER), so it has to be provisioned here instead of relying on the container to have done it. */
 async function ensureLoginAndDatabase(): Promise<void> {
   await withPool('master', async (pool) => {
     await pool.request().query(`
@@ -56,9 +51,7 @@ async function ensureLoginAndDatabase(): Promise<void> {
         CREATE LOGIN testadmin WITH PASSWORD = '${saPassword}';
       END
     `);
-    // sysadmin membership is what lets KILL target a session other than its
-    // own (plain ALTER ANY CONNECTION would suffice too, but sysadmin is the
-    // direct SQL Server equivalent of "DBA").
+    // sysadmin membership is what lets KILL target a session other than its own (plain ALTER ANY CONNECTION would suffice too, but sysadmin is the direct SQL Server equivalent of "DBA").
     await pool.request().query(`
       IF NOT EXISTS (
         SELECT 1
@@ -85,8 +78,7 @@ async function ensureUserAndSchemas(): Promise<void> {
     await pool.request().query(`ALTER ROLE db_owner ADD MEMBER testuser`);
 
     for (const schema of ['schema0', 'schema1', 'testdb', 'h1_piyo2']) {
-      // CREATE SCHEMA must be the only statement in its batch, so it's
-      // routed through EXEC() rather than sent as a plain statement.
+      // CREATE SCHEMA must be the only statement in its batch, so it's routed through EXEC() rather than sent as a plain statement.
       await pool.request().query(`
         IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '${schema}')
           EXEC('CREATE SCHEMA ${schema}');
@@ -218,13 +210,7 @@ export async function init(): Promise<void> {
       END
     `);
 
-    // performance-tuning-context fixture (composite/unique/filtered indexes,
-    // a CHECK constraint, 50 rows + UPDATE STATISTICS WITH FULLSCAN) - kept
-    // independent of the tables above, same rationale as Postgres/MySQL's
-    // own perf_orders fixtures in __tests__/setup/postgres.ts / mysql.ts.
-    // Placed in the `testdb` schema (already used by lock_test/diff/DEPT/
-    // EMP/city above), not `schema1` (reserved for testtable's data-type
-    // coverage) or one of the extra schemas ensureUserAndSchemas() creates.
+    // performance-tuning-context fixture (composite/unique/filtered indexes, a CHECK constraint, 50 rows + UPDATE STATISTICS WITH FULLSCAN) - kept independent of the tables above, same rationale as Postgres/MySQL's own perf_orders fixtures in __tests__/setup/postgres.ts / mysql.ts.
     await q(`DROP TABLE IF EXISTS testdb.perf_orders`);
     await q(CREATE_PERF_ORDERS_TABLE_STATEMENT);
     await q(`CREATE INDEX idx_perf_orders_status ON testdb.perf_orders(status)`);

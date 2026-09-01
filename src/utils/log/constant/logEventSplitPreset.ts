@@ -1,9 +1,5 @@
 import { LogEventSplitConfig } from '../../../types';
 
-/* ======================================================
-   Simple
-   2026-03-12 10:11:22 DEBUG logger - message
-====================================================== */
 
 export const DEFAULT_SIMPLE_SPLIT_CONFIG: LogEventSplitConfig = {
   fields: [
@@ -39,10 +35,6 @@ export const DEFAULT_SIMPLE_SPLIT_CONFIG: LogEventSplitConfig = {
   ],
 };
 
-/* ======================================================
-   Logback
-   %d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg
-====================================================== */
 
 export const DEFAULT_LOGBACK_SPLIT_CONFIG: LogEventSplitConfig = {
   fields: [
@@ -85,10 +77,6 @@ export const DEFAULT_LOGBACK_SPLIT_CONFIG: LogEventSplitConfig = {
   ],
 };
 
-/* ======================================================
-   Log4j
-   %d [%t] %-5p %c - %m
-====================================================== */
 
 export const DEFAULT_LOG4J_SPLIT_CONFIG: LogEventSplitConfig = {
   fields: [
@@ -181,11 +169,7 @@ export const DEFAULT_LOG4J_MDC_SPLIT_CONFIG: LogEventSplitConfig = {
   ],
 };
 
-/* ======================================================
-   Java Util Logging (JUL / Tomcat)
-   Mar 12, 2026 10:11:22 AM logger method
-   INFO: message
-====================================================== */
+/** ====================================================== Java Util Logging (JUL / Tomcat) */
 
 export const DEFAULT_JUL_SPLIT_CONFIG: LogEventSplitConfig = {
   fields: [
@@ -290,9 +274,6 @@ export const DEFAULT_SPRING_BOOT_SPLIT_CONFIG: LogEventSplitConfig = {
   ],
 };
 
-/* ======================================================
-   PRESETS
-====================================================== */
 
 export const LOG_EVENT_SPLIT_PRESETS = {
   Simple: {

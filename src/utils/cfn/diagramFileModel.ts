@@ -25,21 +25,12 @@ const findDiagramResource = (
   return null;
 };
 
-/**
- * Builds the per-template working model shared by the CloudFormation diagram renderers: one
- * `DiagramFile` per `params.list` entry - parsed
- * template, its resource/parameter names listed out - and then, in a second pass (once every
- * file's resource/parameter names are known, so a same-template `Ref` always resolves), its
- * dependency edges and Outputs filled in.
- */
 export const parseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] => {
   const diagramFiles = buildBaseDiagramFiles(params);
 
   diagramFiles.forEach((diagramFile) => {
     populateResourceDependencies(diagramFile);
-    // Outputs are always retained in the internal model because ApplicationDiagram,
-    // MultiAzDeploymentTrafficPathsAndProtection and cross-stack dependency resolution need raw export names.
-    // Rendering remains controlled by options.includeOutputs.
+    // Outputs are always retained in the internal model because ApplicationDiagram, MultiAzDeploymentTrafficPathsAndProtection and cross-stack dependency resolution need raw export names.
     populateOutputs(diagramFile);
   });
   populateCrossStackDependencies(diagramFiles);
@@ -47,9 +38,7 @@ export const parseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] 
   return diagramFiles;
 };
 
-/** Pass 1: one `DiagramFile` per template, with its resource/parameter names listed out but
- * `dependencies`/`outputs` still empty - resolving those requires every file's names to be
- * known first (see parseDiagramFiles). */
+/** Pass 1: one `DiagramFile` per template, with its resource/parameter names listed out but `dependencies`/`outputs` still empty - resolving those requires every file's names to be known first (see parseDiagramFiles). */
 const buildBaseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] => {
   const includeParameters = params.options?.includeParameters ?? false;
 
@@ -82,11 +71,6 @@ const buildBaseDiagramFiles = (params: GenerateDiagramParams): DiagramFile[] => 
   });
 };
 
-/** Pass 2a: for every resource in this file, one dependency edge per `DependsOn` entry plus
- * every `Ref`/`!Ref`/`Fn::GetAtt`/`!GetAtt`/`Fn::ImportValue` intrinsic found in its
- * `Properties` that resolves to another resource or parameter *in this same file* (anything
- * that doesn't - a cross-template reference, typically - is silently dropped by
- * findDiagramResource returning null). */
 const populateResourceDependencies = (diagramFile: DiagramFile): void => {
   diagramFile.resouces.forEach((logicalId) => {
     const resource = diagramFile.cfnTemplate.Resources[logicalId];
@@ -134,10 +118,6 @@ const populateResourceDependencies = (diagramFile: DiagramFile): void => {
   });
 };
 
-/** Pass 2b: one `DiagramOutput` (plus a matching dependency edge, so it renders as an arrow
- * the same way a resource-to-resource reference does) per template Output that points back at
- * a resource this file actually has - an Output whose `Value` doesn't resolve to a known
- * resource is skipped rather than guessed at. */
 const populateOutputs = (diagramFile: DiagramFile): void => {
   if (!diagramFile.cfnTemplate.Outputs) {
     return;

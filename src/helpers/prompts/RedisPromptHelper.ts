@@ -2,11 +2,7 @@ import pluralize from 'pluralize';
 import { RedisDatabase } from '../../resource';
 import { CreateRedisSchemaDefinitionsForPromptParams } from '../../types';
 
-/**
- * Lists the DB index (logical database number) and key count of a target
- * Redis resource tree. Both are already fully populated on `RedisDatabase`
- * (parsed from `INFO keyspace`), so no live driver call is needed here.
- */
+/** Lists the DB index (logical database number) and key count of a target Redis resource tree. */
 export const createRedisSchemaDefinitionsForPrompt = async (
   params: CreateRedisSchemaDefinitionsForPromptParams,
 ): Promise<string | undefined> => {

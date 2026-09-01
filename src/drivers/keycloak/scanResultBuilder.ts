@@ -21,9 +21,7 @@ interface UserRowData
   [key: string]: any;
 }
 
-// Pure RDH builders for KeycloakDriver#scan(): each takes data already
-// fetched over HTTP (by KeycloakDriver's own get*() methods) and converts it
-// to a ResultSetData, with no API/auth concerns of its own.
+// Pure RDH builders for KeycloakDriver#scan(): each takes data already fetched over HTTP (by KeycloakDriver's own get*() methods) and converts it to a ResultSetData, with no API/auth concerns of its own.
 
 export const buildIamRealmResultSet = (
   realms: RealmRepresentation[],
@@ -235,10 +233,7 @@ export const buildIamSessionResultSet = (
   return rdb.build();
 };
 
-// Not part of KeycloakDriver's public API; exported so KeycloakDriver.ts
-// (updateGroup) can reuse it without duplicating it. Expands a Keycloak
-// attributes map (each value either a scalar or already an array) into the
-// multi-valued-array shape the Keycloak API expects for group attributes.
+// Not part of KeycloakDriver's public API; exported so KeycloakDriver.ts (updateGroup) can reuse it without duplicating it.
 export const normalizeAttribute = (
   attr: Record<string, any> | undefined,
 ): Record<string, any[]> | undefined => {

@@ -7,10 +7,6 @@ import {
 } from '../../src';
 import { disposeAutoLayoutEngine } from '../../src/utils/diagramLayout';
 
-// Phase 7 (misc/automatic-diagram-layout-and-er-migration-plan.md 5.4 / 8.3): the ELK-backed
-// renderer must keep every PK/FK/NOT NULL/type/comment/cardinality/label the legacy grid
-// renderer shows, connect each FK line to the declaring/referenced column's own row (not just
-// "the table"), and handle self-reference, mutual reference, and independent tables.
 
 afterAll(() => {
   disposeAutoLayoutEngine();
@@ -95,11 +91,9 @@ describe('createDrawioErDiagramAsync', () => {
     const exitY = Number(style.match(/exitY=([\d.]+)/)?.[1]);
     const entryY = Number(style.match(/entryY=([\d.]+)/)?.[1]);
 
-    // orders has 3 rows (id, note, customer_id) - customer_id is the 3rd row (index 2 of 3), so
-    // its row-center fraction should sit in the back third of the table, not near the top.
+    // orders has 3 rows (id, note, customer_id) - customer_id is the 3rd row (index 2 of 3), so its row-center fraction should sit in the back third of the table, not near the top.
     expect(exitY).toBeGreaterThan(0.6);
-    // customers has 2 rows (note, id) - id is the 2nd row, so its fraction should be in the
-    // back half, clearly below note's row.
+    // customers has 2 rows (note, id) - id is the 2nd row, so its fraction should be in the back half, clearly below note's row.
     expect(entryY).toBeGreaterThan(0.5);
     void tableMatch;
   });
@@ -203,12 +197,6 @@ describe('createDrawioErDiagramAsync', () => {
     expect(extractKeysAndTypes(auto)).toEqual(extractKeysAndTypes(legacy));
   });
 
-  // Regression test for a real user report: with a 3-table chain and realistically long FK
-  // labels ("orders_customer_fk: customer_id >=1 → id 1"), the previous implementation told ELK
-  // nothing about how wide those labels render, so ELK reserved zero extra room for them - the
-  // gap between adjacent tables ended up shorter than the label, and the label was stamped
-  // directly on top of the neighboring table's own column text (see erDiagramDrawioGeneratorAuto.ts's
-  // `labelSize`/`estimateLabelSize` fix).
   it('leaves each long FK label enough room that it does not land on the neighboring table', async () => {
     const orderDetail = table('order_detail', '受注明細');
     orderDetail.addChild(new DbColumn('order_no', 'integer', { key: 'PRI', nullable: false }));
@@ -251,21 +239,14 @@ describe('createDrawioErDiagramAsync', () => {
     };
     const tableBoxes = [box('table_0'), box('table_1'), box('table_2')].sort((a, b) => a.x - b.x);
 
-    // Each relation's rendered label text must have enough horizontal room in the gap between
-    // whichever two tables it actually sits between, not overlap into a table's own column area.
+    // Each relation's rendered label text must have enough horizontal room in the gap between whichever two tables it actually sits between, not overlap into a table's own column area.
     for (let i = 0; i < tableBoxes.length - 1; i++) {
       const gap = tableBoxes[i + 1].x - (tableBoxes[i].x + tableBoxes[i].width);
-      // "orders_customer_fk: customer_id >=1 → id 1"-shaped labels render well over 200px wide;
-      // a gap anywhere near the pre-fix ~60-120px default would fail this.
+      // "orders_customer_fk: customer_id >=1 → id 1"-shaped labels render well over 200px wide; a gap anywhere near the pre-fix ~60-120px default would fail this.
       expect(gap).toBeGreaterThan(200);
     }
   });
 
-  // Regression test (found via review): createERDiagramParams()/createSimpleERDiagramParams()
-  // let a caller display only a subset of a table's columns while still resolving relations from
-  // the full FK metadata - columnPorts() only creates a port for a *displayed* column, so an FK
-  // line whose column was filtered out used to reference a port ELK never received, and the
-  // whole relation silently vanished instead of degrading to a table-level connection.
   it('still draws the FK line when its column is excluded from columnNames, attached to the table itself', async () => {
     const orders = table('orders');
     orders.addChild(new DbColumn('id', 'integer', { key: 'PRI', nullable: false }));

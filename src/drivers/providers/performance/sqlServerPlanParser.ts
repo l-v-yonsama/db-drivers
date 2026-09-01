@@ -5,62 +5,19 @@ import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import { computeRowEstimateRatio } from './planNodeMath';
 import { asNumber, asRecord, asString } from './vendorRowCoercion';
 
-// Parses the rowset `SET SHOWPLAN_ALL ON` produces (already collected by
-// SQLServerDriver.collectPerformanceTuningShowplan() into plain row
-// objects). Everything here is defensive/best-effort, same rationale as
-// postgresPlanParser.ts / mysqlPlanParser.ts: unstructured DB output, every
-// access guarded, nothing throws.
-//
-// Unlike Postgres/MySQL (a single JSON document with an explicit recursive
-// shape), SHOWPLAN_ALL returns one flat rowset with NodeId/Parent columns -
-// the tree is implicit in those two integer columns, not in nesting. This
-// parser's only real job is: (1) turn that flat rowset back into a tree via
-// NodeId/Parent, (2) pull table/alias/index/predicate information out of
-// each row's free-text `Argument` column, which is SQL Server's own
-// human-readable rendering of the operator (e.g. `OBJECT:([db].[schema].
-// [table].[index] AS [alias]), WHERE:(...)`), not a structured field.
-//
-// Notably *not* a limitation here (contrast MySQL's aliased-table gap,
-// documented in mysqlPlanParser.ts): SQL Server's OBJECT:(...) clause always
-// carries the real, fully-qualified table name, with the alias (if any)
-// appended separately as `AS [alias]` - so an aliased FROM/JOIN table
-// resolves directly from the plan alone, no targetTables workaround needed.
-//
-// A root row (Parent = 0, Type = SELECT/INSERT/UPDATE/DELETE, PhysicalOp
-// null) represents the statement itself, not a real operator - it becomes
-// the top PlanNode with the statement's own operation="SELECT"/etc., same
-// as a real operator node would, just without table/predicate info.
-//
-// `planNodeId`/`PlanNode.id` are assigned depth-first ("n0", "n1", ...) by
-// one shared counter, exactly like the other two vendors' parsers, so
-// PlanNode.id and PlanTableMapping.planNodeId never drift apart. Sibling
-// order at each level follows ascending NodeId (SQL Server assigns NodeId in
-// the same order the plan is displayed/indented, even though NodeId values
-// can skip - e.g. 8, 10 - when an internal sub-operator isn't surfaced in
-// this rowset).
+// Parses the rowset `SET SHOWPLAN_ALL ON` produces (already collected by SQLServerDriver.collectPerformanceTuningShowplan() into plain row objects).
 
-// SQL Server always bracket-quotes identifiers, e.g.
-// "[testdb].[perf].[perf_orders].[idx_perf_orders_status]" - `]]` inside a
-// bracketed segment is SQL Server's own escaping for a literal `]`.
+// SQL Server always bracket-quotes identifiers, e.g. "[testdb].[perf].[perf_orders].[idx_perf_orders_status]" - `]]` inside a bracketed segment is SQL Server's own escaping for a literal `]`.
 const BRACKET_SEGMENT = /\[((?:[^\]]|\]\])*)\]/g;
 const unescapeBracket = (s: string): string => s.replace(/\]\]/g, ']');
 
-// A short excerpt of the Argument text for a TABLE_MAPPING_FAILED
-// diagnostic's technical detail (§4.3: "解析対象のArgument概要をtechnical
-// detailへ保持する") - bounded rather than the full clause, since Argument
-// can itself embed WHERE:/SEEK: predicate literals and this driver's
-// no-masking posture (see PerformanceTuningContext.ts's module doc) already
-// covers the full, untruncated text elsewhere in the context (executionPlan.vendorPlan).
 const ARGUMENT_EXCERPT_MAX_LENGTH = 160;
 const argumentExcerpt = (argument: string): string =>
   argument.length > ARGUMENT_EXCERPT_MAX_LENGTH
     ? `${argument.slice(0, ARGUMENT_EXCERPT_MAX_LENGTH)}...`
     : argument;
 
-// Matches the `OBJECT:(...)` clause every table-accessing operator's
-// Argument carries: a dot-joined chain of `[database].[schema].[table]`
-// (heap) or `[database].[schema].[table].[index]` (an index/PK/constraint
-// name), optionally followed by `AS [alias]` when the query aliased it.
+// Matches the `OBJECT:(...)` clause every table-accessing operator's Argument carries: a dot-joined chain of `[database].[schema].[table]` (heap) or `[database].[schema].[table].[index]` (an index/PK/constraint name), optionally followed by `AS [alias]` when the query aliased it.
 const OBJECT_CLAUSE =
   /OBJECT:\(((?:\[(?:[^\]]|\]\])*\])(?:\.\[(?:[^\]]|\]\])*\])*)(?:\s+AS\s+\[((?:[^\]]|\]\])*)\])?\)/;
 
@@ -80,9 +37,7 @@ function extractObjectClause(argument: string | undefined): SqlServerObjectRef |
     return undefined;
   }
   const segments = [...match[1].matchAll(BRACKET_SEGMENT)].map((m) => unescapeBracket(m[1]));
-  // [database].[schema].[table] or [database].[schema].[table].[index] -
-  // fewer than 3 segments is nothing this driver has observed; degrade to
-  // "no object resolved" rather than guess at a shorter chain's meaning.
+  // [database].[schema].[table] or [database].[schema].[table].[index] - fewer than 3 segments is nothing this driver has observed; degrade to "no object resolved" rather than guess at a shorter chain's meaning.
   if (segments.length < 3) {
     return undefined;
   }
@@ -95,12 +50,6 @@ function extractObjectClause(argument: string | undefined): SqlServerObjectRef |
   };
 }
 
-// SQL Server's Argument text embeds predicates as `LABEL:(...)` (WHERE for
-// a scan filter, SEEK for an index seek's seek predicate) where the
-// parenthesized content can itself contain nested parens (function calls,
-// IN lists, a right-hand-side qualified column reference) - a plain regex
-// can't safely extract that, so this walks the string counting paren depth
-// to find the matching close paren.
 function extractLabeledClause(argument: string | undefined, label: string): string | undefined {
   if (!argument) {
     return undefined;
@@ -122,19 +71,10 @@ function extractLabeledClause(argument: string | undefined, label: string): stri
       }
     }
   }
-  // Unbalanced (shouldn't happen for real SHOWPLAN_ALL output) - degrade to
-  // "couldn't extract" rather than returning a truncated/wrong substring.
+  // Unbalanced (shouldn't happen for real SHOWPLAN_ALL output) - degrade to "couldn't extract" rather than returning a truncated/wrong substring.
   return undefined;
 }
 
-// Same heuristic as mysqlPlanParser's MYSQL_COLUMN_BEFORE_OPERATOR: a
-// qualified column reference is a dot-joined bracket chain, and only the
-// *last* segment sits directly before the comparison operator - so matching
-// "a bracketed segment immediately followed by an operator" naturally
-// yields the bare column name without a separate "strip the qualifier"
-// step. This only ever runs against WHERE:/SEEK: clause text, never the
-// whole Argument, so it can't mistake an OBJECT:(...) table/index/alias
-// bracket for a predicate column.
 const SQLSERVER_COLUMN_BEFORE_OPERATOR =
   /\[((?:[^\]]|\]\])+)\]\s*(?:=|<>|!=|<=|>=|<|>|\bIN\b|\bLIKE\b)/gi;
 
@@ -216,10 +156,7 @@ function buildNode(
   const estimatedRows = asNumber(row.EstimateRows);
 
   if (objectRef) {
-    // SET STATISTICS XML is captured separately in analyze mode, but its XML
-    // has not yet been normalized and safely matched to this SHOWPLAN_ALL
-    // mapping. Leave actualRows undefined rather than guessing from a
-    // visually similar XML node.
+    // SET STATISTICS XML is captured separately in analyze mode, but its XML has not yet been normalized and safely matched to this SHOWPLAN_ALL mapping.
     ctx.mappings.push({
       planNodeId: id,
       schemaName: objectRef.schemaName,
@@ -232,8 +169,7 @@ function buildNode(
       filterColumns: filterColumns.size > 0 ? [...filterColumns] : undefined,
     });
   } else if (argument && argument.includes('OBJECT:(')) {
-    // An OBJECT:(...) clause is present but this parser couldn't make sense
-    // of it (unexpected shape) - honest degrade, never guess at a table.
+    // An OBJECT:(...) clause is present but this parser couldn't make sense of it (unexpected shape) - honest degrade, never guess at a table.
     ctx.diagnostics.push({
       code: 'TABLE_MAPPING_FAILED',
       severity: 'warning',
@@ -247,10 +183,7 @@ function buildNode(
   const logicalOp = asString(row.LogicalOp);
   const warningsText = asString(row.Warnings);
   if (warningsText) {
-    // SQL Server's own native SHOWPLAN_ALL `Warnings` column (e.g. "NO
-    // STATS: (...)") - a fact the optimizer itself reported about this
-    // node, not a driver-side collection gap, so this is information rather
-    // than a warning, same rationale as MySQL's temp-table/filesort flags.
+    // SQL Server's own native SHOWPLAN_ALL `Warnings` column (e.g. "NO STATS: (...)") - a fact the optimizer itself reported about this node, not a driver-side collection gap, so this is information rather than a warning, same rationale as MySQL's temp-table/filesort flags.
     ctx.diagnostics.push({
       code: 'PLAN_OBSERVATION',
       severity: 'info',
@@ -275,10 +208,7 @@ function buildNode(
       ? { schemaName: objectRef.schemaName, tableName: objectRef.tableName, alias: objectRef.alias }
       : undefined,
     indexName: objectRef?.indexName,
-    // LogicalOp is populated for every row (e.g. "Table Scan", "Aggregate"),
-    // not just joins - only surface it as joinType when it actually reads
-    // as one, matching Postgres/MySQL's joinType semantics ("Inner"/"Left
-    // Outer"/...), not every operator's logical name.
+    // LogicalOp is populated for every row (e.g. "Table Scan", "Aggregate"), not just joins - only surface it as joinType when it actually reads as one, matching Postgres/MySQL's joinType semantics ("Inner"/"Left Outer"/...), not every operator's logical name.
     joinType: logicalOp && /join/i.test(logicalOp) ? logicalOp : undefined,
     predicates: predicates.length > 0 ? predicates : undefined,
     estimated: {
@@ -290,11 +220,7 @@ function buildNode(
   };
 }
 
-// `rows` is the array of plain row objects
-// SQLServerDriver.collectPerformanceTuningShowplan() returns (one row per
-// SHOWPLAN_ALL rowset row - StmtText/StmtId/NodeId/Parent/PhysicalOp/
-// LogicalOp/Argument/.../EstimateRows/.../Warnings/Type/.../
-// EstimateExecutions).
+// `rows` is the array of plain row objects SQLServerDriver.collectPerformanceTuningShowplan() returns (one row per SHOWPLAN_ALL rowset row - StmtText/StmtId/NodeId/Parent/PhysicalOp/ LogicalOp/Argument/.../EstimateRows/.../Warnings/Type/.../ EstimateExecutions).
 export function parseSqlServerPlan(rows: unknown[]): ParsedSqlServerPlan {
   const ctx: NodeCtx = { mappings: [], diagnostics: [], counter: 0 };
   const validRows = Array.isArray(rows)
@@ -323,10 +249,7 @@ export function parseSqlServerPlan(rows: unknown[]): ParsedSqlServerPlan {
     return { planNode, mappings: ctx.mappings, diagnostics: ctx.diagnostics };
   }
 
-  // A multi-statement batch produces more than one Parent = 0 row - wrap
-  // them under one synthetic root so the tree stays single-rooted like
-  // every other vendor's PlanNode, same rationale as mysqlPlanParser's
-  // "Materialized Subquery" wrapper node.
+  // A multi-statement batch produces more than one Parent = 0 row - wrap them under one synthetic root so the tree stays single-rooted like every other vendor's PlanNode, same rationale as mysqlPlanParser's "Materialized Subquery" wrapper node.
   const id = `n${ctx.counter++}`;
   const children = roots.map((row) => buildNode(row, id, 1, childrenByParent, ctx));
   return {

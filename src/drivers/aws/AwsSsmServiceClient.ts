@@ -23,11 +23,7 @@ import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { Scannable } from '../BaseDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 
-// A constant placeholder, never derived from a real value. scan() only ever
-// calls DescribeParameters, which does not return parameter values at all -
-// so there is nothing to redact, the value is simply never fetched. Only
-// getParameterValue() performs a single, on-demand GetParameter call, used
-// exclusively for the "copy real value" action (never for listing/scanning).
+// A constant placeholder, never derived from a real value.
 const MASKED_VALUE = '••••••••';
 
 export class AwsSsmServiceClient
@@ -106,11 +102,7 @@ export class AwsSsmServiceClient
     return rdb.build();
   }
 
-  /**
-   * Fetches a single parameter's real value on demand, decrypting it if it is a
-   * SecureString. Used exclusively by the "copy real value" action - never called
-   * during scan()/getInfomationSchemas(), which must never see the actual value.
-   */
+  /** Fetches a single parameter's real value on demand, decrypting it if it is a SecureString. */
   async getParameterValue(name: string): Promise<string | undefined> {
     const { Parameter } = await this.ssmClient.send(
       new GetParameterCommand({ Name: name, WithDecryption: true }),

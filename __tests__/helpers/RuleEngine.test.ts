@@ -272,12 +272,6 @@ describe('ResourceHelper', () => {
         expect(n1n2Result.errorRows[0].rowNo).toBe(8);
         // console.log(n1n2Result.conditionText);
 
-        // const rdb = ResultSetDataBuilder.from(rdh);
-        // console.log(
-        //   rdb.toMarkdown({
-        //     withRuleViolation: true,
-        //   }),
-        // );
       });
 
       it('isNull/isNotNull operators reflect actual null column state', async () => {

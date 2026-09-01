@@ -339,8 +339,7 @@ export const SQL_LOG_PARSE_PRESETS = {
 
   SpringJdbc: {
     classify: [
-      // connection
-      // transaction lifecycle (Spring)
+      // connection transaction lifecycle (Spring)
       {
         type: 'TX_BEGIN',
         pattern: '^Creating new transaction with name ',

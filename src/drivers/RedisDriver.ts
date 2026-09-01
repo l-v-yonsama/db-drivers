@@ -47,8 +47,7 @@ export class RedisDriver
       }
       options.connectTimeout = 5_000;
       if (this.conRes.url) {
-        // Connect to 127.0.0.1:6380, db 4, using password "authpassword":
-        // "redis://:authpassword@127.0.0.1:6380/4"
+        // Connect to 127.0.0.1:6380, db 4, using password "authpassword": "redis://:authpassword@127.0.0.1:6380/4"
         this.client = new Redis(this.conRes.url);
       } else {
         this.client = new Redis(options);
@@ -289,8 +288,6 @@ export class RedisDriver
     const dbResources = new Array<RedisDatabase>();
 
     const keyspace = await this.client.info('keyspace');
-    // db0:keys=7,expires=0,avg_ttl=0
-    // db3:keys=1,expires=1,avg_ttl=4996199
     const re = /db([0-9]+):keys=([0-9]+),expires=([0-9]+),avg_ttl=([0-9]+)/g;
     let m: string[];
     while ((m = re.exec(keyspace))) {

@@ -36,10 +36,7 @@ export async function loadRes<T extends DbResource>(
   return fromJson<T>(JSON.parse(jsonString));
 }
 
-/**
- * Shared fixture used across the SQLHelper/SchemaPromptHelper/ProposalHelper
- * test suites, so each file doesn't have to repeat its own `loadRes` call.
- */
+/** Shared fixture used across the SQLHelper/SchemaPromptHelper/ProposalHelper test suites, so each file doesn't have to repeat its own `loadRes` call. */
 export async function loadMysqlDbFixture(): Promise<RdsDatabase> {
   return loadRes<RdsDatabase>('mysqlDbRes.json');
 }
@@ -48,10 +45,7 @@ export async function init(): Promise<void> {
   const con = await mysql.createConnection(baseConnectOption);
 
   try {
-    // ALL PRIVILEGES (which folds in SUPER/CONNECTION_ADMIN) is what lets
-    // KILL target a session other than its own; testadmin exists as a
-    // separate, intentionally-named DBA account for that rather than
-    // overloading root.
+    // ALL PRIVILEGES (which folds in SUPER/CONNECTION_ADMIN) is what lets KILL target a session other than its own; testadmin exists as a separate, intentionally-named DBA account for that rather than overloading root.
     await con.query(
       "CREATE USER IF NOT EXISTS 'testadmin'@'%' IDENTIFIED BY 'testpass'",
     );
@@ -256,10 +250,7 @@ export async function init(): Promise<void> {
       );
     }
 
-    // performance-tuning-context fixture (composite/unique/functional
-    // indexes, CHECK constraint, 50 rows + ANALYZE + a histogram on
-    // `status`) - kept independent of the tables above, same rationale as
-    // Postgres's own perf_orders fixture in __tests__/setup/postgres.ts.
+    // performance-tuning-context fixture (composite/unique/functional indexes, CHECK constraint, 50 rows + ANALYZE + a histogram on `status`) - kept independent of the tables above, same rationale as Postgres's own perf_orders fixture in __tests__/setup/postgres.ts.
     await con.execute('DROP TABLE IF EXISTS `test-db`.perf_orders');
     await con.execute(CREATE_PERF_ORDERS_TABLE_STATEMENT);
     await con.execute(`
@@ -422,9 +413,7 @@ const CREATE_LOCK_TEST_TABLE_STATEMENT = `CREATE TABLE lock_test (
 ) COMMENT='ロックテスト'
 `;
 
-// MySQL has no partial/filtered index concept (unlike Postgres's
-// idx_perf_orders_status_partial), so this fixture only covers composite,
-// unique and functional (expression) indexes plus a CHECK constraint.
+// MySQL has no partial/filtered index concept (unlike Postgres's idx_perf_orders_status_partial), so this fixture only covers composite, unique and functional (expression) indexes plus a CHECK constraint.
 const CREATE_PERF_ORDERS_TABLE_STATEMENT = `CREATE TABLE \`test-db\`.perf_orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   customer_id INT NOT NULL,

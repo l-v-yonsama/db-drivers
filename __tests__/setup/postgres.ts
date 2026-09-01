@@ -25,12 +25,7 @@ export async function init(): Promise<void> {
   const pool = new pg.Pool(options);
 
   try {
-    // Postgres has no `CREATE ROLE IF NOT EXISTS`, so existence has to be
-    // checked explicitly. SUPERUSER is what lets pg_cancel_backend/
-    // pg_terminate_backend target a session other than its own -- testuser
-    // is already superuser here (POSTGRES_USER bootstraps it that way), but
-    // testadmin exists as a separate, intentionally-named DBA account for
-    // that purpose instead of overloading the app user.
+    // Postgres has no `CREATE ROLE IF NOT EXISTS`, so existence has to be checked explicitly.
     const testadmin = await pool.query(
       "SELECT 1 FROM pg_roles WHERE rolname = 'testadmin'",
     );
@@ -204,11 +199,7 @@ export async function init(): Promise<void> {
     await pool.query("COMMENT ON TABLE test2.DEPT IS '部門マスタ'");
     await pool.query("COMMENT ON COLUMN test2.DEPT.LOC IS 'ロケーション'");
 
-    // Dedicated fixture for performance-tuning-context integration tests
-    // (composite/expression/partial indexes, a CHECK constraint, and real
-    // rows + ANALYZE so pg_stats/pg_stat_user_tables aren't empty). Kept
-    // separate from customer/order1/order_detail above so this doesn't
-    // change what any other test observes about those tables.
+    // Dedicated fixture for performance-tuning-context integration tests (composite/expression/partial indexes, a CHECK constraint, and real rows + ANALYZE so pg_stats/pg_stat_user_tables aren't empty).
     await pool.query('DROP TABLE IF EXISTS perf_orders');
     await pool.query(`CREATE TABLE perf_orders (
       id SERIAL PRIMARY KEY,

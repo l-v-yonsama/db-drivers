@@ -22,6 +22,10 @@ import {
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { acceptResourceFilter } from '../utils';
+import {
+  RdbDashboardProvider,
+  SQLiteRdbDashboardProvider,
+} from './providers';
 
 type ExecResult = {
   affectedRows: number;
@@ -37,9 +41,17 @@ export class SQLiteDriver extends RDSBaseDriver {
   }
   private db: Database | undefined;
   private interrupted = false;
+  private rdbDashboardProvider?: RdbDashboardProvider;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
+  }
+
+  protected getRdbDashboardProvider(): RdbDashboardProvider {
+    if (!this.rdbDashboardProvider) {
+      this.rdbDashboardProvider = new SQLiteRdbDashboardProvider(this);
+    }
+    return this.rdbDashboardProvider;
   }
 
   async begin(): Promise<void> {
@@ -252,6 +264,18 @@ export class SQLiteDriver extends RDSBaseDriver {
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
     const dbResources = new Array<RdsDatabase>();
     const dbDatabase = new RdsDatabase(this.conRes.database);
+    dbDatabase.capabilities = {
+      ...(dbDatabase.capabilities ?? {}),
+      dashboards: [
+        ...(dbDatabase.capabilities?.dashboards ?? []),
+        {
+          dashboardId: 'rdb-database',
+          providerId: 'rdb.sqlite.database',
+          variant: 'sqlite',
+          hints: { databaseName: String(this.conRes.database) },
+        },
+      ],
+    };
     dbResources.push(dbDatabase);
 
     const defaultSchema = new DbSchema('Default');
@@ -336,8 +360,6 @@ export class SQLiteDriver extends RDSBaseDriver {
       const columnName = it['column_name'];
       const referencedTableName = it['referenced_table_name']; // order
       const referencedColumnName = it['referenced_column_name'];
-      // FROM order.customer_no -> TO customer.customer_no
-      // FROM order_detail.order_no -> TO order.order_no
       const tableRes = dbSchema.getChildByName(tableName);
       if (tableRes) {
         if (tableRes.getChildByName(columnName)) {
@@ -355,8 +377,6 @@ export class SQLiteDriver extends RDSBaseDriver {
         }
       }
 
-      // TO customer.customer_no <- FROM order.customer_no
-      // TO order.order_no <- FROM order_detail.order_no
       const tableRes2 = dbSchema.getChildByName(referencedTableName);
       if (tableRes2) {
         if (tableRes2.getChildByName(referencedColumnName)) {
@@ -473,14 +493,7 @@ export class SQLiteDriver extends RDSBaseDriver {
     return true;
   }
 
-  /**
-   * `schemaName` is intentionally unused: this codebase models SQLite as
-   * single-schema (`isSchemaSpecificationSvailable()` is false above), so
-   * cross-schema duplicate table names can't occur. The returned DDL is the
-   * verbatim `CREATE TABLE` text as originally authored by the user (stored
-   * in `sqlite_master.sql`), so it's left unrewritten rather than risking
-   * corruption of arbitrary user-written SQL.
-   */
+  /** `schemaName` is intentionally unused: this codebase models SQLite as single-schema (`isSchemaSpecificationSvailable()` is false above), so cross-schema duplicate table names can't occur. */
   async getTableDDL({
     tableName,
   }: {
@@ -510,7 +523,9 @@ export class SQLiteDriver extends RDSBaseDriver {
     try {
       if (this.db) {
         // fs.writeFileSync(database, Buffer.from(this.db.export()));
-        fs.writeFileSync(database, this.db.export());
+        if (!this.conRes.readOnly) {
+          fs.writeFileSync(database, this.db.export());
+        }
         await this.db.close();
         this.db = undefined;
         this.interrupted = false;

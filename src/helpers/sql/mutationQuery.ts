@@ -147,9 +147,7 @@ export const toInsertStatement = ({
 
     if (specifyValuesWithBindParameters) {
       const value = toBindValue(colType, values[key]);
-      // if (value === null) {
-      //   return;
-      // }
+      // if (value === null) { return;
       binds.push(value);
       placeHolders.push(
         toPositionedParameter === true ? `${pChar}${index + 1}` : '?',

@@ -5,58 +5,8 @@ import { planUnresolvedDiagnostic } from './performanceTuningDiagnosticHelpers';
 import { computeRowEstimateRatio } from './planNodeMath';
 import { asNumber, asRecord, asString } from './vendorRowCoercion';
 
-// Parses the object MySQL's `EXPLAIN FORMAT=JSON` returns (already
-// JSON.parse()'d by the caller). Everything here is defensive/best-effort,
-// same rationale as postgresPlanParser.ts: unstructured DB output, every
-// access guarded, nothing throws.
-//
-// MySQL's JSON shape is structurally very different from Postgres's uniform
-// `Plan { Plans: [...] }` recursion - there is no single "plan node" key.
-// A `query_block` (the root, and recursively every subquery/derived table)
-// contains at most one of these mutually-exclusive operation containers:
-//   - `table`: a single table access (scan/index lookup)
-//   - `nested_loop`: an array of `{ table: {...} }` entries (MySQL's default
-//     join strategy - a flat sequence of table accesses, not a binary join
-//     tree the way Postgres represents Hash/Merge/Nested Loop Join)
-//   - `grouping_operation` / `ordering_operation` / `duplicates_removal`:
-//     each wraps another operation container of this same shape, adding
-//     `using_temporary_table`/`using_filesort` flags
-//   - `union_result`: `query_specifications[].query_block` per UNION branch
-// This walker treats a "container" (query_block, or any of the wrappers
-// above) as one recursive shape, and only `table` bottoms out into an
-// actual scan/lookup node. Not modeled (degrades to "no mapping/warning
-// only if the whole tree yields nothing", never throws): window functions,
-// semijoin/antijoin details, `attached_subqueries`,
-// `optimized_away_subqueries` - MySQL's JSON EXPLAIN surface is large and
-// version-dependent; this covers the shapes that actually show up for
-// ordinary SELECT/JOIN/GROUP BY/ORDER BY/UNION queries.
-//
-// Known limitation - aliased tables: when a query aliases a table
-// (`FROM orders o`), MySQL's JSON EXPLAIN reports `table_name: "o"` - the
-// *alias*, not the real table name - and there is no separate field
-// carrying the original name anywhere in the JSON (confirmed against a
-// live MySQL 8.0 instance; not something a defensive coercion can recover).
-// A catalog lookup against that literal alias will simply not find a table
-// and report the usual "not found" unavailableSections entry. The
-// sanctioned workaround is `PerformanceTuningContextParams.targetTables`
-// (§4.1) - RDSBaseDriver.getPerformanceTuningContext() unions those in
-// alongside whatever the plan itself resolved.
-//
-// `planNodeId`/`PlanNode.id` are assigned depth-first ("n0", "n1", ...) by
-// one shared counter across the whole walk, exactly like
-// postgresPlanParser.ts, so PlanNode.id and PlanTableMapping.planNodeId
-// never drift apart.
 
-// MySQL always backtick-quotes identifiers in `attached_condition`, e.g.
-// "(`test-db`.`perf_orders`.`status` = 'shipped')" - schema/table/column
-// each individually quoted, dot-joined. Postgres's plain-identifier regex
-// (postgresPlanParser.ts) would not match these at all, so this is a
-// separate, MySQL-specific heuristic rather than a shared one: match a
-// backtick-quoted segment immediately followed by a comparison operator -
-// only the *last* segment in a qualified reference sits directly before
-// the operator, so this naturally yields the bare column name without a
-// separate "strip the qualifier" step. `` inside a quoted segment is
-// MySQL's own backtick-escaping (like `` `` `` -> a literal backtick).
+// MySQL always backtick-quotes identifiers in `attached_condition`, e.g. "(`test-db`.`perf_orders`.`status` = 'shipped')" - schema/table/column each individually quoted, dot-joined.
 const MYSQL_COLUMN_BEFORE_OPERATOR =
   /`((?:[^`]|``)+)`\s*(?:=|<>|!=|<=|>=|<|>|\bIN\b|\bLIKE\b)/gi;
 
@@ -74,12 +24,7 @@ export function extractMysqlPredicateColumns(predicate: string | undefined): str
   return [...columns];
 }
 
-// MySQL names derived tables / materialized subqueries / UNION results with
-// a synthetic placeholder like "<derived2>", "<subquery3>", "<union1,2>" -
-// never a real table, so a catalog lookup against it would always fail.
-// Exported: mysqlActualPlanTextParser.ts reuses this same check against the
-// table/alias token in EXPLAIN ANALYZE tree-text lines like "Table scan on
-// <temporary>".
+// MySQL names derived tables / materialized subqueries / UNION results with a synthetic placeholder like "<derived2>", "<subquery3>", "<union1,2>" - never a real table, so a catalog lookup against it would always fail.
 export const isSyntheticTableName = (name: string): boolean => /^<.*>$/.test(name);
 
 export type ParsedMysqlPlan = {
@@ -94,11 +39,6 @@ type NodeContext = {
   counter: number;
 };
 
-// using_temporary_table/using_filesort/using_join_buffer are factual,
-// vendor-reported plan characteristics, not performance verdicts (a
-// temp table or filesort is not automatically a problem) - reported as
-// PLAN_OBSERVATION information, attributed to the node that carried the
-// flag (implementation plan §4.4).
 const planObservationsFromFlags = (
   node: Record<string, unknown>,
   id: string,
@@ -151,10 +91,7 @@ function visitTable(tableValue: unknown, parentId: string | undefined, depth: nu
   const indexName = asString(table.key);
 
   if (rawTableName && !synthetic) {
-    // actualRows only exists under an EXPLAIN ANALYZE-equivalent, not
-    // implemented for MySQL yet - left undefined (never guessed), same as
-    // computeRowEstimateRatio() then also resolving to undefined until a
-    // real actualRows source exists.
+    // actualRows only exists under an EXPLAIN ANALYZE-equivalent, not implemented for MySQL yet - left undefined (never guessed), same as computeRowEstimateRatio() then also resolving to undefined until a real actualRows source exists.
     const actualRows: number | undefined = undefined;
     ctx.mappings.push({
       planNodeId: id,
@@ -166,16 +103,6 @@ function visitTable(tableValue: unknown, parentId: string | undefined, depth: nu
       filterColumns: filterColumns.size > 0 ? [...filterColumns] : undefined,
     });
   } else if (rawTableName) {
-    // A derived table / materialized subquery / UNION result placeholder
-    // (`<derivedN>`/`<subqueryN>`/`<unionN,M>`) - fully understood, not a
-    // mapping failure: there was never a real table here to attach
-    // DDL/statistics to, only its own contents
-    // (materialized_from_subquery.query_block below), which are still
-    // walked and may themselves resolve real tables. Reported as
-    // information, not a warning (§4.4) - `objectKind: 'subquery'` covers
-    // every one of MySQL's synthetic placeholder kinds (derived table,
-    // materialized subquery, UNION result), none of which map cleanly onto
-    // the other, more specific objectKind values.
     ctx.diagnostics.push({
       code: 'NON_TABLE_PLAN_SOURCE',
       severity: 'info',
@@ -222,9 +149,7 @@ function visitTable(tableValue: unknown, parentId: string | undefined, depth: nu
   };
 }
 
-// A "container" is query_block or any of its wrapper operations - all four
-// share the same set of mutually-exclusive sub-keys (§ file doc comment
-// above), so one function handles every level of the tree.
+// A "container" is query_block or any of its wrapper operations - all four share the same set of mutually-exclusive sub-keys (§ file doc comment above), so one function handles every level of the tree.
 function visitContainer(
   containerValue: unknown,
   parentId: string | undefined,
@@ -295,11 +220,6 @@ function visitContainer(
     return { id, parentId, depth, operation: 'Union Result', children };
   }
 
-  // A container with none of the recognized keys - e.g. `{ "message":
-  // "Impossible WHERE" }` for a query the optimizer proved returns no rows.
-  // Not a failure: a factual, vendor-reported plan-level observation
-  // (§4.4), represented as both a leaf node and a PLAN_OBSERVATION
-  // diagnostic rather than silently vanishing or only living on the node.
   const message = asString(container.message);
   if (message) {
     const id = `n${ctx.counter++}`;
@@ -317,8 +237,7 @@ function visitContainer(
   return undefined;
 }
 
-// `explainRoot` is expected to be the object MySQL's `EXPLAIN FORMAT=JSON
-// ...` returns (already JSON.parse()'d), i.e. `{ query_block: {...} }`.
+// `explainRoot` is expected to be the object MySQL's `EXPLAIN FORMAT=JSON ...` returns (already JSON.parse()'d), i.e. `{ query_block: {...} }`.
 export function parseMysqlPlan(explainRoot: unknown): ParsedMysqlPlan {
   const ctx: NodeContext = { mappings: [], diagnostics: [], counter: 0 };
   const queryBlock = asRecord(explainRoot)?.query_block;

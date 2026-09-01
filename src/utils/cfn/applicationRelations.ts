@@ -420,17 +420,7 @@ export const extractApplicationRelations = (files: DiagramFile[]): ApplicationRe
     });
   }));
 
-  // An Auto Scaling Group never references a data resource directly - it names an
-  // AWS::EC2::LaunchTemplate, which is configuration rather than an execution actor (so it is
-  // deliberately absent from APP_TYPES/nodes above). When that Launch Template contains an
-  // explicit Ref/GetAtt/Fn::Sub reference to a Data-layer resource - an ElastiCache
-  // PrimaryEndPoint, an RDS endpoint, or any other supported data type - it is read back as the
-  // group's own `accesses` relationship, the same "instance runs resolved configuration"
-  // reasoning already used for LoadBalancer -> Listener -> TargetGroup -> ECS Service above.
-  // Two references into the same target (for example separate Address/Port Fn::Sub
-  // substitutions) collapse into one relation via the final dedupe below; Security Group
-  // references, DependsOn, and a shared SubnetGroup never qualify because they are never
-  // collected as Ref/GetAtt/Fn::Sub hits in the first place.
+  // An Auto Scaling Group never references a data resource directly - it names an AWS::EC2::LaunchTemplate, which is configuration rather than an execution actor (so it is deliberately absent from APP_TYPES/nodes above).
   files.forEach((file) => file.resouces.forEach((logicalId) => {
     const sourceResource = file.cfnTemplate.Resources[logicalId];
     if (sourceResource.Type !== 'AWS::AutoScaling::AutoScalingGroup') return;
@@ -474,9 +464,7 @@ export const extractApplicationRelations = (files: DiagramFile[]): ApplicationRe
   ])).values());
 };
 
-/** Finds cross-stack ImportValue references which the application view cannot render as a
- * runtime relation. Keeping these as notes is preferable to silently dropping an important
- * integration from a user-facing diagram. */
+/** Finds cross-stack ImportValue references which the application view cannot render as a runtime relation. */
 export const extractUnresolvedApplicationReferences = (
   files: DiagramFile[],
 ): UnresolvedApplicationReference[] => {

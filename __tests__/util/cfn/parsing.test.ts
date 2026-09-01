@@ -79,11 +79,7 @@ describe('cfn', () => {
       const original = parseCfnYamlTemplate(readYamlFixture('01_vpc.yaml'));
       const roundTripped = parseCfnJsonTemplate(JSON.stringify(original));
 
-      // js-yaml auto-parses an unquoted date-like scalar (AWSTemplateFormatVersion:
-      // 2010-09-09) into a real Date - JSON has no Date type, so it comes back out of
-      // JSON.parse as a plain string. Normalize both sides through JSON to compare the
-      // same way parseCfnJsonTemplate's actual caller (GetTemplate's JSON response) would
-      // see it, rather than asserting an identity JSON.stringify can't preserve anyway.
+      // js-yaml auto-parses an unquoted date-like scalar (AWSTemplateFormatVersion: 2010-09-09) into a real Date - JSON has no Date type, so it comes back out of JSON.parse as a plain string.
       expect(roundTripped).toEqual(JSON.parse(JSON.stringify(original)));
     });
 
@@ -134,10 +130,6 @@ describe('cfn', () => {
 
   describe('getCidrBlock', () => {
     it('falls back to an empty string instead of crashing on a Fn::FindInMap CidrBlock', () => {
-      // A subnet's CidrBlock authored as !FindInMap (looking its CIDR up in a Mappings
-      // section) isn't a Ref/GetAtt/ImportValue, so parseRefValue's "plain" fallback passes
-      // the raw { '!FindInMap': [...] } object straight through as `value` - getCidrBlock
-      // has no Mappings context to resolve it and must not call String.replace on that object.
       expect(
         getCidrBlock({
           CidrBlock: {
@@ -152,9 +144,7 @@ describe('cfn', () => {
     });
 
     it('resolves a Ref CidrBlock against the Parameter Default when no context is a guess', () => {
-      // A VPC declared as `CidrBlock: !Ref VpcCIDR` is a very common CloudFormation authoring
-      // style. The Parameter's own `Default` is explicit template data, not a guess, so it
-      // should be used the same way availabilityZoneName() already resolves other Ref values.
+      // A VPC declared as `CidrBlock: !Ref VpcCIDR` is a very common CloudFormation authoring style.
       expect(
         getCidrBlock(
           { CidrBlock: { Ref: 'VpcCIDR' } } as any,
@@ -176,9 +166,7 @@ describe('cfn', () => {
     });
 
     it('falls back to an empty string for an unresolved Ref instead of showing the Parameter name', () => {
-      // Without a resolution context (or without a Default/override for that Parameter), the
-      // previous implementation returned the Ref's target logical id ("VpcCIDR") as if it were
-      // the resolved CIDR value, which is misleading rather than merely incomplete.
+      // Without a resolution context (or without a Default/override for that Parameter), the previous implementation returned the Ref's target logical id ("VpcCIDR") as if it were the resolved CIDR value, which is misleading rather than merely incomplete.
       expect(getCidrBlock({ CidrBlock: { Ref: 'VpcCIDR' } } as any)).toBe('');
       expect(
         getCidrBlock(

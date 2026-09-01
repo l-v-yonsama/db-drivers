@@ -87,11 +87,7 @@ export const addDependencyLegend = (cells: string[], y: number): void => {
   }));
 };
 
-/** Only lists a legend row for a relationship kind that actually occurs among `usedKinds` - the
- * generated paths for this specific diagram - instead of always listing the full fixed set of
- * seven kinds. A row with zero matching edges (for example "Security protection" when no WAF Web
- * ACL association is proven) sends a reader unfamiliar with the notation hunting for an arrow
- * that was never drawn. */
+/** Only lists a legend row for a relationship kind that actually occurs among `usedKinds` - the generated paths for this specific diagram - instead of always listing the full fixed set of seven kinds. */
 export const addTrafficProtectionLegend = (
   cells: string[],
   y: number,

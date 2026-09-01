@@ -10,8 +10,7 @@ import {
 
 const dataFolder = path.join('__tests__', 'data');
 
-// Set to true only when intentionally regenerating the expected fixture
-// JSON files; keep false so normal test runs never rewrite fixtures.
+// Set to true only when intentionally regenerating the expected fixture JSON files; keep false so normal test runs never rewrite fixtures.
 const RESET_EXTRACTED_SQL_RESULT = false;
 
 const readFile = async (fileName: string): Promise<string> => {
@@ -271,10 +270,7 @@ describe('LogParser.parse (SQL execution extraction)', () => {
         "insert into users (name) values ('CommitUser')",
       );
 
-      // main's own ENTER (daoMethod=insert) is immediately followed by
-      // thread-2's ENTER (daoMethod=selectById) before main's own SQL_LOG
-      // fires. A shared (non thread-scoped) daoMethod variable would leak
-      // thread-2's value onto main's insert, and vice versa for the select.
+      // main's own ENTER (daoMethod=insert) is immediately followed by thread-2's ENTER (daoMethod=selectById) before main's own SQL_LOG fires.
       expect(mainInsert?.daoMethod).toBe('insert');
       expect(mainSelect?.daoMethod).toBe('selectById');
       expect(thread2Select?.daoMethod).toBe('selectById');
@@ -360,12 +356,7 @@ describe('LogParser.parse (SQL execution extraction)', () => {
         (e) => e.thread === 'thread-2',
       );
 
-      // thread-2's INSERT (Preparing/Parameters/Updates) interleaves between
-      // main's SELECT Parameters and its own Columns/Row/Total. With a shared
-      // (non thread-scoped) extractor buffer, main's Row and Total events
-      // never reach any buffer (they arrive after the shared state has
-      // already moved past the RESULT step for thread-2's session) and are
-      // silently dropped, so main's execution ends up missing its result.
+      // thread-2's INSERT (Preparing/Parameters/Updates) interleaves between main's SELECT Parameters and its own Columns/Row/Total.
       expect(mainSelect?.daoMethod).toBe('selectById');
       expect(mainSelect?.result).toBe('1');
       expect(thread2Insert?.daoMethod).toBe('insert');

@@ -27,6 +27,7 @@ import {
   DBType,
   ResourceFilter,
   SupplyCredentialType,
+  validateDynamoDbPerformanceTuningContext,
 } from '../../../src';
 import _chunk from 'lodash.chunk';
 
@@ -488,6 +489,7 @@ describe('AwsDynamoDBDriver', () => {
           IndexArn: expect.any(String),
           IndexSizeBytes: expect.any(Number),
           ItemCount: 6,
+          Projection: { ProjectionType: 'ALL' },
         });
         expect(food.attr?.gsi[0]).toEqual({
           IndexName: 'iCountry',
@@ -496,6 +498,9 @@ describe('AwsDynamoDBDriver', () => {
           IndexSizeBytes: expect.any(Number),
           ItemCount: 6,
           IndexStatus: 'ACTIVE',
+          Projection: { ProjectionType: 'ALL' },
+          ReadCapacityUnits: 10,
+          WriteCapacityUnits: 5,
         });
         // console.log(food.getProperties());
 
@@ -814,6 +819,25 @@ describe('AwsDynamoDBDriver', () => {
         Count: 1003,
         Items: expect.any(Array),
         CapacityUnits: expect.any(Number),
+        LastEvaluatedKey: undefined,
+        // 1003 records exceed one page's 1MB response limit even with no caller Limit, so this is 2 requests - and the loop's own `while (LastEvaluatedKey)` condition means it only stops once AWS itself reports no more data, so hasMorePages is false.
+        meta: {
+          requestCount: 2,
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: 1003,
+          reportedCount: 1003,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
     });
 
@@ -827,6 +851,23 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: { Id: expect.any(Number) },
         CapacityUnits: expect.any(Number),
+        meta: {
+          requestCount: 2,
+          retryCount: 0,
+          hasMorePages: true,
+          scannedCount: 1000,
+          reportedCount: 1000,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
 
       const r2 = await driver.dynamoClient.scanItems({
@@ -838,6 +879,24 @@ describe('AwsDynamoDBDriver', () => {
         Count: 3,
         Items: expect.any(Array),
         CapacityUnits: expect.any(Number),
+        LastEvaluatedKey: undefined,
+        meta: {
+          requestCount: expect.any(Number),
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: 3,
+          reportedCount: 3,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
     });
 
@@ -851,6 +910,23 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: { Id: expect.any(Number) },
         CapacityUnits: expect.any(Number),
+        meta: {
+          requestCount: 1,
+          retryCount: 0,
+          hasMorePages: true,
+          scannedCount: 1,
+          reportedCount: 1,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
     });
   });
@@ -875,7 +951,150 @@ describe('AwsDynamoDBDriver', () => {
         ],
         CapacityUnits: expect.any(Number),
         LastEvaluatedKey: undefined,
+        meta: {
+          requestCount: 1,
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: 1,
+          reportedCount: 1,
+          capacityBreakdown: {
+            capacityUnits: expect.any(Number),
+            readCapacityUnits: undefined,
+            writeCapacityUnits: undefined,
+            table: {
+              capacityUnits: expect.any(Number),
+              readCapacityUnits: undefined,
+              writeCapacityUnits: undefined,
+            },
+          },
+        },
       });
+    });
+  });
+
+  describe('queryItemsAtClient (native Query)', () => {
+    it('distinguishes table identity keys from GSI access keys', async () => {
+      const rs = await driver.dynamoClient.queryItemsAtClient({
+        TableName: 'Food',
+        IndexName: 'iCountry',
+        KeyConditionExpression: '#country = :country',
+        ExpressionAttributeNames: { '#country': 'Country' },
+        ExpressionAttributeValues: { ':country': { S: 'Jp' } },
+      });
+      expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+        '(table pk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Color')?.comment).toBe(
+        '(table sk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Country')?.comment).toBe(
+        '(access pk)',
+      );
+      expect(rs.summary.dynamoDb?.accessPath).toEqual({
+        type: 'index',
+        indexName: 'iCountry',
+        indexType: 'GSI',
+      });
+      expect(rs.summary.info).toContain('via GSI "iCountry"');
+    });
+
+    it('shows shared table/access roles for an LSI partition key', async () => {
+      const rs = await driver.dynamoClient.queryItemsAtClient({
+        TableName: 'Food',
+        IndexName: 'iKind',
+        KeyConditionExpression: '#name = :name',
+        ExpressionAttributeNames: { '#name': 'Name' },
+        ExpressionAttributeValues: { ':name': { S: 'Apple' } },
+      });
+      expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+        '(table pk, access pk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Kind')?.comment).toBe(
+        '(access sk)',
+      );
+      expect(rs.summary.dynamoDb?.accessPath).toEqual({
+        type: 'index',
+        indexName: 'iKind',
+        indexType: 'LSI',
+      });
+      expect(rs.summary.info).toContain('via LSI "iKind"');
+    });
+
+    it('reports returned/evaluated and a filter pass rate when a FilterExpression narrows results', async () => {
+      const rs = await driver.dynamoClient.queryItemsAtClient({
+        TableName: 'Food',
+        KeyConditionExpression: '#n = :n',
+        FilterExpression: 'Country = :c',
+        ExpressionAttributeNames: { '#n': 'Name' },
+        ExpressionAttributeValues: {
+          ':n': { S: 'Apple' },
+          ':c': { S: 'Jp' },
+        },
+      });
+      expect(rs.summary.selectedRows).toBe(1);
+      expect(rs.summary.dynamoDb?.apiOperation).toBe('Query');
+      expect(rs.summary.dynamoDb?.returnedItemCount).toBe(1);
+      expect(rs.summary.dynamoDb?.evaluatedItemCount).toBe(2);
+      expect(rs.summary.info).toContain('1 returned / 2 evaluated');
+      expect(rs.summary.info).toContain('50% pass');
+    });
+
+    it('keeps returned/evaluated equal (and pass rate 100%) when no FilterExpression is given', async () => {
+      const rs = await driver.dynamoClient.queryItemsAtClient({
+        TableName: 'Food',
+        KeyConditionExpression: '#n = :n',
+        ExpressionAttributeNames: { '#n': 'Name' },
+        ExpressionAttributeValues: {
+          ':n': { S: 'Apple' },
+        },
+      });
+      expect(rs.summary.selectedRows).toBe(2);
+      expect(rs.summary.dynamoDb?.evaluatedItemCount).toBe(2);
+      expect(rs.summary.dynamoDb?.accessPath).toEqual({ type: 'table' });
+      expect(rs.summary.info).toContain('2 returned / 2 evaluated');
+      expect(rs.summary.info).toContain('100% pass');
+    });
+  });
+
+  describe('scanItemsAtClient (native Scan)', () => {
+    it('propagates a GSI access path into key roles and the summary', async () => {
+      const rs = await driver.dynamoClient.scanItemsAtClient({
+        TableName: 'Food',
+        IndexName: 'iCountry',
+        Limit: 10,
+      });
+      expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+        '(table pk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Color')?.comment).toBe(
+        '(table sk)',
+      );
+      expect(rs.keys.find((key) => key.name === 'Country')?.comment).toBe(
+        '(access pk)',
+      );
+      expect(rs.summary.dynamoDb?.accessPath).toEqual({
+        type: 'index',
+        indexName: 'iCountry',
+        indexType: 'GSI',
+      });
+      expect(rs.summary.info).toContain('via GSI "iCountry"');
+    });
+
+    it('returns at most the requested number of items as ResultSetData', async () => {
+      const rs = await driver.dynamoClient.scanItemsAtClient({
+        TableName: 'MassiveRecords',
+        Limit: 100,
+      });
+
+      expect(rs.rows).toHaveLength(100);
+      expect(rs.summary.selectedRows).toBe(100);
+      expect(rs.summary.dynamoDb?.apiOperation).toBe('Scan');
+      expect(rs.summary.dynamoDb?.evaluatedItemCount).toBe(100);
+      expect(rs.summary.dynamoDb?.continuationTokenPresent).toBe(true);
+      expect(rs.meta.tableName).toBe('MassiveRecords');
+      expect(rs.meta.queryInput).toBe(
+        JSON.stringify({ TableName: 'MassiveRecords', Limit: 100 }, null, 2),
+      );
     });
   });
 
@@ -887,9 +1106,20 @@ describe('AwsDynamoDBDriver', () => {
       expect(r1).toEqual({
         Count: 1003,
         Items: expect.any(Array),
-        CapacityUnits: expect.any(Number),
+        CapacityUnits: undefined,
+        LastEvaluatedKey: undefined,
+        NextToken: undefined,
         extra: {
           allAttributeNames: expect.any(Array),
+        },
+        // PartiQL's ExecuteStatement response has no Count/ScannedCount field at all (confirmed against this LocalStack instance too), so scannedCount/reportedCount stay undefined - never estimated from Items.length.
+        meta: {
+          requestCount: 2,
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
         },
       });
     });
@@ -904,9 +1134,17 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
         NextToken: expect.any(String),
-        CapacityUnits: expect.any(Number),
+        CapacityUnits: undefined,
         extra: {
           allAttributeNames: expect.any(Array),
+        },
+        meta: {
+          requestCount: 2,
+          retryCount: 0,
+          hasMorePages: true,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
         },
       });
 
@@ -919,9 +1157,18 @@ describe('AwsDynamoDBDriver', () => {
         Count: 3,
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
-        CapacityUnits: expect.any(Number),
+        NextToken: undefined,
+        CapacityUnits: undefined,
         extra: {
           allAttributeNames: expect.any(Array),
+        },
+        meta: {
+          requestCount: expect.any(Number),
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
         },
       });
     });
@@ -935,10 +1182,18 @@ describe('AwsDynamoDBDriver', () => {
         Count: 1,
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
-        CapacityUnits: expect.any(Number),
+        CapacityUnits: undefined,
         NextToken: expect.any(String),
         extra: {
           allAttributeNames: expect.any(Array),
+        },
+        meta: {
+          requestCount: 1,
+          retryCount: 0,
+          hasMorePages: true,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
         },
       });
     });
@@ -953,9 +1208,17 @@ describe('AwsDynamoDBDriver', () => {
         Items: expect.any(Array),
         LastEvaluatedKey: undefined,
         NextToken: undefined,
-        CapacityUnits: expect.any(Number),
+        CapacityUnits: undefined,
         extra: {
           allAttributeNames: expect.any(Array),
+        },
+        meta: {
+          requestCount: 1,
+          retryCount: 0,
+          hasMorePages: false,
+          scannedCount: undefined,
+          reportedCount: undefined,
+          capacityBreakdown: undefined,
         },
       });
     });
@@ -971,6 +1234,12 @@ describe('AwsDynamoDBDriver', () => {
           expect.arrayContaining(['Id', 'Title', 's1']),
         );
         expect(rs.summary.selectedRows).toBe(1003);
+        expect(rs.summary.capacityUnits).toBeUndefined();
+        expect(rs.summary.dynamoDb?.apiOperation).toBe('ExecuteStatement');
+        expect(rs.summary.dynamoDb?.evaluatedItemCount).toBeUndefined();
+        expect(rs.summary.info).toContain('1,003 items returned');
+        expect(rs.summary.info).toContain('Capacity not reported');
+        expect(rs.summary.info).not.toContain('evaluated');
       });
 
       it('no records', async () => {
@@ -990,6 +1259,12 @@ describe('AwsDynamoDBDriver', () => {
           expect.arrayContaining(['Id', 'Title', 's1']),
         );
         expect(rs.summary.selectedRows).toBe(1000);
+        expect(rs.summary.dynamoDb?.successfulResponseCount).toBeGreaterThanOrEqual(2);
+        expect(rs.summary.dynamoDb?.continuationTokenPresent).toBe(true);
+        expect(rs.summary.info).toContain('requests');
+        expect(rs.summary.info).toContain(
+          'Result limited; additional items exist',
+        );
       });
 
       it('variable attr types', async () => {
@@ -1001,6 +1276,17 @@ describe('AwsDynamoDBDriver', () => {
           expect.arrayContaining(['id', 'b', 'm', 'n', 's2', 'ss', 'null']),
         );
         expect(rs.summary.selectedRows).toBe(2);
+      });
+
+      it('conditions.rawQueries leaves qst unset but still shows select-style wording for a raw SELECT (2026-08-25 review, round 2: operation is resolved from the raw text, not left undefined)', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: 'SELECT * FROM testtable',
+          conditions: { rawQueries: true },
+        });
+        expect(rs.summary.selectedRows).toBe(2);
+        expect(rs.summary.affectedRows).toBeUndefined();
+        expect(rs.summary.info).toContain('items returned');
+        expect(rs.summary.info).not.toContain('affected');
       });
 
       it('using gsi', async () => {
@@ -1021,6 +1307,17 @@ describe('AwsDynamoDBDriver', () => {
 
         expect(rs.summary.selectedRows).toBe(6);
         expect(rs.meta.tableName).toBe('Food');
+        expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+          '(table pk)',
+        );
+        expect(rs.keys.find((key) => key.name === 'Country')?.comment).toBe(
+          '(access pk)',
+        );
+        expect(rs.summary.dynamoDb?.accessPath).toEqual({
+          type: 'index',
+          indexName: 'iCountry',
+          indexType: 'GSI',
+        });
       });
       it('using lsi', async () => {
         await driver.getInfomationSchemas();
@@ -1039,9 +1336,47 @@ describe('AwsDynamoDBDriver', () => {
         );
         expect(rs.summary.selectedRows).toBe(6);
         expect(rs.meta.tableName).toBe('Food');
+        expect(rs.keys.find((key) => key.name === 'Name')?.comment).toBe(
+          '(table pk, access pk)',
+        );
+        expect(rs.keys.find((key) => key.name === 'Kind')?.comment).toBe(
+          '(access sk)',
+        );
+        expect(rs.summary.dynamoDb?.accessPath).toEqual({
+          type: 'index',
+          indexName: 'iKind',
+          indexType: 'LSI',
+        });
       });
     });
     describe('INSERT', () => {
+      it('conditions.rawQueries does not misclassify a raw INSERT as a SELECT (2026-08-25 review, round 2)', async () => {
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `INSERT INTO NoRecords VALUE {'Id': 'raw-1', 'CreatedAt': 1}`,
+          conditions: { rawQueries: true },
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
+        expect(rs.summary.info).not.toContain('items returned');
+        expect(rs.summary.info).not.toContain('RCU');
+      });
+
+      it('conditions.rawQueries does not misclassify a raw INSERT opening with a /* block comment */ (2026-08-25 review, round 3)', async () => {
+        // The repo's own query parser treats both `--` line comments and `/* ...
+        const rs = await driver.dynamoClient.requestPartiql({
+          sql: `/* seed */ INSERT INTO NoRecords VALUE {'Id': 'raw-2', 'CreatedAt': 1}`,
+          conditions: { rawQueries: true },
+        });
+
+        expect(rs.rows).toHaveLength(0);
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
+        expect(rs.summary.info).not.toContain('items returned');
+        expect(rs.summary.info).not.toContain('RCU');
+      });
+
       it('Music', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
           sql: `INSERT INTO 
@@ -1055,6 +1390,11 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('insert');
         expect(rs.meta.tableName).toBe('Music');
+        // A write must not fall into the SELECT summary branch (2026-08-25 review): selectedRows stays undefined (not 0) and DynamoDB's PartiQL response never reports an affected-item count, so affectedRows also stays undefined rather than being invented.
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
+        expect(rs.summary.info).not.toContain('items returned');
+        expect(rs.summary.info).not.toContain('rows in set');
       });
       it('Escape-Test', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
@@ -1176,9 +1516,6 @@ describe('AwsDynamoDBDriver', () => {
       describe('variable attribute types', () => {
         it('testtable No returning', async () => {
           await driver.getInfomationSchemas();
-          // const rs0 = await driver.dynamoClient.requestPartiql({
-          //   sql: 'SELECT * FROM testtable',
-          // });
 
           const rs = await driver.dynamoClient.requestPartiql({
             sql: `UPDATE
@@ -1206,10 +1543,13 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('update');
         expect(rs.meta.tableName).toBe('testtable');
+        // See the INSERT 'Music' test above for why both stay undefined.
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
       });
       it('Escape-Test', async () => {
         const rs = await driver.dynamoClient.requestPartiql({
-          sql: `UPDATE 
+          sql: `UPDATE
           "Escape-Test"
           SET "name with quote'""a" = 'value with quote''"a300'
           WHERE "id" = 3
@@ -1277,6 +1617,9 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs.rows).toHaveLength(0);
         expect(rs.meta.type).toBe('delete');
         expect(rs.meta.tableName).toBe('Escape-Test');
+        // See the INSERT 'Music' test above for why both stay undefined.
+        expect(rs.summary.selectedRows).toBeUndefined();
+        expect(rs.summary.affectedRows).toBeUndefined();
 
         const rs2 = await driver.dynamoClient.requestPartiql({
           sql: `SELECT * FROM "Escape-Test" WHERE id = 2`,
@@ -1284,7 +1627,77 @@ describe('AwsDynamoDBDriver', () => {
         expect(rs2.rows).toHaveLength(0);
         expect(rs2.meta.type).toBe('select');
         expect(rs2.meta.tableName).toBe('Escape-Test');
+        // A SELECT with zero matching rows still takes the select branch: selectedRows is a real, reported 0 (not undefined).
+        expect(rs2.summary.selectedRows).toBe(0);
       });
+    });
+  });
+
+  describe('getDynamoDbPerformanceTuningContext', () => {
+    it('classifies a table Query, does not warn about a full scan, and validates as a well-formed Context', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food WHERE Name = ?` } },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.result?.accessPattern.accessPath).toBe('tableQuery');
+      expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_FULL_TABLE_SCAN')).toBe(false);
+      expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_MONITORING_COLLECTION_SKIPPED')).toBe(true);
+      expect(result.result?.collection.unavailableSections).toEqual([]);
+      expect(result.result?.collection.status).toBe('complete');
+      expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
+    });
+
+    it('classifies a full table Scan and raises DYNAMODB_FULL_TABLE_SCAN', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food` } },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.result?.accessPattern.accessPath).toBe('tableScan');
+      expect(result.result?.collection.diagnostics.some((d) => d.code === 'DYNAMODB_FULL_TABLE_SCAN')).toBe(true);
+    });
+
+    it('classifies a GSI Query against Food.iCountry as indexQuery and reports the GSI in table context, distinct from the iKind LSI', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM "Food"."iCountry" WHERE Country = ?` } },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.result?.accessPattern.accessPath).toBe('indexQuery');
+      expect(result.result?.accessPattern.indexType).toBe('GSI');
+      expect(result.result?.table.globalSecondaryIndexes.map((i) => i.indexName)).toContain('iCountry');
+      expect(result.result?.table.localSecondaryIndexes.map((i) => i.indexName)).toContain('iKind');
+      // Contributor Insights is queried for table + iCountry (GSI) only, never for iKind (LSI) - see DynamoDbPerformanceTuningProvider's own mocked test of this same rule; this confirms it against the real DescribeTable-derived GSI list too.
+      expect(result.result?.table.contributorInsights.map((c) => c.indexName)).not.toContain('iKind');
+      expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
+    });
+
+    it('reports table.billingMode/provisionedThroughput consistent with how Food was created (explicit ProvisionedThroughput)', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food WHERE Name = ?` } },
+      });
+      const billingMode = result.result?.table.billingMode;
+      expect(['PROVISIONED', 'PAY_PER_REQUEST', 'unknown']).toContain(billingMode);
+      const expectedProvisionedThroughput =
+        billingMode === 'PROVISIONED' ? { readCapacityUnits: 10, writeCapacityUnits: 5 } : result.result?.table.provisionedThroughput;
+      expect(result.result?.table.provisionedThroughput).toEqual(expectedProvisionedThroughput);
+    });
+
+    it('never reads item data during static collection - collection.status reflects only Describe/CloudWatch evidence', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: { source: 'sqlHistory', request: { kind: 'partiql', text: `SELECT * FROM Food WHERE Name = ?` } },
+      });
+      expect(result.ok).toBe(true);
+      // The type system + validateDynamoDbPerformanceTuningContext's own forbidden-key scan (Item/Items/ExpressionAttributeValues/...) are the structural proof that no item body could have been attached anywhere in this Context.
+      expect(validateDynamoDbPerformanceTuningContext(result.result)).toEqual([]);
+    });
+
+    it('rejects a native Query analysis input for a table that does not exist', async () => {
+      const result = await driver.getDynamoDbPerformanceTuningContext({
+        statement: {
+          source: 'sqlHistory',
+          request: { kind: 'query', input: { tableName: 'NoSuchTable', keyConditionExpression: 'Id = :id' } },
+        },
+      });
+      expect(result.ok).toBe(false);
     });
   });
 

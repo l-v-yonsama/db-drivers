@@ -15,12 +15,7 @@ import {
 
 type RdsTableWithSchema = { table: DbTable; schemaName: string };
 
-/**
- * Renders DDL text for each resolved table, preferring a live driver-issued
- * DDL statement (e.g. `SHOW CREATE TABLE`) and falling back to a DDL string
- * reconstructed from the `DbTable`/`DbColumn` model when the driver doesn't
- * support it (or none was supplied).
- */
+/** Renders DDL text for each resolved table, preferring a live driver-issued DDL statement (e.g. `SHOW CREATE TABLE`) and falling back to a DDL string reconstructed from the `DbTable`/`DbColumn` model when the driver doesn't support it (or none was supplied). */
 const renderRdsTableDefinitionsForPrompt = async ({
   dbTableWithSchemas,
   rdsDriver,
@@ -140,13 +135,7 @@ export const createTableDefinitionsForPrompt = async (
   return undefined;
 };
 
-/**
- * Returns DDL text for the tables of a target RDS resource tree, optionally
- * narrowed by an exact-match `schemaName`/`tableName` filter (applied only
- * when the corresponding filter is given). Unlike `createTableDefinitionsForPrompt`,
- * this is not driven by parsing a SQL statement, so it doesn't expand to
- * foreign-key-related tables.
- */
+/** Returns DDL text for the tables of a target RDS resource tree, optionally narrowed by an exact-match `schemaName`/`tableName` filter (applied only when the corresponding filter is given). */
 export const createRdsSchemaDefinitionsForPrompt = async (
   params: CreateRdsSchemaDefinitionsForPromptParams,
 ): Promise<string | undefined> => {
@@ -183,12 +172,7 @@ export const createRdsSchemaDefinitionsForPrompt = async (
   return undefined;
 };
 
-/**
- * `schemaName`, when given, qualifies the generated `CREATE TABLE` statement
- * (`CREATE TABLE schemaName.tableName`) -- without it, two same-named tables
- * in different schemas (e.g. Postgres/SQL Server) render as identical,
- * indistinguishable `CREATE TABLE` blocks.
- */
+/** `schemaName`, when given, qualifies the generated `CREATE TABLE` statement (`CREATE TABLE schemaName.tableName`) -- without it, two same-named tables in different schemas (e.g. Postgres/SQL Server) render as identical, indistinguishable `CREATE TABLE` blocks. */
 export const toCreateTableDDL = ({
   dbTable,
   schemaName,

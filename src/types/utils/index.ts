@@ -56,48 +56,34 @@ export type LogFieldPatternDefinition = {
   example?: string;
 };
 
-/**
- * Common properties shared by all field types.
- */
+/** Common properties shared by all field types. */
 type LogEventFieldBase = {
-  /**
-   * Optional enclosure characters around the field.
-   */
+  /** Optional enclosure characters around the field. */
   enclosure?: LogEventFieldEnclosure;
 
-  /**
-   * Indicates that this field marks the start of a log event.
-   */
+  /** Indicates that this field marks the start of a log event. */
   eventStartMarker: boolean;
 };
 
-/**
- * Field parsed using a custom regular expression.
- */
+/** Field parsed using a custom regular expression. */
 type LogEventFieldRegex = LogEventFieldBase & {
   name: string;
   type: 'regex';
   pattern: string;
 };
 
-/**
- * Field representing a fixed literal string.
- */
+/** Field representing a fixed literal string. */
 type LogEventFieldLiteral = LogEventFieldBase & {
   type: 'literal';
   pattern: string;
 };
 
-/**
- * Field representing a line break in multiline logs.
- */
+/** Field representing a line break in multiline logs. */
 type LogEventFieldLineBreakLiteral = LogEventFieldBase & {
   type: 'line-break-literal';
 };
 
-/**
- * Field parsed using a built-in pattern.
- */
+/** Field parsed using a built-in pattern. */
 type LogEventFieldBuiltin = LogEventFieldBase & {
   name: string;
   type: 'builtin';
@@ -110,29 +96,19 @@ export type CreateLogEventPatternParams = {
   targetForHuman?: boolean;
 };
 
-/**
- * Defines a single field in a log event.
- * Each field can be a regex, literal text, builtin pattern, or line-break marker.
- */
+/** Defines a single field in a log event. */
 export type LogEventField =
   | LogEventFieldRegex
   | LogEventFieldLiteral
   | LogEventFieldLineBreakLiteral
   | LogEventFieldBuiltin;
 
-/**
- * Defines how a log line should be split into structured fields.
- */
+/** Defines how a log line should be split into structured fields. */
 export type LogEventSplitConfig = {
-  /**
-   * Ordered list of field definitions used to parse a log line.
-   */
+  /** Ordered list of field definitions used to parse a log line. */
   fields: LogEventField[];
 };
 
-/* ============================
-   classify
-============================ */
 
 export type LogEventType =
   // connection / datasource
@@ -181,38 +157,24 @@ export type LogContextRule = {
   replace: string;
 };
 
-/**
- * Rule used to classify a log event into a semantic event type.
- */
+/** Rule used to classify a log event into a semantic event type. */
 export type LogClassifierRule = {
-  /**
-   * Target event type when the rule matches.
-   */
+  /** Target event type when the rule matches. */
   type: LogEventType;
 
-  /**
-   * Optional log event field to apply the rule to.
-   */
+  /** Optional log event field to apply the rule to. */
   field?: string;
 
-  /**
-   * Regular expression used to detect the event.
-   */
+  /** Regular expression used to detect the event. */
   pattern: string;
 
-  /**
-   * Optional transformation rule applied to the matched message.
-   */
+  /** Optional transformation rule applied to the matched message. */
   transforms?: readonly LogTransformRule[];
 
-  /**
-   * Optional context extraction rules.
-   */
+  /** Optional context extraction rules. */
   context?: readonly LogContextRule[];
 
-  /**
-   * Expands message to include following lines.
-   */
+  /** Expands message to include following lines. */
   expandMessage?: boolean;
 };
 
@@ -222,9 +184,6 @@ export type ClassifiedEvent = LogEvent & {
   eventContext?: Record<string, string>;
 };
 
-/* ============================
-   extractor state machine
-============================ */
 
 export type ExtractorStepAction =
   | 'captureSql'
@@ -236,35 +195,22 @@ export type ExtractorStepAction =
   | 'captureErrorDetail'
   | 'captureField';
 
-/**
- * Single step in the SQL extraction state machine.
- */
+/** Single step in the SQL extraction state machine. */
 export type ExtractorStep = {
-  /**
-   * Event type that triggers this step.
-   */
+  /** Event type that triggers this step. */
   type: LogEventType;
 
-  /**
-   * Action performed when the step is triggered.
-   */
+  /** Action performed when the step is triggered. */
   action?: ExtractorStepAction;
 
-  /**
-   * Target field where extracted value will be stored.
-   */
+  /** Target field where extracted value will be stored. */
   field?: keyof SqlExecutionEvent;
 
-  /**
-   * Whether this step is optional.
-   */
+  /** Whether this step is optional. */
   optional?: boolean;
 };
 
-/**
- * Known SQL framework names used by built-in extractors.
- * Custom names are also allowed.
- */
+/** Known SQL framework names used by built-in extractors. */
 export type FrameworkName =
   | 'Hibernate'
   | 'MyBatis'
@@ -272,29 +218,18 @@ export type FrameworkName =
   | 'Doma'
   | 'SpringJdbc';
 
-/**
- * SQL extractor definition using a simple state machine.
- */
+/** SQL extractor definition using a simple state machine. */
 export type ExtractorConfig = {
-  /**
-   * Unique name of the extractor.
-   */
+  /** Unique name of the extractor. */
   name: string;
 
-  /**
-   * Event type that starts SQL extraction.
-   */
+  /** Event type that starts SQL extraction. */
   start: LogEventType;
 
-  /**
-   * Sequence of steps used to collect SQL fragments.
-   */
+  /** Sequence of steps used to collect SQL fragments. */
   steps: readonly ExtractorStep[];
 
-  /**
-   * Optional framework name associated with the extractor.
-   * Known frameworks will appear in IDE completion.
-   */
+  /** Optional framework name associated with the extractor. */
   framework?: FrameworkName;
 };
 
@@ -350,28 +285,16 @@ export type SqlExecutionBuilder = {
   current?: SqlExecutionEvent;
 };
 
-/* ============================
-   main config
-============================ */
 
-/**
- * Root configuration for the log parser.
- * Defines how logs are split into events, classified, and converted into SQL executions.
- */
+/** Root configuration for the log parser. */
 export type LogParseConfig = {
-  /**
-   * Configuration used to split raw log text into structured log events.
-   */
+  /** Configuration used to split raw log text into structured log events. */
   split: LogEventSplitConfig;
 
-  /**
-   * Rules used to classify log events into semantic event types.
-   */
+  /** Rules used to classify log events into semantic event types. */
   classify: readonly LogClassifierRule[];
 
-  /**
-   * SQL extraction state machines used to build SQL execution events.
-   */
+  /** SQL extraction state machines used to build SQL execution events. */
   extractors: readonly ExtractorConfig[];
 };
 
@@ -385,39 +308,21 @@ export type LogParseParams = {
   withSqlFragments?: boolean;
 };
 
-/* ============================
-   SQL result
-============================ */
 export type LogParseInputSummary = {
   logEventSplitPattern: string;
   logEventFieldsPattern: string;
   extractionSummary: string;
   classificationSummary: string;
 };
-/**
- * ログ解析結果の集計情報
- */
 export type LogParseOutputSummary = {
-  /**
-   * eventTypeごとの件数
-   * 例: { NORMAL: 100, SQL: 50, ERROR: 3 }
-   */
+  /** eventTypeごとの件数 例: { NORMAL: 100, SQL: 50, ERROR: 3 } */
   eventTypeCounts: Record<string, number>;
 
-  /**
-   * SQL実行タイプごとの件数
-   * 例: { SELECT: 30, INSERT: 10, ERROR: 2 }
-   */
+  /** SQL実行タイプごとの件数 例: { SELECT: 30, INSERT: 10, ERROR: 2 } */
   sqlExecutionTypeCounts: Record<string, number>;
 
-  /**
-   * 総ログイベント数
-   */
   totalEvents: number;
 
-  /**
-   * SQL実行数
-   */
   totalSqlExecutions: number;
 };
 export type ExtractedSqlResult = {
@@ -428,13 +333,7 @@ export type ExtractedSqlResult = {
   sqlFragments?: SqlFragment[];
   sqlExecutions: SqlExecutionEvent[];
   inputSummary: LogParseInputSummary;
-  /**
-   * 集計情報（追加）
-   */
   outputSummary: LogParseOutputSummary;
-  /**
-   * エラー率（%）
-   */
   errorRate?: number;
   elapsedTimeMilli: {
     split: number;

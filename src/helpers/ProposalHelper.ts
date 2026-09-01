@@ -65,8 +65,6 @@ export const getProposals = (params: ProposalParams): Proposal[] => {
   }
 
   // Remove duplicate proposals.
-  // If multiple proposals have the same (kind + label),
-  // prefer the one that contains more information (i.e. has `detail`).
   const uniqueRetList = Array.from(
     retList
       .reduce((map, p) => {
@@ -74,7 +72,6 @@ export const getProposals = (params: ProposalParams): Proposal[] => {
         const existing = map.get(key);
 
         // Keep the proposal that provides richer details.
-        // This improves the quality of completion suggestions.
         if (!existing || (!existing.detail && p.detail)) {
           map.set(key, p);
         }
@@ -184,13 +181,7 @@ const matchKeyword = (list: string[], keyword: string): boolean => {
   return list.some((it) => it.toUpperCase().startsWith(keyword));
 };
 
-/**
- * LAST N 取得用に利用するカラム名を決定する
- *
- * 優先順位:
- * 1. created_at / updated_at 系
- * 2. 単一 primary key (数値系)
- */
+/** LAST N 取得用に利用するカラム名を決定する 優先順位: 1. */
 export function resolveLastOrderByColumn(table: DbTable): string | undefined {
   const columns = table.children as DbColumn[];
 
@@ -198,9 +189,6 @@ export function resolveLastOrderByColumn(table: DbTable): string | undefined {
     return undefined;
   }
 
-  // -----------------------------
-  // ① created_at 系優先
-  // -----------------------------
   const dateColumn = columns.find((col) => {
     const name = col.name.toLowerCase();
 
@@ -216,9 +204,6 @@ export function resolveLastOrderByColumn(table: DbTable): string | undefined {
     return dateColumn.name;
   }
 
-  // -----------------------------
-  // ② 単一PK（数値型のみ）
-  // -----------------------------
   const pks = table.getPrimaryColumnNames();
 
   if (pks.length === 1) {
@@ -228,9 +213,6 @@ export function resolveLastOrderByColumn(table: DbTable): string | undefined {
     }
   }
 
-  // -----------------------------
-  // 見つからない場合
-  // -----------------------------
   return undefined;
 }
 
@@ -331,9 +313,7 @@ const getAllProposals = (db: RdsDatabase): Proposal[] => {
   schema.children.forEach((table) => {
     retList.push(createTableProposal(schema, table));
 
-    // table.children.forEach((column) => {
-    //   retList.push(createColumnProposal(table, column));
-    // });
+    // table.children.forEach((column) => { retList.push(createColumnProposal(table, column));
   });
   schema.getUniqColumnNameWithComments().forEach((it) => {
     retList.push({

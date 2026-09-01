@@ -1,8 +1,3 @@
-// Migrated from db-notebook's src/shared/ERDiagram.ts (see
-// misc/automatic-diagram-layout-and-er-migration-plan.md, Phase 6). `DbTable` used to be
-// imported across the package boundary from `@l-v-yonsama/multi-platform-database-drivers`;
-// now that this module lives inside that same package, it references the resource type
-// directly - see plan 6.2 "DbSchema、DbTable、DbColumn は同一パッケージ内の型を直接利用する".
 import { DbTable } from '../../resource';
 
 export type TableColumn = {

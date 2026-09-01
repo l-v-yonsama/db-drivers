@@ -23,7 +23,9 @@ import {
 import { PostgresColumnType } from '../types/resource/PostgresColumnType';
 import {
   PerformanceTuningContextProvider,
+  PostgresRdbDashboardProvider,
   PostgresPerformanceTuningProvider,
+  RdbDashboardProvider,
 } from './providers';
 import { RDSBaseDriver } from './RDSBaseDriver';
 import { QuoteChar } from '../helpers';
@@ -32,15 +34,7 @@ import {
   normalizeStatementStatisticsParams,
 } from '../utils';
 
-/**
- * Convert driver-specific class instances (e.g. `PostgresInterval`, which
- * `pg` returns for INTERVAL columns) into plain, rdh-safe values.
- *
- * rdh's `cloneRdhValue()` only supports a fixed set of types (Date, Buffer,
- * ArrayBuffer, TypedArray/DataView, Map, Set, Array, plain objects) and
- * throws for unrecognized class instances, so raw `pg` values must be
- * normalized before they enter a row.
- */
+/** Convert driver-specific class instances (e.g. `PostgresInterval`, which `pg` returns for INTERVAL columns) into plain, rdh-safe values. */
 function normalizePostgresValue(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => normalizePostgresValue(item));
@@ -96,9 +90,7 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   async setAutoCommit(value: boolean): Promise<void> {
-    // set autocommit = ON;  -->> do nothing.
-    // set autocommit = OFF;  -->> use flowTransaction.
-    // see. https://node-postgres.com/features/transactions
+    // set autocommit = ON; -->> do nothing.
   }
 
   async getLockWaitTimeout(): Promise<number> {
@@ -133,25 +125,11 @@ export class PostgresDriver extends RDSBaseDriver {
     throw new Error('Missing transaction_isolation');
   }
 
-  //      name: 'name',
-  //      tableID: 12822,
-  //      columnID: 2,
-  //      dataTypeID: 1043,
-  //      dataTypeSize: -1,
-  //      dataTypeModifier: -1,
-  //      format: 'text' }
   fieldInfo2Key(
     fieldInfo: pg.FieldDef,
     useTableColumnType: boolean,
     table?: DbTable,
   ): RdhKey {
-    // if (fieldInfo.name.startsWith('c_')) {
-    //   console.log(
-    //     `★ ${fieldInfo.name.substring(2).toUpperCase()} = ${
-    //       fieldInfo.dataTypeID
-    //     }`,
-    //   );
-    // }
     const name = EnumValues.getNameFromValue(
       PostgresColumnType,
       PostgresColumnType.parse(fieldInfo.dataTypeID),
@@ -255,18 +233,6 @@ export class PostgresDriver extends RDSBaseDriver {
     const startTime = new Date().getTime();
     const results = await this.client.query(sql, binds);
     const elapsedTimeMilli = new Date().getTime() - startTime;
-    // console.log(results);
-    // command: 'SELECT',
-    // rowCount: 5,
-    // oid: null,
-    // rows:
-    //  [ anonymous { name: 'pg_catalog' },
-    //    anonymous { name: 'pg_temp_1' },
-    //    anonymous { name: 'pg_toast' },
-    //    anonymous { name: 'pg_toast_temp_1' },
-    //    anonymous { name: 'public' } ],
-    // fields: [  ],
-    // console.log('done.', results.fields)
     if (results) {
       const fields = results.fields;
       if (fields?.length) {
@@ -332,24 +298,24 @@ export class PostgresDriver extends RDSBaseDriver {
   }
 
   async getVersion(): Promise<string> {
-    // `SHOW` is a command, not a SELECT - it doesn't accept `AS alias`
-    // (`SHOW server_version AS version` is a syntax error). The result
-    // column is named after the setting itself.
+    // `SHOW` is a command, not a SELECT - it doesn't accept `AS alias` (`SHOW server_version AS version` is a syntax error).
     const sql = 'SHOW server_version';
     const rdb = await this.requestSqlSub({ sql, dbTable: undefined });
     return rdb.rs.rows[0].values.server_version;
   }
 
   private performanceTuningContextProvider?: PerformanceTuningContextProvider;
+  private rdbDashboardProvider?: RdbDashboardProvider;
 
-  // Typed to the interface (not the concrete PostgresPerformanceTuningProvider)
-  // so it stays override-compatible with RDSBaseDriver's declared return
-  // type - test doubles that subclass a driver and override this hook with
-  // a fake PerformanceTuningContextProvider stay valid overrides too.
+  protected getRdbDashboardProvider(): RdbDashboardProvider {
+    if (!this.rdbDashboardProvider) {
+      this.rdbDashboardProvider = new PostgresRdbDashboardProvider(this);
+    }
+    return this.rdbDashboardProvider;
+  }
+
   protected getPerformanceTuningContextProvider(): PerformanceTuningContextProvider {
-    // Lazily constructed and cached on the driver instance (not a module
-    // singleton) so it always closes over this connection's `requestSql`,
-    // and a second call doesn't re-allocate for no reason.
+    // Lazily constructed and cached on the driver instance (not a module singleton) so it always closes over this connection's `requestSql`, and a second call doesn't re-allocate for no reason.
     if (!this.performanceTuningContextProvider) {
       this.performanceTuningContextProvider = new PostgresPerformanceTuningProvider(this);
     }
@@ -507,6 +473,18 @@ ORDER BY A.pid DESC
     const list = rdh.rows.map((r) => {
       const res = new RdsDatabase(r.values.name);
       res.comment = r.values.comment;
+      res.capabilities = {
+        ...(res.capabilities ?? {}),
+        dashboards: [
+          ...(res.capabilities?.dashboards ?? []),
+          {
+            dashboardId: 'rdb-database',
+            providerId: 'rdb.postgres.database',
+            variant: 'postgres',
+            hints: { databaseName: String(r.values.name) },
+          },
+        ],
+      };
       return res;
     });
     return list;
@@ -734,8 +712,6 @@ ORDER BY A.pid DESC
         const referencedTableName = r[2];
         const referencedColumnName = r[3];
 
-        // FROM order.customer_no -> TO customer.customer_no
-        // FROM order_detail.order_no -> TO order.order_no
         const tableRes = dbSchema.getChildByName(tableName);
         if (tableRes) {
           if (tableRes.getChildByName(columnName)) {
@@ -753,8 +729,6 @@ ORDER BY A.pid DESC
           }
         }
 
-        // TO customer.customer_no <- FROM order.customer_no
-        // TO order.order_no <- FROM order_detail.order_no
         const tableRes2 = dbSchema.getChildByName(referencedTableName);
         if (tableRes2) {
           if (tableRes2.getChildByName(referencedColumnName)) {
@@ -829,8 +803,7 @@ ORDER BY A.pid DESC
     );
 
     if (this.conRes.queryTimeoutMs) {
-      // https://github.com/brianc/node-postgres/issues/3219
-      // options.query_timeout = this.conRes.queryTimeoutMs;
+      // https://github.com/brianc/node-postgres/issues/3219 options.query_timeout = this.conRes.queryTimeoutMs;
       options.statement_timeout = this.conRes.queryTimeoutMs;
     }
 

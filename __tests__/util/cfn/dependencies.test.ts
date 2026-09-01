@@ -9,8 +9,7 @@ describe('cfn', () => {
 
       // Ref inside Properties (VpcId: !Ref CFnVPC)
       expect(deps.PublicSubnet1).toEqual([{ logicalId: 'CFnVPC', via: 'Ref' }]);
-      // Both an explicit DependsOn and a same-target Ref inside Properties - both kept,
-      // since they're distinct relationships even when they point at the same resource.
+      // Both an explicit DependsOn and a same-target Ref inside Properties - both kept, since they're distinct relationships even when they point at the same resource.
       expect(deps.PublicRoute).toEqual(
         expect.arrayContaining([
           { logicalId: 'CFnVPCIGW', via: 'DependsOn' },
@@ -30,8 +29,7 @@ describe('cfn', () => {
     });
 
     it('does not resolve a Ref/ImportValue that points outside the template', () => {
-      // ec2.yaml's SubnetId/VpcId are !ImportValue references into vpc.yaml, a different
-      // template - correctly not resolvable within ec2.yaml's own Resources.
+      // ec2.yaml's SubnetId/VpcId are !ImportValue references into vpc.yaml, a different template - correctly not resolvable within ec2.yaml's own Resources.
       const template = parseCfnYamlTemplate(
         readYamlFixture('cross_ref_02/ec2.yaml'),
       );

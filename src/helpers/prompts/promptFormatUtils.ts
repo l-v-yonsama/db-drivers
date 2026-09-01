@@ -1,8 +1,6 @@
 import pluralize from 'pluralize';
 
-/**
- * Formats a level-2 resource-group heading, e.g. `--- Buckets (3 buckets) ---`.
- */
+/** Formats a level-2 resource-group heading, e.g. `--- Buckets (3 buckets) ---`. */
 export const formatResourceGroupHeading = (
   groupName: string,
   unit: string,

@@ -27,26 +27,9 @@ const connectOption = {
   region: AwsRegion.apNortheast1,
 };
 
-// A minimal fixture: two SQS queues, the second acting as a DLQ for the
-// first, wired together with a real Fn::GetAtt so both L2a (plain resource
-// listing via getInfomationSchemas()/DescribeStackResources) and L2b
-// (dependency extraction via getResourcesWithDependencies()/GetTemplate) have
-// something real to assert against from the same stack. EC2/VPC-flavored
-// resources aren't used here since this LocalStack instance's SERVICES list
-// (docker/unit-test.yml) doesn't include `ec2` - see cfn.test.ts for the
-// VPC/MultiAzDeploymentTrafficPathsAndProtection-mode coverage, which runs entirely offline
-// against the recovered __tests__/data/cfn/ fixtures instead.
 const stackName = 'db-drivers-test-order-stack';
 const template = testOrderStackTemplate;
 
-// A second, unrelated stack (API Gateway -> Lambda), so there's more than
-// one real stack sitting in LocalStack at once - both for a second live data
-// point in the tests below (IAM/Lambda/ApiGateway dependency wiring, not
-// just SQS), and so the "create CloudFormation diagram" button's multi-stack
-// selection / CloudFormation-service-node MultiAzDeploymentTrafficPathsAndProtection mode
-// (db-notebook side) has more than one stack to actually exercise during a
-// manual F5 check - `SERVICES` in docker/unit-test.yml needed `apigateway`
-// added for this (it wasn't enabled before).
 const apiStackName = 'db-drivers-test-api-lambda-stack';
 const apiTemplate = testApiLambdaStackTemplate;
 
@@ -77,13 +60,6 @@ describe('AwsCloudFormationDriver', () => {
     };
     driver = driverResolver.createDriver<AwsDriver>(setting);
 
-    // Deletes-then-recreates one stack for a clean run, same rationale as
-    // the single-stack version this replaced: afterAll deliberately leaves
-    // stacks in place (see afterAll below), so every run after the first
-    // hits the "already exists" branch, and DeleteStackCommand only kicks
-    // off the deletion without waiting for it - CreateStack-ing immediately
-    // after used to race the still-in-progress deletion (LocalStack:
-    // AlreadyExistsException).
     const ensureStack = async (name: string, body: unknown): Promise<void> => {
       try {
         const { StackSummaries } = await cfnClient.send(
@@ -116,9 +92,7 @@ describe('AwsCloudFormationDriver', () => {
       );
     };
 
-    // Independent stacks (no shared resources) - safe to (re)create in
-    // parallel, keeping beforeAll's wall time close to what a single stack
-    // took before.
+    // Independent stacks (no shared resources) - safe to (re)create in parallel, keeping beforeAll's wall time close to what a single stack took before.
     await Promise.all([
       ensureStack(stackName, template),
       ensureStack(apiStackName, apiTemplate),
@@ -126,11 +100,6 @@ describe('AwsCloudFormationDriver', () => {
   }, 180000);
 
   afterAll(async () => {
-    // Deliberately not deleting the stack here - same convention as the other
-    // AWS driver tests (SQS/SES/SSM/...): beforeAll deletes-then-recreates for
-    // a clean run, but afterAll leaves the resource in place so it's still
-    // visible against LocalStack for manual UI verification (e.g. the F5
-    // debug launch's localAws connection).
     cfnClient.destroy();
     await driver.disconnect();
   });
@@ -223,7 +192,7 @@ describe('AwsCloudFormationDriver', () => {
     });
   });
 
-  describe('getResourcesWithDependencies (L2b)', () => {
+  describe('getResourcesWithDependencies', () => {
     it('enriches OrderQueue with a GetAtt dependency on OrderQueueDLQ, resolved from the real template', async () => {
       const { ok, result } = await driver.flow(async () => {
         return await driver.cloudFormationClient.getResourcesWithDependencies(
@@ -237,8 +206,7 @@ describe('AwsCloudFormationDriver', () => {
         { logicalId: 'OrderQueueDLQ', via: 'GetAtt' },
       ]);
 
-      // The DLQ itself depends on nothing - dependsOn stays undefined rather
-      // than an empty array, same convention as the plain listing.
+      // The DLQ itself depends on nothing - dependsOn stays undefined rather than an empty array, same convention as the plain listing.
       const dlq = result.find((it) => it.logicalId === 'OrderQueueDLQ');
       expect(dlq.dependsOn).toBeUndefined();
     });
@@ -258,10 +226,7 @@ describe('AwsCloudFormationDriver', () => {
         { logicalId: 'GreetingFunctionRole', via: 'GetAtt' },
       ]);
 
-      // API Gateway resource -> the REST API, via both Ref (RestApiId) and
-      // Fn::GetAtt (ParentId: RootResourceId) - two distinct relationships
-      // to the same target, both kept (same convention already covered by
-      // the PublicRoute case in cfn.test.ts).
+      // API Gateway resource -> the REST API, via both Ref (RestApiId) and Fn::GetAtt (ParentId: RootResourceId) - two distinct relationships to the same target, both kept (same convention already covered by the PublicRoute case in cfn.test.ts).
       const resource = result.find((it) => it.logicalId === 'GreetingResource');
       expect(resource.dependsOn).toEqual(
         expect.arrayContaining([
@@ -270,8 +235,7 @@ describe('AwsCloudFormationDriver', () => {
         ]),
       );
 
-      // API Gateway method -> the API and the resource it's mounted on via Ref, plus the
-      // Lambda invocation URI's `${GreetingFunction.Arn}` Fn::Sub variable via GetAtt.
+      // API Gateway method -> the API and the resource it's mounted on via Ref, plus the Lambda invocation URI's `${GreetingFunction.Arn}` Fn::Sub variable via GetAtt.
       const method = result.find((it) => it.logicalId === 'GreetingMethod');
       expect(method.dependsOn).toEqual(
         expect.arrayContaining([
@@ -282,11 +246,7 @@ describe('AwsCloudFormationDriver', () => {
       );
       expect(method.dependsOn).toHaveLength(3);
 
-      // Deployment -> the API (Ref, from its Properties) AND the method
-      // (DependsOn, an explicit deploy-ordering attribute rather than a
-      // Properties Ref/GetAtt) - both are real relationships, so both are
-      // kept, same as PublicRoute's DependsOn+Ref combination in
-      // cfn.test.ts.
+      // Deployment -> the API (Ref, from its Properties) AND the method (DependsOn, an explicit deploy-ordering attribute rather than a Properties Ref/GetAtt) - both are real relationships, so both are kept, same as PublicRoute's DependsOn+Ref combination in cfn.test.ts.
       const deployment = result.find(
         (it) => it.logicalId === 'GreetingApiDeployment',
       );
@@ -298,8 +258,7 @@ describe('AwsCloudFormationDriver', () => {
       );
       expect(deployment.dependsOn).toHaveLength(2);
 
-      // Lambda permission -> the function it grants apigateway.amazonaws.com permission to
-      // invoke via Ref FunctionName, and the API in its `${GreetingApi}` Fn::Sub SourceArn.
+      // Lambda permission -> the function it grants apigateway.amazonaws.com permission to invoke via Ref FunctionName, and the API in its `${GreetingApi}` Fn::Sub SourceArn.
       const permission = result.find(
         (it) => it.logicalId === 'GreetingApiInvokePermission',
       );
@@ -381,13 +340,6 @@ describe('AwsCloudFormationDriver', () => {
   });
 
   describe('describeAccountLimits', () => {
-    // Best-effort: this LocalStack edition doesn't implement
-    // DescribeAccountLimits at all (confirmed: it 500s with "...is not
-    // currently supported by LocalStack"), so this only checks that when the
-    // call *does* succeed, StackLimit is a sane positive number - never
-    // asserting a specific value, which would just be whatever backend's
-    // current default. A failure that isn't this known LocalStack gap still
-    // fails the test.
     it('either returns a sane StackLimit, or fails with LocalStack\'s known "not supported" error', async () => {
       let stackLimit: number | undefined;
       let unsupportedErrorMessage: string | undefined;

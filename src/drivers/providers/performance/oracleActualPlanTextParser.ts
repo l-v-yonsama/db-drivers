@@ -1,12 +1,6 @@
 import type { PlanTableMapping, RuntimeObservation } from '../../../types/drivers/performance/PerformanceTuningContext';
 
-// DBMS_XPLAN.DISPLAY_CURSOR(..., 'ALLSTATS LAST') is a human-oriented text
-// table, not a stable machine API. This parser deliberately accepts only the
-// fields needed to attach runtime evidence to an already-resolved table
-// mapping, and leaves an entry unset whenever the relation is ambiguous.
-// In particular, it never aligns an actual-plan row to PLAN_TABLE by row ID:
-// Oracle can choose a different runtime topology (adaptive plans, bind
-// peeking, and reoptimization), so the two sets of IDs are independent.
+// DBMS_XPLAN.DISPLAY_CURSOR(..., 'ALLSTATS LAST') is a human-oriented text table, not a stable machine API.
 
 type OracleActualPlanNode = {
   id: number;
@@ -150,20 +144,14 @@ function flattenNodes(nodes: OracleActualPlanNode[]): OracleActualPlanNode[] {
   return nodes.flatMap((node) => [node, ...flattenNodes(node.children)]);
 }
 
-/**
- * Extracts a compact, unambiguous runtime summary from DISPLAY_CURSOR. The
- * operation is intentionally not linked to an estimate-plan node: Oracle may
- * use an adaptive or reoptimized runtime topology.
- */
+/** Extracts a compact, unambiguous runtime summary from DISPLAY_CURSOR. */
 export function extractOracleRuntimeObservations(actualPlanText: string): RuntimeObservation[] {
   const nodes = flattenNodes(buildActualPlanTree(actualPlanText));
   const candidates = nodes.filter(
     (node) => node.actualRows !== undefined || node.buffers !== undefined || node.elapsedMs !== undefined,
   );
   if (candidates.length === 0) return [];
-  // A relation-bearing operation is more actionable than SELECT STATEMENT
-  // or a generic join/root with the same cumulative counters. Fall back to
-  // all operations only when DISPLAY_CURSOR did not name any relation.
+  // A relation-bearing operation is more actionable than SELECT STATEMENT or a generic join/root with the same cumulative counters.
   const relationCandidates = candidates.filter((node) => node.name);
   const dominant = (relationCandidates.length > 0 ? relationCandidates : candidates).reduce((best, node) => {
     const bestScore = (best.buffers ?? 0) || (best.elapsedMs ?? 0) || (best.actualRows ?? 0);
@@ -217,12 +205,7 @@ function collectTableAccessNodes(nodes: OracleActualPlanNode[]): OracleActualPla
   return found;
 }
 
-// An INDEX FAST FULL SCAN can be the physical relation access itself (for
-// example COUNT(*) can be satisfied from an index) and therefore have no
-// TABLE ACCESS parent in DISPLAY_CURSOR. Do not collect an INDEX child below
-// TABLE ACCESS here: that child is already used as the table access's input
-// row source, and treating it as a second independent candidate would make
-// the mapping ambiguous.
+// An INDEX FAST FULL SCAN can be the physical relation access itself (for example COUNT(*) can be satisfied from an index) and therefore have no TABLE ACCESS parent in DISPLAY_CURSOR.
 function collectStandaloneIndexAccessNodes(nodes: OracleActualPlanNode[]): OracleActualPlanNode[] {
   const found: OracleActualPlanNode[] = [];
   const visit = (node: OracleActualPlanNode, belowTableAccess: boolean): void => {
@@ -236,16 +219,7 @@ function collectStandaloneIndexAccessNodes(nodes: OracleActualPlanNode[]): Oracl
   return found;
 }
 
-/**
- * Resolves only a one-to-one table-name match between DISPLAY_CURSOR's
- * runtime table access and the structured PLAN_TABLE mapping. If there is
- * no runtime TABLE ACCESS at all, an index-only access can instead resolve
- * by a one-to-one index-name match. A self join, a same-named table from
- * multiple schemas, or repeated physical access is deliberately left
- * unresolved rather than guessed. `A-Rows / Starts` normalizes Oracle's
- * cumulative row-source counter to the same per-start grain as the
- * optimizer's E-Rows estimate.
- */
+/** Resolves only a one-to-one table-name match between DISPLAY_CURSOR's runtime table access and the structured PLAN_TABLE mapping. */
 export function resolveOracleActualPlanTableStats(
   actualPlanText: string,
   planTableMappings: PlanTableMapping[],
@@ -269,11 +243,7 @@ export function resolveOracleActualPlanTableStats(
     }
   }
 
-  // Index-only operations have no table name in DISPLAY_CURSOR, but are safe
-  // to attach when exactly one existing PLAN_TABLE mapping uses that index.
-  // This deliberately does not infer a tableAccessRows value: A-Rows on a
-  // filtered INDEX FAST FULL SCAN is its output, not the number of index
-  // entries read before the filter.
+  // Index-only operations have no table name in DISPLAY_CURSOR, but are safe to attach when exactly one existing PLAN_TABLE mapping uses that index.
   const mappingsByIndex = new Map<string, PlanTableMapping[]>();
   for (const mapping of planTableMappings) {
     if (!mapping.indexName) continue;

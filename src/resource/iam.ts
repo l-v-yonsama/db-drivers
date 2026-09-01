@@ -140,10 +140,6 @@ export class IamRealm extends DbResource<
 
 export class IamClient extends DbResource {
   baseUrl: string;
-  /**
-   * protocol(client type) For Keycloak
-   * openid-connect or saml
-   */
   protocol: string;
   clientId: string;
   standardFlowEnabled?: boolean;
@@ -151,9 +147,7 @@ export class IamClient extends DbResource {
   directAccessGrantsEnabled?: boolean;
   numOfUserSessions?: number;
   numOfOfflineSessions?: number;
-  /**
-   * The type of application this client represents for Auth0.
-   */
+  /** The type of application this client represents for Auth0. */
   appType: string;
 
   constructor(name: string) {

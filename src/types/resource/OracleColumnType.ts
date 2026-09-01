@@ -1,14 +1,5 @@
 import { EnumValues } from 'enum-values';
 
-/**
- * Member names are chosen so that, once lowercased, they either exactly
- * match a `GeneralColumnType` member or one of the special-cased strings
- * `rdh`'s `parseColumnType()` already recognizes (e.g. `varchar2`,
- * `number`) — see `parse()` below for the handful that need translating
- * first (Oracle's `ALL_TAB_COLUMNS.DATA_TYPE` and node-oracledb's
- * `dbTypeName` share the same string vocabulary, so one parser covers
- * both schema introspection and live query column metadata).
- */
 export enum OracleColumnType {
   VARCHAR2,
   NVARCHAR2,
@@ -53,8 +44,7 @@ export namespace OracleColumnType {
     } else if ('LONG RAW' === s) {
       return OracleColumnType.LONG_RAW;
     } else if (s.startsWith('TIMESTAMP') && s.includes('TIME ZONE')) {
-      // covers both "TIMESTAMP(n) WITH TIME ZONE" and
-      // "TIMESTAMP(n) WITH LOCAL TIME ZONE"
+      // covers both "TIMESTAMP(n) WITH TIME ZONE" and "TIMESTAMP(n) WITH LOCAL TIME ZONE"
       return OracleColumnType.TIMESTAMP_WITH_TIME_ZONE;
     } else if (s.startsWith('TIMESTAMP')) {
       return OracleColumnType.TIMESTAMP;

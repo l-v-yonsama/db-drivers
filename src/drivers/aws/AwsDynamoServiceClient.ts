@@ -15,7 +15,13 @@ import {
   CreateTableCommandInput,
   AttributeValue,
   ScanCommand as OriginalScanCommand,
+  ScanCommandInput as OriginalScanCommandInput,
+  ScanCommandOutput as OriginalScanCommandOutput,
   DescribeTimeToLiveCommand,
+  TimeToLiveDescription,
+  DescribeContributorInsightsCommand,
+  ContributorInsightsStatus,
+  ContributorInsightsMode,
 } from '@aws-sdk/client-dynamodb';
 import {
   DeleteCommand,
@@ -40,6 +46,7 @@ import {
 import {
   createRdhKey,
   GeneralColumnType,
+  RdhDynamoDbSummary,
   RdhKey,
   ResultSetData,
   ResultSetDataBuilder,
@@ -64,13 +71,87 @@ import { AwsDriver, ClientConfigType } from '../AwsDriver';
 import { AwsServiceClient } from './AwsServiceClient';
 import { parseQuery } from '../../helpers';
 import { unmarshall, marshall } from '@aws-sdk/util-dynamodb';
+import {
+  aggregateConsumedCapacity,
+  DynamoDbExecutionMeta,
+  DynamoDbExecutionMetaTracker,
+} from '../providers/performance/dynamoDbCapacity';
+import { DynamoDbCapacityBreakdown } from '../../types/drivers/performance/DynamoDbPerformanceTuningContext';
+import { buildDynamoDbRdhSummaryInfo } from './dynamoDbRdhSummary';
+import {
+  compareDynamoDbResultKeys,
+  describeDynamoDbResultKey,
+  getDynamoDbResultKeyNames,
+  resolveDynamoDbAccessPath,
+} from './dynamoDbResultMetadata';
 
 export type QueryItemsAtClientInputParams = OriginalQueryCommandInput;
+export type ScanItemsAtClientInputParams = OriginalScanCommandInput;
+
+type ScanPage<TItem, TKey> = {
+  Items?: TItem[];
+  LastEvaluatedKey?: TKey;
+  Count?: number;
+  ScannedCount?: number;
+  ConsumedCapacity?: OriginalScanCommandOutput['ConsumedCapacity'];
+  $metadata?: OriginalScanCommandOutput['$metadata'];
+};
+
+type CollectScanItemsParams<TItem, TKey> = {
+  limit?: number;
+  exclusiveStartKey?: TKey;
+  fetchPage: (
+    remainingLimit: number | undefined,
+    exclusiveStartKey: TKey | undefined,
+  ) => Promise<ScanPage<TItem, TKey> | undefined>;
+};
 
 export type TableDescWithExtraAttrs = TableDescription & {
   ExtraItems?: { name: string; value: AttributeValue }[];
   ttl?: TTLDesc;
 };
+
+// Hard safety cap for a single observed read.
+export const DYNAMODB_OBSERVED_READ_MAX_ITEMS = 100;
+
+export type DynamoDbObservedReadResult = {
+  returnedItemCount: number;
+  // Native Query only; ExecuteStatement has no ScannedCount field.
+  scannedItemCount?: number;
+  hasMorePages: boolean;
+  capacityBreakdown?: DynamoDbCapacityBreakdown;
+  clientElapsedTimeMs: number;
+  requestCount: number;
+  retryCount: number;
+};
+
+export const DYNAMODB_COMPLETE_READ_MAX_PAGES = 10;
+export const DYNAMODB_COMPLETE_READ_MAX_EVALUATED_ITEMS = 1000;
+export const DYNAMODB_COMPLETE_READ_TIMEOUT_MS = 30_000;
+
+// Enforce a caller timeout independently of SDK AbortSignal cancellation.
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number | undefined,
+): Promise<T> {
+  if (!timeoutMs) return promise;
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error('Run Observed Read timed out.')),
+      timeoutMs,
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
 export class AwsDynamoServiceClient extends AwsServiceClient {
   client: DynamoDBClient;
   docClient: DynamoDBDocumentClient;
@@ -85,9 +166,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
   }
 
   async connectSub(): Promise<string> {
-    // const config: DynamoDBClientConfig = {
-    //   ...this.config,
-    // };
     this.client = new DynamoDBClient(this.config);
     this.docClient = DynamoDBDocumentClient.from(this.client);
     this.interrupted = false;
@@ -117,7 +195,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
 
       const response = await this.client.send(command);
       lastEvaluatedTableName = response.LastEvaluatedTableName;
-      // console.log(response);
       tableNames.push(...response.TableNames);
       if (limit && tableNames.length >= limit) {
         break;
@@ -133,6 +210,46 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       }),
     );
     return res.Table.ItemCount;
+  }
+
+  // Metadata helpers never read item data.
+
+  async describeTable(
+    tableName: string,
+  ): Promise<TableDescription | undefined> {
+    const res = await this.client.send(
+      new DescribeTableCommand({ TableName: tableName }),
+    );
+    return res.Table;
+  }
+
+  async describeTimeToLive(
+    tableName: string,
+  ): Promise<TimeToLiveDescription | undefined> {
+    const res = await this.client.send(
+      new DescribeTimeToLiveCommand({ TableName: tableName }),
+    );
+    return res.TimeToLiveDescription;
+  }
+
+  // Contributor Insights status applies to tables and GSIs; key reports are never read.
+  async describeContributorInsights(
+    tableName: string,
+    indexName?: string,
+  ): Promise<{
+    status?: ContributorInsightsStatus;
+    mode?: ContributorInsightsMode;
+  }> {
+    const res = await this.client.send(
+      new DescribeContributorInsightsCommand({
+        TableName: tableName,
+        IndexName: indexName,
+      }),
+    );
+    return {
+      status: res.ContributorInsightsStatus,
+      mode: res.ContributorInsightsMode,
+    };
   }
 
   async listTables(): Promise<TableDescWithExtraAttrs[]> {
@@ -205,6 +322,11 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
           TableSizeBytes: table.TableSizeBytes,
           ItemCount: table.ItemCount,
           TableArn: table.TableArn,
+          BillingMode: table.BillingModeSummary?.BillingMode,
+          OnDemandMaxReadRequestUnits:
+            table.OnDemandThroughput?.MaxReadRequestUnits,
+          OnDemandMaxWriteRequestUnits:
+            table.OnDemandThroughput?.MaxWriteRequestUnits,
           ttl: table.ttl,
           lsi:
             table.LocalSecondaryIndexes?.map((it) => {
@@ -214,6 +336,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
                 IndexSizeBytes: it.IndexSizeBytes,
                 ItemCount: it.ItemCount,
                 IndexArn: it.IndexArn,
+                Projection: it.Projection,
               };
             }) ?? [],
           gsi:
@@ -225,6 +348,14 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
                 IndexSizeBytes: it.IndexSizeBytes,
                 ItemCount: it.ItemCount,
                 IndexArn: it.IndexArn,
+                Projection: it.Projection,
+                ReadCapacityUnits: it.ProvisionedThroughput?.ReadCapacityUnits,
+                WriteCapacityUnits:
+                  it.ProvisionedThroughput?.WriteCapacityUnits,
+                OnDemandMaxReadRequestUnits:
+                  it.OnDemandThroughput?.MaxReadRequestUnits,
+                OnDemandMaxWriteRequestUnits:
+                  it.OnDemandThroughput?.MaxWriteRequestUnits,
               };
             }) ?? [],
         });
@@ -275,7 +406,6 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       dbDatabase.comment = `${tables.length} ${plural('table')}`;
     } catch (e) {
       console.error(e);
-      // reject(e);
     }
     return dbDatabase;
   }
@@ -317,42 +447,74 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     };
   }
 
+  private async collectScanItems<TItem, TKey>({
+    limit,
+    exclusiveStartKey,
+    fetchPage,
+  }: CollectScanItemsParams<TItem, TKey>): Promise<{
+    items: TItem[];
+    lastEvaluatedKey?: TKey;
+    meta: DynamoDbExecutionMeta;
+  }> {
+    let lastEvaluatedKey = exclusiveStartKey;
+    const items: TItem[] = [];
+    const tracker = new DynamoDbExecutionMetaTracker();
+
+    do {
+      const remainingLimit = limit ? limit - items.length : undefined;
+      const response = await fetchPage(remainingLimit, lastEvaluatedKey);
+      if (!response) {
+        break;
+      }
+
+      tracker.recordResponse(response, { trackNativeCounts: true });
+      lastEvaluatedKey = response.LastEvaluatedKey;
+      items.push(...(response.Items ?? []));
+      if (limit && items.length >= limit) {
+        break;
+      }
+    } while (lastEvaluatedKey);
+
+    return {
+      items,
+      lastEvaluatedKey,
+      meta: tracker.build(!!lastEvaluatedKey),
+    };
+  }
+
   async scanItems(params: ScanCommandInput): Promise<{
     Items: ScanCommandOutput['Items'];
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
-    CapacityUnits: number;
+    // Undefined means no response reported capacity; it is distinct from zero.
+    CapacityUnits: number | undefined;
+    meta: DynamoDbExecutionMeta;
   }> {
-    let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
-      undefined;
-    let CapacityUnits = 0;
-    if (params.ExclusiveStartKey) {
-      LastEvaluatedKey = params.ExclusiveStartKey;
-    }
-
-    const Items: ScanCommandOutput['Items'] = [];
-    do {
-      const command = new ScanCommand({
-        ...params,
-        Limit: params.Limit ? params.Limit - Items.length : undefined,
-        ExclusiveStartKey: LastEvaluatedKey ? LastEvaluatedKey : undefined,
-        ReturnConsumedCapacity: 'TOTAL',
-      });
-
-      const response = await this.client.send(command);
-      LastEvaluatedKey = response.LastEvaluatedKey;
-      CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
-      Items.push(...response.Items);
-      if (params.Limit && Items.length >= params.Limit) {
-        break;
-      }
-    } while (LastEvaluatedKey);
+    const { items, lastEvaluatedKey, meta } = await this.collectScanItems<
+      Record<string, NativeAttributeValue>,
+      Record<string, NativeAttributeValue>
+    >({
+      limit: params.Limit,
+      exclusiveStartKey: params.ExclusiveStartKey,
+      fetchPage: async (remainingLimit, exclusiveStartKey) => {
+        return await this.docClient.send(
+          new ScanCommand({
+            ...params,
+            Limit: remainingLimit,
+            ExclusiveStartKey: exclusiveStartKey,
+            // INDEXES includes total and per-table/index capacity evidence.
+            ReturnConsumedCapacity: 'INDEXES',
+          }),
+        );
+      },
+    });
 
     return {
-      Items,
-      LastEvaluatedKey,
-      Count: Items.length,
-      CapacityUnits,
+      Items: items,
+      LastEvaluatedKey: lastEvaluatedKey,
+      Count: items.length,
+      CapacityUnits: meta.capacityBreakdown?.capacityUnits,
+      meta,
     };
   }
 
@@ -360,38 +522,32 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     Items: QueryCommandOutput['Items'];
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
-    CapacityUnits: number;
+    // See scanItems() above: undefined iff Capacity was never reported.
+    CapacityUnits: number | undefined;
+    meta: DynamoDbExecutionMeta;
   }> {
-    let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
-      undefined;
-    let CapacityUnits = 0;
-    if (params.ExclusiveStartKey) {
-      LastEvaluatedKey = params.ExclusiveStartKey;
-    }
-
-    const Items: QueryCommandOutput['Items'] = [];
-    do {
-      const command = new QueryCommand({
-        ...params,
-        Limit: params.Limit ? params.Limit - Items.length : undefined,
-        ExclusiveStartKey: LastEvaluatedKey ? LastEvaluatedKey : undefined,
-        ReturnConsumedCapacity: 'TOTAL',
-      });
-
-      const response = await this.docClient.send(command);
-      LastEvaluatedKey = response.LastEvaluatedKey;
-      CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
-      Items.push(...response.Items);
-      if (params.Limit && Items.length >= params.Limit) {
-        break;
-      }
-    } while (LastEvaluatedKey);
-
+    const { items, lastEvaluatedKey, meta } = await this.collectScanItems<
+      Record<string, NativeAttributeValue>,
+      Record<string, NativeAttributeValue>
+    >({
+      limit: params.Limit,
+      exclusiveStartKey: params.ExclusiveStartKey,
+      fetchPage: (remainingLimit, exclusiveStartKey) =>
+        this.docClient.send(
+          new QueryCommand({
+            ...params,
+            Limit: remainingLimit,
+            ExclusiveStartKey: exclusiveStartKey,
+            ReturnConsumedCapacity: 'INDEXES',
+          }),
+        ),
+    });
     return {
-      Items,
-      LastEvaluatedKey,
-      Count: Items.length,
-      CapacityUnits,
+      Items: items,
+      LastEvaluatedKey: lastEvaluatedKey,
+      Count: items.length,
+      CapacityUnits: meta.capacityBreakdown?.capacityUnits,
+      meta,
     };
   }
 
@@ -402,10 +558,9 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
 
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
-    let CapacityUnits = 0;
     const qst: QStatement = {
       ast: { type: 'select' },
-      names: { tableName: TableName },
+      names: { tableName: TableName, indexName: IndexName },
     };
     const dbTable = this.getDbTable(qst);
 
@@ -413,6 +568,7 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
 
     const allAttributeTypes = new Map<string, GeneralColumnType>();
     const startTime = new Date().getTime();
+    const tracker = new DynamoDbExecutionMetaTracker();
     do {
       const command = new OriginalQueryCommand({
         ...params,
@@ -420,13 +576,13 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         IndexName,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
         ExclusiveStartKey: LastEvaluatedKey ? LastEvaluatedKey : undefined,
-        ReturnConsumedCapacity: 'TOTAL',
+        ReturnConsumedCapacity: 'INDEXES',
       });
 
       try {
         const response = await this.client.send(command);
+        tracker.recordResponse(response, { trackNativeCounts: true });
         LastEvaluatedKey = response.LastEvaluatedKey;
-        CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
         Items.push(...response.Items);
         response.Items.forEach((item) => {
           Object.keys(item)
@@ -441,10 +597,8 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         }
       } catch (e) {
         if (e.name === 'ResourceNotFoundException') {
-          // create empty ResultSetData
           break;
         }
-        // re-throw
         throw e;
       }
     } while (LastEvaluatedKey);
@@ -463,9 +617,79 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       },
       qst,
       elapsedTimeMilli,
-      capacityUnits: CapacityUnits,
       dbTable,
       allAttributeTypes,
+      meta: tracker.build(!!LastEvaluatedKey),
+      apiOperation: 'Query',
+    });
+    rs.meta.queryInput = JSON.stringify(params, null, 2);
+    return rs;
+  }
+
+  async scanItemsAtClient(
+    params: OriginalScanCommandInput,
+  ): Promise<ResultSetData> {
+    const { TableName, IndexName } = params;
+    const qst: QStatement = {
+      ast: { type: 'select' },
+      names: { tableName: TableName, indexName: IndexName },
+    };
+    const dbTable = this.getDbTable(qst);
+    const startTime = new Date().getTime();
+    const { items: Items, meta } = await this.collectScanItems<
+      Record<string, AttributeValue>,
+      Record<string, AttributeValue>
+    >({
+      limit: params.Limit,
+      exclusiveStartKey: params.ExclusiveStartKey,
+      fetchPage: async (remainingLimit, exclusiveStartKey) => {
+        try {
+          return await this.client.send(
+            new OriginalScanCommand({
+              ...params,
+              TableName,
+              Limit: remainingLimit,
+              ExclusiveStartKey: exclusiveStartKey,
+              ReturnConsumedCapacity: 'INDEXES',
+            }),
+          );
+        } catch (e) {
+          if (e.name === 'ResourceNotFoundException') {
+            return undefined;
+          }
+          throw e;
+        }
+      },
+    });
+
+    const allAttributeTypes = new Map<string, GeneralColumnType>();
+    Items.forEach((item) => {
+      Object.keys(item)
+        .filter((it) => !allAttributeTypes.has(it))
+        .forEach((it) => {
+          const colType = this.parseDynamoAttrTypeByNameAndItem(it, item);
+          allAttributeTypes.set(it, colType);
+        });
+    });
+
+    const elapsedTimeMilli = new Date().getTime() - startTime;
+    const rs = this.itemsToResultSetData({
+      Count: Items.length,
+      Items,
+      params: {
+        sql: '',
+        conditions: {},
+        meta: {
+          type: 'select',
+          tableName: TableName,
+        },
+      },
+      qst,
+      elapsedTimeMilli,
+      dbTable,
+      allAttributeTypes,
+      meta,
+      apiOperation: 'Scan',
     });
     rs.meta.queryInput = JSON.stringify(params, null, 2);
     return rs;
@@ -478,19 +702,21 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     NextToken?: string;
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
-    CapacityUnits: number;
+    // See scanItems() above: undefined iff Capacity was never reported.
+    CapacityUnits: number | undefined;
     extra: {
       allAttributeNames: string[];
     };
+    meta: DynamoDbExecutionMeta;
   }> {
     this.interrupted = false;
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
     let NextToken = params.NextToken;
-    let CapacityUnits = 0;
     const allAttributeNames = new Set<string>();
 
     const Items: QueryCommandOutput['Items'] = [];
+    const tracker = new DynamoDbExecutionMetaTracker();
     do {
       if (this.interrupted) {
         this.interrupted = false;
@@ -500,13 +726,14 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         ...params,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
         NextToken,
-        ReturnConsumedCapacity: 'TOTAL',
+        ReturnConsumedCapacity: 'INDEXES',
       });
 
       const response = await this.docClient.send(command);
+      // PartiQL responses do not expose native Count/ScannedCount evidence.
+      tracker.recordResponse(response);
       LastEvaluatedKey = response.LastEvaluatedKey;
       NextToken = response.NextToken;
-      CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
       response.Items.forEach((item) => {
         Object.keys(item)
@@ -520,15 +747,17 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       }
     } while (LastEvaluatedKey || NextToken);
 
+    const meta = tracker.build(!!(LastEvaluatedKey || NextToken));
     return {
       Items,
       LastEvaluatedKey,
       NextToken,
       Count: Items.length,
-      CapacityUnits,
+      CapacityUnits: meta.capacityBreakdown?.capacityUnits,
       extra: {
         allAttributeNames: [...allAttributeNames],
       },
+      meta,
     };
   }
 
@@ -539,19 +768,21 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     NextToken?: string;
     LastEvaluatedKey: Record<string, NativeAttributeValue>;
     Count: number;
-    CapacityUnits: number;
+    // See scanItems() above: undefined iff Capacity was never reported.
+    CapacityUnits: number | undefined;
     extra: {
       allAttributeTypes: Map<string, GeneralColumnType>;
     };
+    meta: DynamoDbExecutionMeta;
   }> {
     this.interrupted = false;
     let LastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
       undefined;
     let NextToken = params.NextToken;
-    let CapacityUnits = 0;
     const allAttributeTypes = new Map<string, GeneralColumnType>();
 
     const Items: OriginalExecuteStatementCommandOutput['Items'] = [];
+    const tracker = new DynamoDbExecutionMetaTracker();
     do {
       if (this.interrupted) {
         this.interrupted = false;
@@ -562,13 +793,14 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
         ...params,
         Limit: params.Limit ? params.Limit - Items.length : undefined,
         NextToken,
-        ReturnConsumedCapacity: 'TOTAL',
+        ReturnConsumedCapacity: 'INDEXES',
       });
 
       const response = await this.client.send(command);
+      // PartiQL responses do not expose native Count/ScannedCount evidence.
+      tracker.recordResponse(response);
       LastEvaluatedKey = response.LastEvaluatedKey;
       NextToken = response.NextToken;
-      CapacityUnits += response.ConsumedCapacity?.CapacityUnits ?? 0;
       Items.push(...response.Items);
       response.Items.forEach((item) => {
         Object.keys(item)
@@ -583,15 +815,17 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       }
     } while (LastEvaluatedKey || NextToken);
 
+    const meta = tracker.build(!!(LastEvaluatedKey || NextToken));
     return {
       Items,
       LastEvaluatedKey,
       NextToken,
       Count: Items.length,
-      CapacityUnits,
+      CapacityUnits: meta.capacityBreakdown?.capacityUnits,
       extra: {
         allAttributeTypes,
       },
+      meta,
     };
   }
 
@@ -645,14 +879,13 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     // 1 validation error detected: Value '[]' at 'parameters' failed to satisfy constraint: Member must have length greater than or equal to 1
     if (binds && binds.length > 0) {
       input.Parameters = marshall(binds);
-      // console.log('input.Parameters=', input.Parameters);
     }
 
     const {
-      CapacityUnits: capacityUnits,
       Count,
       Items,
       extra: { allAttributeTypes },
+      meta,
     } = await this.executeStatementAtClient(input);
 
     const elapsedTimeMilli = new Date().getTime() - startTime;
@@ -663,10 +896,232 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       params,
       qst,
       elapsedTimeMilli,
-      capacityUnits,
       dbTable,
       allAttributeTypes,
+      meta,
+      apiOperation: 'ExecuteStatement',
     });
+  }
+
+  // Observed reads return telemetry only and never expose item bodies or pagination keys.
+
+  async observeNativeQueryRead(params: {
+    input: OriginalQueryCommandInput;
+    maxEvaluatedItems?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResult> {
+    const limit = Math.min(
+      params.maxEvaluatedItems ?? DYNAMODB_OBSERVED_READ_MAX_ITEMS,
+      DYNAMODB_OBSERVED_READ_MAX_ITEMS,
+    );
+    const startTime = Date.now();
+    const command = new OriginalQueryCommand({
+      ...params.input,
+      Limit: limit,
+      ExclusiveStartKey: undefined,
+      ReturnConsumedCapacity: 'INDEXES',
+    });
+    const response = await withTimeout(
+      this.client.send(command, { abortSignal: params.signal }),
+      params.timeoutMs,
+    );
+    return {
+      returnedItemCount: response.Count ?? response.Items?.length ?? 0,
+      scannedItemCount: response.ScannedCount,
+      hasMorePages: !!response.LastEvaluatedKey,
+      capacityBreakdown: aggregateConsumedCapacity([response.ConsumedCapacity]),
+      clientElapsedTimeMs: Date.now() - startTime,
+      requestCount: 1,
+      retryCount: Math.max(0, (response.$metadata?.attempts ?? 1) - 1),
+    };
+  }
+
+  async observePartiqlRead(params: {
+    statement: string;
+    parameters?: unknown[];
+    maxEvaluatedItems?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResult> {
+    // Recheck SELECT immediately before issuing the capacity-consuming request.
+    const qst = parseQuery(params.statement);
+    if (!qst || qst.ast?.type !== 'select') {
+      throw new Error(
+        'Run Observed Read only supports a single SELECT statement.',
+      );
+    }
+
+    const limit = Math.min(
+      params.maxEvaluatedItems ?? DYNAMODB_OBSERVED_READ_MAX_ITEMS,
+      DYNAMODB_OBSERVED_READ_MAX_ITEMS,
+    );
+    const startTime = Date.now();
+    const input: OriginalExecuteStatementCommandInput = {
+      Statement: params.statement,
+      Limit: limit,
+      ReturnConsumedCapacity: 'INDEXES',
+    };
+    if (params.parameters && params.parameters.length > 0) {
+      input.Parameters = marshall(params.parameters);
+    }
+    const response = await withTimeout(
+      this.client.send(new OriginalExecuteStatementCommand(input), {
+        abortSignal: params.signal,
+      }),
+      params.timeoutMs,
+    );
+    return {
+      returnedItemCount: response.Items?.length ?? 0,
+      scannedItemCount: undefined,
+      hasMorePages: !!(response.LastEvaluatedKey || response.NextToken),
+      capacityBreakdown: aggregateConsumedCapacity([response.ConsumedCapacity]),
+      clientElapsedTimeMs: Date.now() - startTime,
+      requestCount: 1,
+      retryCount: Math.max(0, (response.$metadata?.attempts ?? 1) - 1),
+    };
+  }
+
+  async observeNativeQueryReadComplete(params: {
+    input: OriginalQueryCommandInput;
+    maxPages?: number;
+    maxEvaluatedItems?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResult> {
+    const maxPages = Math.min(
+      params.maxPages ?? DYNAMODB_COMPLETE_READ_MAX_PAGES,
+      DYNAMODB_COMPLETE_READ_MAX_PAGES,
+    );
+    const maxEvaluatedItems = Math.min(
+      params.maxEvaluatedItems ?? DYNAMODB_COMPLETE_READ_MAX_EVALUATED_ITEMS,
+      DYNAMODB_COMPLETE_READ_MAX_EVALUATED_ITEMS,
+    );
+    const timeoutMs = Math.min(
+      params.timeoutMs ?? DYNAMODB_COMPLETE_READ_TIMEOUT_MS,
+      DYNAMODB_COMPLETE_READ_TIMEOUT_MS,
+    );
+    const startedAt = Date.now();
+    let exclusiveStartKey: OriginalQueryCommandInput['ExclusiveStartKey'];
+    let returnedItemCount = 0;
+    let scannedItemCount = 0;
+    let pageCount = 0;
+    let hasMorePages = false;
+    const tracker = new DynamoDbExecutionMetaTracker();
+
+    do {
+      const remainingItems = maxEvaluatedItems - scannedItemCount;
+      if (remainingItems <= 0 || pageCount >= maxPages) break;
+      const response = await withTimeout(
+        this.client.send(
+          new OriginalQueryCommand({
+            ...params.input,
+            Limit: Math.min(DYNAMODB_OBSERVED_READ_MAX_ITEMS, remainingItems),
+            ExclusiveStartKey: exclusiveStartKey,
+            ReturnConsumedCapacity: 'INDEXES',
+          }),
+          { abortSignal: params.signal },
+        ),
+        Math.max(1, timeoutMs - (Date.now() - startedAt)),
+      );
+      tracker.recordResponse(response, { trackNativeCounts: true });
+      pageCount += 1;
+      returnedItemCount += response.Count ?? response.Items?.length ?? 0;
+      scannedItemCount +=
+        response.ScannedCount ?? response.Count ?? response.Items?.length ?? 0;
+      exclusiveStartKey = response.LastEvaluatedKey;
+      hasMorePages = !!exclusiveStartKey;
+    } while (hasMorePages);
+
+    const meta = tracker.build(hasMorePages);
+    return {
+      returnedItemCount,
+      scannedItemCount,
+      hasMorePages,
+      capacityBreakdown: meta.capacityBreakdown,
+      clientElapsedTimeMs: Date.now() - startedAt,
+      requestCount: meta.requestCount,
+      retryCount: meta.retryCount,
+    };
+  }
+
+  async observePartiqlReadComplete(params: {
+    statement: string;
+    parameters?: unknown[];
+    maxPages?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): Promise<DynamoDbObservedReadResult> {
+    const qst = parseQuery(params.statement);
+    if (!qst || qst.ast?.type !== 'select') {
+      throw new Error(
+        'Complete-result Benchmark only supports a single SELECT statement.',
+      );
+    }
+    const maxPages = Math.min(
+      params.maxPages ?? DYNAMODB_COMPLETE_READ_MAX_PAGES,
+      DYNAMODB_COMPLETE_READ_MAX_PAGES,
+    );
+    const timeoutMs = Math.min(
+      params.timeoutMs ?? DYNAMODB_COMPLETE_READ_TIMEOUT_MS,
+      DYNAMODB_COMPLETE_READ_TIMEOUT_MS,
+    );
+    const startedAt = Date.now();
+    let nextToken: string | undefined;
+    let returnedItemCount = 0;
+    let pageCount = 0;
+    let hasMorePages = false;
+    const tracker = new DynamoDbExecutionMetaTracker();
+
+    do {
+      if (pageCount >= maxPages) break;
+      const input: OriginalExecuteStatementCommandInput = {
+        Statement: params.statement,
+        Limit: DYNAMODB_OBSERVED_READ_MAX_ITEMS,
+        NextToken: nextToken,
+        ReturnConsumedCapacity: 'INDEXES',
+      };
+      if (params.parameters && params.parameters.length > 0)
+        input.Parameters = marshall(params.parameters);
+      const response = await withTimeout(
+        this.client.send(new OriginalExecuteStatementCommand(input), {
+          abortSignal: params.signal,
+        }),
+        Math.max(1, timeoutMs - (Date.now() - startedAt)),
+      );
+      tracker.recordResponse(response);
+      pageCount += 1;
+      returnedItemCount += response.Items?.length ?? 0;
+      nextToken = response.NextToken;
+      hasMorePages = !!(response.NextToken || response.LastEvaluatedKey);
+      if (!nextToken && hasMorePages) break;
+    } while (hasMorePages);
+
+    const meta = tracker.build(hasMorePages);
+    return {
+      returnedItemCount,
+      scannedItemCount: undefined,
+      hasMorePages,
+      capacityBreakdown: meta.capacityBreakdown,
+      clientElapsedTimeMs: Date.now() - startedAt,
+      requestCount: meta.requestCount,
+      retryCount: meta.retryCount,
+    };
+  }
+
+  // Classifies raw PartiQL when the full parser is unavailable or intentionally skipped.
+  private static classifyPartiqlOperationFromText(
+    sql: string,
+  ): 'select' | 'insert' | 'update' | 'delete' | undefined {
+    // Ignore leading line and block comments before reading the operation.
+    const withoutLeadingComments = sql.replace(
+      /^(\s*(?:--[^\n]*\n|\/\*[\s\S]*?\*\/))*\s*/,
+      '',
+    );
+    const m = withoutLeadingComments.match(/^(select|insert|update|delete)\b/i);
+    return m
+      ? (m[1].toLowerCase() as 'select' | 'insert' | 'update' | 'delete')
+      : undefined;
   }
 
   private itemsToResultSetData({
@@ -675,39 +1130,38 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     params,
     qst,
     elapsedTimeMilli,
-    capacityUnits,
     dbTable,
     allAttributeTypes,
+    meta,
+    apiOperation,
   }: {
     Count: number;
     Items?: Record<string, AttributeValue>[];
     params: QueryParams;
     qst: QStatement;
     elapsedTimeMilli: number;
-    capacityUnits: number;
     dbTable: DbDynamoTable;
     allAttributeTypes: Map<string, GeneralColumnType>;
+    // Optional execution evidence; missing values remain distinct from zero.
+    meta?: DynamoDbExecutionMeta;
+    // The AWS API operation is distinct from the PartiQL read/write classification.
+    apiOperation: RdhDynamoDbSummary['apiOperation'];
   }): ResultSetData {
-    let rdb: ResultSetDataBuilder | undefined = undefined;
-
-    const record = Count === 0 ? {} : Items[0];
-    const pkAndSk = dbTable?.getPkAndSkByIndex(qst?.names?.indexName);
+    const materializedItems = Items ?? [];
+    const record = Count === 0 ? {} : materializedItems[0] ?? {};
+    const indexName = qst?.names?.indexName;
+    const accessPath = resolveDynamoDbAccessPath(dbTable, indexName);
 
     const createRdhKeyFromName = (name: string): RdhKey => {
       const col = dbTable?.getChildByName(name);
       const type = col?.attrType
         ? parseDynamoAttrType(col.attrType)
         : allAttributeTypes.get(name);
-      let comment = '';
-      let required = false;
-      if (col?.name === pkAndSk?.pk) {
-        comment = '(pk)';
-        required = true;
-      }
-      if (col?.name === pkAndSk?.sk) {
-        comment = '(sk)';
-        required = true;
-      }
+      const { comment, required } = describeDynamoDbResultKey(
+        dbTable,
+        indexName,
+        name,
+      );
       return createRdhKey({
         name,
         type,
@@ -717,15 +1171,17 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
     };
 
     const keys = Object.keys(record).map((it) => createRdhKeyFromName(it));
+    const keyNames = new Set(keys.map((key) => key.name));
 
     for (const [attrName, colType] of allAttributeTypes) {
-      if (!keys.map((key) => key.name).includes(attrName)) {
+      if (!keyNames.has(attrName)) {
         keys.push(
           createRdhKey({
             name: attrName,
             type: colType,
           }),
         );
+        keyNames.add(attrName);
       }
     }
 
@@ -737,33 +1193,19 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       const { expr } = qst.ast.columns[0];
       if (expr.type === 'ref' && expr.name === '*') {
         if (Count === 0 && keys.length === 0) {
-          if (pkAndSk?.pk) {
-            keys.push(createRdhKeyFromName(pkAndSk?.pk));
-          }
-          if (pkAndSk?.sk) {
-            keys.push(createRdhKeyFromName(pkAndSk?.sk));
+          for (const keyName of getDynamoDbResultKeyNames(dbTable, indexName)) {
+            keys.push(createRdhKeyFromName(keyName));
           }
         }
 
-        keys.sort((a, b) => {
-          const n = (it): number =>
-            it.name === pkAndSk?.pk ? -2 : it.name === pkAndSk?.sk ? -1 : 0;
-          const an = n(a);
-          const bn = n(b);
-          if (an < bn) {
-            return -1;
-          }
-          if (an > bn) {
-            return 1;
-          }
-
-          return a.name.localeCompare(b.name);
-        });
+        keys.sort((a, b) =>
+          compareDynamoDbResultKeys(dbTable, indexName, a.name, b.name),
+        );
       }
     }
 
-    rdb = new ResultSetDataBuilder(keys);
-    Items.forEach((item) => {
+    const rdb = new ResultSetDataBuilder(keys);
+    materializedItems.forEach((item) => {
       const values = unmarshall(item);
       Object.entries(values).forEach(([key, value]) => {
         const attrType = Object.keys(item[key])[0];
@@ -785,10 +1227,82 @@ export class AwsDynamoServiceClient extends AwsServiceClient {
       dbTable,
     });
 
+    // Fall back to the raw statement when parsing was skipped or failed.
+    const operation =
+      qst?.ast?.type ??
+      AwsDynamoServiceClient.classifyPartiqlOperationFromText(params.sql);
+    // Only a known write suppresses returned-row evidence.
+    const isKnownWrite =
+      operation === 'insert' ||
+      operation === 'update' ||
+      operation === 'delete';
+    const selectedRows = isKnownWrite ? undefined : rdb.rs.rows.length;
+    // PartiQL writes do not report an affected-item count.
+    const affectedRows: number | undefined = undefined;
+    const capacityUnits = meta?.capacityBreakdown?.capacityUnits;
+
+    // Surface disagreement between native response counts and materialized rows.
+    if (
+      meta?.reportedCount !== undefined &&
+      selectedRows !== undefined &&
+      meta.reportedCount !== selectedRows
+    ) {
+      console.warn(
+        `[AwsDynamoServiceClient] DynamoDB-reported Count (${
+          meta.reportedCount
+        }) does not match the number of items materialized into ResultSetData (${selectedRows}) for table "${
+          dbTable?.name ?? params.meta?.tableName ?? 'unknown'
+        }".`,
+      );
+    }
+
+    // RdhSummary.dynamoDb is the sole structured execution-evidence store.
+    const dynamoDb: RdhDynamoDbSummary | undefined = meta
+      ? {
+          apiOperation,
+          accessPath,
+          returnedItemCount: selectedRows,
+          evaluatedItemCount: meta.scannedCount,
+          successfulResponseCount: meta.requestCount,
+          sdkRetryCount: meta.retryCount,
+          continuationTokenPresent: meta.hasMorePages,
+          consumedCapacity: meta.capacityBreakdown
+            ? {
+                totalCapacityUnits: meta.capacityBreakdown.capacityUnits,
+                totalReadCapacityUnits:
+                  meta.capacityBreakdown.readCapacityUnits,
+                totalWriteCapacityUnits:
+                  meta.capacityBreakdown.writeCapacityUnits,
+                table: meta.capacityBreakdown.table,
+                localSecondaryIndexes:
+                  meta.capacityBreakdown.localSecondaryIndexes,
+                globalSecondaryIndexes:
+                  meta.capacityBreakdown.globalSecondaryIndexes,
+              }
+            : undefined,
+        }
+      : undefined;
+
     rdb.setSummary({
+      info: buildDynamoDbRdhSummaryInfo({
+        operation,
+        elapsedTimeMilli,
+        selectedRows,
+        affectedRows,
+        scannedRows: meta?.scannedCount,
+        requestCount: meta?.requestCount,
+        retryCount: meta?.retryCount,
+        capacityUnits,
+        readCapacityUnits: meta?.capacityBreakdown?.readCapacityUnits,
+        writeCapacityUnits: meta?.capacityBreakdown?.writeCapacityUnits,
+        hasMoreRows: meta?.hasMorePages,
+        accessPath,
+      }),
       elapsedTimeMilli,
-      selectedRows: rdb.rs.rows.length,
+      selectedRows,
+      affectedRows,
       capacityUnits,
+      dynamoDb,
     });
     return rdb.build();
   }

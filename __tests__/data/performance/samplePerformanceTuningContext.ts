@@ -1,16 +1,5 @@
 import { PerformanceTuningContext } from '../../../src';
 
-// A hand-built, fully-typed example of getPerformanceTuningContext()'s
-// output, standing in for the PostgreSQL fixture that Phase 1 will replace
-// with real EXPLAIN/catalog output (§10 Phase 0 "PostgreSQL / MySQL / SQL
-// Server / Oracle の plan・統計 fixture"). Until then this is what proves:
-//   - the type surface actually nests together into one coherent object,
-//   - validatePerformanceTuningContext() accepts a well-formed context,
-//   - nothing in a well-formed context looks like a raw bind/secret value.
-// Deliberately contains a query with a literal already removed, and no
-// bind array anywhere - PerformanceTuningContext has no field to hold binds
-// in the first place (§9.2: binds are used for plan retrieval only and are
-// never part of the return value).
 export const samplePerformanceTuningContext: PerformanceTuningContext = {
   formatVersion: 1,
 
@@ -55,8 +44,7 @@ export const samplePerformanceTuningContext: PerformanceTuningContext = {
       children: [],
     },
     planningTimeMs: 0.4,
-    // 2026-08-21 follow-up (summary.md's Full Context improvement item 5) -
-    // this single-node plan's own Seq Scan is trivially the dominant node.
+    // The only plan node is the dominant node.
     dominantCostPlanNode: { planNodeId: 'n1', metric: 'estimated', exclusiveValue: 48210 },
   },
 

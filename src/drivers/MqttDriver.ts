@@ -27,12 +27,7 @@ import { parseQuery } from '../helpers';
 
 export type TopicPayloadMessage = {
   timestamp: Date;
-  /**
-   * The concrete topic the message was published to, as reported by the broker.
-   * May differ from the subscription filter key it is bucketed under
-   * (e.g. filter `device/piyo/#` can receive messages for `device/piyo/cycle_time`
-   * and `device/piyo/status`).
-   */
+  /** The concrete topic the message was published to, as reported by the broker. */
   topic: string;
   messageId?: number;
   qos: MqttQoS;

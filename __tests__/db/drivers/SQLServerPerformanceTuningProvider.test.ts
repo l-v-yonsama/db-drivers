@@ -142,11 +142,6 @@ describe('parseSqlServerPlan', () => {
   });
 
   it('surfaces the native Warnings column as PLAN_OBSERVATION information, not a warning', () => {
-    // SQL Server's own "NO STATS" text is a fact the optimizer reported
-    // about this node, not a driver-side collection gap (§8 Step 1
-    // inventory) - it must not silently disappear (it used to only live on
-    // PlanNode.warnings, invisible to collection.status) nor turn the
-    // result 'partial' on its own.
     const rows = [
       row({ NodeId: 1, Parent: 0, Type: 'SELECT' }),
       row({
@@ -169,10 +164,6 @@ describe('parseSqlServerPlan', () => {
   });
 
   it('warns instead of silently dropping a node whose OBJECT:(...) clause could not be parsed', () => {
-    // An OBJECT:(...) clause is present (so this is clearly meant to be a
-    // table access) but has fewer than the 3 segments this parser expects
-    // ([database].[schema].[table], optionally + [index]) - an honest
-    // degrade to a warning, never a guessed table (§4.3).
     const rows = [
       row({ NodeId: 1, Parent: 0, Type: 'SELECT' }),
       row({
@@ -184,8 +175,6 @@ describe('parseSqlServerPlan', () => {
     ];
     const { planNode, mappings, diagnostics } = parseSqlServerPlan(rows);
     expect(mappings).toEqual([]);
-    // §4.3: a short excerpt of the Argument that failed to parse is kept as
-    // technical detail, not just the fact that resolution failed.
     expect(diagnostics[0].message).toContain('OBJECT:([testdb].[perf])');
     expect(diagnostics).toEqual([
       expect.objectContaining({
@@ -507,8 +496,6 @@ describe('SQLServerPerformanceTuningProvider', () => {
       expect(result.result!.indexes).toHaveLength(1);
       expect(result.result!.ddl).toContain('CREATE TABLE');
 
-      // Every catalog query is scoped to exactly this one table (§9.3), and
-      // tagged as internal collection (§6.3).
       for (const call of requestSql.mock.calls) {
         expect(call[0].conditions.binds[1]).toBe('perf_orders');
         expect(call[0].meta).toEqual({ type: 'performanceTuningContext' });
@@ -623,9 +610,7 @@ describe('SQLServerPerformanceTuningProvider', () => {
   });
 });
 
-// Runs the actual catalog SQL against a live SQL Server (the same Docker
-// fixture __tests__/db/drivers/SQLServerDriver.test.ts uses), not stubbed
-// rows - same rationale as the Postgres/MySQL Providers' live suites.
+// Runs the actual catalog SQL against a live SQL Server (the same Docker fixture __tests__/db/drivers/SQLServerDriver.test.ts uses), not stubbed rows - same rationale as the Postgres/MySQL Providers' live suites.
 describe('SQLServerPerformanceTuningProvider (live SQL Server)', () => {
   const connectOption: ConnectionSetting = {
     host: '127.0.0.1',

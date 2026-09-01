@@ -46,10 +46,7 @@ const fakeCapabilities: PerformanceTuningCapabilities = {
   physicalHealth: { available: true },
 };
 
-// PostgresDriver is already used as a plain (unconnected) instance
-// elsewhere in this test suite; subclassing it just to override the
-// protected Provider hook keeps the fake as close as possible to how a real
-// Vendor driver would wire one in.
+// PostgresDriver is already used as a plain (unconnected) instance elsewhere in this test suite; subclassing it just to override the protected Provider hook keeps the fake as close as possible to how a real Vendor driver would wire one in.
 class FakeProviderDriver extends PostgresDriver {
   constructor(
     conRes: ConnectionSetting,
@@ -88,8 +85,7 @@ describe('performance tuning context params', () => {
     });
 
     expect(normalized.plan.timeoutMs).toBeGreaterThan(0);
-    // binds are threaded through only for plan retrieval; the public
-    // PerformanceTuningContext type has no field to place them into.
+    // binds are threaded through only for plan retrieval; the public PerformanceTuningContext type has no field to place them into.
     expect(normalized.plan.binds).toEqual(['secret-value']);
   });
 
@@ -103,8 +99,7 @@ describe('performance tuning context params', () => {
       statement: { sql: 'SELECT 1', source: 'editor' },
       plan: { mode: 'bogus' as never },
     });
-    // An unrecognized mode is never silently trusted downstream - it falls
-    // back to the safe default rather than reaching a Provider as-is.
+    // An unrecognized mode is never silently trusted downstream - it falls back to the safe default rather than reaching a Provider as-is.
     expect(normalized.plan.mode).toBe('estimate');
   });
 
@@ -133,8 +128,7 @@ describe('performance tuning context params', () => {
     expect(isSingleSelectStatement(undefined)).toBe(false);
     expect(isSingleSelectStatement('')).toBe(false);
 
-    // allowExecution: true alone must not be enough to let a non-SELECT
-    // (or unparseable/multi-statement) statement through Analyze.
+    // allowExecution: true alone must not be enough to let a non-SELECT (or unparseable/multi-statement) statement through Analyze.
     const deleteErrors = validatePerformanceTuningContextParams({
       databaseName: 'testdb',
       statement: { sql: 'DELETE FROM orders', source: 'editor' },
@@ -211,7 +205,7 @@ describe('performance tuning context params', () => {
   });
 });
 
-describe('performance tuning context - unsupported drivers (Phase 0)', () => {
+describe('performance tuning context - unsupported drivers', () => {
   it('reports unsupported for every RDS driver without a Provider yet', () => {
     const driver = new SQLiteDriver(connectionSetting(DBType.SQLite));
     expect(driver.supportsGetPerformanceTuningContext()).toBe(false);
@@ -304,9 +298,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
     const consoleError = jest.spyOn(console, 'error').mockImplementation();
     try {
       const provider = makeProvider(async () => {
-        // A real driver exception can embed SQL text, a connection string,
-        // or bind values - none of that may reach the public result, since
-        // this API's purpose is to hand data to an external AI.
+        // A real driver exception can embed SQL text, a connection string, or bind values - none of that may reach the public result, since this API's purpose is to hand data to an external AI.
         throw new Error(
           'permission denied for view pg_stat_user_tables; password=hunter2',
         );
@@ -329,8 +321,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
       expect(result.message).not.toContain('hunter2');
       expect(result.message).not.toContain('pg_stat_user_tables');
 
-      // The detail isn't discarded outright - it goes to the local console
-      // instead of the public result.
+      // The detail isn't discarded outright - it goes to the local console instead of the public result.
       expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('checkCapabilities'),
         expect.any(Error),
@@ -404,7 +395,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
     });
   });
 
-  it('assembles a partial context from plan + table resolution alone (Phase 1 step 4)', async () => {
+  it('assembles a partial context from plan and table resolution alone', async () => {
     const getVersion = jest
       .spyOn(PostgresDriver.prototype, 'getVersion')
       .mockResolvedValue('16.3');
@@ -454,8 +445,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
       expect(context.tables).toEqual([
         { schemaName: undefined, tableName: 'orders' },
       ]);
-      // DDL/statistics/physical health aren't collected in this step yet -
-      // the caller must see that as a partial result, not silently missing data.
+      // DDL/statistics/physical health aren't collected in this step yet - the caller must see that as a partial result, not silently missing data.
       expect(context.collection.status).toBe('partial');
       expect(
         context.collection.unavailableSections.map((s) => s.section).sort(),
@@ -470,9 +460,8 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
     }
   });
 
-  it('resolves a plan-reported alias tableName via tableAliasMap before using it anywhere (§6.6)', async () => {
-    // Mirrors MySQL's EXPLAIN FORMAT=JSON gap: the plan only ever knows the
-    // aliases "o"/"c", never the real table names.
+  it('resolves a plan-reported alias tableName via tableAliasMap before using it anywhere', async () => {
+    // Mirrors MySQL's EXPLAIN FORMAT=JSON gap: the plan only ever knows the aliases "o"/"c", never the real table names.
     const getVersion = jest
       .spyOn(PostgresDriver.prototype, 'getVersion')
       .mockResolvedValue('16.3');
@@ -510,8 +499,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
       expect(result.ok).toBe(true);
       const context = result.result!;
 
-      // Output planTableMappings is resolved too - plan node <-> tables[]
-      // linkage must stay intact under the real names.
+      // Output planTableMappings is resolved too - plan node <-> tables[] linkage must stay intact under the real names.
       expect(
         context.planTableMappings.map((m) => ({ tableName: m.tableName, schemaName: m.schemaName })),
       ).toEqual([
@@ -609,16 +597,6 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
   });
 
   it('does not add a duplicate, differently-cased entry when targetTables coincidentally matches an already-resolved table (Oracle live repro)', async () => {
-    // Mirrors an Oracle plan that already resolved the table correctly
-    // (uppercase, schema-qualified - Oracle folds unquoted identifiers to
-    // uppercase) plus a caller-supplied targetTables hint derived from the
-    // raw SQL text (lowercase, unqualified - resolveTargetTables() in
-    // db-notebook has no way to know the vendor's actual stored case). Before
-    // this fix, tableKeyOf()'s exact-string dedup treated "PERFLAB.ORDERS"
-    // and ".orders" as two different tables, adding a second, bogus,
-    // schema-less entry alongside the correct one - and that second entry's
-    // own catalog lookup then failed as "table not found", even though the
-    // real table had already been collected successfully.
     const getVersion = jest
       .spyOn(PostgresDriver.prototype, 'getVersion')
       .mockResolvedValue('16.3');
@@ -645,23 +623,16 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
 
       const params: PerformanceTuningContextParams = {
         ...baseParams(),
-        // No tableAliasMap here - this is specifically the targetTables-only
-        // dedup path, distinct from the tableAliasMap guard above.
+        // No tableAliasMap here - this is specifically the targetTables-only dedup path, distinct from the tableAliasMap guard above.
         targetTables: [{ schemaName: undefined, tableName: 'orders' }],
       };
 
       const result = await driver.getPerformanceTuningContext(params);
       expect(result.ok).toBe(true);
-      // Exactly one table - not two (the real "PERFLAB.ORDERS" plus a bogus
-      // lowercase, schema-less "orders" ghost entry).
+      // Exactly one table - not two (the real "PERFLAB.ORDERS" plus a bogus lowercase, schema-less "orders" ghost entry).
       expect(result.result!.tables.map((t) => ({ schemaName: t.schemaName, tableName: t.tableName }))).toEqual([
         { schemaName: 'PERFLAB', tableName: 'ORDERS' },
       ]);
-      // No unavailableSections for the lowercase ghost specifically - this
-      // fake Provider leaves every collectXxx() unimplemented (throws), so
-      // the real "ORDERS" table's own sections legitimately fail to collect
-      // here too (a test-harness artifact, not what this test is about);
-      // only a ghost "orders" entry would indicate the bug under test.
       expect(
         result.result!.collection.unavailableSections.some((s) => s.tableName === 'orders'),
       ).toBe(false);
@@ -671,19 +642,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
   });
 
   it('leaves an already-correct plan-resolved tableName/schemaName unchanged when tableAliasMap only has a coincidental bare-name match (Oracle)', async () => {
-    // Oracle's plan already resolves the real, correctly-cased,
-    // schema-qualified name ("ORDERS"/"PERFLAB" - Oracle folds unquoted
-    // identifiers to uppercase). tableAliasMap here mirrors
-    // resolveTableAliasMap()'s real output for `FROM orders o` (db-notebook
-    // repo) - both the genuine alias key ("o") and the bare-table-name
-    // self-reference key ("orders") it deliberately also includes (see that
-    // function's own tests) so resolveTargetTables() can see unaliased
-    // tables too. mapping.tableName.toLowerCase() ("orders") coincidentally
-    // matches the bare-name key, but that's not a genuine alias to correct -
-    // applying it anyway used to silently replace Oracle's correct
-    // {schemaName:"PERFLAB", tableName:"ORDERS"} with the hint's unverified,
-    // unqualified {tableName:"orders"} (no schema), breaking Oracle's
-    // case-sensitive catalog lookup downstream.
+    // Oracle's plan already resolves the real, correctly-cased, schema-qualified name ("ORDERS"/"PERFLAB" - Oracle folds unquoted identifiers to uppercase).
     const getVersion = jest
       .spyOn(PostgresDriver.prototype, 'getVersion')
       .mockResolvedValue('16.3');
@@ -731,7 +690,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
     }
   });
 
-  it('does not mark the result partial when the only diagnostics are informational (§2.2)', async () => {
+  it('does not mark the result partial when the only diagnostics are informational', async () => {
     const getVersion = jest
       .spyOn(PostgresDriver.prototype, 'getVersion')
       .mockResolvedValue('16.3');
@@ -746,9 +705,6 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
               message: '',
               result: {
                 raw: {},
-                // A pg_stat_statements-style Function Scan (diagnostics-
-                // display design doc §0): fully understood, not a
-                // table-mapping gap.
                 diagnostics: [
                   {
                     code: 'NON_TABLE_PLAN_SOURCE',
@@ -764,8 +720,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
                     },
                   },
                 ],
-                // No resolved tables at all - keeps this test isolated to
-                // the diagnostics-only question, not table collection.
+                // No resolved tables at all - keeps this test isolated to the diagnostics-only question, not table collection.
                 planTableMappings: [],
               },
             }),
@@ -780,8 +735,6 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
       expect(context.collection.unavailableSections).toEqual([]);
       expect(context.collection.diagnostics).toHaveLength(1);
       expect(context.collection.diagnostics[0].severity).toBe('info');
-      // The whole point of §2.2: an info-only diagnostic set never flips
-      // status to 'partial' on its own.
       expect(context.collection.status).toBe('complete');
       expect(validatePerformanceTuningContext(context)).toEqual([]);
     } finally {
@@ -934,9 +887,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
               message: '',
               result: { columns: [], constraints: [], indexes: [] },
             }),
-            // collectTableStatistics()/collectColumnStatistics() are
-            // independent Provider calls - one failing must not discard the
-            // other's already-fetched result.
+            // collectTableStatistics()/collectColumnStatistics() are independent Provider calls - one failing must not discard the other's already-fetched result.
             collectTableStatistics: async () => ({
               ok: false,
               message: 'permission denied for pg_stat_user_tables',
@@ -954,9 +905,7 @@ describe('performance tuning context - Provider wired in (fake Provider)', () =>
       const result = await driver.getPerformanceTuningContext(baseParams());
       expect(result.ok).toBe(true);
       const table = result.result!.tables[0];
-      // The failed table-level statistics leaves no estimatedRowCount/etc.,
-      // but the successful column statistics must still be present, not
-      // silently dropped just because `statistics` had nowhere to attach.
+      // The failed table-level statistics leaves no estimatedRowCount/etc., but the successful column statistics must still be present, not silently dropped just because `statistics` had nowhere to attach.
       expect(table.statistics).toBeDefined();
       expect(table.statistics!.estimatedRowCount).toBeUndefined();
       expect(table.statistics!.columns).toEqual([
@@ -1019,8 +968,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
       expect(result.ok).toBe(true);
       const context = result.result!;
       expect(context.tables[0].definition).toBeUndefined();
-      // The table's other three sections still came back fine - one
-      // section timing out must not take the rest of the table down with it.
+      // The table's other three sections still came back fine - one section timing out must not take the rest of the table down with it.
       expect(context.tables[0].statistics).toBeDefined();
       expect(context.collection.unavailableSections).toEqual(
         expect.arrayContaining([
@@ -1047,12 +995,6 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
           collectExecutionPlan: async () => planWithOneTable('orders'),
           collectTableDefinition: async () => {
             tableDefinitionStarted = true;
-            // Long enough relative to the 5ms abort delay below to prove
-            // cancellation short-circuits the wait, but short enough not to
-            // leave a dangling timer alive past this test (the abort only
-            // stops withDeadline()'s own wrapper promise from waiting - this
-            // inner setTimeout keeps running in the background regardless,
-            // matching real "query still runs server-side" behavior).
             await new Promise((resolve) => setTimeout(resolve, 50));
             return { ok: true, message: '', result: { columns: [], constraints: [], indexes: [] } };
           },
@@ -1118,8 +1060,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
 
       expect(result.ok).toBe(true);
       const context = result.result!;
-      // Two ~20KB-DDL tables can't both fit in a 5KB budget - at least one
-      // must be dropped.
+      // Two ~20KB-DDL tables can't both fit in a 5KB budget - at least one must be dropped.
       expect(context.tables.length).toBeLessThan(2);
       expect(context.collection.status).toBe('partial');
       expect(
@@ -1139,8 +1080,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
     }
   });
 
-  // 2026-08-21 follow-up (summary.md's Full Context improvement item 5):
-  // executionPlan.dominantCostPlanNode.
+  // executionPlan.dominantCostPlanNode
   it("passes a Provider-supplied dominantCostPlanNode through untouched, rather than overriding it with the generic normalizedPlan-based fallback", async () => {
     const getVersion = mockVersion();
     try {
@@ -1153,11 +1093,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
             result: {
               raw: {},
               normalizedPlan: { id: 'n0', depth: 0, operation: 'Seq Scan', estimated: { totalCost: 999 }, children: [] },
-              // A vendor Provider (MySQL) resolving this itself from real
-              // actual plan, deliberately different from what the
-              // generic estimated-cost fallback below would compute from
-              // normalizedPlan (totalCost: 999) - proves the Provider's own
-              // answer wins.
+              // A vendor Provider (MySQL) resolving this itself from real actual plan, deliberately different from what the generic estimated-cost fallback below would compute from normalizedPlan (totalCost: 999) - proves the Provider's own answer wins.
               dominantCostPlanNode: { planNodeId: 'n0', metric: 'actual' as const, exclusiveValue: 12.5 },
               diagnostics: [],
               planTableMappings: [{ planNodeId: 'n0', tableName: 'orders', estimatedRows: 1 }],
@@ -1200,9 +1136,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
                 estimated: { totalCost: 42 },
                 children: [],
               },
-              // No dominantCostPlanNode from this Provider (e.g. Postgres,
-              // whose real actual data - when present - already lives on
-              // normalizedPlan itself, not resolved separately).
+              // No dominantCostPlanNode from this Provider (e.g. Postgres, whose real actual data - when present - already lives on normalizedPlan itself, not resolved separately).
               diagnostics: [],
               planTableMappings: [{ planNodeId: 'n0', tableName: 'orders', estimatedRows: 1 }],
             },
@@ -1236,9 +1170,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
             ok: true,
             message: '',
             result: {
-              // Oversized on its own - no tables to drop first (empty
-              // planTableMappings), so this must hit the plan-drop branch
-              // of enforcePayloadBudget() directly.
+              // Oversized on its own - no tables to drop first (empty planTableMappings), so this must hit the plan-drop branch of enforcePayloadBudget() directly.
               raw: { pad: 'x'.repeat(20_000) },
               normalizedPlan: { id: 'n0', depth: 0, operation: 'Seq Scan', estimated: { totalCost: 100 }, children: [] },
               diagnostics: [],
@@ -1331,10 +1263,7 @@ describe('performance tuning context - timeout/cancel/payload/provenance (推奨
         }),
       );
 
-      // 1 byte (the clamp's own floor) is unsatisfiable by any real
-      // context, even one with every table/plan already dropped - this
-      // must surface as a hard failure, not a "success" carrying an
-      // over-budget payload.
+      // 1 byte (the clamp's own floor) is unsatisfiable by any real context, even one with every table/plan already dropped - this must surface as a hard failure, not a "success" carrying an over-budget payload.
       const result = await driver.getPerformanceTuningContext({
         ...baseParams(),
         limits: { maxPayloadBytes: 1 },
@@ -1442,10 +1371,7 @@ describe('performance tuning context - output schema', () => {
   });
 
   it('rejects a shallowly well-shaped but deeply broken context', () => {
-    // The exact broken example from review: every top-level key present
-    // with the "right" container type (object/array), but every value
-    // inside is empty, null, or malformed. A validator that only checks
-    // "is this key an object/array" accepts this with zero errors.
+    // The exact broken example from review: every top-level key present with the "right" container type (object/array), but every value inside is empty, null, or malformed.
     const broken = {
       formatVersion: 1,
       database: {},
@@ -1456,9 +1382,7 @@ describe('performance tuning context - output schema', () => {
       collection: {
         collectedAt: 'not-a-date',
         status: 'complete',
-        // A malformed diagnostic (right container type, wrong/missing
-        // fields inside) must be caught the same way a malformed table or
-        // planTableMappings entry already is above.
+        // A malformed diagnostic (right container type, wrong/missing fields inside) must be caught the same way a malformed table or planTableMappings entry already is above.
         diagnostics: [{}],
         unavailableSections: [],
       },
@@ -1486,12 +1410,6 @@ describe('performance tuning context - output schema', () => {
   });
 
   it('rejects an info diagnostic with affectsCompleteness: true (review finding)', () => {
-    // collection.status is derived from diagnostics.some(d =>
-    // d.affectsCompleteness) (§2.2), while a consuming UI splits Information
-    // vs. Collection issues by severity - an info diagnostic that also
-    // claims affectsCompleteness: true would flip status to 'partial' while
-    // landing in the Information section, leaving no visible reason in
-    // Collection issues (exactly what §6.4 forbids).
     const broken = {
       ...samplePerformanceTuningContext,
       collection: {
@@ -1520,7 +1438,7 @@ describe('performance tuning context - output schema', () => {
         ...samplePerformanceTuningContext.collection,
         diagnostics: [
           {
-            code: 'NON_TABLE_PLAN_SOURCE', // always 'info' (§8 Step 1 inventory)
+            code: 'NON_TABLE_PLAN_SOURCE', // always 'info'
             severity: 'warning',
             affectsCompleteness: true,
             scope: 'executionPlan',
@@ -1536,10 +1454,6 @@ describe('performance tuning context - output schema', () => {
   });
 
   it('never contains a raw bind/secret literal from plan retrieval', () => {
-    // The fixture never had a bind array to begin with (§9.2: binds are
-    // used for plan retrieval only, never returned) - this asserts that
-    // property, and doubles as the shape future real fixtures/snapshots
-    // should be checked against once Phase 1 adds them.
     const serialized = JSON.stringify(samplePerformanceTuningContext);
     expect(serialized).not.toContain('secret-value');
     expect(serialized.includes('"binds"')).toBe(false);

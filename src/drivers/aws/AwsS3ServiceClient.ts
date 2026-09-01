@@ -307,23 +307,6 @@ export class AwsS3ServiceClient
     return rdb.build();
   }
 
-  // async putObject(
-  //   bucket: string,
-  //   key: string,
-  //   file_path: string,
-  // ): Promise<string | undefined> {
-  //   const params: any = {
-  //     Bucket: bucket,
-  //     Key: key,
-  //   };
-  //   const v = fs.readFileSync(file_path);
-  //   params.Body = v;
-  //   return new Promise<string | undefined>((resolve, reject) => {
-  //     this.s3.putObject(params, (err, data) => {
-  //       resolve(data.ETag);
-  //     });
-  //   });
-  // }
 
   async getInfomationSchemas(): Promise<AwsDatabase> {
     if (!this.conRes) {
@@ -333,13 +316,30 @@ export class AwsS3ServiceClient
     const dbDatabase = new AwsDatabase('S3', AwsServiceType.S3);
 
     try {
-      const buckets = await this.s3Client.send(new ListBucketsCommand({}));
-      if (buckets.Buckets) {
-        for (const bucket of buckets.Buckets) {
+      const allBuckets = [];
+      let continuationToken: string | undefined;
+      let owner;
+      do {
+        const buckets = await this.s3Client.send(
+          new ListBucketsCommand({
+            MaxBuckets: 1000,
+            ContinuationToken: continuationToken,
+          }),
+        );
+        allBuckets.push(...(buckets.Buckets ?? []));
+        owner ??= buckets.Owner;
+        continuationToken = buckets.ContinuationToken;
+      } while (continuationToken);
+      if (allBuckets.length > 0) {
+        for (const bucket of allBuckets) {
           if (!this.acceptResource(bucket.Name)) {
             continue;
           }
-          const dbBucket = new DbS3Bucket(bucket.Name, bucket.CreationDate);
+          const dbBucket = new DbS3Bucket(
+            bucket.Name,
+            bucket.CreationDate,
+            bucket.BucketRegion,
+          );
           dbDatabase.addChild(dbBucket);
         }
         const bucketCount = dbDatabase.children.filter(
@@ -347,11 +347,8 @@ export class AwsS3ServiceClient
         ).length;
         dbDatabase.comment = `${bucketCount} ${plural('bucket')}`;
       }
-      if (buckets.Owner) {
-        const dbOwner = new DbS3Owner(
-          buckets.Owner.ID,
-          buckets.Owner.DisplayName,
-        );
+      if (owner) {
+        const dbOwner = new DbS3Owner(owner.ID, owner.DisplayName);
         dbDatabase.addChild(dbOwner);
       } else {
         // log.info('Owner nothing.')

@@ -31,7 +31,12 @@ import {
   TransactionIsolationLevel,
 } from '../types';
 import { RDSBaseDriver } from './RDSBaseDriver';
-import { PerformanceTuningContextProvider, SQLServerPerformanceTuningProvider } from './providers';
+import {
+  PerformanceTuningContextProvider,
+  RdbDashboardProvider,
+  SQLServerPerformanceTuningProvider,
+  SQLServerRdbDashboardProvider,
+} from './providers';
 import { QuoteChar } from '../helpers';
 import {
   getStatementStatisticsOrderByColumn,
@@ -118,9 +123,17 @@ export class SQLServerDriver extends RDSBaseDriver {
   private con: ConnectionPool | undefined;
   private req: Request | undefined;
   private tran: Transaction | undefined;
+  private rdbDashboardProvider?: RdbDashboardProvider;
 
   constructor(conRes: ConnectionSetting) {
     super(conRes);
+  }
+
+  protected getRdbDashboardProvider(): RdbDashboardProvider {
+    if (!this.rdbDashboardProvider) {
+      this.rdbDashboardProvider = new SQLServerRdbDashboardProvider(this);
+    }
+    return this.rdbDashboardProvider;
   }
 
   async begin(): Promise<void> {
@@ -252,11 +265,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
       errorMessage = e.message;
     }
     try {
-      // if (this.conRes.timezone) {
-      //   // e.g. SET TIME ZONE '+00:00'
-      //   await this.con.query(`SET time_zone = ?`, [this.conRes.timezone]);
-      // }
-      //
+      // if (this.conRes.timezone) { // e.g. SET TIME ZONE '+00:00'
       if (this.conRes.lockWaitTimeoutMs) {
         await this.setLockWaitTimeout(this.conRes.lockWaitTimeoutMs);
       }
@@ -294,8 +303,6 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
         }
         const req = extraCon.request();
         // Incorrect syntax near '@1'.
-        // req.input('1', sesssionOrPid);
-        // await req.query(`KILL @1`);
 
         await req.query(`KILL ${sesssionOrPid}`);
       } catch (e) {
@@ -408,14 +415,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     await req.batch(`SET SHOWPLAN_ALL ON`);
 
     try {
-      // SQL Server rejects "SET SHOWPLAN_ALL ON" together with a parameterized
-      // query in the same batch ("SET SHOWPLAN statements must be the only
-      // statements in the batch"). req.query() always sends bound parameters
-      // through sp_executesql, which counts as more than one statement, so we
-      // can't use req.input()/req.query() here like requestSqlSub() does.
-      // Instead we substitute each bind value directly into the SQL text
-      // (escaping it as a string literal) and execute it as a plain batch via
-      // req.batch(), which never goes through sp_executesql.
+      // SQL Server rejects "SET SHOWPLAN_ALL ON" together with a parameterized query in the same batch ("SET SHOWPLAN statements must be the only statements in the batch").
       const binds = params.conditions?.binds ?? [];
       const sql = binds.reduce<string>((acc, bind, idx) => {
         const placeholder = new RegExp(`@${idx + 1}(?!\\d)`, 'g');
@@ -453,10 +453,6 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
 
   private performanceTuningContextProvider?: PerformanceTuningContextProvider;
 
-  // Typed to the interface (not the concrete SQLServerPerformanceTuningProvider),
-  // same rationale as Postgres/MySQLDriver's override of this hook: stays
-  // override-compatible with RDSBaseDriver's declared return type, and test
-  // doubles overriding this hook with a fake Provider remain valid overrides.
   protected getPerformanceTuningContextProvider(): PerformanceTuningContextProvider {
     if (!this.performanceTuningContextProvider) {
       this.performanceTuningContextProvider = new SQLServerPerformanceTuningProvider(this);
@@ -464,41 +460,6 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     return this.performanceTuningContextProvider;
   }
 
-  // Used only by SQLServerPerformanceTuningProvider (§13 step 8) - kept
-  // separate from explainSqlSub()/EXPLAIN_COLUMNS above (the general
-  // "Explain" feature's own tabular view) rather than adding a flag to it,
-  // per [[avoid-boolean-opt-in-flags]]: a wider-capability caller gets its
-  // own function instead of a flag on the shared one. explainSqlSub()'s
-  // fixed EXPLAIN_COLUMNS intentionally drops NodeId/Parent/StmtId; those
-  // two columns are exactly what sqlServerPlanParser.ts needs to
-  // reconstruct SHOWPLAN_ALL's flat rowset back into a parent/child tree,
-  // so this returns every column SHOWPLAN_ALL produces instead of a
-  // curated subset - built dynamically from whatever the first row's own
-  // keys are, since that set isn't fixed/known ahead of time the way
-  // EXPLAIN_COLUMNS is.
-  // Builds the SHOWPLAN batch text with each bind value substituted in
-  // place of its marker. Extended (misc/design/performance-tuning-query-
-  // statistics-parameter-input-plan.ja.md §3.4/§6.4/§7.4, db-notebook repo)
-  // to accept SQL Server's named parameters (`@name`) alongside the legacy
-  // positional-only `@1`, `@2`, ... substitution. `SET SHOWPLAN_ALL ON`
-  // rejects a parameterized batch (see collectPerformanceTuningShowplan()'s
-  // own comment on why req.input()/sp_executesql can't be used here), so
-  // every bind value is substituted directly into the SQL text as an
-  // escaped string literal.
-  //
-  // `bindMarkers`, when given, must be the same length as `binds` and
-  // pairs each value with the exact marker text the Scanner (or the user,
-  // via the Bind Parameters editor's Add/Del rows) associated with it -
-  // e.g. `@1` or `@customerId`. Without it (or on a length mismatch), this
-  // falls back to the legacy positional-only `@${index + 1}` substitution -
-  // this method's only caller (collectPerformanceTuningShowplan() below)
-  // still works when a caller has binds but no markers yet to pair with
-  // them. explainSqlSub() uses the same safe literal conversion below.
-  //
-  // Do not use wrapSingleQuote() here. That generic identifier/display
-  // helper deliberately preserves an already-quoted input, while bind
-  // values are data: a value such as `'a' OR '1'='1'` must still have every
-  // quote escaped before it is embedded in a batch that may be executed.
   private toSqlServerStringLiteral(value: string): string {
     return `'${value.replace(/'/g, "''")}'`;
   }
@@ -512,9 +473,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     return binds.reduce<string>((acc, bind, idx) => {
       const marker = markers[idx];
       const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // `(?<!@)` keeps `@@ROWCOUNT`-style system variables untouched even
-      // if one happened to share a name with a bind marker; `(?![\w$#])`
-      // stops `@1` from matching inside `@10`/`@name2`.
+      // `(?<!@)` keeps `@@ROWCOUNT`-style system variables untouched even if one happened to share a name with a bind marker; `(?![\w$#])` stops `@1` from matching inside `@10`/`@name2`.
       const placeholder = new RegExp(`(?<!@)${escapedMarker}(?![\\w$#])`, 'g');
       return acc.replace(placeholder, this.toSqlServerStringLiteral(bind));
     }, sql);
@@ -525,29 +484,14 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     bindMarkers?: string[],
   ): Promise<ResultSetData> {
     this.assertSessionStateAvailable('retrieve an execution plan');
-    // A pool-backed Request (this.con.request()) does not guarantee its
-    // separate batch() calls all run on the same physical connection -
-    // node-mssql may hand each call whichever pooled connection happens to
-    // be free. That would break SET SHOWPLAN_ALL ON/OFF's connection-scoped
-    // session state: the target SQL could run on a connection where
-    // SHOWPLAN was never turned on (executing it for real instead of just
-    // estimating a plan - unacceptable for a read-only diagnostics call),
-    // or SHOWPLAN could be left stuck on for some other pooled connection
-    // afterward. A Transaction pins all three statements to one connection
-    // for the same reason begin()/commit() already does for this driver's
-    // real transactions - used purely as a connection-pinning mechanism
-    // here (nothing to roll back: SET SHOWPLAN_ALL and the target SELECT
-    // never modify data), always committed at the end regardless of outcome.
+    // A pool-backed Request (this.con.request()) does not guarantee its separate batch() calls all run on the same physical connection - node-mssql may hand each call whichever pooled connection happens to be free.
     const tran = new Transaction(this.con);
     await tran.begin();
     try {
       const req = tran.request();
       await req.batch(`SET SHOWPLAN_ALL ON`);
       try {
-        // Same bind-substitution technique as explainSqlSub() and for the
-        // same reason: "SET SHOWPLAN statements must be the only statements
-        // in the batch", which rules out req.query()'s sp_executesql-based
-        // parameter binding.
+        // Same bind-substitution technique as explainSqlSub() and for the same reason: "SET SHOWPLAN statements must be the only statements in the batch", which rules out req.query()'s sp_executesql-based parameter binding.
         const binds = params.conditions?.binds ?? [];
         const sql = this.substituteShowplanBinds(params.sql, binds, bindMarkers);
 
@@ -575,12 +519,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     }
   }
 
-  /**
-   * Executes a diagnostic SELECT with STATISTICS XML enabled on a session
-   * pinned by a short-lived transaction.  Unlike SHOWPLAN this intentionally
-   * runs the statement, so callers must have passed the public SELECT-only
-   * and explicit-allowExecution checks before reaching here.
-   */
+  /** Executes a diagnostic SELECT with STATISTICS XML enabled on a session pinned by a short-lived transaction. */
   async collectPerformanceTuningActualPlan(
     params: QueryParams,
     bindMarkers?: string[],
@@ -620,10 +559,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
       begun = true;
       req = tran.request();
       this.req = req;
-      // RDSBaseDriver.withDeadline() bounds the caller-facing promise, but
-      // does not itself interrupt a server-side request on timeout. Schedule
-      // cancellation on this pinned Request as well, so timeoutMs limits the
-      // SELECT that STATISTICS XML intentionally executes.
+      // RDSBaseDriver.withDeadline() bounds the caller-facing promise, but does not itself interrupt a server-side request on timeout.
       if (options?.timeoutMs && options.timeoutMs > 0) {
         timeoutTimer = setTimeout(cancel, options.timeoutMs);
       }
@@ -652,9 +588,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
       }
       if (begun) {
         try {
-          // The target is required to be SELECT-only. Rollback still makes
-          // the lifecycle explicit and protects us if a future driver change
-          // accidentally adds transactional session work here.
+          // The target is required to be SELECT-only.
           await tran.rollback();
         } catch (e) {
           cleanupError ??= e;
@@ -664,7 +598,6 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID`;
     }
     if (cleanupError) {
       // A failed OFF means the pooled session might retain STATISTICS XML.
-      // Do not return that connection to normal requestSql callers.
       const disconnectError = await this.disconnect();
       if (disconnectError) {
         throw new Error(`Failed to restore SQL Server actual-plan session state; connection was closed. ${disconnectError}`);
@@ -859,6 +792,18 @@ ORDER BY s.session_id DESC
   async getInfomationSchemasSub(): Promise<Array<RdsDatabase>> {
     const dbResources = new Array<RdsDatabase>();
     const dbDatabase = new RdsDatabase(this.conRes.database);
+    dbDatabase.capabilities = {
+      ...(dbDatabase.capabilities ?? {}),
+      dashboards: [
+        ...(dbDatabase.capabilities?.dashboards ?? []),
+        {
+          dashboardId: 'rdb-database',
+          providerId: 'rdb.sqlserver.database',
+          variant: 'sqlserver',
+          hints: { databaseName: this.conRes.database },
+        },
+      ],
+    };
     dbResources.push(dbDatabase);
 
     const currentSchemaName = await this.getCurrentSchema();
@@ -1073,9 +1018,6 @@ ORDER BY s.session_id DESC
     });
   }
 
-  //  table_name   column_name referenced_table_name referenced_column_name constraint_name
-  //  order        customer_no customer              customer_no            order_ibfk_1
-  //  order_detail order_no    order                 order_no               order_detail_ibfk_1
   async setForinKeys(dbSchema: DbSchema): Promise<void> {
     const binds = [dbSchema.name];
     const rdh = await this.requestSql({
@@ -1104,8 +1046,6 @@ ORDER BY s.session_id DESC
       const referencedColumnName = row.values['referenced_column_name'];
       const constraintName = row.values['constraint_name'];
 
-      // FROM order.customer_no -> TO customer.customer_no
-      // FROM order_detail.order_no -> TO order.order_no
       const tableRes = dbSchema.getChildByName(tableName);
       if (tableRes) {
         if (tableRes.getChildByName(columnName)) {
@@ -1123,8 +1063,6 @@ ORDER BY s.session_id DESC
         }
       }
 
-      // TO customer.customer_no <- FROM order.customer_no
-      // TO order.order_no <- FROM order_detail.order_no
       const tableRes2 = dbSchema.getChildByName(referencedTableName);
       if (tableRes2) {
         if (tableRes2.getChildByName(referencedColumnName)) {
@@ -1212,10 +1150,7 @@ ORDER BY s.session_id DESC
         encrypt: sqlServer?.encrypt ?? false,
         //
         trustServerCertificate: sqlServer?.trustServerCertificate ?? false,
-        // NOTE: this only requests Always-On Availability-Group read-only
-        // routing (ApplicationIntent=ReadOnly). On a standalone instance,
-        // or a primary without read-only routing configured, this is a
-        // no-op — writes will still succeed. See isReadOnlyEnforcementReliable().
+        // NOTE: this only requests Always-On Availability-Group read-only routing (ApplicationIntent=ReadOnly).
         readOnlyIntent: this.conRes.readOnly ?? false,
       },
     };
@@ -1262,19 +1197,11 @@ ORDER BY s.session_id DESC
           authentication: {
             type: authType,
             options: {
-              /**
-               * User name from your windows account.
-               */
+              /** User name from your windows account. */
               userName: this.conRes.user,
-              /**
-               * Password from your windows account.
-               */
+              /** Password from your windows account. */
               password: this.conRes.password,
-              /**
-               * Once you set domain for ntlm authentication type, driver will connect to SQL Server using domain login.
-               *
-               * This is necessary for forming a connection using ntlm type
-               */
+              /** Once you set domain for ntlm authentication type, driver will connect to SQL Server using domain login. */
               domain: sqlServer.domain,
             },
           },

@@ -1,5 +1,5 @@
 import ShortUniqueId from 'short-unique-id';
-import { ResourceType } from '../types';
+import { DbResourceCapabilities, ResourceType } from '../types';
 import type { AllSubDbResource } from './types';
 
 const uid = new ShortUniqueId();
@@ -11,6 +11,7 @@ export abstract class DbResource<T extends DbResource = AllSubDbResource> {
   public comment?: string;
   public readonly children: Array<T>;
   public meta: { [key: string]: any };
+  public capabilities?: DbResourceCapabilities;
   public isInProgress?: boolean;
 
   constructor(resourceType: ResourceType, name: string) {

@@ -1,18 +1,7 @@
 import { GeneralColumnType } from '@l-v-yonsama/rdh';
 
-// See misc/design/performance-tuning-query-statistics-parameter-input-plan.ja.md
-// (db-notebook repo) §5.1/§6 for the full rationale. In short: when a
-// Statement Statistics row's SQL still has bind placeholders in it,
-// estimateBindParameters() gives the UI a best-effort starting point for a
-// Bind Parameters input table - never a guaranteed-correct one. Callers are
-// expected to let the user add/remove rows to correct Scanner mistakes.
 
-/**
- * Where a bind placeholder's marker occurs in the original SQL text.
- * Independent of `EstimatedBindParameter.position` (the bind order): a
- * placeholder that's textually second can still be bind #1 (e.g. PostgreSQL
- * `$1` appearing after `$2` in the SQL text).
- */
+/** Where a bind placeholder's marker occurs in the original SQL text. */
 export type EstimatedBindParameterLocation = {
   /** 1-based line number in the original SQL text. */
   line: number;

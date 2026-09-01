@@ -6,10 +6,7 @@ export type CfnStringResolutionContext = {
   pseudoParameters?: Record<string, string>;
 };
 
-/**
- * Extract all variable names enclosed in ${...} from a string.
- * Example: "aa_${piyo}_aaa${hoge}_${fuga}90" → ["piyo", "hoge", "fuga"]
- */
+/** Extract all variable names enclosed in ${...} from a string. */
 function extractTemplateVariables(str: string): string[] {
   const regex = /\$\{([^}]+)\}/g;
   const result: string[] = [];
@@ -20,12 +17,7 @@ function extractTemplateVariables(str: string): string[] {
   return result;
 }
 
-/**
- * Resolves one CloudFormation template value that may be a `Ref`/`Fn::GetAtt`/
- * `Fn::ImportValue` intrinsic (in either its long `Fn::*` or `!` shorthand form - see
- * parseCfnYamlTemplate in templateParsing.ts) down to the logical id / import name it points
- * at. A plain literal passes through unchanged as `type: 'plain'`.
- */
+/** Resolves one CloudFormation template value that may be a `Ref`/`Fn::GetAtt`/ `Fn::ImportValue` intrinsic (in either its long `Fn::*` or `!` shorthand form - see parseCfnYamlTemplate in templateParsing.ts) down to the logical id / import name it points at. */
 export const parseRefValue = (ref: Refable): RefValue => {
   if (typeof ref === 'object' && ref !== null) {
     for (const prop of ['Ref', 'GetAtt', 'ImportValue']) {
@@ -56,9 +48,7 @@ export const parseRefValue = (ref: Refable): RefValue => {
   };
 };
 
-/** Resolves the string-building intrinsic forms commonly used for Export.Name and
- * Fn::ImportValue. Unknown runtime values deliberately return undefined instead of being
- * compared as lossy JSON strings. */
+/** Resolves the string-building intrinsic forms commonly used for Export.Name and Fn::ImportValue. */
 export const resolveCfnString = (
   value: any,
   context: CfnStringResolutionContext = {},
@@ -119,8 +109,7 @@ export const resolveCfnString = (
   return undefined;
 };
 
-/** Visits complete ImportValue expressions without mistaking Fn::Sub parameters for export
- * names. The caller can resolve each expression with the importing template's parameters. */
+/** Visits complete ImportValue expressions without mistaking Fn::Sub parameters for export names. */
 export const walkImportValues = (
   obj: any,
   visit: (value: any) => void,
@@ -140,14 +129,7 @@ export const walkImportValues = (
   }
 };
 
-/**
- * Walks a resource's `Properties` (or any nested value) looking for `Ref`/`Fn::GetAtt`/
- * `Fn::ImportValue` intrinsics (either form - long or `!` shorthand) and calls `visit` with
- * the logical id / `${...}` variable name each one points at. Shared by both
- * `parseDiagramFiles` (see diagramFileModel.ts, which additionally needs to know whether the
- * target is a resource vs. a parameter) and `extractResourceDependencies` (see
- * resourceDependencies.ts, which only cares about resource-to-resource edges).
- */
+/** Walks a resource's `Properties` (or any nested value) looking for `Ref`/`Fn::GetAtt`/ `Fn::ImportValue` intrinsics (either form - long or `!` shorthand) and calls `visit` with the logical id / `${...}` variable name each one points at. */
 export const walkIntrinsicRefs = (
   obj: any,
   visit: (via: 'Ref' | 'GetAtt' | 'ImportValue', targetId: string) => void,
@@ -169,8 +151,7 @@ export const walkIntrinsicRefs = (
       ) {
         visit('ImportValue', v);
       } else if (k === 'Fn::ImportValue' || k === '!ImportValue') {
-        // Nested Ref/Sub values can still depend on a local parameter. The complete export
-        // name is handled separately by walkImportValues()+resolveCfnString().
+        // Nested Ref/Sub values can still depend on a local parameter.
         walkIntrinsicRefs(v, visit);
       } else if (k === 'Fn::Sub' || k === '!Sub') {
         const subValues = Array.isArray(v) ? [v[0], v[1]] : [v];

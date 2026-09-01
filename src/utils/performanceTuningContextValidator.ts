@@ -12,9 +12,7 @@ const UNAVAILABLE_SECTIONS = [
 ];
 
 const DIAGNOSTIC_SEVERITIES = ['info', 'warning'];
-// 'collection' is the one DiagnosticScope value with no UnavailableSection
-// equivalent (a diagnostic about the result as a whole, not one section) -
-// kept as its own list rather than reusing UNAVAILABLE_SECTIONS above.
+// 'collection' is the one DiagnosticScope value with no UnavailableSection equivalent (a diagnostic about the result as a whole, not one section) - kept as its own list rather than reusing UNAVAILABLE_SECTIONS above.
 const DIAGNOSTIC_SCOPES = [
   'executionPlan',
   'tableDefinition',
@@ -54,10 +52,6 @@ const isIsoLikeDate = (v: unknown): boolean =>
 const oneOf = (v: unknown, allowed: readonly string[]): boolean =>
   typeof v === 'string' && allowed.includes(v);
 
-// A MetricValue<T> field is optional everywhere it appears, but when
-// present it must carry real provenance (§5.4/§5.5's whole point) - a bare
-// number or string in its place is exactly the "one estimated/source per
-// section" regression MetricValue<T> replaced.
 const validateMetricValue = (
   value: unknown,
   path: string,
@@ -126,10 +120,7 @@ const validateStatement = (statement: unknown, errors: string[]): void => {
   }
 };
 
-// Recurses into every child, not just the top node - a normalizedPlan with
-// a well-shaped root but a garbage leaf three levels down is exactly the
-// kind of "looks right at a glance" break this validator exists to catch
-// (see the module doc comment below).
+// Recurses into every child, not just the top node - a normalizedPlan with a well-shaped root but a garbage leaf three levels down is exactly the kind of "looks right at a glance" break this validator exists to catch (see the module doc comment below).
 const validatePlanNode = (node: unknown, path: string, errors: string[]): void => {
   if (!isPlainObject(node)) {
     errors.push(`${path} must be an object.`);
@@ -291,12 +282,6 @@ const validateDiagnosticNode = (node: unknown, path: string, errors: string[]): 
   }
 };
 
-// Every code currently defined always uses exactly one fixed severity
-// (§8 Step 1 inventory) - checked below alongside the info/affectsCompleteness
-// invariant. This table only ever grows alongside DIAGNOSTIC_CODES itself
-// (adding a new code already means touching this file), so it doesn't add
-// the "two-file change forever" cost the comment below warns about for
-// scope/technical-field pairings - it is not attempting that broader check.
 const DIAGNOSTIC_CODE_SEVERITY: Record<string, 'info' | 'warning'> = {
   NON_TABLE_PLAN_SOURCE: 'info',
   PLAN_OBSERVATION: 'info',
@@ -307,18 +292,6 @@ const DIAGNOSTIC_CODE_SEVERITY: Record<string, 'info' | 'warning'> = {
   CARDINALITY_MISESTIMATE: 'info',
 };
 
-// Checks the structural contract every PerformanceTuningDiagnostic must
-// satisfy (code/severity/scope/message/node - design doc §8 Step 1 item 8),
-// not whether `code` is one this exact validator version happens to
-// recognize as semantically meaningful for its `scope`/technical-field
-// pairing - that broader cross-checking would make adding a new code a
-// two-file change forever. A UI is expected to tolerate an unrecognized
-// `code` (§7); this validator is not that UI - it is a self-consistency
-// check on what this package's own Providers just built, so an unrecognized
-// `code` here is still treated as a real defect. severity IS checked against
-// `code` (via DIAGNOSTIC_CODE_SEVERITY above) since every code currently
-// defined has exactly one valid severity - this is a fixed-cost check, not
-// an open-ended one.
 const validateDiagnostic = (diagnostic: unknown, index: number, errors: string[]): void => {
   const path = `collection.diagnostics[${index}]`;
   if (!isPlainObject(diagnostic)) {
@@ -340,13 +313,6 @@ const validateDiagnostic = (diagnostic: unknown, index: number, errors: string[]
   if (typeof diagnostic.affectsCompleteness !== 'boolean') {
     errors.push(`${path}.affectsCompleteness must be a boolean.`);
   } else if (diagnostic.severity === 'info' && diagnostic.affectsCompleteness !== false) {
-    // §2.2: collection.status is derived from
-    // `diagnostics.some(d => d.affectsCompleteness)` - an `info` diagnostic
-    // with affectsCompleteness: true would flip status to 'partial' while
-    // (per db-notebook's formatter) landing in the Information section, not
-    // Collection issues - exactly the "partial with no visible reason"
-    // state §6.4 forbids. Rejected here rather than left to the UI to
-    // work around.
     errors.push(`${path}.affectsCompleteness must be false when severity is 'info'.`);
   }
   if (!oneOf(diagnostic.scope, DIAGNOSTIC_SCOPES)) {
@@ -437,15 +403,6 @@ const validateCollection = (collection: unknown, errors: string[]): void => {
   }
 };
 
-// Hand-rolled structural/runtime check for the *output* of
-// getPerformanceTuningContext() - deliberately not a full JSON Schema
-// library (no schema-validation dependency exists in this package yet;
-// see §10 Phase 0 "JSON Schema または runtime validator"). Recurses into
-// tables/planTableMappings/collection rather than only checking their
-// top-level shape, so a context with e.g. `tables: [null]` or
-// `collectedAt: 'not-a-date'` is caught here instead of reaching an AI
-// prompt as a half-shaped object that merely happened to have the right
-// top-level keys.
 export function validatePerformanceTuningContext(context: unknown): string[] {
   const errors: string[] = [];
 

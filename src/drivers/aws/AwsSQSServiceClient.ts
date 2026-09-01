@@ -96,9 +96,7 @@ export class AwsSQSServiceClient
       throw new Error('limit must be between 1 and 10 for aws-sqs scan.');
     }
 
-    // Scanning is a read-only peek, not a real consumer: force VisibilityTimeout
-    // to 0 so messages stay visible to other consumers instead of disappearing
-    // for the queue's default visibility timeout.
+    // Scanning is a read-only peek, not a real consumer: force VisibilityTimeout to 0 so messages stay visible to other consumers instead of disappearing for the queue's default visibility timeout.
     let keys = await this.receiveMessages({
       QueueUrl: queueUrl,
       MaxNumberOfMessages: limit,
@@ -163,7 +161,6 @@ export class AwsSQSServiceClient
         if (queues.QueueUrls) {
           for (const queueUrl of queues.QueueUrls) {
             // The following is the queue URL for a queue named MyQueue owned by a user with the AWS account number 123456789012.
-            // https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue
             let name = url.parse(queueUrl).pathname;
             const idx = name.lastIndexOf('/');
             if (idx) {
@@ -197,10 +194,7 @@ export class AwsSQSServiceClient
     return dbDatabase;
   }
 
-  // Cross-references every queue's own RedrivePolicy.deadLetterTargetArn
-  // against every other queue's QueueArn (already fetched via
-  // AttributeNames: ['All'] above, no extra API calls) and stamps
-  // attr.isDlq on the ones that are themselves someone else's DLQ target.
+  // Cross-references every queue's own RedrivePolicy.deadLetterTargetArn against every other queue's QueueArn (already fetched via AttributeNames: ['All'] above, no extra API calls) and stamps attr.isDlq on the ones that are themselves someone else's DLQ target.
   private markDlqQueues(queues: DbSQSQueue[]): void {
     const dlqArns = new Set<string>();
     queues.forEach((q) => {

@@ -15,11 +15,7 @@ type TopologyVpcResource = TopologySubnetResource & {
   placement: string;
   candidateSubnets: TopologySubnet[];
   multiAz?: boolean;
-  /** Additional structured, individually-optional placement descriptors (for example
-   * ElastiCache's Multi-AZ/automatic-failover/node-count traits) rendered after `placement`
-   * (and the `multiAz` suffix, when set) in this order. Left undefined for resource kinds -
-   * RDS included - that only use `placement`/`multiAz`, so their rendered strings are
-   * unchanged. */
+  /** Additional structured, individually-optional placement descriptors (for example ElastiCache's Multi-AZ/automatic-failover/node-count traits) rendered after `placement` (and the `multiAz` suffix, when set) in this order. */
   traits?: string[];
 };
 
@@ -139,10 +135,7 @@ const displayProperty = (value: any): string | undefined => {
   return serialized.length > 80 ? `${serialized.slice(0, 77)}...` : serialized;
 };
 
-/** Reads a literal or `Fn::Sub`/pseudo-parameter-resolvable integer property. Returns
- * undefined rather than a guessed value when it cannot be resolved (for example an
- * unresolved CloudFormation Parameter), matching how the rest of this topology model treats
- * unresolvable data. */
+/** Reads a literal or `Fn::Sub`/pseudo-parameter-resolvable integer property. */
 const resolveInteger = (value: any): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   const resolved = typeof value === 'string' ? value : resolveCfnString(value);
@@ -153,12 +146,7 @@ const resolveInteger = (value: any): number | undefined => {
 const pluralize = (count: number, noun: string): string =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-/** Builds ElastiCache ReplicationGroup placement traits in the documented, stable order:
- * Multi-AZ, then automatic failover, then a resolvable node/shard count. Cluster-mode-disabled
- * replication groups report `NumCacheClusters` as a flat node count; cluster-mode-enabled ones
- * report `NumNodeGroups`/`ReplicasPerNodeGroup` as shard/replica-per-shard counts instead. Only
- * traits that are explicitly proven by the template are included - CloudFormation never proves
- * which AZ actually holds the primary versus a replica, so this never claims one. */
+/** Builds ElastiCache ReplicationGroup placement traits in the documented, stable order: Multi-AZ, then automatic failover, then a resolvable node/shard count. */
 const buildElastiCacheReplicationGroupTraits = (properties: any): string[] => {
   const traits: string[] = [];
   if (properties?.MultiAZEnabled === true) traits.push('Multi-AZ');
@@ -193,9 +181,7 @@ const listenerRuleConditions = (conditions: any): string[] => {
   });
 };
 
-/** The Parameters/parameterValues/pseudoParameters context resolveCfnString() needs to resolve
- * a `Ref`/`Fn::Sub`/etc. against this file's own template - shared by any topology field that
- * needs to resolve a template string (Availability Zone names, VPC/Subnet CidrBlock). */
+/** The Parameters/parameterValues/pseudoParameters context resolveCfnString() needs to resolve a `Ref`/`Fn::Sub`/etc. against this file's own template - shared by any topology field that needs to resolve a template string (Availability Zone names, VPC/Subnet CidrBlock). */
 const resolutionContextFor = (file: DiagramFile): CfnStringResolutionContext => ({
   parameters: file.cfnTemplate.Parameters,
   parameterValues: file.parameterValues,
@@ -240,9 +226,7 @@ export class CfnDeploymentTopologyStructure {
     diagramFiles.forEach((file) => this.collectLoadBalancers(file));
   }
 
-  /** Finds a rendered target using stack identity for local Refs and raw export names for
-   * ImportValue. A target may live directly at VPC level (for ECS/RDS placement candidates)
-   * or in a concrete subnet (for EC2/NAT). */
+  /** Finds a rendered target using stack identity for local Refs and raw export names for ImportValue. */
   getResourceFrom(reference: TopologyTarget):
     | {
         vpc: TopologyVpc;
@@ -334,9 +318,7 @@ export class CfnDeploymentTopologyStructure {
     return az;
   }
 
-  /** A subnet is public only when its associated route table has a default route to an
-   * Internet Gateway. NAT/EgressOnlyIGW default routes are private egress; no default route is
-   * isolated. MapPublicIpOnLaunch is intentionally not used for this classification. */
+  /** A subnet is public only when its associated route table has a default route to an Internet Gateway. */
   private classifySubnetConnectivity(file: DiagramFile): void {
     const resources = file.cfnTemplate.Resources;
     Object.values(resources)
@@ -544,9 +526,7 @@ export class CfnDeploymentTopologyStructure {
     });
   }
 
-  /** Reuses RDS's VPC-level placement model: resolve `CacheSubnetGroupName` to a template-local
-   * `AWS::ElastiCache::SubnetGroup`, resolve its `SubnetIds` as candidate subnets, and place the
-   * replication group once at VPC level only when those candidates resolve to exactly one VPC. */
+  /** Reuses RDS's VPC-level placement model: resolve `CacheSubnetGroupName` to a template-local `AWS::ElastiCache::SubnetGroup`, resolve its `SubnetIds` as candidate subnets, and place the replication group once at VPC level only when those candidates resolve to exactly one VPC. */
   private attachElastiCacheReplicationGroup(
     file: DiagramFile,
     logicalId: string,
@@ -600,11 +580,7 @@ export class CfnDeploymentTopologyStructure {
     });
   }
 
-  /** Reuses the same VPC-level placement model via `VPCZoneIdentifier`, the Auto Scaling Group
-   * equivalent of an ECS service's `NetworkConfiguration.AwsvpcConfiguration.Subnets`. The
-   * `AWS::EC2::LaunchTemplate` it references is configuration attached to the group, not a
-   * separately placed resource - see applicationRelations.ts for how a Launch Template's data
-   * references are read back as the group's own `accesses` relationships. */
+  /** Reuses the same VPC-level placement model via `VPCZoneIdentifier`, the Auto Scaling Group equivalent of an ECS service's `NetworkConfiguration.AwsvpcConfiguration.Subnets`. */
   private attachAutoScalingGroup(
     file: DiagramFile,
     logicalId: string,

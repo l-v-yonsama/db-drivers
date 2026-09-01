@@ -15,8 +15,7 @@ describe('ProposalHelper', () => {
   });
 
   describe('module exports', () => {
-    // Guard against the package barrel (src/index.ts) silently dropping a
-    // re-export of a symbol that lives in ProposalHelper.ts.
+    // Guard against the package barrel (src/index.ts) silently dropping a re-export of a symbol that lives in ProposalHelper.ts.
     it('still exposes every function defined in ProposalHelper.ts', () => {
       const exportedFunctionNames = [
         'getProposals',

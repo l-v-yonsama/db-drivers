@@ -13,6 +13,7 @@ import {
   AwsServiceType,
   ConnectionSetting,
   LimitClauseStyle,
+  MetricEndpoint,
   QueryParams,
   ResourceType,
   SQLLang,
@@ -30,9 +31,46 @@ import { AwsSecretsManagerServiceClient } from './aws/AwsSecretsManagerServiceCl
 import { ResultSetData } from '@l-v-yonsama/rdh';
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 import { QuoteChar } from '../helpers';
+import { CloudWatchClient } from '@aws-sdk/client-cloudwatch';
+import { S3Client } from '@aws-sdk/client-s3';
+import { GeneralResult } from '../types/drivers/GeneralResult';
+import { PerformanceTuningCallOptions } from '../types/drivers/performance/PerformanceTuningContext';
+import {
+  DynamoDbPerformanceTuningAvailabilityParams,
+  DynamoDbPerformanceTuningCapabilities,
+} from '../types/drivers/performance/DynamoDbPerformanceTuningCapabilities';
+import {
+  DynamoDbPerformanceTuningCallOptions,
+  DynamoDbPerformanceTuningContext,
+  DynamoDbPerformanceTuningContextParams,
+} from '../types/drivers/performance/DynamoDbPerformanceTuningContext';
+import { DynamoDbCloudWatchMetricsCollector } from './providers/performance/dynamoDbCloudWatchMetrics';
+import {
+  DynamoDbMonitoringMode,
+  DynamoDbPerformanceTuningDriverAccess,
+  DynamoDbPerformanceTuningProvider,
+} from './providers/performance/DynamoDbPerformanceTuningProvider';
+import {
+  CloudWatchMetricsCollector,
+  CloudWatchMetricsAvailability,
+  CloudWatchMetricPanelsResult,
+  CollectCloudWatchMetricPanelsInput,
+  CloudWatchMetricsTransport,
+  CloudWatchLogsMetricServiceAdapter,
+  collectAcrossMetricEndpoints,
+  DynamoDbOverviewMetricServiceAdapter,
+  DynamoDbMetricServiceAdapter,
+  MetricServiceAdapterRegistry,
+  S3MetricServiceAdapter,
+  S3OverviewMetricServiceAdapter,
+  SesMetricServiceAdapter,
+  SqsOverviewMetricServiceAdapter,
+  SqsMetricServiceAdapter,
+} from './providers/metrics';
 
 export type ClientConfigType = {
   region?: string;
+  profile?: string;
   endpoint?: string;
   credentials: AwsCredentialIdentityProvider | AwsCredentialIdentity;
 };
@@ -47,8 +85,46 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
   public secretsManagerClient: AwsSecretsManagerServiceClient;
   public cloudFormationClient: AwsCloudFormationServiceClient;
 
+  // Lazily reuse the tuning provider without changing normal AWS service initialization.
+  private dynamoDbPerformanceTuningProvider:
+    | DynamoDbPerformanceTuningProvider
+    | undefined;
+  private readonly cloudWatchMetricsCollectors = new Map<
+    string,
+    {
+      client: CloudWatchClient;
+      collector: CloudWatchMetricsCollector;
+      availability: CloudWatchMetricsAvailability;
+    }
+  >();
+  private readonly s3MetricControlClients = new Map<string, S3Client>();
+  private readonly metricServiceAdapterRegistry: MetricServiceAdapterRegistry;
+  private effectiveRegion: string | undefined;
+  private effectiveRegionPromise: Promise<string | undefined> | undefined;
+
   constructor(conRes: ConnectionSetting) {
     super(conRes);
+    this.metricServiceAdapterRegistry = new MetricServiceAdapterRegistry([
+      new SqsMetricServiceAdapter(),
+      new SqsOverviewMetricServiceAdapter(),
+      new DynamoDbMetricServiceAdapter(),
+      new DynamoDbOverviewMetricServiceAdapter(),
+      new CloudWatchLogsMetricServiceAdapter(),
+      new S3MetricServiceAdapter({
+        getS3Client: (endpoint): S3Client =>
+          this.getS3MetricsControlClient(endpoint),
+        getAvailability: (endpoint): CloudWatchMetricsAvailability =>
+          this.getCloudWatchMetricsAvailability(endpoint),
+      }),
+      new S3OverviewMetricServiceAdapter({
+        getAvailability: (endpoint): CloudWatchMetricsAvailability =>
+          this.getCloudWatchMetricsAvailability(endpoint),
+      }),
+      new SesMetricServiceAdapter({
+        getAvailability: (endpoint): CloudWatchMetricsAvailability =>
+          this.getCloudWatchMetricsAvailability(endpoint),
+      }),
+    ]);
   }
 
   protected createClientConfig(): ClientConfigType {
@@ -60,10 +136,42 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     if (awsSetting?.region) {
       config.region = awsSetting.region;
     }
+    if (
+      awsSetting?.supplyCredentialType ===
+        SupplyCredentialType.sharedCredentialsFile &&
+      awsSetting.profile
+    ) {
+      // Keep the SDK's region/config resolution on the same named profile as the explicitly selected credential provider.
+      config.profile = awsSetting.profile;
+    }
     if (url) {
       config.endpoint = url;
     }
     return config;
+  }
+
+  /** Returns the base region selected by the AWS SDK after applying the connection's explicit region, named profile, environment, and shared config provider chain. */
+  async getEffectiveRegion(): Promise<string | undefined> {
+    if (this.effectiveRegion) {
+      return this.effectiveRegion;
+    }
+    if (!this.effectiveRegionPromise) {
+      this.effectiveRegionPromise = this.resolveEffectiveRegion();
+    }
+    return this.effectiveRegionPromise;
+  }
+
+  private async resolveEffectiveRegion(): Promise<string | undefined> {
+    const client = new CloudWatchClient(this.createClientConfig());
+    try {
+      const region = await client.config.region();
+      this.effectiveRegion = region || undefined;
+      return this.effectiveRegion;
+    } catch (_) {
+      return undefined;
+    } finally {
+      client.destroy();
+    }
   }
 
   getSqlLang(): SQLLang {
@@ -135,6 +243,80 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
     return client as T;
   }
 
+  /** Dashboard adapters are registered independently from selected AWS services. */
+  getMetricServiceAdapterRegistry(): MetricServiceAdapterRegistry {
+    return this.metricServiceAdapterRegistry;
+  }
+
+  /** Lazily creates a CloudWatch metrics collector for the resolved endpoint. */
+  getCloudWatchMetricsCollector(
+    endpoint: MetricEndpoint,
+  ): CloudWatchMetricsCollector {
+    return this.getCloudWatchMetricsResources(endpoint).collector;
+  }
+
+  getCloudWatchMetricsAvailability(
+    endpoint: MetricEndpoint,
+  ): CloudWatchMetricsAvailability {
+    return this.getCloudWatchMetricsResources(endpoint).availability;
+  }
+
+  collectCloudWatchMetricPanels(
+    defaultEndpoint: MetricEndpoint,
+    input: CollectCloudWatchMetricPanelsInput,
+  ): Promise<CloudWatchMetricPanelsResult> {
+    return collectAcrossMetricEndpoints(
+      (endpoint) => this.getCloudWatchMetricsCollector(endpoint),
+      defaultEndpoint,
+      input,
+    );
+  }
+
+  private getCloudWatchMetricsResources(endpoint: MetricEndpoint): {
+    client: CloudWatchClient;
+    collector: CloudWatchMetricsCollector;
+    availability: CloudWatchMetricsAvailability;
+  } {
+    const cacheKey = JSON.stringify([
+      endpoint.scope,
+      endpoint.region,
+      endpoint.endpoint ?? '',
+    ]);
+    const cached = this.cloudWatchMetricsCollectors.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const client = new CloudWatchClient({
+      ...this.createClientConfig(),
+      region: endpoint.region,
+      ...(endpoint.endpoint ? { endpoint: endpoint.endpoint } : {}),
+    });
+    const collector = new CloudWatchMetricsCollector(
+      new CloudWatchMetricsTransport(client),
+    );
+    const availability = new CloudWatchMetricsAvailability(client);
+    const resources = { client, collector, availability };
+    this.cloudWatchMetricsCollectors.set(cacheKey, resources);
+    return resources;
+  }
+
+  private getS3MetricsControlClient(endpoint: MetricEndpoint): S3Client {
+    const cacheKey = JSON.stringify([endpoint.region, endpoint.endpoint ?? '']);
+    const cached = this.s3MetricControlClients.get(cacheKey);
+    if (cached) return cached;
+    const client = new S3Client({
+      ...this.createClientConfig(),
+      region: endpoint.region,
+      ...(endpoint.endpoint ? { endpoint: endpoint.endpoint } : {}),
+      ...(this.conRes.awsSetting?.s3ForcePathStyle
+        ? { forcePathStyle: true }
+        : {}),
+    });
+    this.s3MetricControlClients.set(cacheKey, client);
+    return client;
+  }
+
   private createAwsCredential():
     | AwsCredentialIdentityProvider
     | AwsCredentialIdentity {
@@ -159,6 +341,7 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
   async connectSub(): Promise<string> {
     const messageList = [];
     const config = this.createClientConfig();
+    await this.getEffectiveRegion();
     const cw = new AwsCloudwatchServiceClient(this.conRes, config, this);
     const sqs = new AwsSQSServiceClient(this.conRes, config, this);
     const s3 = new AwsS3ServiceClient(this.conRes, config, this);
@@ -391,6 +574,14 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
         messageList.push(message);
       }
     }
+    for (const entry of this.cloudWatchMetricsCollectors.values()) {
+      entry.client.destroy();
+    }
+    this.cloudWatchMetricsCollectors.clear();
+    for (const client of this.s3MetricControlClients.values()) {
+      client.destroy();
+    }
+    this.s3MetricControlClients.clear();
     return messageList.join(',');
   }
 
@@ -451,5 +642,151 @@ export class AwsDriver extends BaseSQLSupportDriver<AwsDatabase> {
       return await this.dynamoClient.count(params.table);
     }
     throw new Error('Not supported.');
+  }
+
+  // Capability support comes from connection settings because callers check before connecting.
+  supportsGetDynamoDbPerformanceTuningContext(): boolean {
+    return !!this.conRes.awsSetting?.services?.includes(
+      AwsServiceType.DynamoDB,
+    );
+  }
+
+  async checkDynamoDbPerformanceTuningContextAvailability(
+    params: DynamoDbPerformanceTuningAvailabilityParams,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    options?: PerformanceTuningCallOptions,
+  ): Promise<GeneralResult<DynamoDbPerformanceTuningCapabilities>> {
+    if (!this.dynamoClient) {
+      return {
+        ok: false,
+        message: 'This connection does not have DynamoDB configured.',
+      };
+    }
+    return this.getDynamoDbPerformanceTuningProvider().checkCapabilities(
+      params,
+    );
+  }
+
+  async getDynamoDbPerformanceTuningContext(
+    params: DynamoDbPerformanceTuningContextParams,
+    options?: DynamoDbPerformanceTuningCallOptions,
+  ): Promise<GeneralResult<DynamoDbPerformanceTuningContext>> {
+    if (!this.dynamoClient) {
+      return {
+        ok: false,
+        message: 'This connection does not have DynamoDB configured.',
+      };
+    }
+    return this.getDynamoDbPerformanceTuningProvider().collect(params, options);
+  }
+
+  // CloudWatch evidence is created lazily only for supported AWS connections.
+  private getDynamoDbPerformanceTuningProvider(): DynamoDbPerformanceTuningProvider {
+    if (!this.dynamoDbPerformanceTuningProvider) {
+      const cloudWatchSelected = !!this.conRes.awsSetting?.services?.includes(
+        AwsServiceType.Cloudwatch,
+      );
+      const monitoringMode: DynamoDbMonitoringMode = !cloudWatchSelected
+        ? 'cloudWatchNotSelected'
+        : this.conRes.url
+        ? 'customEndpoint'
+        : 'enabled';
+      const cloudWatchCollector =
+        monitoringMode === 'enabled'
+          ? new DynamoDbCloudWatchMetricsCollector(
+              new CloudWatchClient(this.createClientConfig()),
+            )
+          : undefined;
+      const access = new AwsDriverDynamoDbPerformanceTuningAccess(
+        this.dynamoClient,
+        cloudWatchCollector,
+        this.effectiveRegion ?? this.conRes.awsSetting?.region,
+        this.conRes.url ? 'custom' : 'aws',
+        monitoringMode,
+      );
+      this.dynamoDbPerformanceTuningProvider =
+        new DynamoDbPerformanceTuningProvider(access);
+    }
+    return this.dynamoDbPerformanceTuningProvider;
+  }
+}
+
+// Keeps the performance provider dependent on its narrow driver-access contract.
+class AwsDriverDynamoDbPerformanceTuningAccess
+  implements DynamoDbPerformanceTuningDriverAccess
+{
+  constructor(
+    private readonly dynamoClient: AwsDynamoServiceClient,
+    private readonly cloudWatchCollector:
+      | DynamoDbCloudWatchMetricsCollector
+      | undefined,
+    public readonly region: string | undefined,
+    public readonly endpointKind: 'aws' | 'custom',
+    public readonly monitoringMode: DynamoDbMonitoringMode,
+  ) {}
+
+  describeTable(
+    tableName: string,
+  ): ReturnType<AwsDynamoServiceClient['describeTable']> {
+    return this.dynamoClient.describeTable(tableName);
+  }
+
+  describeTimeToLive(
+    tableName: string,
+  ): ReturnType<AwsDynamoServiceClient['describeTimeToLive']> {
+    return this.dynamoClient.describeTimeToLive(tableName);
+  }
+
+  describeContributorInsights(
+    tableName: string,
+    indexName?: string,
+  ): ReturnType<AwsDynamoServiceClient['describeContributorInsights']> {
+    return this.dynamoClient.describeContributorInsights(tableName, indexName);
+  }
+
+  collectCloudWatchMetrics(
+    input: Parameters<DynamoDbCloudWatchMetricsCollector['collect']>[0],
+  ): ReturnType<DynamoDbCloudWatchMetricsCollector['collect']> {
+    return this.cloudWatchCollector
+      ? this.cloudWatchCollector.collect(input)
+      : Promise.resolve({
+          ok: false as const,
+          message: 'CloudWatch monitoring is not enabled for this connection.',
+        });
+  }
+
+  observeNativeQueryRead(params: {
+    input: unknown;
+    maxEvaluatedItems?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): ReturnType<AwsDynamoServiceClient['observeNativeQueryRead']> {
+    return this.dynamoClient.observeNativeQueryRead(
+      params as Parameters<AwsDynamoServiceClient['observeNativeQueryRead']>[0],
+    );
+  }
+
+  observePartiqlRead(params: {
+    statement: string;
+    parameters?: unknown[];
+    maxEvaluatedItems?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }): ReturnType<AwsDynamoServiceClient['observePartiqlRead']> {
+    return this.dynamoClient.observePartiqlRead(params);
+  }
+
+  observeNativeQueryReadComplete(
+    params: Parameters<
+      AwsDynamoServiceClient['observeNativeQueryReadComplete']
+    >[0],
+  ): ReturnType<AwsDynamoServiceClient['observeNativeQueryReadComplete']> {
+    return this.dynamoClient.observeNativeQueryReadComplete(params);
+  }
+
+  observePartiqlReadComplete(
+    params: Parameters<AwsDynamoServiceClient['observePartiqlReadComplete']>[0],
+  ): ReturnType<AwsDynamoServiceClient['observePartiqlReadComplete']> {
+    return this.dynamoClient.observePartiqlReadComplete(params);
   }
 }

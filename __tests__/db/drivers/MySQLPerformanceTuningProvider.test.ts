@@ -18,8 +18,7 @@ describe('extractMysqlPredicateColumns', () => {
   it('returns an empty array for missing/empty/unqualified predicates', () => {
     expect(extractMysqlPredicateColumns(undefined)).toEqual([]);
     expect(extractMysqlPredicateColumns('')).toEqual([]);
-    // No backticks at all - this heuristic is MySQL-attached_condition-
-    // specific (always backtick-quoted), unlike Postgres's plain-identifier one.
+    // No backticks at all - this heuristic is MySQL-attached_condition- specific (always backtick-quoted), unlike Postgres's plain-identifier one.
     expect(extractMysqlPredicateColumns('status = 1')).toEqual([]);
   });
 });
@@ -263,29 +262,18 @@ describe('MySQLPerformanceTuningProvider', () => {
       }),
     );
     expect(result.ok).toBe(true);
-    // Structure still comes from the estimate-mode JSON plan - MySQL
-    // computes the same plan either way, so this is not re-derived from
-    // the analyze text.
+    // Structure still comes from the estimate-mode JSON plan - MySQL computes the same plan either way, so this is not re-derived from the analyze text.
     expect(result.result!.planTableMappings).toHaveLength(1);
     expect(result.result!.normalizedPlan).toMatchObject({ id: 'n0', operation: 'ALL' });
     // The analyze text itself is carried through completely unparsed.
     expect(result.result!.actualPlan).toEqual({ source: 'EXPLAIN ANALYZE', format: 'text', content: analyzeText });
-    // 2026-08-21 follow-up: resolved from the real actual-plan text (the leaf
-    // table scan is the exclusive-cost winner - the Filter above it has
-    // only 1.2-1.1=0.1ms of its own once the table scan's 1.1ms is
-    // subtracted out), matched against planTableMappings by table name.
+    // 2026-08-21 follow-up: resolved from the real actual-plan text (the leaf table scan is the exclusive-cost winner - the Filter above it has only 1.2-1.1=0.1ms of its own once the table scan's 1.1ms is subtracted out), matched against planTableMappings by table name.
     expect(result.result!.dominantCostPlanNode).toEqual({
       planNodeId: 'n0',
       metric: 'actual',
       exclusiveValue: 1.1,
     });
-    // 2026-08-21 follow-up (found while manually verifying this feature in
-    // the Extension Development Host): the real actualRows/rowEstimateRatio
-    // measured by EXPLAIN ANALYZE ("Table scan on perf_orders ... rows=50")
-    // must be backfilled into planTableMappings, not just used internally
-    // to resolve dominantCostPlanNode - otherwise the rendered plan table's
-    // "Actual rows"/"Est./actual ratio" columns stay blank even though the
-    // real numbers were successfully parsed.
+    // 2026-08-21 follow-up (found while manually verifying this feature in the Extension Development Host): the real actualRows/rowEstimateRatio measured by EXPLAIN ANALYZE ("Table scan on perf_orders ...
     expect(result.result!.planTableMappings[0]).toMatchObject({
       estimatedRows: 10,
       actualRows: 50,
@@ -416,13 +404,9 @@ describe('MySQLPerformanceTuningProvider', () => {
       expect(result.result!.constraints).toHaveLength(1);
       expect(result.result!.indexes).toHaveLength(1);
       expect(result.result!.ddl).toBe('CREATE TABLE `perf_orders` (...)');
-      // schemaName falls back to databaseName ('test-db') rather than being
-      // left undefined - see collectDdl()'s comment on why this must never
-      // rely on getTableDDL()'s own "current database" default.
+      // schemaName falls back to databaseName ('test-db') rather than being left undefined - see collectDdl()'s comment on why this must never rely on getTableDDL()'s own "current database" default.
       expect(getTableDDL).toHaveBeenCalledWith({ tableName: 'perf_orders', schemaName: 'test-db' });
 
-      // Every catalog query is scoped to exactly this one table (§9.3), and
-      // tagged as internal collection (§6.3).
       for (const call of requestSql.mock.calls) {
         expect(call[0].conditions.binds[1]).toBe('perf_orders');
         expect(call[0].meta).toEqual({ type: 'performanceTuningContext' });
@@ -514,11 +498,6 @@ describe('MySQLPerformanceTuningProvider', () => {
       expect(requestSql).not.toHaveBeenCalled();
     });
 
-    // 2026-08-21 follow-up (summary.md's Full Context improvement item 2):
-    // a column with no CARDINALITY row at all (not the leading key part of
-    // any index) still gets a distinctCount when an existing histogram
-    // covers it - HISTOGRAM_SQL is already queried unconditionally for
-    // every requested column, this is not a new query.
     it('falls back to a histogram-derived distinctCount for a non-index-backed column', async () => {
       const requestSql = routedRequestSql({
         cardinality: [],
@@ -584,9 +563,7 @@ describe('MySQLPerformanceTuningProvider', () => {
   });
 });
 
-// Runs the actual catalog SQL against a live MySQL (the same Docker fixture
-// __tests__/db/drivers/MySQLDriver.test.ts uses), not stubbed rows - same
-// rationale as PostgresPerformanceTuningProvider.test.ts's live suite.
+// Runs the actual catalog SQL against a live MySQL (the same Docker fixture __tests__/db/drivers/MySQLDriver.test.ts uses), not stubbed rows - same rationale as PostgresPerformanceTuningProvider.test.ts's live suite.
 describe('MySQLPerformanceTuningProvider (live MySQL)', () => {
   const connectOption: ConnectionSetting = {
     host: '127.0.0.1',
@@ -748,9 +725,7 @@ describe('MySQLPerformanceTuningProvider (live MySQL)', () => {
   });
 
   it("resolves an aliased table via targetTables, MySQL's own EXPLAIN JSON not exposing the real name", async () => {
-    // Without targetTables: the plan only knows the alias "o", which does
-    // not exist as a real table - the section fails as "not found" (an
-    // honest degradation, not a crash).
+    // Without targetTables: the plan only knows the alias "o", which does not exist as a real table - the section fails as "not found" (an honest degradation, not a crash).
     const withoutHint = await driver.getPerformanceTuningContext({
       databaseName: 'test-db',
       statement: { sql: "SELECT o.status FROM perf_orders o WHERE o.status = 'shipped'", source: 'editor' },

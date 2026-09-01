@@ -76,9 +76,7 @@ export class DBDriverResolver {
 
     let driver: BaseDriver = undefined;
     switch (conRes.dbType) {
-      // case DBType.ODBC:
-      //   driver = new ODBCDriver(conRes);
-      //   break;
+      // case DBType.ODBC: driver = new ODBCDriver(conRes);
       case DBType.MySQL:
         driver = new MySQLDriver(conRes);
         break;
@@ -106,18 +104,14 @@ export class DBDriverResolver {
       case DBType.Keycloak:
         driver = new KeycloakDriver(conRes);
         break;
-      // case DBType.Firestore:
-      //   // driver = new FirestoreDriver(conRes);
-      //   break;
+      // case DBType.Firestore: // driver = new FirestoreDriver(conRes);
       case DBType.Aws:
         driver = new AwsDriver(conRes);
         break;
       case DBType.Mqtt:
         driver = new MqttDriver(conRes);
         break;
-      // case DBType.IndexedDB:
-      //   driver = new IndexedDBDriver(conRes);
-      //   break;
+      // case DBType.IndexedDB: driver = new IndexedDBDriver(conRes);
       default:
         throw new Error(`${conRes.dbType} is not supported.`);
     }

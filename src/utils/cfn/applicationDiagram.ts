@@ -36,8 +36,7 @@ const relationStyle: Record<
   'security-protection': { color: '#dc2626', width: 2, edge: '-->' },
 };
 
-/** Renders the user-facing application flow. Unlike CfnDependencyGraph, this intentionally
- * emits only semantic runtime relations detected from service-specific properties. */
+/** Renders the user-facing application flow. */
 export const generateDiagramApplicationDiagram = (
   params: GenerateDiagramParams,
 ): string => {
@@ -94,11 +93,7 @@ export const generateDiagramApplicationDiagram = (
   );
   const visibleLayers = new Set(visibleNodes.map((node) => node.layer));
 
-  // A DBInstance's DBClusterIdentifier proves membership in a DBCluster. Rather than a
-  // separate "member of" edge, that containment is drawn directly by nesting the member's
-  // node inside its parent's subgraph, matching the Multi-AZ diagram's representation. The
-  // relation is still fully absorbed - no top-level node and no edge remain for it - so the
-  // legend below only lists kinds that are actually drawn.
+  // A DBInstance's DBClusterIdentifier proves membership in a DBCluster.
   const containedMemberIds = new Set(
     visibleRelations
       .filter((relation) => relation.kind === 'resource-membership')
@@ -169,8 +164,7 @@ export const generateDiagramApplicationDiagram = (
     );
   });
 
-  // Keep semantic edges first so their linkStyle indexes remain stable. Invisible links are
-  // layout hints only and do not change the relation model shown to the reader.
+  // Keep semantic edges first so their linkStyle indexes remain stable.
   const firstNodeByLayer = (
     ['ingress', 'compute', 'messaging', 'data'] as const
   )

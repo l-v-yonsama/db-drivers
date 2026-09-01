@@ -5,12 +5,6 @@ import {
   RealmRepresentation,
 } from '../../types';
 
-// Pure Resource-model builders for KeycloakDriver#getInfomationSchemasSub():
-// each takes one representation already fetched over HTTP (by
-// KeycloakDriver's own get*() methods) and converts it to a Resource
-// instance, with no API/auth concerns or orchestration (Promise.all
-// batching, session-count backfilling, ...) of its own - that stays in
-// KeycloakDriver.
 
 export const buildIamRealmResource = (
   realm: RealmRepresentation,

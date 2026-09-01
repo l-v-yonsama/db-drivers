@@ -29,30 +29,8 @@ const connectOption: ConnectionSetting = {
   queryTimeoutMs: 2000,
 };
 
-// const CREATE_TABLE_STATEMENT = `
-// CREATE TABLE testtable (
-//   ID SERIAL NOT NULL PRIMARY KEY,
-//   n0 BIT,
-//   n1 INT,
-//   n2 BIGINT,
-//   n3 SMALLSERIAL,
-//   n4 BIGSERIAL,
-//   f1 NUMERIC(6,4),
-//   f2 DOUBLE PRECISION,
-//   f3 REAL,
 
-//   d1 DATE,
-//   d2 TIME,
-//   d3 TIMESTAMP,
-//   d4 TIMESTAMP WITH TIME ZONE,
-//   d5 INTERVAL YEAR,
 
-//   s1 CHAR(10),
-//   s2 VARCHAR(10),
-//   s3 TEXT,
-//   s4 mood,
-//   s5 BYTEA,
-//   s6 uuid,
 
 //   j1 JSON
 
@@ -84,9 +62,7 @@ describe('PostgresDriver', () => {
 
   describe('getVersion', () => {
     it('should return the server version string', async () => {
-      // `SHOW server_version AS version` is a Postgres syntax error (SHOW
-      // is a command, not a SELECT) - this only ever gets exercised
-      // against a real connection, never a mocked requestSql().
+      // `SHOW server_version AS version` is a Postgres syntax error (SHOW is a command, not a SELECT) - this only ever gets exercised against a real connection, never a mocked requestSql().
       const version = await driver.getVersion();
       expect(version).toEqual(expect.stringMatching(/^\d+/));
     });
@@ -539,9 +515,7 @@ describe('PostgresDriver', () => {
       });
       const value = rdh.rows[0].values.d5;
       expect(value === null || typeof value === 'string').toBe(true);
-      // A plain string must survive rdh's cloneRdhValue()-based diff/clone
-      // path unmodified; a raw driver class instance (PostgresInterval)
-      // would throw there.
+      // A plain string must survive rdh's cloneRdhValue()-based diff/clone path unmodified; a raw driver class instance (PostgresInterval) would throw there.
       expect(() => diff(rdh, rdh)).not.toThrow();
     });
   });
@@ -672,10 +646,7 @@ describe('PostgresDriver', () => {
 
     it('should have RowExclusiveLock', async () => {
       await driver1.begin();
-      // ROW EXCLUSIVE
-      // SHARE、SHARE ROW EXCLUSIVE、EXCLUSIVE、およびACCESS EXCLUSIVEロックモードと競合します
-      // UPDATE、DELETE、およびINSERTコマンドは、（参照される他の全てのテーブルに対するACCESS SHAREロックに加えて）対象となるテーブル上にこのモードのロックを獲得します。
-      // 通常、このロックモードは、テーブルのデータを変更する問い合わせにより獲得されます。
+      // ROW EXCLUSIVE SHARE、SHARE ROW EXCLUSIVE、EXCLUSIVE、およびACCESS EXCLUSIVEロックモードと競合します UPDATE、DELETE、およびINSERTコマンドは、（参照される他の全てのテーブルに対するACCESS SHAREロックに加えて）対象となるテーブル上にこのモードのロックを獲得します。
       await driver1.requestSql({
         sql: `INSERT INTO lock_test VALUES (20, 'T20', 200)`,
       });
@@ -696,10 +667,7 @@ describe('PostgresDriver', () => {
 
     it('should have AccessExclusiveLock', async () => {
       await driver1.begin();
-      // ACCESS EXCLUSIVE
-      // 全てのモードのロック（ACCESS SHARE、ROW SHARE、ROW EXCLUSIVE、SHARE UPDATE EXCLUSIVE、SHARE、SHARE ROW EXCLUSIVE、EXCLUSIVE、および ACCESS EXCLUSIVE）と競合します。
-      // このモードにより、その保持者以外にテーブルにアクセスするトランザクションがないことが保証されます。
-      // DROP TABLE、TRUNCATE、REINDEX、CLUSTER、VACUUM FULL、（CONCURRENTLYなしの）REFRESH MATERIALIZED VIEWコマンドによって獲得されます。 ALTER INDEXとALTER TABLEの多くの形式もこのレベルでロックを獲得します。 これはまた、明示的にモードを指定しないLOCK TABLE文のデフォルトのロックモードです。
+      // ACCESS EXCLUSIVE 全てのモードのロック（ACCESS SHARE、ROW SHARE、ROW EXCLUSIVE、SHARE UPDATE EXCLUSIVE、SHARE、SHARE ROW EXCLUSIVE、EXCLUSIVE、および ACCESS EXCLUSIVE）と競合します。
       await driver1.requestSql({ sql: `TRUNCATE TABLE lock_test` });
       const result3 = await driver3.getLocks('testDb');
 
@@ -956,8 +924,6 @@ describe('PostgresDriver', () => {
     if (asRoot) {
       options = {
         ...options,
-        // user: 'root',
-        // password: 'p@ssw0rd',
       };
     }
     options = {
