@@ -325,6 +325,13 @@ export type LogParseOutputSummary = {
 
   totalSqlExecutions: number;
 };
+export type LogParseDiagnostics = {
+  /** Counts blocks that fail field extraction. */
+  unmatchedEventCount: number;
+  /** First 20 start lines, 1-based. */
+  unmatchedEventStartLines: number[];
+};
+
 export type ExtractedSqlResult = {
   ok: boolean;
   error?: string;
@@ -334,6 +341,8 @@ export type ExtractedSqlResult = {
   sqlExecutions: SqlExecutionEvent[];
   inputSummary: LogParseInputSummary;
   outputSummary: LogParseOutputSummary;
+  /** Absent in older results; partial on failure. */
+  diagnostics?: LogParseDiagnostics;
   errorRate?: number;
   elapsedTimeMilli: {
     split: number;

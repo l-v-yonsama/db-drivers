@@ -60,7 +60,9 @@ export function validateConfig(
     availableStage = 'classify';
     errorMessage = validateExtractors(config.extractors, config.classify);
   }
-  availableStage = 'sqlExecution';
+  if (!errorMessage) {
+    availableStage = 'sqlExecution';
+  }
 
   return {
     ok: !errorMessage,

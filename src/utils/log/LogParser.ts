@@ -3,6 +3,7 @@ import {
   ExtractedSqlResult,
   LogEvent,
   LogParseConfig,
+  LogParseDiagnostics,
   LogParseParams,
   SqlFragment,
 } from '../../types';
@@ -19,6 +20,8 @@ import XRegExp from 'xregexp';
 import { buildSqlExecutions } from './buildSqlExecutions';
 import { validateConfig } from './validator';
 import { summarizeClassifyRules, summarizeExtractors } from './logSummary';
+
+const MAX_UNMATCHED_EVENT_START_LINES = 20;
 
 export class LogParser {
   private fieldSplitPattern: RegExp;
@@ -44,6 +47,10 @@ export class LogParser {
 
     const logEvents: ClassifiedEvent[] = [];
     let sqlFragments: SqlFragment[] | undefined;
+    const diagnostics: LogParseDiagnostics = {
+      unmatchedEventCount: 0,
+      unmatchedEventStartLines: [],
+    };
 
     const result: ExtractedSqlResult = {
       ok: false,
@@ -51,6 +58,7 @@ export class LogParser {
       logEvents,
       sqlFragments,
       sqlExecutions: [],
+      diagnostics,
       inputSummary: {
         logEventSplitPattern: createLogEventPatternText({
           ...config.split,
@@ -95,7 +103,21 @@ export class LogParser {
           logEventLine.lineNo,
         );
 
-        if (!logEvent) continue;
+        if (!logEvent) {
+          if (logEventLine.text.trim().length > 0) {
+            diagnostics.unmatchedEventCount++;
+            if (
+              diagnostics.unmatchedEventStartLines.length <
+              MAX_UNMATCHED_EVENT_START_LINES
+            ) {
+              // A preamble has lineNo 0.
+              diagnostics.unmatchedEventStartLines.push(
+                Math.max(1, logEventLine.lineNo),
+              );
+            }
+          }
+          continue;
+        }
 
         const expanedLogEvents = expandLogEvent(logEvent, expandMessageRules);
         for (const expanedLogEvent of expanedLogEvents) {

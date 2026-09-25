@@ -171,6 +171,45 @@ Other top-level folders:
 - `docker/` — Docker Compose config for the local test databases used by `__tests__/setup/*.ts` (see "Prepare" above)
 - `schema/` — JSON Schema generated from the `LogParseConfig` type (`npm run build:schema`, via `typescript-json-schema`); consumed by the db-notebook VS Code extension as the JSON Validator schema for `*.log-parser.config.json` files
 
+### Log parser validation and diagnostics
+
+`validateConfig(config, stage?)` returns `ok`, `errorMessage`, and the highest
+available stage. An invalid split configuration has no `availableStage`; invalid
+classification keeps `split` available; invalid extraction keeps `classify`
+available. To check one operation, pass its stage and inspect `ok` instead of
+inferring success from the presence of an available stage.
+
+`LogParser.parse()` returns `diagnostics` alongside the existing events and SQL
+results. `LogParseDiagnostics` is exported from the package root:
+
+```ts
+const result = new LogParser(config).parse({
+  logText,
+  stage: 'split',
+  linesToParse: 100,
+});
+const diagnostics = result.diagnostics;
+// Example: { unmatchedEventCount: 3, unmatchedEventStartLines: [2, 7, 15] }
+```
+
+- `unmatchedEventCount` counts non-whitespace split blocks that did not match the
+  field extraction pattern, before classification and message expansion. It is
+  not a count of physical lines, unclassified events, or missing SQL statements.
+- `unmatchedEventStartLines` contains original 1-based start lines for the first
+  20 such blocks. The total count remains accurate when there are more than 20.
+  A nonmatching preamble before the first start marker starts at line 1. If no
+  start marker matches, the input is one block, not one event per line.
+- Only the requested input range is inspected. Whitespace-only unmatched blocks
+  are ignored. No raw log text is duplicated in diagnostics.
+- Successful events/SQL and `ok` keep their existing meaning: unmatched blocks
+  are warnings, not a fatal parse error. No unmatched blocks does not prove that
+  the chosen split boundaries or extracted fields are semantically correct.
+- The property is optional in `ExtractedSqlResult` for older stored results;
+  missing diagnostics means unavailable, not zero unmatched events. The current
+  parser includes diagnostics in every returned result. On `ok: false`, counts
+  may cover only the portion processed before failure. Configuration validation
+  or pattern construction can still throw before a result is returned.
+
 ### Diagram generation
 
 Beyond the database drivers above, this package also generates two kinds of diagram (Mermaid and
