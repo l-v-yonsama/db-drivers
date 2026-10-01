@@ -100,7 +100,7 @@ export class SQLiteDriver extends RDSBaseDriver {
   }
 
   private isQueryType(type: string, sql: string): boolean {
-    if (type === 'select' || type === 'show') {
+    if (type === 'select' || type === 'show' || type === 'union' || type === 'union all' || type === 'values') {
       return true;
     }
     if (type === 'pragma') {

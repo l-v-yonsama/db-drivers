@@ -326,6 +326,22 @@ describe('SQLiteDriver', () => {
   });
 
   describe('requestSql', () => {
+    it('returns columns and rows for UNION ALL SELECT', async () => {
+      const sql = `SELECT 1 AS id, '1' AS kind, 'ok' AS related_value, 'XX' AS group_code
+UNION ALL SELECT 2, '1', NULL, 'XX'
+UNION ALL SELECT 3, '1', 'ok', 'NG'
+UNION ALL SELECT 4, '9', 'ok', 'XX'
+UNION ALL SELECT 5, '2', NULL, 'NG'
+UNION ALL SELECT 6, '9', 'ok', 'XX'
+ORDER BY id`;
+      const rdh = await driver.requestSql({ sql });
+      expect(rdh.meta.type).toBe('select');
+      expect(rdh.keys.map((key) => key.name)).toEqual(['id', 'kind', 'related_value', 'group_code']);
+      expect(rdh.rows).toHaveLength(6);
+      expect(rdh.rows[1].values).toEqual({ id: 2, kind: '1', related_value: null, group_code: 'XX' });
+      expect(rdh.summary.selectedRows).toBe(6);
+      expect(rdh.summary.affectedRows).toBeUndefined();
+    });
     it('should return 6 records', async () => {
       const query = 'SELECT * FROM EMP';
       const rdh = await driver.requestSql({ sql: query });

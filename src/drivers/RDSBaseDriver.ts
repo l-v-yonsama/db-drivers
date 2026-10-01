@@ -168,15 +168,19 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
 
     let qst: QStatement | undefined = undefined;
     let dbTable: DbTable | undefined = undefined;
+    let resultType: QStatement['ast']['type'] | undefined;
 
     if (conditions?.rawQueries !== true) {
       qst = parseQuery(sql);
       dbTable = this.getDbTable(qst);
       if (qst?.ast?.type) {
+        resultType = qst.ast.type === 'union' || qst.ast.type === 'union all'
+          ? 'select'
+          : qst.ast.type;
         if (!params.meta) {
           params.meta = {};
         }
-        params.meta.type = qst?.ast?.type;
+        params.meta.type = resultType;
       }
     }
     if (prepare && prepare.useDatabaseName) {
@@ -193,7 +197,7 @@ export abstract class RDSBaseDriver extends BaseSQLSupportDriver<RdsDatabase> {
       useDatabase: prepare?.useDatabaseName,
       params,
       rdb,
-      type: qst?.ast?.type,
+      type: resultType,
       qst,
       dbTable,
       tableComment: dbTable?.comment,
