@@ -10,7 +10,7 @@ import {
   toNum,
   toTime,
 } from '@l-v-yonsama/rdh';
-import { TopLevelCondition } from 'json-rules-engine';
+import { TopLevelCondition } from '../../types/helpers/ViewCondition';
 import * as os from 'os';
 import {
   DbColumn,
@@ -31,7 +31,7 @@ import {
   isAnyConditions,
   isTopLevelCondition,
   operatorToSQLString,
-} from '../RuleEngine';
+} from './viewCondition';
 import { normalizeQuery } from './parameterNormalizer';
 import {
   createTableNameWithSchema,

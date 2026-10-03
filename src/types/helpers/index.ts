@@ -1,4 +1,5 @@
-import { TopLevelCondition } from 'json-rules-engine';
+import { TopLevelCondition } from './ViewCondition';
+export * from './ViewCondition';
 import { Statement } from 'pgsql-ast-parser';
 import {
   Auth0Database,
