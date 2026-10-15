@@ -175,6 +175,12 @@ describe('SQLHelper', () => {
       const ast = parseQuery(sql);
       expect(ast).not.toBeUndefined();
     });
+    it('uses the outer UPDATE when a fallback query contains a SELECT', () => {
+      const sql = 'UPDATE outer_table AS o SET o.value = (SELECT value FROM inner_table) WHERE o.id = 1 LIMIT 10';
+      const parsed = parseQuery(sql);
+      expect(parsed?.ast.type).toBe('update');
+      expect(parsed?.names?.tableName).toBe('outer_table');
+    });
     describe('Unexpected keyword tokens for pgsqlAST', () => {
       it('authorization', () => {
         const sql = 'select authorization from hoge';

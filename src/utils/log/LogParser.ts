@@ -22,6 +22,7 @@ import { validateConfig } from './validator';
 import { summarizeClassifyRules, summarizeExtractors } from './logSummary';
 
 const MAX_UNMATCHED_EVENT_START_LINES = 20;
+const MAX_UNMATCHED_EVENT_SAMPLES = 3;
 
 export class LogParser {
   private fieldSplitPattern: RegExp;
@@ -34,7 +35,7 @@ export class LogParser {
 
   parse(params: LogParseParams): ExtractedSqlResult {
     const { config } = this;
-    const { logText, withSqlFragments, linesToParse, language } = params;
+    const { logText, withSqlFragments, withComparisonInfo, linesToParse, language } = params;
 
     const stage = params.stage ?? 'sqlExecution';
     const r = validateConfig(this.config, stage);
@@ -90,6 +91,7 @@ export class LogParser {
         logText,
         this.config.split,
         linesToParse,
+        withComparisonInfo,
       );
       const beforeClassificationTime = new Date().getTime();
       result.elapsedTimeMilli.split = beforeClassificationTime - startTime;
@@ -101,6 +103,8 @@ export class LogParser {
         const logEvent = this.parseSqlLogEvent(
           logEventLine.text,
           logEventLine.lineNo,
+          logEventLine.sourceStartLine,
+          logEventLine.sourceEndLine,
         );
 
         if (!logEvent) {
@@ -114,6 +118,10 @@ export class LogParser {
               diagnostics.unmatchedEventStartLines.push(
                 Math.max(1, logEventLine.lineNo),
               );
+            }
+            if ((diagnostics.unmatchedEventSamples?.length ?? 0) < MAX_UNMATCHED_EVENT_SAMPLES) {
+              diagnostics.unmatchedEventSamples ??= [];
+              diagnostics.unmatchedEventSamples.push(this.describeFieldMismatch(logEventLine.text, logEventLine.lineNo));
             }
           }
           continue;
@@ -160,7 +168,7 @@ export class LogParser {
         return result;
       }
 
-      result.sqlExecutions = buildSqlExecutions({ fragments, language });
+      result.sqlExecutions = buildSqlExecutions({ fragments, language, withComparisonInfo });
       if (result.sqlExecutions) {
         const list = result.sqlExecutions;
         if (
@@ -195,7 +203,36 @@ export class LogParser {
     }
   }
 
-  private parseSqlLogEvent(event: string, lineNo: number): LogEvent | null {
+  private describeFieldMismatch(event: string, lineNo: number): string {
+    const near = (text: string): string => JSON.stringify(text.replace(/\s+/g, ' ').trim().slice(0, 60));
+    if (lineNo === 0) return `Line 1: event start pattern did not match near ${near(event)}.`;
+
+    let matchedThrough = 'none';
+    let matchedLength = 0;
+    try {
+      for (const [index, field] of this.config.split.fields.entries()) {
+        const pattern = createLogEventPattern({ fields: this.config.split.fields.slice(0, index + 1) });
+        const match = XRegExp.exec(event, pattern);
+        const name = 'name' in field ? field.name : field.type === 'literal' ? `literal ${JSON.stringify(field.pattern)}` : field.type;
+        if (!match) {
+          const enclosure = field.enclosure ? `, enclosure ${field.enclosure}` : '';
+          return `Line ${lineNo}: event split matched; fields through ${matchedThrough} matched; field ${index + 1} (${name}${enclosure}) did not match near ${near(event.slice(matchedLength))}.`;
+        }
+        matchedThrough = name;
+        matchedLength = match[0].length;
+      }
+    } catch {
+      // A standalone prefix may be invalid when a custom regex refers to later fields.
+    }
+    return `Line ${lineNo}: event split matched, but the field pattern did not match.`;
+  }
+
+  private parseSqlLogEvent(
+    event: string,
+    lineNo: number,
+    sourceStartLine?: number,
+    sourceEndLine?: number,
+  ): LogEvent | null {
     const match = XRegExp.exec(event, this.fieldSplitPattern);
 
     if (!match) return null;
@@ -221,6 +258,16 @@ export class LogParser {
         if (!data.fields) data.fields = {};
         data.fields[field.name] = value;
       }
+    }
+
+    if (sourceStartLine !== undefined && sourceEndLine !== undefined) {
+      data.sourceStartLine = sourceStartLine;
+      data.sourceEndLine = sourceEndLine;
+      const message = data.message;
+      const messageOffset = message ? event.lastIndexOf(message) : -1;
+      data.messageStartLine = messageOffset >= 0
+        ? sourceStartLine + (event.slice(0, messageOffset).match(/\n/g)?.length ?? 0)
+        : sourceStartLine;
     }
 
     return data as LogEvent;

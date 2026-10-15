@@ -67,6 +67,23 @@ describe('LogParser field extraction diagnostics', () => {
     expect(result).toMatchObject({ diagnostics: noUnmatchedEvents });
   });
 
+  it('identifies the first unmatched field after a successful event split', () => {
+    const config = createConfig();
+    config.split = { fields: [
+      { name: 'timestamp', type: 'builtin', pattern: 'SLASH_TIMESTAMP', enclosure: '[]', eventStartMarker: true },
+      { name: 'level', type: 'builtin', pattern: 'LEVEL', enclosure: '[]', eventStartMarker: false },
+      { name: 'thread', type: 'builtin', pattern: 'DATA', enclosure: '[]', eventStartMarker: false },
+      { name: 'message', type: 'builtin', pattern: 'GREEDY_MULTILINE', eventStartMarker: false },
+    ] };
+    const result = new LogParser(config).parse({
+      stage: 'split',
+      logText: '[1999/01/01 18:26:04 0059] [DEBUG] query.AutoSelectImpl - select 1',
+    });
+    expect(result.diagnostics?.unmatchedEventSamples).toEqual([
+      expect.stringContaining('fields through level matched; field 3 (thread, enclosure []) did not match near "query.AutoSelectImpl'),
+    ]);
+  });
+
   it.each(['', '\n', ' \t\r\n  '])(
     'does not report empty or whitespace-only input as an unmatched event: %j',
     (logText) => {
@@ -85,6 +102,7 @@ describe('LogParser field extraction diagnostics', () => {
     expect(result).toMatchObject({
       diagnostics: { unmatchedEventCount: 1, unmatchedEventStartLines: [1] },
     });
+    expect(result.diagnostics?.unmatchedEventSamples?.[0]).toContain('event start pattern did not match');
   });
 
   it('reports a whole unmatched block even if no start marker matches', () => {
@@ -135,6 +153,7 @@ describe('LogParser field extraction diagnostics', () => {
           ),
         },
       });
+      expect(result.diagnostics?.unmatchedEventSamples).toHaveLength(3);
     },
   );
 

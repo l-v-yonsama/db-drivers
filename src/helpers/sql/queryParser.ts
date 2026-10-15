@@ -106,6 +106,12 @@ const SQL_REPLACEMENT_RULES: SqlReplacementRule[] = [
     apply: (sql) => sql.replace(/\?/g, '$1'),
   },
   {
+    name: 'sqlite-insert-conflict',
+    dialects: 'SQLite',
+    purpose: 'Remove SQLite conflict actions for structural parsing.',
+    apply: (sql) => sql.replace(/^(\s*INSERT)\s+OR\s+(?:REPLACE|IGNORE|ROLLBACK|ABORT|FAIL)(\s+INTO\b)/i, '$1$2'),
+  },
+  {
     name: 'oracle-named-bind',
     dialects: 'Oracle',
     purpose:
@@ -356,6 +362,7 @@ const getFallbackStatement = (
     }
   | undefined => {
   const rsql = sql.replace(/[\r\n]/g, ' ');
+  const leadingType = rsql.match(/^\s*(select|insert|update|delete)\b/i)?.[1].toLowerCase();
   const findIdentifier = (pattern: string): QNames | undefined => {
     const result = rsql.match(new RegExp(pattern, 'i'));
     return result?.[1] ? toFallbackQNames(result[1]) : undefined;
@@ -375,14 +382,14 @@ const getFallbackStatement = (
     },
     {
       type: 'update',
-      pattern: `\\bupdate\\s+(${FALLBACK_QUALIFIED_IDENTIFIER})\\s+(?:set|remove)\\b`,
+      pattern: `\\bupdate\\s+(${FALLBACK_QUALIFIED_IDENTIFIER})(?:\\s+(?:as\\s+)?[A-Za-z_][\\w$]*)?\\s+(?:set|remove)\\b`,
     },
     {
       type: 'delete',
       pattern: `\\bdelete\\s+from\\s+(${FALLBACK_QUALIFIED_IDENTIFIER})(?=\\s|;|$)`,
     },
   ];
-  for (const { type, pattern } of patterns) {
+  for (const { type, pattern } of patterns.filter(({ type }) => !leadingType || type === leadingType)) {
     const names = findIdentifier(pattern);
     if (names) {
       return { type, names };

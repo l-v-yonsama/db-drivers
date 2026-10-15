@@ -671,8 +671,8 @@ describe('LogParser.parse (SQL execution extraction)', () => {
         thread: 'ajp-nio-0.0.0.0-8009-exec-1',
         sql: "UPDATE\n  super_mario_bros\n  AS o\n  SET\n  o.sf_mon9 = '2025-01', \n  o.standard_mario_bros_pp_gener = (select pp_gener from standard_mario_bros where id = o.standard_mario_bros_id)\n-- Com-Google\n  WHERE (bi_type6 IN (1 ,9) OR (bi_type6 = 2 AND usg_type = 3))\n-- Common Clause\nAND tanaka_pny >= 6\n  AND (sf_mon9 = \"\" OR sf_mon9 IS NULL)\n  AND t8_date >= '2025-01-01' \n  AND t8_date <= '2025-01-01' \n  AND hj999id LIKE CONCAT('%', '100000034701', '%') \n  AND pid IN ('600000006083') \n  LIMIT 10000 ",
         formattedSql: expect.any(String),
-        table: 'standard_mario_bros',
-        type: 'select',
+        table: 'super_mario_bros',
+        type: 'update',
       });
     });
   });

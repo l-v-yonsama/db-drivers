@@ -4,6 +4,8 @@ import { SqlLanguage } from 'sql-formatter';
 export type SpligLogText = {
   lineNo: number;
   text: string;
+  sourceStartLine?: number;
+  sourceEndLine?: number;
 };
 
 export type LogEvent = {
@@ -15,6 +17,11 @@ export type LogEvent = {
   message: string;
   messageSeq: number;
   fields?: Record<string, string>;
+  /** Physical source lines, 1-based and inclusive. Present when comparison info is requested. */
+  sourceStartLine?: number;
+  sourceEndLine?: number;
+  /** Physical line on which the message begins, for expanded events. */
+  messageStartLine?: number;
 };
 
 export const OPTIONAL_LOG_EVENT_KEYS = [
@@ -204,7 +211,23 @@ export type ExtractorStep = {
   action?: ExtractorStepAction;
 
   /** Target field where extracted value will be stored. */
-  field?: keyof SqlExecutionEvent;
+  field?:
+    | 'daoClass'
+    | 'daoMethod'
+    | 'endLine'
+    | 'error'
+    | 'errorDetail'
+    | 'formattedSql'
+    | 'framework'
+    | 'params'
+    | 'result'
+    | 'schema'
+    | 'sql'
+    | 'startLine'
+    | 'table'
+    | 'thread'
+    | 'timestamp'
+    | 'type';
 
   /** Whether this step is optional. */
   optional?: boolean;
@@ -249,6 +272,8 @@ export type SqlFragmentType =
 export type SqlFragment = {
   lineNo: number;
   messageSeq: number;
+  sourceStartLine?: number;
+  sourceEndLine?: number;
   timestamp?: string;
   thread?: string;
   framework?: FrameworkName;
@@ -261,12 +286,20 @@ export type SqlFragment = {
 export type SqlExecutionEvent = {
   startLine: number;
   endLine: number;
+  /** Unformatted SQL with safely reconstructed bound values. */
+  comparisonSql?: string;
+  /** Original parameter text from the extractor, without display normalization. */
+  rawParameters?: string[];
+  /** Physical source ranges for SQL and parameter log events. */
+  sourceRanges?: { startLine: number; endLine: number }[];
+  /** Reasons why comparisonSql could not be reconstructed. */
+  comparisonIssues?: { code: string; message: string }[];
 
   timestamp?: string;
   thread?: string;
   framework?: FrameworkName;
   sql?: string;
-  params?: string[];
+  params?: string;
   result?: string;
   formattedSql?: string;
   type?: string;
@@ -282,7 +315,7 @@ export type SqlExecutionBuilderState = 'idle' | 'collecting';
 
 export type SqlExecutionBuilder = {
   state: SqlExecutionBuilderState;
-  current?: SqlExecutionEvent;
+  current?: Omit<SqlExecutionEvent, 'params'> & { params?: string[] };
 };
 
 
@@ -306,6 +339,8 @@ export type LogParseParams = {
   linesToParse?: number;
   language?: SqlLanguage;
   withSqlFragments?: boolean;
+  /** Retain bound SQL, raw parameters and physical source ranges for comparison. */
+  withComparisonInfo?: boolean;
 };
 
 export type LogParseInputSummary = {
@@ -330,6 +365,8 @@ export type LogParseDiagnostics = {
   unmatchedEventCount: number;
   /** First 20 start lines, 1-based. */
   unmatchedEventStartLines: number[];
+  /** Up to three field-mismatch examples, evaluated only for failed blocks. */
+  unmatchedEventSamples?: string[];
 };
 
 export type ExtractedSqlResult = {
@@ -362,3 +399,5 @@ export type LogFormatDetectionResult = {
   confidence: number;
   scores: Record<string, number>;
 };
+
+export * from './logSqlComparison';

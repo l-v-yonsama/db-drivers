@@ -27,6 +27,12 @@ export function expandLogEvent(
             ...event,
             message: m.trim(),
             messageSeq: event.messageSeq + offset,
+            ...(event.messageStartLine !== undefined
+              ? {
+                  sourceStartLine: event.messageStartLine + offset,
+                  sourceEndLine: event.messageStartLine + offset,
+                }
+              : {}),
           });
           offset++;
         }

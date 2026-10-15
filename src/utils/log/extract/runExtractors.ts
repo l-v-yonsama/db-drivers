@@ -90,6 +90,12 @@ export function runExtractors(
           const baseFragment = {
             lineNo: event.lineNo,
             messageSeq: event.messageSeq,
+            ...(event.sourceStartLine !== undefined
+              ? {
+                  sourceStartLine: event.sourceStartLine,
+                  sourceEndLine: event.sourceEndLine,
+                }
+              : {}),
             timestamp: event.timestamp,
             thread: event.thread,
             framework: extractor.framework,

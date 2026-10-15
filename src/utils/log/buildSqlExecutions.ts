@@ -10,13 +10,16 @@ import {
   removeSqlComments,
   splitByStringLiterals,
 } from './sql/removeSqlComments';
+import { createComparisonSql } from './sql/createComparisonSql';
 
 export function buildSqlExecutions({
   fragments,
   language,
+  withComparisonInfo = false,
 }: {
   fragments: SqlFragment[];
   language?: SqlLanguage;
+  withComparisonInfo?: boolean;
 }): SqlExecutionEvent[] {
   const sqlExecutions: SqlExecutionEvent[] = [];
   const builders = new Map<string, SqlExecutionBuilder>();
@@ -38,20 +41,30 @@ export function buildSqlExecutions({
     if (!builder.current) return;
 
     const rawSql = builder.current.sql ?? '';
+    const rawParameters = builder.current.params ?? [];
 
     sqlExecutions.push({
       ...builder.current,
       formattedSql: createFormattedSql({
         rawSql,
-        params: builder.current.params,
+        params: rawParameters,
         framework: builder.current.framework,
         language,
       }),
-      params: builder.current.params
-        ? builder.current.params.join(',')
-        : undefined,
+      params: rawParameters.length > 0 ? rawParameters.join(',') : undefined,
+      ...(withComparisonInfo
+        ? {
+            ...(rawParameters.length > 0 ? { rawParameters: [...rawParameters] } : {}),
+            ...createComparisonSql({
+              rawSql,
+              rawParameters,
+              framework: builder.current.framework,
+              language,
+            }),
+          }
+        : {}),
       ...buildExecutionMeta(rawSql, builder.current),
-    } as SqlExecutionEvent);
+    });
 
     builder.state = 'idle';
     builder.current = undefined;
@@ -65,8 +78,8 @@ export function buildSqlExecutions({
       const rawSql = fragment.value;
 
       sqlExecutions.push({
-        startLine: calcLine(fragment),
-        endLine: calcLine(fragment),
+        startLine: sourceStartLine(fragment, withComparisonInfo),
+        endLine: sourceEndLine(fragment, withComparisonInfo),
         timestamp: fragment.timestamp,
         thread: fragment.thread,
         sql: rawSql,
@@ -78,6 +91,12 @@ export function buildSqlExecutions({
         daoClass: fragment.daoClass,
         daoMethod: fragment.daoMethod,
         framework: fragment.framework,
+        ...(withComparisonInfo
+          ? {
+              sourceRanges: [sourceRange(fragment)],
+              ...createComparisonSql({ rawSql, rawParameters: [], framework: fragment.framework, language }),
+            }
+          : {}),
         ...buildExecutionMeta(rawSql),
       });
 
@@ -100,8 +119,8 @@ export function buildSqlExecutions({
       }
 
       builder.current = {
-        startLine: calcLine(fragment),
-        endLine: calcLine(fragment),
+        startLine: sourceStartLine(fragment, withComparisonInfo),
+        endLine: sourceEndLine(fragment, withComparisonInfo),
         timestamp: fragment.timestamp,
         thread: fragment.thread,
         sql,
@@ -109,13 +128,14 @@ export function buildSqlExecutions({
         daoClass: fragment.daoClass,
         daoMethod: fragment.daoMethod,
         framework: fragment.framework,
+        ...(withComparisonInfo ? { sourceRanges: [sourceRange(fragment)] } : {}),
       };
 
       continue;
     }
 
     if (builder.current) {
-      builder.current.endLine = calcLine(fragment);
+      builder.current.endLine = sourceEndLine(fragment, withComparisonInfo);
     }
 
     if (fragment.type === 'SQL_ERROR') {
@@ -126,8 +146,8 @@ export function buildSqlExecutions({
       builder.state = 'collecting';
 
       builder.current = {
-        startLine: calcLine(fragment),
-        endLine: calcLine(fragment),
+        startLine: sourceStartLine(fragment, withComparisonInfo),
+        endLine: sourceEndLine(fragment, withComparisonInfo),
         timestamp: fragment.timestamp,
         thread: fragment.thread,
         sql: extractSqlFromErrorText(fragment.value) ?? '',
@@ -137,6 +157,7 @@ export function buildSqlExecutions({
         daoMethod: fragment.daoMethod,
         error: fragment.value,
         type: 'error',
+        ...(withComparisonInfo ? { sourceRanges: [sourceRange(fragment)] } : {}),
       };
 
       continue;
@@ -151,6 +172,9 @@ export function buildSqlExecutions({
         builder.current.params = [];
       }
       builder.current.params.push(fragment.value);
+      if (withComparisonInfo) {
+        builder.current.sourceRanges?.push(sourceRange(fragment));
+      }
     }
 
     if (fragment.type === 'RESULT') {
@@ -160,6 +184,9 @@ export function buildSqlExecutions({
 
     if (fragment.type === 'SQL_ERROR_DETAIL') {
       builder.current.errorDetail = fragment.value;
+      if (withComparisonInfo) {
+        builder.current.sourceRanges?.push(sourceRange(fragment));
+      }
       if (!builder.current.sql) {
         builder.current.sql = extractSqlFromErrorText(fragment.value) ?? '';
       }
@@ -178,7 +205,7 @@ export function buildSqlExecutions({
 
 function buildExecutionMeta(
   rawSql: string,
-  current?: SqlExecutionEvent,
+  current?: Pick<SqlExecutionEvent, 'error' | 'errorDetail'>,
 ): Partial<SqlExecutionEvent> {
   if (current && (current.error || current.errorDetail)) {
     return {
@@ -203,6 +230,17 @@ function buildExecutionMeta(
 const calcLine = (fragment: SqlFragment): number => {
   return fragment.lineNo + fragment.messageSeq - 1;
 };
+
+const sourceStartLine = (fragment: SqlFragment, withComparisonInfo: boolean): number =>
+  withComparisonInfo ? fragment.sourceStartLine ?? calcLine(fragment) : calcLine(fragment);
+
+const sourceEndLine = (fragment: SqlFragment, withComparisonInfo: boolean): number =>
+  withComparisonInfo ? fragment.sourceEndLine ?? calcLine(fragment) : calcLine(fragment);
+
+const sourceRange = (fragment: SqlFragment): { startLine: number; endLine: number } => ({
+  startLine: fragment.sourceStartLine ?? calcLine(fragment),
+  endLine: fragment.sourceEndLine ?? calcLine(fragment),
+});
 
 function createFormattedSql({
   rawSql,

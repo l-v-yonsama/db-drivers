@@ -4,6 +4,7 @@ import { unwrapQuote } from '../helpers/sql/quote';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from '../resource';
 import { DBType } from '../types';
 import { EstimatedBindParameter, EstimatedBindParameterLocation } from '../types/drivers/EstimatedBindParameter';
+import { RawBindMarker, scanSqlBindMarkers } from './sqlBindMarkerScanner';
 
 
 /** Finds bind placeholders in `sql` and, where possible, the DB Resource column they most likely bind to. */
@@ -18,7 +19,7 @@ export function estimateBindParameters(params: {
   }
 
   try {
-    const raw = scanRawMarkers(sql, dbType);
+    const raw = scanSqlBindMarkers({ sql, dbType }).markers;
     if (raw.length === 0) {
       return [];
     }
@@ -81,147 +82,7 @@ export function resolveTableAliasMap(params: {
 }
 
 
-type RawMarkerOccurrence = {
-  /** Exact marker text, e.g. `?`, `$1`, `:B1`, `@name`. */
-  marker: string;
-  /** 0-based char offset of the marker's first character in `sql`. */
-  offset: number;
-};
-
-function scanRawMarkers(sql: string, dbType: DBType): RawMarkerOccurrence[] {
-  const occurrences: RawMarkerOccurrence[] = [];
-  const n = sql.length;
-  let i = 0;
-
-  while (i < n) {
-    const ch = sql[i];
-
-    // -- comments --------------------------------------------------------
-    if (ch === '-' && sql[i + 1] === '-') {
-      while (i < n && sql[i] !== '\n') i++;
-      continue;
-    }
-    if (dbType === DBType.MySQL && ch === '#') {
-      while (i < n && sql[i] !== '\n') i++;
-      continue;
-    }
-    if (ch === '/' && sql[i + 1] === '*') {
-      i += 2;
-      while (i < n && !(sql[i] === '*' && sql[i + 1] === '/')) i++;
-      i = Math.min(n, i + 2);
-      continue;
-    }
-
-    // -- quoted strings / identifiers ------------------------------------
-    if (ch === "'") {
-      i = skipQuoted(sql, i, "'");
-      continue;
-    }
-    if (ch === '"') {
-      i = skipQuoted(sql, i, '"');
-      continue;
-    }
-    if (dbType === DBType.MySQL && ch === '`') {
-      i = skipQuoted(sql, i, '`');
-      continue;
-    }
-    if (dbType === DBType.SQLServer && ch === '[') {
-      i++;
-      while (i < n) {
-        if (sql[i] === ']') {
-          // SQL Server escapes a closing bracket in an identifier as `]]`.
-          if (sql[i + 1] === ']') {
-            i += 2;
-            continue;
-          }
-          i++;
-          break;
-        }
-        i++;
-      }
-      continue;
-    }
-
-    // PostgreSQL dollar-quoted strings (`$$...$$` or `$tag$...$tag$`) may contain text that looks like numbered bind markers.
-    if (dbType === DBType.Postgres && ch === '$') {
-      const delimiter = /^\$[A-Za-z_][A-Za-z0-9_]*\$|^\$\$/.exec(sql.slice(i))?.[0];
-      if (delimiter) {
-        const close = sql.indexOf(delimiter, i + delimiter.length);
-        i = close === -1 ? n : close + delimiter.length;
-        continue;
-      }
-    }
-
-    if ((dbType === DBType.MySQL || dbType === DBType.Aws) && ch === '?') {
-      occurrences.push({ marker: '?', offset: i });
-      i++;
-      continue;
-    }
-
-    if (dbType === DBType.Postgres && ch === '$') {
-      // `::` cast and PostgreSQL are unrelated (Postgres binds are `$N`, never `:`), so no separate `::` exclusion is needed here.
-      const m = /^\$\d+/.exec(sql.slice(i));
-      if (m) {
-        occurrences.push({ marker: m[0], offset: i });
-        i += m[0].length;
-        continue;
-      }
-    }
-
-    if (dbType === DBType.Oracle && ch === ':') {
-      if (sql[i + 1] === '=') {
-        // PL/SQL assignment (`:=`), not a bind marker.
-        i += 2;
-        continue;
-      }
-      const m = /^:([A-Za-z_][A-Za-z0-9_$#]*|\d+)/.exec(sql.slice(i));
-      if (m) {
-        occurrences.push({ marker: m[0], offset: i });
-        i += m[0].length;
-        continue;
-      }
-    }
-
-    if (dbType === DBType.SQLServer && ch === '@') {
-      if (sql[i + 1] === '@') {
-        // `@@` system variable (e.g. `@@SPID`, `@@ROWCOUNT`), not a bind.
-        i += 2;
-        while (i < n && /[A-Za-z0-9_]/.test(sql[i])) i++;
-        continue;
-      }
-      const m = /^@(\d+|[A-Za-z_][A-Za-z0-9_]*)/.exec(sql.slice(i));
-      if (m) {
-        occurrences.push({ marker: m[0], offset: i });
-        i += m[0].length;
-        continue;
-      }
-    }
-
-    i++;
-  }
-
-  return occurrences;
-}
-
-// Advances past a `quoteChar`-delimited token starting at `start` (which must point at the opening quote), honoring the SQL convention of a doubled quote char as an escaped literal quote (e.g. `''`, `""`).
-function skipQuoted(sql: string, start: number, quoteChar: string): number {
-  let i = start + 1;
-  const n = sql.length;
-  while (i < n) {
-    if (sql[i] === quoteChar) {
-      if (sql[i + 1] === quoteChar) {
-        i += 2;
-        continue;
-      }
-      return i + 1;
-    }
-    i++;
-  }
-  return i;
-}
-
-
-function orderMarkers(raw: RawMarkerOccurrence[], dbType: DBType): RawMarkerOccurrence[] {
+function orderMarkers(raw: RawBindMarker[], dbType: DBType): RawBindMarker[] {
   switch (dbType) {
     case DBType.MySQL:
     case DBType.Aws:
@@ -244,8 +105,8 @@ function orderMarkers(raw: RawMarkerOccurrence[], dbType: DBType): RawMarkerOccu
   }
 }
 
-function dedupeFirst(raw: RawMarkerOccurrence[]): RawMarkerOccurrence[] {
-  const seen = new Map<string, RawMarkerOccurrence>();
+function dedupeFirst(raw: RawBindMarker[]): RawBindMarker[] {
+  const seen = new Map<string, RawBindMarker>();
   for (const occurrence of raw) {
     if (!seen.has(occurrence.marker)) {
       seen.set(occurrence.marker, occurrence);
@@ -306,7 +167,7 @@ const NEARBY_WINDOW = 200;
 
 function extractNearbyIdentifier(
   sql: string,
-  occurrence: RawMarkerOccurrence,
+  occurrence: RawBindMarker,
 ): ColumnCandidate | undefined {
   const before = sql.slice(Math.max(0, occurrence.offset - NEARBY_WINDOW), occurrence.offset);
   const after = sql.slice(

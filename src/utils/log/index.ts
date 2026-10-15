@@ -8,3 +8,5 @@ export * from './buildSqlExecutions';
 export * from './constant';
 export * from './validator';
 export * from './logSummary';
+export * from './compare/compareSqlExecutions';
+export * from './compare/comparisonOptions';
