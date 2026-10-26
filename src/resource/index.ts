@@ -6,3 +6,4 @@ export * from './iam';
 export * from './aws';
 export * from './keyValue';
 export * from './fromJson';
+export * from './rpc';

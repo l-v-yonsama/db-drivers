@@ -5,6 +5,12 @@ export const ResourceType = {
   RedisDatabase: 'RedisDatabase',
   MemcacheDatabase: 'MemcacheDatabase',
   MqttDatabase: 'MqttDatabase',
+  RpcDatabase: 'RpcDatabase',
+  RpcPackage: 'RpcPackage',
+  RpcService: 'RpcService',
+  RpcMethod: 'RpcMethod',
+  RpcMessage: 'RpcMessage',
+  RpcField: 'RpcField',
 
   Schema: 'Schema',
   Table: 'Table',

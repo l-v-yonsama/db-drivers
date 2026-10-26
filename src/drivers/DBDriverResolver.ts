@@ -19,6 +19,7 @@ import { SQLServerDriver } from './SQLServerDriver';
 import { SQLiteDriver } from './SQLiteDriver';
 import { BaseSQLSupportDriver } from './BaseSQLSupportDriver';
 import { MqttDriver } from './MqttDriver';
+import { RPCDriver } from './RPCDriver';
 import { MemcacheDriver } from './MemcacheDriver';
 
 const uid = new ShortUniqueId();
@@ -110,6 +111,9 @@ export class DBDriverResolver {
         break;
       case DBType.Mqtt:
         driver = new MqttDriver(conRes);
+        break;
+      case DBType.RPC:
+        driver = new RPCDriver(conRes);
         break;
       // case DBType.IndexedDB: driver = new IndexedDBDriver(conRes);
       default:

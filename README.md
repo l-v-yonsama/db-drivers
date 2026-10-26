@@ -23,6 +23,8 @@ Test accounts (provisioned by `__tests__/setup/*.ts` on each test run):
 | SQL Server | 127.0.0.1:6433 | testdb | testuser | Pass123zxcv! | db_owner on testdb |
 | SQL Server | 127.0.0.1:6433 | (all) | testadmin | Pass123zxcv! | sysadmin role, for session kill |
 | MQTT | 127.0.0.1:61883 | - | - | - | anonymous access for unit tests |
+| gRPC fixture | 127.0.0.1:65051 | - | - | - | plaintext, no authentication |
+| gRPC fixture | localhost:65052 | - | - | rpc-fixture-token | TLS + Bearer; test certificate in `docker/rpc-test/certs/` |
 
 ```sh
 yarn add @l-v-yonsama/multi-platform-database-drivers
@@ -136,6 +138,59 @@ message
 
 ```
 
+## gRPC client
+
+`RPCDriver` loads services and message fields either from server reflection or a local `.proto` file. It supports unary calls, proto3 scalars, enum, message fields, `repeated` fields, and maps.
+
+- `discovery: 'reflection'`: fetch definitions and their imports from the server; neither `protoFilePath` nor `includeDirs` is required. Supports reflection v1 and v1alpha. TLS and Bearer authentication also apply to reflection requests.
+- `discovery: 'proto'` (also the default when omitted): load a local `.proto` file, using `includeDirs` when necessary.
+- `discovery: 'verify'`: legacy local-proto mode that additionally checks service signatures against server reflection. Existing connections retain this behavior.
+
+Reflection must be enabled and accessible on the server. If unavailable, explicitly choose local proto; the driver reports the error rather than silently falling back to a potentially stale local definition.
+
+The Docker fixture also exposes `StreamingTestService` with server, client, and bidirectional streaming methods. `RPCDriver` shows these methods in the schema but invokes only unary methods; the streaming methods are exercised with a standard gRPC client in the integration test. `fixture.proto` imports `Customer` from `includes/customer.proto` and Google's `Timestamp` and `Duration` types. Its import statement is `import "customer.proto";`, so set `includeDirs` to `docker/rpc-test/includes` when connecting from the host. With this fixture, leaving `includeDirs` empty or pointing it at `docker/rpc-test` fails to resolve `customer.proto`; the setting is optional for proto files whose imports resolve without extra directories.
+
+```ts
+import { DBDriverResolver, DBType, RPCDriver } from '@l-v-yonsama/multi-platform-database-drivers';
+
+const driver = DBDriverResolver.getInstance().createDriver<RPCDriver>({
+  dbType: DBType.RPC,
+  name: 'rpc-fixture',
+  host: '127.0.0.1',
+  port: 65051,
+  rpc: {
+    discovery: 'reflection',
+    // For local files instead:
+    // discovery: 'proto',
+    // protoFilePath: 'docker/rpc-test/fixture.proto',
+    // includeDirs: ['docker/rpc-test/includes'],
+  },
+});
+const error = await driver.connect();
+if (error) throw new Error(error);
+try {
+  const schema = await driver.getInfomationSchemas();
+  const result = await driver.invokeUnary({
+    service: 'rpcfixture.v1.CustomerService',
+    method: 'CreateCustomer',
+    request: { name: 'Hana', email: 'hana@example.test', active: true },
+  });
+  console.log(result.contents, result.status, result.elapsedMs);
+} finally {
+  await driver.disconnect();
+}
+```
+
+`invokeUnary` returns `UnaryResult`: `contents` is the decoded response message, `status` contains the gRPC code, name, and details, and `elapsedMs` is the call duration. Optional `headers` and `trailers` contain text response metadata as string arrays; binary metadata and keys matching common credential names are omitted. Failed calls throw `RpcInvokeError` with `kind`, optional `status`, and a message ending in `statusCode:<code>` for gRPC failures. Local validation errors have no gRPC status code.
+
+For JSON editors, use `invokeUnaryProtoJson({ service, method, requestJson, metadata })`. It parses the JSON text using the Protobuf schema and returns `contents` in ProtoJSON form: field names use their JSON names, 64-bit integers are decimal strings, and `google.protobuf.Timestamp` and `Duration` are strings. Safe 64-bit numeric inputs are accepted; unsafe numeric inputs are rejected before JSON parsing can round them. The existing `invokeUnary` object API remains available for callers that use protobuf field names and message objects.
+
+Set `rpc.showDefaultValues: true` on the connection to include implicit-presence defaults in `invokeUnaryProtoJson` responses (for example `0`, `false`, empty strings, arrays, and maps). It defaults to `false`. This affects only the response JSON; an emitted default does not mean the field was sent or stored. Absent message, `optional`, and `oneof` fields stay absent.
+
+For TLS and token authentication, set `ssl: { use: true }` and `rpc.authentication: { type: 'bearer', token }`. Supply `rpc.caFilePath` when the server certificate uses a custom CA. The fixture is started with `docker compose -f docker/unit-test.yml up -d --build rpc-test`; then run `npm run test:driver:rpc`.
+
+For extensions using local-proto mode, pass an absolute `rpc.protoFilePath` from the target project's filesystem path. Relative `protoFilePath` and `includeDirs` values are resolved against the Node process's current working directory, which may differ from the target project directory.
+
 ## Project Structure
 
 This package exposes one driver per database/service behind a shared interface. High-level layout:
@@ -146,7 +201,7 @@ src/
 ├── drivers/      # one <Engine>Driver.ts per DB/service
 │   │             #   BaseDriver → BaseSQLSupportDriver → RDSBaseDriver
 │   │             #   (MySQL/Postgres/SQLite/SQLServer/Oracle extend RDSBaseDriver;
-│   │             #    Auth0/Keycloak/Memcache/Mqtt/Redis/Aws extend BaseDriver directly)
+│   │             #    Auth0/Keycloak/Memcache/Mqtt/Redis/Aws/RPC extend BaseDriver directly)
 │   ├── aws/        # AWS service clients (S3/SQS/SES/Dynamo/CloudWatch) used by AwsDriver
 │   └── memcache/    # helper used internally by MemcacheDriver
 ├── resource/     # DB metadata model: DbDatabase/DbSchema/DbTable/DbColumn hierarchy
@@ -168,7 +223,7 @@ Every directory has its own `index.ts` that re-exports its contents (`export * f
 
 Other top-level folders:
 
-- `docker/` — Docker Compose config for the local test databases used by `__tests__/setup/*.ts` (see "Prepare" above)
+- `docker/` — Docker Compose config for local test databases and the gRPC fixture server (see "Prepare" above)
 - `schema/` — JSON Schema generated from the `LogParseConfig` type (`npm run build:schema`, via `typescript-json-schema`); consumed by the db-notebook VS Code extension as the JSON Validator schema for `*.log-parser.config.json` files
 
 ### Log parser validation and diagnostics
