@@ -26,6 +26,22 @@ export type RpcFieldType =
   | { kind: 'repeated'; element: RpcFieldType }
   | { kind: 'map'; key: RpcScalarType; value: RpcFieldType };
 
+export type RpcCallKind =
+  | 'unary'
+  | 'serverStreaming'
+  | 'clientStreaming'
+  | 'bidiStreaming';
+
+export function getRpcCallKind(method: {
+  requestStream: boolean;
+  responseStream: boolean;
+}): RpcCallKind {
+  if (method.requestStream) {
+    return method.responseStream ? 'bidiStreaming' : 'clientStreaming';
+  }
+  return method.responseStream ? 'serverStreaming' : 'unary';
+}
+
 export function formatRpcFieldType(type: RpcFieldType): string {
   switch (type.kind) {
     case 'scalar':

@@ -11,15 +11,18 @@ import {
   RpcDatabase,
   RpcField,
   RpcFieldType,
+  RpcCallKind,
   RpcMessage,
   RpcMethod,
   RpcPackage,
   RpcScalarType,
   RpcService,
+  getRpcCallKind,
 } from '../resource';
 import { ConnectionSetting } from '../types';
 import { BaseDriver } from './BaseDriver';
 import { formatRpcProtoJson, parseRpcProtoJson } from './rpcProtoJson';
+import { parseRpcRequestMetadata } from './rpcMetadata';
 
 export type RpcInvokeParams = {
   service: string;
@@ -59,10 +62,7 @@ export type RpcProtoJsonStreamParams = {
   requestJson?: string;
 };
 
-export type RpcStreamKind =
-  | 'serverStreaming'
-  | 'clientStreaming'
-  | 'bidiStreaming';
+export type RpcStreamKind = Exclude<RpcCallKind, 'unary'>;
 
 export type RpcStreamEvent =
   | { type: 'headers'; headers: RpcTextMetadata }
@@ -1023,9 +1023,7 @@ export class RPCDriver extends BaseDriver<RpcDatabase> {
 
   private requestMetadata(values?: Record<string, string | string[]>): grpc.Metadata {
     const metadata = new grpc.Metadata();
-    for (const [key, value] of Object.entries(values ?? {})) {
-      if (key.toLowerCase() === 'authorization')
-        throw new Error('authorization metadata is managed by RPC authentication.');
+    for (const [key, value] of Object.entries(parseRpcRequestMetadata(values))) {
       for (const item of Array.isArray(value) ? value : [value])
         metadata.add(key, item);
     }
@@ -1170,13 +1168,9 @@ export class RPCDriver extends BaseDriver<RpcDatabase> {
       const method = Object.values(service).find((item) => item.path === path);
       const reflected = this.root.lookupService(params.service).methods[params.method];
       if (!method || !reflected) throw new Error(`Unknown RPC method: ${path}`);
-      if (!method.requestStream && !method.responseStream)
+      const kind = getRpcCallKind(method);
+      if (kind === 'unary')
         throw new Error(`Not a streaming RPC method: ${path}`);
-      const kind: RpcStreamKind = method.requestStream
-        ? method.responseStream
-          ? 'bidiStreaming'
-          : 'clientStreaming'
-        : 'serverStreaming';
       if (kind !== 'serverStreaming' && params.requestJson !== undefined)
         throw new Error('The initial request is only supported for server streaming.');
       if (kind === 'serverStreaming' && params.requestJson === undefined)
