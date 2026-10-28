@@ -6,6 +6,7 @@ import {
   MqttDatabase,
   RdsDatabase,
   RedisDatabase,
+  RpcDatabase,
 } from '../../resource';
 import { CreateSchemaDefinitionsForPromptParams } from '../../types';
 import { createAuth0SchemaDefinitionsForPrompt } from './Auth0PromptHelper';
@@ -15,6 +16,7 @@ import { createMemcacheSchemaDefinitionsForPrompt } from './MemcachePromptHelper
 import { createMqttSchemaDefinitionsForPrompt } from './MqttPromptHelper';
 import { createRdsSchemaDefinitionsForPrompt } from './RdsPromptHelper';
 import { createRedisSchemaDefinitionsForPrompt } from './RedisPromptHelper';
+import { createRpcSchemaDefinitionsForPrompt } from './RpcPromptHelper';
 
 /** Single entry point for MCP tools: dispatches to the vendor-specific schema-prompt renderer based on the runtime type of each element of `db`, so callers don't need to branch on dbType themselves. */
 export const createSchemaDefinitionsForPrompt = async (
@@ -28,6 +30,8 @@ export const createSchemaDefinitionsForPrompt = async (
     resourceName,
     serviceType,
     realmName,
+    serviceName,
+    methodName,
   } = params;
 
   try {
@@ -101,6 +105,18 @@ export const createSchemaDefinitionsForPrompt = async (
     );
     if (redisDbs.length) {
       const t = await createRedisSchemaDefinitionsForPrompt({ db: redisDbs });
+      if (t) results.push(t);
+    }
+
+    const rpcDbs = databases.filter(
+      (it): it is RpcDatabase => it instanceof RpcDatabase,
+    );
+    if (rpcDbs.length) {
+      const t = createRpcSchemaDefinitionsForPrompt(
+        rpcDbs,
+        serviceName,
+        methodName,
+      );
       if (t) results.push(t);
     }
 

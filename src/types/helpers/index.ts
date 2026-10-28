@@ -140,6 +140,9 @@ export type CreateSchemaDefinitionsForPromptParams = {
   serviceType?: AwsServiceType;
   // Keycloak-only
   realmName?: string;
+  // RPC-only
+  serviceName?: string;
+  methodName?: string;
 };
 
 export type ResourcePosition = {
