@@ -163,4 +163,77 @@ describe('RPC streaming calls on a connected driver (rpc-test fixture)', () => {
       },
     );
   });
+
+  it('times out after the timeout fixture accepts requests, including a partially received stream', async () => {
+    await withDriver(
+      {
+        ...setting,
+        queryTimeoutMs: 300,
+        rpc: { ...setting.rpc, streamTimeoutMs: 300 },
+      },
+      async (driver) => {
+        const timeoutService = 'rpcfixture.v1.TestTimeoutService';
+        await expect(driver.invokeUnaryProtoJson({
+          service: timeoutService,
+          method: 'Unary',
+          requestJson: '{}',
+        })).rejects.toMatchObject({
+          status: { code: 4, name: 'DEADLINE_EXCEEDED' },
+          headers: { 'x-timeout-test-accepted': ['true'] },
+        });
+
+        const client = driver.openProtoJsonStream({
+          service: timeoutService,
+          method: 'ClientStreaming',
+        });
+        const clientEvents = collect(client);
+        await client.send('{"value":"accepted"}');
+        await client.finishSending();
+        expect(await client.completion).toMatchObject({
+          outcome: 'timeout',
+          sentCount: 1,
+          receivedCount: 0,
+          status: { code: 4, name: 'DEADLINE_EXCEEDED' },
+        });
+        expect(await clientEvents).toContainEqual({
+          type: 'headers',
+          headers: { 'x-timeout-test-accepted': ['true'] },
+        });
+
+        const server = driver.openProtoJsonStream({
+          service: timeoutService,
+          method: 'ServerStreaming',
+          requestJson: '{}',
+        });
+        const serverEvents = collect(server);
+        expect(await server.completion).toMatchObject({
+          outcome: 'timeout',
+          sentCount: 1,
+          receivedCount: 0,
+          status: { code: 4, name: 'DEADLINE_EXCEEDED' },
+        });
+        expect(await serverEvents).toContainEqual({
+          type: 'headers',
+          headers: { 'x-timeout-test-accepted': ['true'] },
+        });
+
+        const partial = driver.openProtoJsonStream({
+          service: timeoutService,
+          method: 'ServerStreamingTwoThenHang',
+          requestJson: '{"prefix":"item-"}',
+        });
+        const partialEvents = collect(partial);
+        expect(await partial.completion).toMatchObject({
+          outcome: 'timeout',
+          sentCount: 1,
+          receivedCount: 2,
+          status: { code: 4, name: 'DEADLINE_EXCEEDED' },
+        });
+        expect((await partialEvents).filter((event) => event.type === 'received')).toEqual([
+          expect.objectContaining({ index: 1, contents: { value: 'item-0' } }),
+          expect.objectContaining({ index: 2, contents: { value: 'item-1' } }),
+        ]);
+      },
+    );
+  });
 });

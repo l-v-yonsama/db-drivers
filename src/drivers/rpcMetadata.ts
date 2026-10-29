@@ -13,6 +13,9 @@ export function parseRpcRequestMetadata(value: unknown): RpcRequestMetadata {
         'authorization metadata is managed by RPC authentication.',
       );
     }
+    if (key.toLowerCase().endsWith('-bin')) {
+      throw new Error(`Binary RPC metadata ${key} is not supported.`);
+    }
     if (
       typeof item !== 'string' &&
       !(Array.isArray(item) && item.every((part) => typeof part === 'string'))

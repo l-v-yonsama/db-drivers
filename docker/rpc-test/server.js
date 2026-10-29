@@ -42,6 +42,11 @@ function handlers(requireToken) {
   };
   const notFound = (callback, name) =>
     callback({ code: grpc.status.NOT_FOUND, message: `${name} not found.` });
+  const markTimeoutRequestAccepted = (call) => {
+    const headers = new grpc.Metadata();
+    headers.set('x-timeout-test-accepted', 'true');
+    call.sendMetadata(headers);
+  };
   return {
     customer: {
       CreateCustomer: guard(({ request }, callback) => {
@@ -138,6 +143,19 @@ function handlers(requireToken) {
         call.on('end', () => call.end());
       }),
     },
+    timeout: {
+      Unary: guard((call) => markTimeoutRequestAccepted(call)),
+      ClientStreaming: guard((call) => {
+        call.on('end', () => markTimeoutRequestAccepted(call));
+        call.resume();
+      }),
+      ServerStreaming: guardStream((call) => markTimeoutRequestAccepted(call)),
+      ServerStreamingTwoThenHang: guardStream((call) => {
+        markTimeoutRequestAccepted(call);
+        call.write({ value: `${call.request.prefix}0` });
+        call.write({ value: `${call.request.prefix}1` });
+      }),
+    },
   };
 }
 
@@ -147,6 +165,7 @@ function startServer(port, credentials, requireToken) {
   server.addService(api.CustomerService.service, implementation.customer);
   server.addService(api.TestTableService.service, implementation.testTable);
   server.addService(api.StreamingTestService.service, implementation.streaming);
+  server.addService(api.TestTimeoutService.service, implementation.timeout);
   if (!requireToken) new ReflectionService(definition).addToServer(server);
   server.bindAsync(`0.0.0.0:${port}`, credentials, (error) => {
     if (error) throw error;

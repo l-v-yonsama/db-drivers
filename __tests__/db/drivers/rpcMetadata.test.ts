@@ -20,5 +20,8 @@ describe('RPC request metadata', () => {
     ).toThrow(/authorization/);
     expect(() => parseRpcRequestMetadata({ 'x-count': 2 })).toThrow(/string/);
     expect(isRpcRequestMetadata({ 'x-tag': [true] })).toBe(false);
+    expect(() => parseRpcRequestMetadata({ 'x-payload-bin': 'YWJj' })).toThrow(
+      /Binary RPC metadata/,
+    );
   });
 });

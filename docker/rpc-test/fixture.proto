@@ -79,3 +79,13 @@ service StreamingTestService {
   rpc ClientStream(stream StreamItem) returns (StreamSummary);
   rpc BidiStream(stream StreamItem) returns (stream StreamItem);
 }
+
+// These methods accept requests but never complete normally.
+// Use a short client deadline to exercise DEADLINE_EXCEEDED handling.
+service TestTimeoutService {
+  rpc Unary(StreamRequest) returns (StreamSummary);
+  rpc ClientStreaming(stream StreamItem) returns (StreamSummary);
+  rpc ServerStreaming(StreamRequest) returns (stream StreamItem);
+  // Sends two items, then leaves the stream open as if the third item stalled.
+  rpc ServerStreamingTwoThenHang(StreamRequest) returns (stream StreamItem);
+}
