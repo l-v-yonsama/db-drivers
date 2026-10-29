@@ -724,7 +724,7 @@ describe('OraclePerformanceTuningProvider (live Oracle)', () => {
 
     expect(def.ddl).toContain('CREATE TABLE');
     expect(def.ddl).toContain('PERF_ORDERS');
-  });
+  }, 15_000);
 
   it('reports table statistics with real row counts and byte sizes', async () => {
     const result = await provider.collectTableStatistics(target, options);
