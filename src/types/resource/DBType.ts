@@ -10,6 +10,7 @@ export const DBType = {
   Auth0: 'Auth0',
   Aws: 'Aws',
   Mqtt: 'Mqtt',
+  RPC: 'RPC',
 } as const;
 
 export type DBType = (typeof DBType)[keyof typeof DBType];

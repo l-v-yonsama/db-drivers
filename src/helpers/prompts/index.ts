@@ -5,4 +5,5 @@ export * from './MemcachePromptHelper';
 export * from './MqttPromptHelper';
 export * from './RdsPromptHelper';
 export * from './RedisPromptHelper';
+export * from './RpcPromptHelper';
 export * from './SchemaPromptHelper';

@@ -34,6 +34,7 @@ const DBTypeToSqlLanguageMap: Record<DBType, SqlLanguage> = {
   Auth0: 'mysql',
   Aws: 'mysql',
   Mqtt: 'mysql',
+  RPC: 'mysql',
 } as const;
 
 export const getSqlLanguage = (dbType: DBType): SqlLanguage => {

@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package rpcfixture.v1;
+
+import "customer.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+message CreateCustomerRequest { string name = 1; string email = 2; bool active = 3; }
+message GetCustomerRequest { int64 id = 1; }
+message ListCustomersRequest {}
+message ListCustomersResponse { repeated Customer customers = 1; }
+message UpdateCustomerRequest { Customer customer = 1; }
+message DeleteCustomerRequest { int64 id = 1; }
+message DeleteCustomerResponse { bool deleted = 1; }
+
+service CustomerService {
+  rpc CreateCustomer(CreateCustomerRequest) returns (Customer);
+  rpc GetCustomer(GetCustomerRequest) returns (Customer);
+  rpc ListCustomers(ListCustomersRequest) returns (ListCustomersResponse);
+  rpc UpdateCustomer(UpdateCustomerRequest) returns (Customer);
+  rpc DeleteCustomer(DeleteCustomerRequest) returns (DeleteCustomerResponse);
+}
+
+enum SampleState {
+  SAMPLE_STATE_UNSPECIFIED = 0;
+  SAMPLE_STATE_READY = 1;
+}
+
+message TestTable {
+  double double_value = 1;
+  float float_value = 2;
+  int32 int32_value = 3;
+  int64 int64_value = 4;
+  uint32 uint32_value = 5;
+  uint64 uint64_value = 6;
+  sint32 sint32_value = 7;
+  sint64 sint64_value = 8;
+  fixed32 fixed32_value = 9;
+  fixed64 fixed64_value = 10;
+  sfixed32 sfixed32_value = 11;
+  sfixed64 sfixed64_value = 12;
+  bool bool_value = 13;
+  string string_value = 14;
+  bytes bytes_value = 15;
+  SampleState state = 16;
+  repeated int32 int32_values = 17;
+  repeated string string_values = 18;
+  map<string, string> string_values_by_key = 19;
+  map<int32, int64> int64_values_by_key = 20;
+  string deprecated_string_value = 21 [deprecated = true];
+  google.protobuf.Timestamp timestamp_value = 22;
+  google.protobuf.Duration duration_value = 23;
+  int64 id = 24;
+}
+
+message CreateTestTableRequest { TestTable test_table = 1; }
+message GetTestTableRequest { int64 id = 1; }
+message ListTestTablesRequest {}
+message ListTestTablesResponse { repeated TestTable test_tables = 1; }
+message UpdateTestTableRequest { TestTable test_table = 1; }
+message DeleteTestTableRequest { int64 id = 1; }
+message DeleteTestTableResponse { bool deleted = 1; }
+
+service TestTableService {
+  rpc CreateTestTable(CreateTestTableRequest) returns (TestTable);
+  rpc GetTestTable(GetTestTableRequest) returns (TestTable);
+  rpc ListTestTables(ListTestTablesRequest) returns (ListTestTablesResponse);
+  rpc UpdateTestTable(UpdateTestTableRequest) returns (TestTable);
+  rpc DeleteTestTable(DeleteTestTableRequest) returns (DeleteTestTableResponse);
+}
+
+message StreamItem { string value = 1; }
+message StreamRequest { string prefix = 1; uint32 count = 2; }
+message StreamSummary { string joined = 1; uint32 count = 2; }
+
+service StreamingTestService {
+  rpc ServerStream(StreamRequest) returns (stream StreamItem);
+  rpc ClientStream(stream StreamItem) returns (StreamSummary);
+  rpc BidiStream(stream StreamItem) returns (stream StreamItem);
+}
+
+// These methods accept requests but never complete normally.
+// Use a short client deadline to exercise DEADLINE_EXCEEDED handling.
+service TestTimeoutService {
+  rpc Unary(StreamRequest) returns (StreamSummary);
+  rpc ClientStreaming(stream StreamItem) returns (StreamSummary);
+  rpc ServerStreaming(StreamRequest) returns (stream StreamItem);
+  // Sends two items, then leaves the stream open as if the third item stalled.
+  rpc ServerStreamingTwoThenHang(StreamRequest) returns (stream StreamItem);
+}

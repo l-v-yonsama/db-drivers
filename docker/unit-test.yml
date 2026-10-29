@@ -149,6 +149,14 @@ services:
       timeout: 2s
       retries: 10
 
+  rpc-test:
+    build: ./rpc-test
+    ports:
+      - '65051:50051'
+      - '65052:50052'
+    environment:
+      RPC_TEST_TOKEN: rpc-fixture-token
+
 volumes:
   redis_data:
   mysql_data:

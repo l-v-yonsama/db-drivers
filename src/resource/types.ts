@@ -32,6 +32,14 @@ import type {
   RedisDatabase,
 } from './keyValue';
 import type { DbColumn, DbSchema, DbTable, RdsDatabase } from './rdb';
+import type {
+  RpcDatabase,
+  RpcField,
+  RpcMessage,
+  RpcMethod,
+  RpcPackage,
+  RpcService,
+} from './rpc';
 
 export interface SchemaAndTableName {
   schema?: string;
@@ -49,7 +57,8 @@ export type DbDatabase =
   | MemcacheDatabase
   | Auth0Database
   | KeycloakDatabase
-  | MqttDatabase;
+  | MqttDatabase
+  | RpcDatabase;
 
 export type AllSubDbResource =
   | DbDatabase
@@ -76,7 +85,12 @@ export type AllSubDbResource =
   | IamOrganization
   | IamUser
   | IamGroup
-  | IamRole;
+  | IamRole
+  | RpcPackage
+  | RpcService
+  | RpcMethod
+  | RpcMessage
+  | RpcField;
 
 export type IamResourceType = 'users' | 'groups' | 'roles';
 

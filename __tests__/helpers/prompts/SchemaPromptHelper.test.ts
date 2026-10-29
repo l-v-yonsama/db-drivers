@@ -9,6 +9,11 @@ import {
   MemcacheDatabase,
   MqttDatabase,
   RedisDatabase,
+  RpcDatabase,
+  RpcMethod,
+  RpcPackage,
+  RpcService,
+  RpcMessage,
 } from '../../../src';
 import * as SchemaPromptHelperExports from '../../../src';
 import { loadMysqlDbFixture } from '../../setup/mysql';
@@ -28,6 +33,7 @@ describe('SchemaPromptHelper', () => {
         'createMemcacheSchemaDefinitionsForPrompt',
         'createMqttSchemaDefinitionsForPrompt',
         'createRedisSchemaDefinitionsForPrompt',
+        'createRpcSchemaDefinitionsForPrompt',
         'createSchemaDefinitionsForPrompt',
       ];
 
@@ -118,6 +124,52 @@ describe('SchemaPromptHelper', () => {
       });
 
       expect(promptText).toContain('- DB 0: 7 keys');
+    });
+
+    it('renders and filters discovered RPC methods with their request and response contracts', async () => {
+      const db = new RpcDatabase('localhost:50051');
+      const pkg = new RpcPackage('example.v1');
+      const service = new RpcService('Greeter', 'example.v1.Greeter');
+      const hello = new RpcMethod(
+        'Hello',
+        '/example.v1.Greeter/Hello',
+        'example.v1.HelloRequest',
+        'example.v1.HelloReply',
+      );
+      const other = new RpcMethod(
+        'Other',
+        '/example.v1.Greeter/Other',
+        'example.v1.OtherRequest',
+        'example.v1.OtherReply',
+        true,
+        true,
+      );
+      service.addChild(hello);
+      service.addChild(other);
+      pkg.addChild(service);
+      db.addChild(pkg);
+      db.messageDefinitions.push(
+        new RpcMessage('HelloRequest', 'example.v1.HelloRequest'),
+      );
+      db.messageDefinitions.push(
+        new RpcMessage('HelloReply', 'example.v1.HelloReply'),
+      );
+      const text = await createSchemaDefinitionsForPrompt({
+        db,
+        serviceName: 'example.v1.Greeter',
+        methodName: 'Hello',
+      });
+      expect(text).toContain('RPC /example.v1.Greeter/Hello (unary)');
+      expect(text).toContain('message HelloRequest');
+      expect(text).toContain('message HelloReply');
+      expect(text).not.toContain('/Other');
+      const streamingText = await createSchemaDefinitionsForPrompt({
+        db,
+        methodName: 'Other',
+      });
+      expect(streamingText).toContain(
+        'ProtoJSON request example (notebook cell array):\n[\n  {}\n]',
+      );
     });
 
     it('joins results across a mixed-vendor array', async () => {

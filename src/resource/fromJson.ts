@@ -35,6 +35,14 @@ import {
   RedisDatabase,
 } from './keyValue';
 import { DbColumn, DbSchema, DbTable, RdsDatabase } from './rdb';
+import {
+  RpcDatabase,
+  RpcField,
+  RpcMessage,
+  RpcMethod,
+  RpcPackage,
+  RpcService,
+} from './rpc';
 
 export function fromJson<T extends DbResource = DbResource>(json: T): T {
   const resourceType: ResourceType = json.resourceType;
@@ -65,6 +73,62 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
     case ResourceType.MqttDatabase:
       res = Object.assign(new MqttDatabase(name), json);
       break;
+    case ResourceType.RpcDatabase:
+      res = Object.assign(new RpcDatabase(name), json);
+      (res as RpcDatabase).messageDefinitions = (
+        castTo<RpcDatabase>(json).messageDefinitions ?? []
+      ).map((message) => fromJson(message));
+      break;
+    case ResourceType.RpcPackage:
+      res = Object.assign(new RpcPackage(name), json);
+      break;
+    case ResourceType.RpcService: {
+      const p = castTo<RpcService>(json);
+      res = Object.assign(new RpcService(name, p.fullName, p.discovery), json);
+      break;
+    }
+    case ResourceType.RpcMethod: {
+      const p = castTo<RpcMethod>(json);
+      res = Object.assign(
+        new RpcMethod(
+          name,
+          p.path,
+          p.inputType,
+          p.outputType,
+          p.requestStream,
+          p.responseStream,
+        ),
+        json,
+      );
+      break;
+    }
+    case ResourceType.RpcMessage: {
+      const p = castTo<RpcMessage>(json);
+      res = Object.assign(new RpcMessage(name, p.fullName, p.direction), json);
+      break;
+    }
+    case ResourceType.RpcField: {
+      const p = castTo<RpcField>(json);
+      res = Object.assign(
+        new RpcField(
+          name,
+          p.fieldNumber,
+          p.fieldType,
+          p.generalType,
+          p.presence,
+          p.oneofGroup,
+          p.jsonName,
+          {
+            deprecated: p.deprecated,
+            proto3Optional: p.proto3Optional,
+            required: p.required,
+            jsonNameOption: p.jsonNameOption,
+          },
+        ),
+        json,
+      );
+      break;
+    }
     case ResourceType.Subscription:
       res = Object.assign(
         new DbSubscription(name, castTo<DbSubscription>(json).qos),
@@ -204,6 +268,9 @@ export function fromJson<T extends DbResource = DbResource>(json: T): T {
   if (json.children) {
     const children = json.children.map((child) => fromJson(child));
     (res as any)['children'] = children;
+  }
+  if (res instanceof RpcDatabase) {
+    res.expandMessageReferences();
   }
   return res;
 }

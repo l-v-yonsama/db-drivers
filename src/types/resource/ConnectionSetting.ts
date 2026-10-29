@@ -95,6 +95,20 @@ export type MqttSetting = {
   clean?: boolean;
 };
 
+export type RpcSetting = {
+  /** Required for local proto and legacy verify modes; unused for reflection. */
+  protoFilePath?: string;
+  includeDirs?: string[];
+  /** Default: proto, preserving existing connections. */
+  discovery?: 'reflection' | 'proto' | 'verify';
+  /** Include implicit-presence default values in ProtoJSON responses. Default: false. */
+  showDefaultValues?: boolean;
+  /** Stream deadline in milliseconds. Default: 300000; 0 disables the deadline. */
+  streamTimeoutMs?: number;
+  caFilePath?: string;
+  authentication?: { type: 'none' } | { type: 'bearer'; token: string };
+};
+
 export type SQLServerSetting = {
   encrypt?: boolean;
   /** 信頼関係を検証するために証明書チェーンを順に調べる処理をバイパスしない（MS SQL Serverのサーバ証明書を必ず信頼する） この引数はMS SQL Serverへの接続に暗号化が有効化されている （接続URLにencrypt=falseが未指定、またはMS SQL Server側に強制的に暗号化を構成している）場合にのみ使用されます。 */
@@ -158,6 +172,7 @@ export type ConnectionSetting = {
   oracle?: OracleSetting;
   iamSolution?: IamSolutionSetting;
   mqttSetting?: MqttSetting;
+  rpc?: RpcSetting;
   /** The timezone used to store local dates. */
   timezone?: string;
   /** Ask the driver to open/keep this connection read-only. */

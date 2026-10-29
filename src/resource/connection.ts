@@ -7,6 +7,7 @@ import {
   IamSolutionSetting,
   MqttSetting,
   ResourceFilter,
+  RpcSetting,
   ResourceType,
   SQLServerSetting,
   SshSetting,
@@ -38,6 +39,7 @@ export class DbConnection
   public awsSetting?: AwsSetting;
   public iamSolution?: IamSolutionSetting;
   public mqttSetting?: MqttSetting;
+  public rpc?: RpcSetting;
   public firebase?: FirebaseSetting;
   public sqlServer?: SQLServerSetting;
   public timezone?: string;
@@ -67,6 +69,7 @@ export class DbConnection
     this.awsSetting = prop.awsSetting;
     this.iamSolution = prop.iamSolution;
     this.mqttSetting = prop.mqttSetting;
+    this.rpc = prop.rpc;
     this.firebase = prop.firebase;
     this.sqlServer = prop.sqlServer;
     this.timezone = prop.timezone;
